@@ -19,6 +19,11 @@ class Molecule:
         self.atom_labels = np.array([]) # empty array for element labels
         self.coordinates = np.empty((0,3), dtype=np.float64) # Empty 2D array
         self.masses = None 
+        
+        #TODO build something to automatically take care of spin and charge or ask for user input here
+        self.charge = 0
+        self.spin_mult = 1
+
 
     def get_atomic_mass(self,element_symbol):
         """ 
@@ -156,7 +161,6 @@ class Molecule:
 
         # Create new molecule objects for each connected component
         submolecules = []
-
         for i,component in enumerate(connected_components):
             # Get indices of atoms in this components
             indices = [idx for idx, label in enumerate(self.atom_labels) if label in component]
@@ -165,6 +169,7 @@ class Molecule:
             submol = Molecule(name=f"{self.name}_fragment_{i+1}")
             submol.atom_labels = self.atom_labels[indices].copy()
             submol.coordinates = self.coordinates[indices].copy()
+            submol.masses = self.masses[indices].copy()            
             submolecules.append(submol)
 
         return submolecules
@@ -188,6 +193,27 @@ class Molecule:
             remove_digits = str.maketrans("","", digits)
             atom_labels_without_digits = [elem.translate(remove_digits) for elem in atom_labels]
             masses = [self.get_atomic_mass(elem) for elem in atom_labels_without_digits]
+            print(masses)
             self.masses = np.array(masses)
-    
+
+    @classmethod
+    def from_submolecules_list(cls, submolecules: List['Molecule'], name: str = "Combined Molecule"):
+        """ 
+        Create a Molecule by combining a list of submolecules
+
+        Args:
+            submolecules: List of Molecule objects to combine
+            name: Name for the combined molecule
+
+        Returns:
+            Molecule: A new Molecule instance
+        """
+        combined_molecule = cls(name)
+        
+        for submol in submolecules:
+            combined_molecule.add_atoms_batch(submol.atom_labels, submol.coordinates, submol.masses)
+        
+        return combined_molecule
+
+
     

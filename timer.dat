@@ -1,0 +1,2133 @@
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 11:44:18 2025
+Timers Off: Sun Nov 23 11:44:18 2025
+
+Wall Time:        0.43 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 11:47:00 2025
+Timers Off: Sun Nov 23 11:47:00 2025
+
+Wall Time:        0.43 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 11:48:10 2025
+Timers Off: Sun Nov 23 11:48:10 2025
+
+Wall Time:        0.43 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 11:49:19 2025
+Timers Off: Sun Nov 23 11:49:19 2025
+
+Wall Time:        0.42 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 11:54:35 2025
+Timers Off: Sun Nov 23 11:54:36 2025
+
+Wall Time:        0.43 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 11:55:00 2025
+Timers Off: Sun Nov 23 11:55:01 2025
+
+Wall Time:        0.42 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 11:55:23 2025
+Timers Off: Sun Nov 23 11:55:23 2025
+
+Wall Time:        0.42 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 11:55:46 2025
+Timers Off: Sun Nov 23 11:55:46 2025
+
+Wall Time:        0.48 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 11:58:27 2025
+Timers Off: Sun Nov 23 11:58:28 2025
+
+Wall Time:        0.47 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 11:58:43 2025
+Timers Off: Sun Nov 23 11:58:44 2025
+
+Wall Time:        0.47 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 11:59:46 2025
+Timers Off: Sun Nov 23 11:59:48 2025
+
+Wall Time:        1.85 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      0.033u      0.000s      0.030w      1 calls
+Libint2ERI::Libint2ERI              :      0.033u      0.000s      0.018w      3 calls
+HF: Form core H                     :      0.000u      0.017s      0.002w      1 calls
+HF: Form S/X                        :      0.000u      0.000s      0.000w      1 calls
+HF: Guess                           :      0.067u      0.000s      0.038w      1 calls
+SAD Guess                           :      0.050u      0.000s      0.036w      1 calls
+HF: Form G                          :      0.000u      0.000s      0.002w     11 calls
+JK: D                               :      0.000u      0.000s      0.000w     11 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     11 calls
+JK: JK                              :      0.000u      0.000s      0.001w     11 calls
+PK computes JK                      :      0.000u      0.000s      0.001w     11 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     11 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     11 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     11 calls
+HF: DIIS                            :      2.083u      0.033s      0.231w     10 calls
+HF: Form C                          :      0.000u      0.000s      0.003w     10 calls
+ccenergy                            :      0.167u      0.333s      0.707w      1 calls
+F build                             :      0.000u      0.000s      0.012w     11 calls
+Wmbej build                         :      0.017u      0.000s      0.018w     11 calls
+C->Wmbej                            :      0.000u      0.000s      0.001w     11 calls
+F->Wmbej                            :      0.000u      0.000s      0.011w     11 calls
+E->Wmbej                            :      0.017u      0.000s      0.002w     11 calls
+X->Wmbej                            :      0.000u      0.000s      0.003w     11 calls
+Z                                   :      0.017u      0.000s      0.001w     11 calls
+T2 Build                            :      0.050u      0.033s      0.044w     11 calls
+BT2                                 :      0.033u      0.000s      0.023w     11 calls
+ABCD:new                            :      0.033u      0.000s      0.023w     11 calls
+ABCD:S                              :      0.000u      0.000s      0.001w     11 calls
+ABCD:A                              :      0.000u      0.000s      0.001w     11 calls
+ABCD:axpy                           :      0.033u      0.000s      0.019w     11 calls
+FT2                                 :      0.000u      0.000s      0.002w     11 calls
+WmbejT2                             :      0.000u      0.000s      0.005w     11 calls
+CT2                                 :      0.000u      0.033s      0.009w     11 calls
+cctriples                           :      0.017u      0.033s      0.058w      1 calls
+ET_RHF                              :      0.017u      0.000s      0.007w      1 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      0.033u      0.000s      0.030w      1 calls
+| Libint2ERI::Libint2ERI            :      0.017u      0.000s      0.012w      2 calls
+HF: Form core H                     :      0.000u      0.017s      0.002w      1 calls
+HF: Form S/X                        :      0.000u      0.000s      0.000w      1 calls
+HF: Guess                           :      0.067u      0.000s      0.038w      1 calls
+| SAD Guess                         :      0.050u      0.000s      0.036w      1 calls
+HF: Form G                          :      0.000u      0.000s      0.002w     11 calls
+| JK: D                             :      0.000u      0.000s      0.000w     11 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w     11 calls
+| JK: JK                            :      0.000u      0.000s      0.001w     11 calls
+| | PK computes JK                  :      0.000u      0.000s      0.001w     11 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w     11 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     11 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     11 calls
+HF: DIIS                            :      2.083u      0.033s      0.231w     10 calls
+HF: Form C                          :      0.000u      0.000s      0.003w     10 calls
+Libint2ERI::Libint2ERI              :      0.017u      0.000s      0.006w      1 calls
+ccenergy                            :      0.167u      0.333s      0.707w      1 calls
+| F build                           :      0.000u      0.000s      0.012w     11 calls
+| Wmbej build                       :      0.017u      0.000s      0.018w     11 calls
+| | C->Wmbej                        :      0.000u      0.000s      0.001w     11 calls
+| | F->Wmbej                        :      0.000u      0.000s      0.011w     11 calls
+| | E->Wmbej                        :      0.017u      0.000s      0.002w     11 calls
+| | X->Wmbej                        :      0.000u      0.000s      0.003w     11 calls
+| Z                                 :      0.017u      0.000s      0.001w     11 calls
+| T2 Build                          :      0.050u      0.033s      0.044w     11 calls
+| | BT2                             :      0.033u      0.000s      0.023w     11 calls
+| | | ABCD:new                      :      0.033u      0.000s      0.023w     11 calls
+| | | | ABCD:S                      :      0.000u      0.000s      0.001w     11 calls
+| | | | ABCD:A                      :      0.000u      0.000s      0.001w     11 calls
+| | | | ABCD:axpy                   :      0.033u      0.000s      0.019w     11 calls
+| | FT2                             :      0.000u      0.000s      0.002w     11 calls
+| | WmbejT2                         :      0.000u      0.000s      0.005w     11 calls
+| | CT2                             :      0.000u      0.033s      0.009w     11 calls
+cctriples                           :      0.017u      0.033s      0.058w      1 calls
+| ET_RHF                            :      0.017u      0.000s      0.007w      1 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:12:01 2025
+Timers Off: Sun Nov 23 14:12:02 2025
+
+Wall Time:        0.43 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:12:15 2025
+Timers Off: Sun Nov 23 14:12:44 2025
+
+Wall Time:       29.04 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      0.817u      0.067s      0.530w     20 calls
+Libint2ERI::Libint2ERI              :      0.333u      0.067s      0.240w     60 calls
+HF: Form core H                     :      0.000u      0.000s      0.034w     20 calls
+HF: Form S/X                        :      0.017u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.200u      0.017s      0.728w     20 calls
+SAD Guess                           :      1.117u      0.017s      0.692w     20 calls
+HF: Form G                          :      0.033u      0.000s      0.042w    260 calls
+JK: D                               :      0.000u      0.000s      0.002w    260 calls
+JK: USO2AO                          :      0.000u      0.000s      0.008w    260 calls
+JK: JK                              :      0.017u      0.000s      0.024w    260 calls
+PK computes JK                      :      0.017u      0.000s      0.023w    260 calls
+JK: AO2USO                          :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.367u      0.167s      0.919w    240 calls
+HF: Form C                          :      0.067u      0.000s      0.071w    240 calls
+ccenergy                            :      4.683u      6.617s     15.360w     20 calls
+F build                             :      0.217u      0.117s      0.278w    240 calls
+Wmbej build                         :      0.333u      0.367s      0.421w    240 calls
+C->Wmbej                            :      0.000u      0.033s      0.018w    240 calls
+F->Wmbej                            :      0.183u      0.217s      0.258w    240 calls
+E->Wmbej                            :      0.083u      0.033s      0.053w    240 calls
+X->Wmbej                            :      0.033u      0.083s      0.077w    240 calls
+Z                                   :      0.000u      0.017s      0.019w    240 calls
+T2 Build                            :      1.017u      0.567s      1.022w    240 calls
+BT2                                 :      0.517u      0.367s      0.522w    240 calls
+ABCD:new                            :      0.517u      0.350s      0.521w    240 calls
+ABCD:S                              :      0.000u      0.000s      0.017w    240 calls
+ABCD:A                              :      0.000u      0.017s      0.016w    240 calls
+ABCD:axpy                           :      0.483u      0.333s      0.447w    240 calls
+FT2                                 :      0.033u      0.000s      0.039w    240 calls
+WmbejT2                             :      0.100u      0.017s      0.111w    240 calls
+CT2                                 :      0.150u      0.117s      0.219w    240 calls
+cctriples                           :      0.433u      0.433s      1.206w     20 calls
+ET_RHF                              :      0.267u      0.117s      0.190w     20 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      0.817u      0.067s      0.530w     20 calls
+| Libint2ERI::Libint2ERI            :      0.267u      0.067s      0.169w     40 calls
+HF: Form core H                     :      0.000u      0.000s      0.034w     20 calls
+HF: Form S/X                        :      0.017u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.200u      0.017s      0.728w     20 calls
+| SAD Guess                         :      1.117u      0.017s      0.692w     20 calls
+HF: Form G                          :      0.033u      0.000s      0.042w    260 calls
+| JK: D                             :      0.000u      0.000s      0.002w    260 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.008w    260 calls
+| JK: JK                            :      0.017u      0.000s      0.024w    260 calls
+| | PK computes JK                  :      0.017u      0.000s      0.023w    260 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.367u      0.167s      0.919w    240 calls
+HF: Form C                          :      0.067u      0.000s      0.071w    240 calls
+Libint2ERI::Libint2ERI              :      0.067u      0.000s      0.071w     20 calls
+ccenergy                            :      4.683u      6.617s     15.360w     20 calls
+| F build                           :      0.217u      0.117s      0.278w    240 calls
+| Wmbej build                       :      0.333u      0.367s      0.421w    240 calls
+| | C->Wmbej                        :      0.000u      0.033s      0.018w    240 calls
+| | F->Wmbej                        :      0.183u      0.217s      0.258w    240 calls
+| | E->Wmbej                        :      0.083u      0.033s      0.053w    240 calls
+| | X->Wmbej                        :      0.033u      0.083s      0.077w    240 calls
+| Z                                 :      0.000u      0.017s      0.019w    240 calls
+| T2 Build                          :      1.017u      0.567s      1.022w    240 calls
+| | BT2                             :      0.517u      0.367s      0.522w    240 calls
+| | | ABCD:new                      :      0.517u      0.350s      0.521w    240 calls
+| | | | ABCD:S                      :      0.000u      0.000s      0.017w    240 calls
+| | | | ABCD:A                      :      0.000u      0.017s      0.016w    240 calls
+| | | | ABCD:axpy                   :      0.483u      0.333s      0.447w    240 calls
+| | FT2                             :      0.033u      0.000s      0.039w    240 calls
+| | WmbejT2                         :      0.100u      0.017s      0.111w    240 calls
+| | CT2                             :      0.150u      0.117s      0.219w    240 calls
+cctriples                           :      0.433u      0.433s      1.206w     20 calls
+| ET_RHF                            :      0.267u      0.117s      0.190w     20 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:14:25 2025
+Timers Off: Sun Nov 23 14:14:26 2025
+
+Wall Time:        0.43 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:15:58 2025
+Timers Off: Sun Nov 23 14:16:27 2025
+
+Wall Time:       28.86 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      0.833u      0.033s      0.544w     20 calls
+Libint2ERI::Libint2ERI              :      0.350u      0.033s      0.245w     60 calls
+HF: Form core H                     :      0.017u      0.000s      0.038w     20 calls
+HF: Form S/X                        :      0.000u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.250u      0.050s      0.755w     20 calls
+SAD Guess                           :      1.133u      0.050s      0.717w     20 calls
+HF: Form G                          :      0.100u      0.000s      0.042w    260 calls
+JK: D                               :      0.000u      0.000s      0.002w    260 calls
+JK: USO2AO                          :      0.033u      0.000s      0.009w    260 calls
+JK: JK                              :      0.050u      0.000s      0.025w    260 calls
+PK computes JK                      :      0.050u      0.000s      0.024w    260 calls
+JK: AO2USO                          :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.300u      0.183s      0.932w    240 calls
+HF: Form C                          :      0.117u      0.000s      0.072w    240 calls
+ccenergy                            :      4.433u      6.850s     15.326w     20 calls
+F build                             :      0.300u      0.183s      0.268w    240 calls
+Wmbej build                         :      0.433u      0.250s      0.411w    240 calls
+C->Wmbej                            :      0.017u      0.000s      0.018w    240 calls
+F->Wmbej                            :      0.283u      0.167s      0.251w    240 calls
+E->Wmbej                            :      0.067u      0.033s      0.052w    240 calls
+X->Wmbej                            :      0.067u      0.050s      0.075w    240 calls
+Z                                   :      0.050u      0.033s      0.018w    240 calls
+T2 Build                            :      1.017u      0.800s      1.013w    240 calls
+BT2                                 :      0.517u      0.417s      0.518w    240 calls
+ABCD:new                            :      0.517u      0.417s      0.517w    240 calls
+ABCD:S                              :      0.000u      0.017s      0.016w    240 calls
+ABCD:A                              :      0.017u      0.000s      0.016w    240 calls
+ABCD:axpy                           :      0.467u      0.383s      0.446w    240 calls
+FT2                                 :      0.050u      0.017s      0.038w    240 calls
+WmbejT2                             :      0.050u      0.083s      0.111w    240 calls
+CT2                                 :      0.250u      0.217s      0.216w    240 calls
+cctriples                           :      0.383u      0.483s      1.203w     20 calls
+ET_RHF                              :      0.150u      0.117s      0.185w     20 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      0.833u      0.033s      0.544w     20 calls
+| Libint2ERI::Libint2ERI            :      0.250u      0.033s      0.172w     40 calls
+HF: Form core H                     :      0.017u      0.000s      0.038w     20 calls
+HF: Form S/X                        :      0.000u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.250u      0.050s      0.755w     20 calls
+| SAD Guess                         :      1.133u      0.050s      0.717w     20 calls
+HF: Form G                          :      0.100u      0.000s      0.042w    260 calls
+| JK: D                             :      0.000u      0.000s      0.002w    260 calls
+| JK: USO2AO                        :      0.033u      0.000s      0.009w    260 calls
+| JK: JK                            :      0.050u      0.000s      0.025w    260 calls
+| | PK computes JK                  :      0.050u      0.000s      0.024w    260 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.300u      0.183s      0.932w    240 calls
+HF: Form C                          :      0.117u      0.000s      0.072w    240 calls
+Libint2ERI::Libint2ERI              :      0.100u      0.000s      0.073w     20 calls
+ccenergy                            :      4.433u      6.850s     15.326w     20 calls
+| F build                           :      0.300u      0.183s      0.268w    240 calls
+| Wmbej build                       :      0.433u      0.250s      0.411w    240 calls
+| | C->Wmbej                        :      0.017u      0.000s      0.018w    240 calls
+| | F->Wmbej                        :      0.283u      0.167s      0.251w    240 calls
+| | E->Wmbej                        :      0.067u      0.033s      0.052w    240 calls
+| | X->Wmbej                        :      0.067u      0.050s      0.075w    240 calls
+| Z                                 :      0.050u      0.033s      0.018w    240 calls
+| T2 Build                          :      1.017u      0.800s      1.013w    240 calls
+| | BT2                             :      0.517u      0.417s      0.518w    240 calls
+| | | ABCD:new                      :      0.517u      0.417s      0.517w    240 calls
+| | | | ABCD:S                      :      0.000u      0.017s      0.016w    240 calls
+| | | | ABCD:A                      :      0.017u      0.000s      0.016w    240 calls
+| | | | ABCD:axpy                   :      0.467u      0.383s      0.446w    240 calls
+| | FT2                             :      0.050u      0.017s      0.038w    240 calls
+| | WmbejT2                         :      0.050u      0.083s      0.111w    240 calls
+| | CT2                             :      0.250u      0.217s      0.216w    240 calls
+cctriples                           :      0.383u      0.483s      1.203w     20 calls
+| ET_RHF                            :      0.150u      0.117s      0.185w     20 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:16:54 2025
+Timers Off: Sun Nov 23 14:17:23 2025
+
+Wall Time:       28.69 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      0.800u      0.050s      0.515w     20 calls
+Libint2ERI::Libint2ERI              :      0.383u      0.067s      0.238w     60 calls
+HF: Form core H                     :      0.050u      0.000s      0.033w     20 calls
+HF: Form S/X                        :      0.000u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.117u      0.067s      0.719w     20 calls
+SAD Guess                           :      1.067u      0.050s      0.683w     20 calls
+HF: Form G                          :      0.083u      0.000s      0.041w    260 calls
+JK: D                               :      0.000u      0.000s      0.001w    260 calls
+JK: USO2AO                          :      0.017u      0.000s      0.008w    260 calls
+JK: JK                              :      0.067u      0.000s      0.024w    260 calls
+PK computes JK                      :      0.067u      0.000s      0.023w    260 calls
+JK: AO2USO                          :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.417u      0.083s      0.939w    240 calls
+HF: Form C                          :      0.100u      0.000s      0.071w    240 calls
+ccenergy                            :      4.617u      6.633s     15.376w     20 calls
+F build                             :      0.317u      0.250s      0.273w    240 calls
+Wmbej build                         :      0.383u      0.250s      0.419w    240 calls
+C->Wmbej                            :      0.000u      0.017s      0.018w    240 calls
+F->Wmbej                            :      0.217u      0.167s      0.256w    240 calls
+E->Wmbej                            :      0.067u      0.017s      0.053w    240 calls
+X->Wmbej                            :      0.100u      0.050s      0.077w    240 calls
+Z                                   :      0.050u      0.000s      0.019w    240 calls
+T2 Build                            :      1.150u      0.633s      1.005w    240 calls
+BT2                                 :      0.500u      0.383s      0.515w    240 calls
+ABCD:new                            :      0.500u      0.367s      0.514w    240 calls
+ABCD:S                              :      0.000u      0.000s      0.016w    240 calls
+ABCD:A                              :      0.033u      0.000s      0.016w    240 calls
+ABCD:axpy                           :      0.433u      0.350s      0.442w    240 calls
+FT2                                 :      0.033u      0.000s      0.038w    240 calls
+WmbejT2                             :      0.133u      0.050s      0.108w    240 calls
+CT2                                 :      0.300u      0.117s      0.215w    240 calls
+cctriples                           :      0.450u      0.417s      1.211w     20 calls
+ET_RHF                              :      0.250u      0.017s      0.188w     20 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      0.800u      0.050s      0.515w     20 calls
+| Libint2ERI::Libint2ERI            :      0.267u      0.050s      0.164w     40 calls
+HF: Form core H                     :      0.050u      0.000s      0.033w     20 calls
+HF: Form S/X                        :      0.000u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.117u      0.067s      0.719w     20 calls
+| SAD Guess                         :      1.067u      0.050s      0.683w     20 calls
+HF: Form G                          :      0.083u      0.000s      0.041w    260 calls
+| JK: D                             :      0.000u      0.000s      0.001w    260 calls
+| JK: USO2AO                        :      0.017u      0.000s      0.008w    260 calls
+| JK: JK                            :      0.067u      0.000s      0.024w    260 calls
+| | PK computes JK                  :      0.067u      0.000s      0.023w    260 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.417u      0.083s      0.939w    240 calls
+HF: Form C                          :      0.100u      0.000s      0.071w    240 calls
+Libint2ERI::Libint2ERI              :      0.117u      0.017s      0.074w     20 calls
+ccenergy                            :      4.617u      6.633s     15.376w     20 calls
+| F build                           :      0.317u      0.250s      0.273w    240 calls
+| Wmbej build                       :      0.383u      0.250s      0.419w    240 calls
+| | C->Wmbej                        :      0.000u      0.017s      0.018w    240 calls
+| | F->Wmbej                        :      0.217u      0.167s      0.256w    240 calls
+| | E->Wmbej                        :      0.067u      0.017s      0.053w    240 calls
+| | X->Wmbej                        :      0.100u      0.050s      0.077w    240 calls
+| Z                                 :      0.050u      0.000s      0.019w    240 calls
+| T2 Build                          :      1.150u      0.633s      1.005w    240 calls
+| | BT2                             :      0.500u      0.383s      0.515w    240 calls
+| | | ABCD:new                      :      0.500u      0.367s      0.514w    240 calls
+| | | | ABCD:S                      :      0.000u      0.000s      0.016w    240 calls
+| | | | ABCD:A                      :      0.033u      0.000s      0.016w    240 calls
+| | | | ABCD:axpy                   :      0.433u      0.350s      0.442w    240 calls
+| | FT2                             :      0.033u      0.000s      0.038w    240 calls
+| | WmbejT2                         :      0.133u      0.050s      0.108w    240 calls
+| | CT2                             :      0.300u      0.117s      0.215w    240 calls
+cctriples                           :      0.450u      0.417s      1.211w     20 calls
+| ET_RHF                            :      0.250u      0.017s      0.188w     20 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:18:49 2025
+Timers Off: Sun Nov 23 14:19:18 2025
+
+Wall Time:       29.03 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      0.850u      0.067s      0.530w     20 calls
+Libint2ERI::Libint2ERI              :      0.383u      0.067s      0.242w     60 calls
+HF: Form core H                     :      0.067u      0.000s      0.034w     20 calls
+HF: Form S/X                        :      0.017u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.200u      0.033s      0.753w     20 calls
+SAD Guess                           :      1.150u      0.033s      0.715w     20 calls
+HF: Form G                          :      0.067u      0.000s      0.041w    260 calls
+JK: D                               :      0.000u      0.000s      0.002w    260 calls
+JK: USO2AO                          :      0.000u      0.000s      0.008w    260 calls
+JK: JK                              :      0.050u      0.000s      0.024w    260 calls
+PK computes JK                      :      0.050u      0.000s      0.023w    260 calls
+JK: AO2USO                          :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.533u      0.100s      0.955w    240 calls
+HF: Form C                          :      0.100u      0.000s      0.071w    240 calls
+ccenergy                            :      4.900u      6.500s     15.413w     20 calls
+F build                             :      0.383u      0.183s      0.273w    240 calls
+Wmbej build                         :      0.400u      0.300s      0.423w    240 calls
+C->Wmbej                            :      0.017u      0.033s      0.021w    240 calls
+F->Wmbej                            :      0.233u      0.183s      0.257w    240 calls
+E->Wmbej                            :      0.017u      0.017s      0.053w    240 calls
+X->Wmbej                            :      0.067u      0.033s      0.077w    240 calls
+Z                                   :      0.000u      0.017s      0.019w    240 calls
+T2 Build                            :      0.833u      0.800s      1.023w    240 calls
+BT2                                 :      0.467u      0.417s      0.521w    240 calls
+ABCD:new                            :      0.467u      0.417s      0.520w    240 calls
+ABCD:S                              :      0.000u      0.000s      0.017w    240 calls
+ABCD:A                              :      0.000u      0.000s      0.016w    240 calls
+ABCD:axpy                           :      0.467u      0.400s      0.446w    240 calls
+FT2                                 :      0.033u      0.067s      0.039w    240 calls
+WmbejT2                             :      0.133u      0.150s      0.111w    240 calls
+CT2                                 :      0.167u      0.133s      0.219w    240 calls
+cctriples                           :      0.400u      0.567s      1.221w     20 calls
+ET_RHF                              :      0.250u      0.083s      0.189w     20 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      0.850u      0.067s      0.530w     20 calls
+| Libint2ERI::Libint2ERI            :      0.250u      0.067s      0.170w     40 calls
+HF: Form core H                     :      0.067u      0.000s      0.034w     20 calls
+HF: Form S/X                        :      0.017u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.200u      0.033s      0.753w     20 calls
+| SAD Guess                         :      1.150u      0.033s      0.715w     20 calls
+HF: Form G                          :      0.067u      0.000s      0.041w    260 calls
+| JK: D                             :      0.000u      0.000s      0.002w    260 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.008w    260 calls
+| JK: JK                            :      0.050u      0.000s      0.024w    260 calls
+| | PK computes JK                  :      0.050u      0.000s      0.023w    260 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.533u      0.100s      0.955w    240 calls
+HF: Form C                          :      0.100u      0.000s      0.071w    240 calls
+Libint2ERI::Libint2ERI              :      0.133u      0.000s      0.072w     20 calls
+ccenergy                            :      4.900u      6.500s     15.413w     20 calls
+| F build                           :      0.383u      0.183s      0.273w    240 calls
+| Wmbej build                       :      0.400u      0.300s      0.423w    240 calls
+| | C->Wmbej                        :      0.017u      0.033s      0.021w    240 calls
+| | F->Wmbej                        :      0.233u      0.183s      0.257w    240 calls
+| | E->Wmbej                        :      0.017u      0.017s      0.053w    240 calls
+| | X->Wmbej                        :      0.067u      0.033s      0.077w    240 calls
+| Z                                 :      0.000u      0.017s      0.019w    240 calls
+| T2 Build                          :      0.833u      0.800s      1.023w    240 calls
+| | BT2                             :      0.467u      0.417s      0.521w    240 calls
+| | | ABCD:new                      :      0.467u      0.417s      0.520w    240 calls
+| | | | ABCD:S                      :      0.000u      0.000s      0.017w    240 calls
+| | | | ABCD:A                      :      0.000u      0.000s      0.016w    240 calls
+| | | | ABCD:axpy                   :      0.467u      0.400s      0.446w    240 calls
+| | FT2                             :      0.033u      0.067s      0.039w    240 calls
+| | WmbejT2                         :      0.133u      0.150s      0.111w    240 calls
+| | CT2                             :      0.167u      0.133s      0.219w    240 calls
+cctriples                           :      0.400u      0.567s      1.221w     20 calls
+| ET_RHF                            :      0.250u      0.083s      0.189w     20 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:19:37 2025
+Timers Off: Sun Nov 23 14:20:06 2025
+
+Wall Time:       28.77 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      0.817u      0.033s      0.523w     20 calls
+Libint2ERI::Libint2ERI              :      0.333u      0.033s      0.234w     60 calls
+HF: Form core H                     :      0.083u      0.000s      0.034w     20 calls
+HF: Form S/X                        :      0.000u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.133u      0.033s      0.707w     20 calls
+SAD Guess                           :      1.067u      0.033s      0.670w     20 calls
+HF: Form G                          :      0.050u      0.000s      0.041w    260 calls
+JK: D                               :      0.017u      0.000s      0.002w    260 calls
+JK: USO2AO                          :      0.000u      0.000s      0.008w    260 calls
+JK: JK                              :      0.033u      0.000s      0.024w    260 calls
+PK computes JK                      :      0.033u      0.000s      0.023w    260 calls
+JK: AO2USO                          :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.400u      0.117s      0.897w    240 calls
+HF: Form C                          :      0.133u      0.000s      0.070w    240 calls
+ccenergy                            :      5.017u      6.550s     15.426w     20 calls
+F build                             :      0.217u      0.250s      0.272w    240 calls
+Wmbej build                         :      0.467u      0.233s      0.420w    240 calls
+C->Wmbej                            :      0.017u      0.017s      0.018w    240 calls
+F->Wmbej                            :      0.267u      0.150s      0.255w    240 calls
+E->Wmbej                            :      0.050u      0.033s      0.053w    240 calls
+X->Wmbej                            :      0.117u      0.033s      0.079w    240 calls
+Z                                   :      0.067u      0.033s      0.019w    240 calls
+T2 Build                            :      0.933u      0.700s      1.031w    240 calls
+BT2                                 :      0.483u      0.333s      0.520w    240 calls
+ABCD:new                            :      0.483u      0.333s      0.519w    240 calls
+ABCD:S                              :      0.000u      0.017s      0.017w    240 calls
+ABCD:A                              :      0.050u      0.000s      0.016w    240 calls
+ABCD:axpy                           :      0.433u      0.283s      0.445w    240 calls
+FT2                                 :      0.050u      0.067s      0.038w    240 calls
+WmbejT2                             :      0.100u      0.083s      0.113w    240 calls
+CT2                                 :      0.217u      0.133s      0.226w    240 calls
+cctriples                           :      0.433u      0.533s      1.210w     20 calls
+ET_RHF                              :      0.233u      0.050s      0.187w     20 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      0.817u      0.033s      0.523w     20 calls
+| Libint2ERI::Libint2ERI            :      0.283u      0.033s      0.164w     40 calls
+HF: Form core H                     :      0.083u      0.000s      0.034w     20 calls
+HF: Form S/X                        :      0.000u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.133u      0.033s      0.707w     20 calls
+| SAD Guess                         :      1.067u      0.033s      0.670w     20 calls
+HF: Form G                          :      0.050u      0.000s      0.041w    260 calls
+| JK: D                             :      0.017u      0.000s      0.002w    260 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.008w    260 calls
+| JK: JK                            :      0.033u      0.000s      0.024w    260 calls
+| | PK computes JK                  :      0.033u      0.000s      0.023w    260 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.400u      0.117s      0.897w    240 calls
+HF: Form C                          :      0.133u      0.000s      0.070w    240 calls
+Libint2ERI::Libint2ERI              :      0.050u      0.000s      0.070w     20 calls
+ccenergy                            :      5.017u      6.550s     15.426w     20 calls
+| F build                           :      0.217u      0.250s      0.272w    240 calls
+| Wmbej build                       :      0.467u      0.233s      0.420w    240 calls
+| | C->Wmbej                        :      0.017u      0.017s      0.018w    240 calls
+| | F->Wmbej                        :      0.267u      0.150s      0.255w    240 calls
+| | E->Wmbej                        :      0.050u      0.033s      0.053w    240 calls
+| | X->Wmbej                        :      0.117u      0.033s      0.079w    240 calls
+| Z                                 :      0.067u      0.033s      0.019w    240 calls
+| T2 Build                          :      0.933u      0.700s      1.031w    240 calls
+| | BT2                             :      0.483u      0.333s      0.520w    240 calls
+| | | ABCD:new                      :      0.483u      0.333s      0.519w    240 calls
+| | | | ABCD:S                      :      0.000u      0.017s      0.017w    240 calls
+| | | | ABCD:A                      :      0.050u      0.000s      0.016w    240 calls
+| | | | ABCD:axpy                   :      0.433u      0.283s      0.445w    240 calls
+| | FT2                             :      0.050u      0.067s      0.038w    240 calls
+| | WmbejT2                         :      0.100u      0.083s      0.113w    240 calls
+| | CT2                             :      0.217u      0.133s      0.226w    240 calls
+cctriples                           :      0.433u      0.533s      1.210w     20 calls
+| ET_RHF                            :      0.233u      0.050s      0.187w     20 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:22:45 2025
+Timers Off: Sun Nov 23 14:23:13 2025
+
+Wall Time:       28.91 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      0.850u      0.017s      0.543w     20 calls
+Libint2ERI::Libint2ERI              :      0.367u      0.017s      0.247w     60 calls
+HF: Form core H                     :      0.050u      0.000s      0.035w     20 calls
+HF: Form S/X                        :      0.000u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.217u      0.017s      0.737w     20 calls
+SAD Guess                           :      1.183u      0.000s      0.701w     20 calls
+HF: Form G                          :      0.033u      0.000s      0.041w    260 calls
+JK: D                               :      0.000u      0.000s      0.002w    260 calls
+JK: USO2AO                          :      0.017u      0.000s      0.008w    260 calls
+JK: JK                              :      0.000u      0.000s      0.024w    260 calls
+PK computes JK                      :      0.000u      0.000s      0.023w    260 calls
+JK: AO2USO                          :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.017u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.400u      0.067s      0.960w    240 calls
+HF: Form C                          :      0.167u      0.017s      0.072w    240 calls
+ccenergy                            :      4.400u      6.917s     15.322w     20 calls
+F build                             :      0.250u      0.117s      0.273w    240 calls
+Wmbej build                         :      0.300u      0.350s      0.414w    240 calls
+C->Wmbej                            :      0.033u      0.000s      0.017w    240 calls
+F->Wmbej                            :      0.133u      0.183s      0.254w    240 calls
+E->Wmbej                            :      0.083u      0.067s      0.052w    240 calls
+X->Wmbej                            :      0.050u      0.100s      0.076w    240 calls
+Z                                   :      0.000u      0.017s      0.018w    240 calls
+T2 Build                            :      1.250u      0.550s      0.997w    240 calls
+BT2                                 :      0.633u      0.333s      0.508w    240 calls
+ABCD:new                            :      0.633u      0.333s      0.508w    240 calls
+ABCD:S                              :      0.033u      0.000s      0.016w    240 calls
+ABCD:A                              :      0.000u      0.000s      0.015w    240 calls
+ABCD:axpy                           :      0.567u      0.317s      0.436w    240 calls
+FT2                                 :      0.050u      0.000s      0.038w    240 calls
+WmbejT2                             :      0.217u      0.017s      0.108w    240 calls
+CT2                                 :      0.200u      0.117s      0.215w    240 calls
+cctriples                           :      0.383u      0.500s      1.217w     20 calls
+ET_RHF                              :      0.217u      0.100s      0.196w     20 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      0.850u      0.017s      0.543w     20 calls
+| Libint2ERI::Libint2ERI            :      0.217u      0.017s      0.175w     40 calls
+HF: Form core H                     :      0.050u      0.000s      0.035w     20 calls
+HF: Form S/X                        :      0.000u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.217u      0.017s      0.737w     20 calls
+| SAD Guess                         :      1.183u      0.000s      0.701w     20 calls
+HF: Form G                          :      0.033u      0.000s      0.041w    260 calls
+| JK: D                             :      0.000u      0.000s      0.002w    260 calls
+| JK: USO2AO                        :      0.017u      0.000s      0.008w    260 calls
+| JK: JK                            :      0.000u      0.000s      0.024w    260 calls
+| | PK computes JK                  :      0.000u      0.000s      0.023w    260 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.017u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.400u      0.067s      0.960w    240 calls
+HF: Form C                          :      0.167u      0.017s      0.072w    240 calls
+Libint2ERI::Libint2ERI              :      0.150u      0.000s      0.072w     20 calls
+ccenergy                            :      4.400u      6.917s     15.322w     20 calls
+| F build                           :      0.250u      0.117s      0.273w    240 calls
+| Wmbej build                       :      0.300u      0.350s      0.414w    240 calls
+| | C->Wmbej                        :      0.033u      0.000s      0.017w    240 calls
+| | F->Wmbej                        :      0.133u      0.183s      0.254w    240 calls
+| | E->Wmbej                        :      0.083u      0.067s      0.052w    240 calls
+| | X->Wmbej                        :      0.050u      0.100s      0.076w    240 calls
+| Z                                 :      0.000u      0.017s      0.018w    240 calls
+| T2 Build                          :      1.250u      0.550s      0.997w    240 calls
+| | BT2                             :      0.633u      0.333s      0.508w    240 calls
+| | | ABCD:new                      :      0.633u      0.333s      0.508w    240 calls
+| | | | ABCD:S                      :      0.033u      0.000s      0.016w    240 calls
+| | | | ABCD:A                      :      0.000u      0.000s      0.015w    240 calls
+| | | | ABCD:axpy                   :      0.567u      0.317s      0.436w    240 calls
+| | FT2                             :      0.050u      0.000s      0.038w    240 calls
+| | WmbejT2                         :      0.217u      0.017s      0.108w    240 calls
+| | CT2                             :      0.200u      0.117s      0.215w    240 calls
+cctriples                           :      0.383u      0.500s      1.217w     20 calls
+| ET_RHF                            :      0.217u      0.100s      0.196w     20 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:23:29 2025
+Timers Off: Sun Nov 23 14:23:57 2025
+
+Wall Time:       28.70 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      0.817u      0.033s      0.523w     20 calls
+Libint2ERI::Libint2ERI              :      0.333u      0.050s      0.236w     60 calls
+HF: Form core H                     :      0.050u      0.000s      0.035w     20 calls
+HF: Form S/X                        :      0.000u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.217u      0.083s      0.737w     20 calls
+SAD Guess                           :      1.133u      0.067s      0.700w     20 calls
+HF: Form G                          :      0.000u      0.000s      0.041w    260 calls
+JK: D                               :      0.000u      0.000s      0.002w    260 calls
+JK: USO2AO                          :      0.000u      0.000s      0.008w    260 calls
+JK: JK                              :      0.000u      0.000s      0.024w    260 calls
+PK computes JK                      :      0.000u      0.000s      0.023w    260 calls
+JK: AO2USO                          :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.333u      0.083s      0.945w    240 calls
+HF: Form C                          :      0.150u      0.000s      0.071w    240 calls
+ccenergy                            :      4.683u      6.483s     15.371w     20 calls
+F build                             :      0.217u      0.150s      0.269w    240 calls
+Wmbej build                         :      0.317u      0.250s      0.421w    240 calls
+C->Wmbej                            :      0.033u      0.000s      0.018w    240 calls
+F->Wmbej                            :      0.167u      0.183s      0.257w    240 calls
+E->Wmbej                            :      0.017u      0.000s      0.055w    240 calls
+X->Wmbej                            :      0.083u      0.050s      0.076w    240 calls
+Z                                   :      0.050u      0.017s      0.019w    240 calls
+T2 Build                            :      1.033u      0.900s      1.005w    240 calls
+BT2                                 :      0.583u      0.500s      0.513w    240 calls
+ABCD:new                            :      0.583u      0.500s      0.512w    240 calls
+ABCD:S                              :      0.000u      0.033s      0.017w    240 calls
+ABCD:A                              :      0.050u      0.017s      0.016w    240 calls
+ABCD:axpy                           :      0.500u      0.417s      0.440w    240 calls
+FT2                                 :      0.033u      0.017s      0.038w    240 calls
+WmbejT2                             :      0.050u      0.067s      0.109w    240 calls
+CT2                                 :      0.217u      0.200s      0.215w    240 calls
+cctriples                           :      0.333u      0.517s      1.204w     20 calls
+ET_RHF                              :      0.150u      0.117s      0.181w     20 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      0.817u      0.033s      0.523w     20 calls
+| Libint2ERI::Libint2ERI            :      0.183u      0.017s      0.163w     40 calls
+HF: Form core H                     :      0.050u      0.000s      0.035w     20 calls
+HF: Form S/X                        :      0.000u      0.000s      0.004w     20 calls
+HF: Guess                           :      1.217u      0.083s      0.737w     20 calls
+| SAD Guess                         :      1.133u      0.067s      0.700w     20 calls
+HF: Form G                          :      0.000u      0.000s      0.041w    260 calls
+| JK: D                             :      0.000u      0.000s      0.002w    260 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.008w    260 calls
+| JK: JK                            :      0.000u      0.000s      0.024w    260 calls
+| | PK computes JK                  :      0.000u      0.000s      0.023w    260 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.003w    260 calls
+HF: Form F                          :      0.000u      0.000s      0.002w    260 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    260 calls
+HF: DIIS                            :      1.333u      0.083s      0.945w    240 calls
+HF: Form C                          :      0.150u      0.000s      0.071w    240 calls
+Libint2ERI::Libint2ERI              :      0.150u      0.033s      0.073w     20 calls
+ccenergy                            :      4.683u      6.483s     15.371w     20 calls
+| F build                           :      0.217u      0.150s      0.269w    240 calls
+| Wmbej build                       :      0.317u      0.250s      0.421w    240 calls
+| | C->Wmbej                        :      0.033u      0.000s      0.018w    240 calls
+| | F->Wmbej                        :      0.167u      0.183s      0.257w    240 calls
+| | E->Wmbej                        :      0.017u      0.000s      0.055w    240 calls
+| | X->Wmbej                        :      0.083u      0.050s      0.076w    240 calls
+| Z                                 :      0.050u      0.017s      0.019w    240 calls
+| T2 Build                          :      1.033u      0.900s      1.005w    240 calls
+| | BT2                             :      0.583u      0.500s      0.513w    240 calls
+| | | ABCD:new                      :      0.583u      0.500s      0.512w    240 calls
+| | | | ABCD:S                      :      0.000u      0.033s      0.017w    240 calls
+| | | | ABCD:A                      :      0.050u      0.017s      0.016w    240 calls
+| | | | ABCD:axpy                   :      0.500u      0.417s      0.440w    240 calls
+| | FT2                             :      0.033u      0.017s      0.038w    240 calls
+| | WmbejT2                         :      0.050u      0.067s      0.109w    240 calls
+| | CT2                             :      0.217u      0.200s      0.215w    240 calls
+cctriples                           :      0.333u      0.517s      1.204w     20 calls
+| ET_RHF                            :      0.150u      0.117s      0.181w     20 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:25:40 2025
+Timers Off: Sun Nov 23 14:25:40 2025
+
+Wall Time:        0.59 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:25:59 2025
+Timers Off: Sun Nov 23 14:26:00 2025
+
+Wall Time:        0.60 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:26:56 2025
+Timers Off: Sun Nov 23 14:26:57 2025
+
+Wall Time:        0.58 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:27:20 2025
+Timers Off: Sun Nov 23 14:27:21 2025
+
+Wall Time:        1.09 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:29:42 2025
+Timers Off: Sun Nov 23 14:29:43 2025
+
+Wall Time:        0.61 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:30:21 2025
+Timers Off: Sun Nov 23 14:30:21 2025
+
+Wall Time:        0.59 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:30:34 2025
+Timers Off: Sun Nov 23 14:30:35 2025
+
+Wall Time:        0.90 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:36:28 2025
+Timers Off: Sun Nov 23 14:36:28 2025
+
+Wall Time:        0.59 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:40:36 2025
+Timers Off: Sun Nov 23 14:40:37 2025
+
+Wall Time:        0.95 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:54:11 2025
+Timers Off: Sun Nov 23 14:54:12 2025
+
+Wall Time:        0.96 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:54:50 2025
+Timers Off: Sun Nov 23 14:54:51 2025
+
+Wall Time:        0.90 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:56:24 2025
+Timers Off: Sun Nov 23 14:56:25 2025
+
+Wall Time:        0.93 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:56:32 2025
+Timers Off: Sun Nov 23 14:56:33 2025
+
+Wall Time:        1.04 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:58:32 2025
+Timers Off: Sun Nov 23 14:58:33 2025
+
+Wall Time:        0.92 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:58:39 2025
+Timers Off: Sun Nov 23 14:58:41 2025
+
+Wall Time:        1.14 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:59:41 2025
+Timers Off: Sun Nov 23 14:59:42 2025
+
+Wall Time:        1.14 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 14:59:57 2025
+Timers Off: Sun Nov 23 14:59:58 2025
+
+Wall Time:        1.18 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:08:15 2025
+Timers Off: Sun Nov 23 15:08:17 2025
+
+Wall Time:        1.16 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:08:56 2025
+Timers Off: Sun Nov 23 15:08:57 2025
+
+Wall Time:        1.16 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:10:13 2025
+Timers Off: Sun Nov 23 15:10:14 2025
+
+Wall Time:        1.16 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:11:17 2025
+Timers Off: Sun Nov 23 15:11:18 2025
+
+Wall Time:        1.16 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:17:47 2025
+Timers Off: Sun Nov 23 15:17:48 2025
+
+Wall Time:        1.17 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:18:10 2025
+Timers Off: Sun Nov 23 15:18:11 2025
+
+Wall Time:        1.17 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:19:24 2025
+Timers Off: Sun Nov 23 15:19:26 2025
+
+Wall Time:        1.19 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:19:35 2025
+Timers Off: Sun Nov 23 15:19:36 2025
+
+Wall Time:        1.18 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:27:01 2025
+Timers Off: Sun Nov 23 15:27:02 2025
+
+Wall Time:        1.23 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:29:04 2025
+Timers Off: Sun Nov 23 15:29:05 2025
+
+Wall Time:        1.19 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:37:09 2025
+Timers Off: Sun Nov 23 15:37:10 2025
+
+Wall Time:        1.18 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:37:51 2025
+Timers Off: Sun Nov 23 15:37:52 2025
+
+Wall Time:        1.18 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:40:32 2025
+Timers Off: Sun Nov 23 15:40:34 2025
+
+Wall Time:        1.82 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:41:19 2025
+Timers Off: Sun Nov 23 15:41:21 2025
+
+Wall Time:        1.79 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:41:24 2025
+Timers Off: Sun Nov 23 15:41:26 2025
+
+Wall Time:        1.83 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:41:28 2025
+Timers Off: Sun Nov 23 15:41:30 2025
+
+Wall Time:        1.89 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:41:32 2025
+Timers Off: Sun Nov 23 15:41:34 2025
+
+Wall Time:        1.82 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:42:25 2025
+Timers Off: Sun Nov 23 15:42:27 2025
+
+Wall Time:        1.81 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:42:44 2025
+Timers Off: Sun Nov 23 15:42:45 2025
+
+Wall Time:        1.84 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:42:50 2025
+Timers Off: Sun Nov 23 15:42:52 2025
+
+Wall Time:        1.83 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:43:37 2025
+Timers Off: Sun Nov 23 15:43:39 2025
+
+Wall Time:        1.83 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:43:42 2025
+Timers Off: Sun Nov 23 15:43:44 2025
+
+Wall Time:        1.91 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:43:51 2025
+Timers Off: Sun Nov 23 15:43:53 2025
+
+Wall Time:        1.81 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:43:57 2025
+Timers Off: Sun Nov 23 15:43:59 2025
+
+Wall Time:        1.81 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:44:02 2025
+Timers Off: Sun Nov 23 15:44:03 2025
+
+Wall Time:        1.78 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:44:08 2025
+Timers Off: Sun Nov 23 15:44:09 2025
+
+Wall Time:        1.83 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 15:45:05 2025
+Timers Off: Sun Nov 23 15:45:12 2025
+
+Wall Time:        6.69 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:08:06 2025
+Timers Off: Sun Nov 23 16:08:13 2025
+
+Wall Time:        6.91 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:08:38 2025
+Timers Off: Sun Nov 23 16:08:39 2025
+
+Wall Time:        1.57 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:09:29 2025
+Timers Off: Sun Nov 23 16:09:53 2025
+
+Wall Time:       24.54 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      1.417u      0.017s      0.875w      5 calls
+Libint2ERI::Libint2ERI              :      0.200u      0.017s      0.125w     15 calls
+HF: Form core H                     :      0.033u      0.000s      0.013w      5 calls
+HF: Form S/X                        :      0.017u      0.000s      0.002w      5 calls
+HF: Guess                           :      0.250u      0.000s      0.177w      5 calls
+SAD Guess                           :      0.250u      0.000s      0.168w      5 calls
+HF: Form G                          :      0.133u      0.000s      0.082w     60 calls
+JK: D                               :      0.000u      0.000s      0.001w     60 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     60 calls
+JK: JK                              :      0.100u      0.000s      0.080w     60 calls
+PK computes JK                      :      0.100u      0.000s      0.079w     60 calls
+JK: AO2USO                          :      0.017u      0.000s      0.000w     60 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     60 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     60 calls
+HF: DIIS                            :      2.133u      0.083s      0.331w     55 calls
+HF: Form C                          :      0.017u      0.000s      0.027w     55 calls
+ccenergy                            :     10.333u      5.650s     12.277w      5 calls
+F build                             :      0.950u      0.200s      0.622w     76 calls
+Wmbej build                         :      2.333u      0.783s      1.848w     76 calls
+C->Wmbej                            :      0.117u      0.050s      0.094w     76 calls
+F->Wmbej                            :      0.483u      0.383s      0.557w     76 calls
+E->Wmbej                            :      0.400u      0.250s      0.319w     76 calls
+X->Wmbej                            :      1.267u      0.067s      0.821w     76 calls
+Z                                   :      0.300u      0.067s      0.273w     76 calls
+T2 Build                            :      3.783u      2.183s      3.624w     76 calls
+BT2                                 :      1.167u      0.617s      1.097w     76 calls
+ABCD:new                            :      1.167u      0.617s      1.097w     76 calls
+ABCD:S                              :      0.300u      0.167s      0.212w     76 calls
+ABCD:A                              :      0.183u      0.100s      0.207w     76 calls
+ABCD:axpy                           :      0.617u      0.267s      0.531w     76 calls
+FT2                                 :      0.183u      0.100s      0.159w     76 calls
+WmbejT2                             :      0.833u      0.483s      0.809w     76 calls
+CT2                                 :      0.800u      0.617s      0.814w     76 calls
+cctriples                           :      7.333u      0.500s      4.878w      5 calls
+ET_RHF                              :      7.250u      0.467s      4.622w      5 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      1.417u      0.017s      0.875w      5 calls
+| Libint2ERI::Libint2ERI            :      0.133u      0.017s      0.084w     10 calls
+HF: Form core H                     :      0.033u      0.000s      0.013w      5 calls
+HF: Form S/X                        :      0.017u      0.000s      0.002w      5 calls
+HF: Guess                           :      0.250u      0.000s      0.177w      5 calls
+| SAD Guess                         :      0.250u      0.000s      0.168w      5 calls
+HF: Form G                          :      0.133u      0.000s      0.082w     60 calls
+| JK: D                             :      0.000u      0.000s      0.001w     60 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w     60 calls
+| JK: JK                            :      0.100u      0.000s      0.080w     60 calls
+| | PK computes JK                  :      0.100u      0.000s      0.079w     60 calls
+| JK: AO2USO                        :      0.017u      0.000s      0.000w     60 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     60 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     60 calls
+HF: DIIS                            :      2.133u      0.083s      0.331w     55 calls
+HF: Form C                          :      0.017u      0.000s      0.027w     55 calls
+Libint2ERI::Libint2ERI              :      0.067u      0.000s      0.041w      5 calls
+ccenergy                            :     10.333u      5.650s     12.277w      5 calls
+| F build                           :      0.950u      0.200s      0.622w     76 calls
+| Wmbej build                       :      2.333u      0.783s      1.848w     76 calls
+| | C->Wmbej                        :      0.117u      0.050s      0.094w     76 calls
+| | F->Wmbej                        :      0.483u      0.383s      0.557w     76 calls
+| | E->Wmbej                        :      0.400u      0.250s      0.319w     76 calls
+| | X->Wmbej                        :      1.267u      0.067s      0.821w     76 calls
+| Z                                 :      0.300u      0.067s      0.273w     76 calls
+| T2 Build                          :      3.783u      2.183s      3.624w     76 calls
+| | BT2                             :      1.167u      0.617s      1.097w     76 calls
+| | | ABCD:new                      :      1.167u      0.617s      1.097w     76 calls
+| | | | ABCD:S                      :      0.300u      0.167s      0.212w     76 calls
+| | | | ABCD:A                      :      0.183u      0.100s      0.207w     76 calls
+| | | | ABCD:axpy                   :      0.617u      0.267s      0.531w     76 calls
+| | FT2                             :      0.183u      0.100s      0.159w     76 calls
+| | WmbejT2                         :      0.833u      0.483s      0.809w     76 calls
+| | CT2                             :      0.800u      0.617s      0.814w     76 calls
+cctriples                           :      7.333u      0.500s      4.878w      5 calls
+| ET_RHF                            :      7.250u      0.467s      4.622w      5 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:14:45 2025
+Timers Off: Sun Nov 23 16:14:47 2025
+
+Wall Time:        1.62 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:18:00 2025
+Timers Off: Sun Nov 23 16:18:02 2025
+
+Wall Time:        1.57 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:18:14 2025
+Timers Off: Sun Nov 23 16:18:16 2025
+
+Wall Time:        1.68 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:18:35 2025
+Timers Off: Sun Nov 23 16:19:49 2025
+
+Wall Time:       74.52 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:20:07 2025
+Timers Off: Sun Nov 23 16:21:22 2025
+
+Wall Time:       75.18 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:30:08 2025
+Timers Off: Sun Nov 23 16:30:10 2025
+
+Wall Time:        1.70 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:30:40 2025
+Timers Off: Sun Nov 23 16:30:42 2025
+
+Wall Time:        1.77 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:35:51 2025
+Timers Off: Sun Nov 23 16:37:40 2025
+
+Wall Time:      109.79 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:37:58 2025
+Timers Off: Sun Nov 23 16:38:32 2025
+
+Wall Time:       33.58 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:38:35 2025
+Timers Off: Sun Nov 23 16:39:46 2025
+
+Wall Time:       70.94 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:41:53 2025
+Timers Off: Sun Nov 23 16:41:57 2025
+
+Wall Time:        3.97 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:43:50 2025
+Timers Off: Sun Nov 23 16:43:56 2025
+
+Wall Time:        6.18 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+DFH: sparsity prep                  :      0.117u      0.000s      0.062w      5 calls
+Libint2ERI::Libint2ERI              :      0.100u      0.000s      0.073w     15 calls
+DFH: initialize()                   :      0.400u      0.000s      0.246w      5 calls
+DFH: AO Construction                :      0.217u      0.000s      0.113w      5 calls
+DFH: AO-Met. Contraction            :      0.017u      0.000s      0.025w      5 calls
+HF: Form core H                     :      0.017u      0.000s      0.012w      5 calls
+HF: Form S/X                        :      0.000u      0.000s      0.002w      5 calls
+HF: Guess                           :      0.267u      0.000s      0.176w      5 calls
+SAD Guess                           :      0.250u      0.000s      0.166w      5 calls
+HF: Form G                          :      0.067u      0.000s      0.055w     47 calls
+JK: D                               :      0.000u      0.000s      0.000w     47 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     47 calls
+JK: JK                              :      0.067u      0.000s      0.053w     47 calls
+DFH: compute_JK()                   :      0.067u      0.000s      0.052w     47 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     47 calls
+DFH: compute_J                      :      0.033u      0.000s      0.012w     47 calls
+DFH: compute_K                      :      0.017u      0.000s      0.038w     47 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     47 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     47 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     47 calls
+HF: DIIS                            :      1.367u      0.050s      0.309w     42 calls
+HF: Form C                          :      0.017u      0.000s      0.021w     42 calls
+
+--------------------------------------------------------------------------------------
+DFH: sparsity prep                  :      0.117u      0.000s      0.062w      5 calls
+| Libint2ERI::Libint2ERI            :      0.067u      0.000s      0.040w      5 calls
+DFH: initialize()                   :      0.400u      0.000s      0.246w      5 calls
+| Libint2ERI::Libint2ERI            :      0.033u      0.000s      0.033w     10 calls
+| DFH: AO Construction              :      0.217u      0.000s      0.113w      5 calls
+| DFH: AO-Met. Contraction          :      0.017u      0.000s      0.025w      5 calls
+HF: Form core H                     :      0.017u      0.000s      0.012w      5 calls
+HF: Form S/X                        :      0.000u      0.000s      0.002w      5 calls
+HF: Guess                           :      0.267u      0.000s      0.176w      5 calls
+| SAD Guess                         :      0.250u      0.000s      0.166w      5 calls
+HF: Form G                          :      0.067u      0.000s      0.055w     47 calls
+| JK: D                             :      0.000u      0.000s      0.000w     47 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w     47 calls
+| JK: JK                            :      0.067u      0.000s      0.053w     47 calls
+| | DFH: compute_JK()               :      0.067u      0.000s      0.052w     47 calls
+| | | DFH: Grabbing AOs             :      0.000u      0.000s      0.000w     47 calls
+| | | DFH: compute_J                :      0.033u      0.000s      0.012w     47 calls
+| | | DFH: compute_K                :      0.017u      0.000s      0.038w     47 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w     47 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     47 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     47 calls
+HF: DIIS                            :      1.367u      0.050s      0.309w     42 calls
+HF: Form C                          :      0.017u      0.000s      0.021w     42 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:44:21 2025
+Timers Off: Sun Nov 23 16:44:53 2025
+
+Wall Time:       32.48 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      1.500u      0.000s      0.922w      5 calls
+Libint2ERI::Libint2ERI              :      0.200u      0.000s      0.123w     15 calls
+HF: Form core H                     :      0.050u      0.000s      0.012w      5 calls
+HF: Form S/X                        :      0.017u      0.000s      0.002w      5 calls
+HF: Guess                           :      0.267u      0.017s      0.177w      5 calls
+SAD Guess                           :      0.267u      0.017s      0.167w      5 calls
+HF: Form G                          :      0.150u      0.000s      0.084w     61 calls
+JK: D                               :      0.000u      0.000s      0.000w     61 calls
+JK: USO2AO                          :      0.017u      0.000s      0.000w     61 calls
+JK: JK                              :      0.117u      0.000s      0.081w     61 calls
+PK computes JK                      :      0.117u      0.000s      0.081w     61 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     61 calls
+HF: Form F                          :      0.000u      0.000s      0.001w     61 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     61 calls
+HF: DIIS                            :      1.150u      0.050s      0.334w     56 calls
+HF: Form C                          :      0.033u      0.000s      0.027w     56 calls
+ccenergy                            :     10.817u      5.750s     12.714w      5 calls
+F build                             :      0.883u      0.117s      0.645w     77 calls
+Wmbej build                         :      2.433u      0.867s      1.947w     77 calls
+C->Wmbej                            :      0.100u      0.033s      0.095w     77 calls
+F->Wmbej                            :      0.583u      0.517s      0.583w     77 calls
+E->Wmbej                            :      0.333u      0.233s      0.336w     77 calls
+X->Wmbej                            :      1.333u      0.083s      0.872w     77 calls
+Z                                   :      0.367u      0.050s      0.288w     77 calls
+T2 Build                            :      4.017u      2.350s      3.822w     77 calls
+BT2                                 :      1.250u      0.717s      1.167w     77 calls
+ABCD:new                            :      1.250u      0.717s      1.167w     77 calls
+ABCD:S                              :      0.250u      0.233s      0.223w     77 calls
+ABCD:A                              :      0.233u      0.083s      0.218w     77 calls
+ABCD:axpy                           :      0.667u      0.367s      0.571w     77 calls
+FT2                                 :      0.083u      0.133s      0.168w     77 calls
+WmbejT2                             :      0.917u      0.517s      0.857w     77 calls
+CT2                                 :      0.817u      0.567s      0.844w     77 calls
+cctriples                           :      7.483u      0.533s      4.978w      5 calls
+ET_RHF                              :      7.417u      0.417s      4.723w      5 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      1.500u      0.000s      0.922w      5 calls
+| Libint2ERI::Libint2ERI            :      0.133u      0.000s      0.082w     10 calls
+HF: Form core H                     :      0.050u      0.000s      0.012w      5 calls
+HF: Form S/X                        :      0.017u      0.000s      0.002w      5 calls
+HF: Guess                           :      0.267u      0.017s      0.177w      5 calls
+| SAD Guess                         :      0.267u      0.017s      0.167w      5 calls
+HF: Form G                          :      0.150u      0.000s      0.084w     61 calls
+| JK: D                             :      0.000u      0.000s      0.000w     61 calls
+| JK: USO2AO                        :      0.017u      0.000s      0.000w     61 calls
+| JK: JK                            :      0.117u      0.000s      0.081w     61 calls
+| | PK computes JK                  :      0.117u      0.000s      0.081w     61 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w     61 calls
+HF: Form F                          :      0.000u      0.000s      0.001w     61 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     61 calls
+HF: DIIS                            :      1.150u      0.050s      0.334w     56 calls
+HF: Form C                          :      0.033u      0.000s      0.027w     56 calls
+Libint2ERI::Libint2ERI              :      0.067u      0.000s      0.041w      5 calls
+ccenergy                            :     10.817u      5.750s     12.714w      5 calls
+| F build                           :      0.883u      0.117s      0.645w     77 calls
+| Wmbej build                       :      2.433u      0.867s      1.947w     77 calls
+| | C->Wmbej                        :      0.100u      0.033s      0.095w     77 calls
+| | F->Wmbej                        :      0.583u      0.517s      0.583w     77 calls
+| | E->Wmbej                        :      0.333u      0.233s      0.336w     77 calls
+| | X->Wmbej                        :      1.333u      0.083s      0.872w     77 calls
+| Z                                 :      0.367u      0.050s      0.288w     77 calls
+| T2 Build                          :      4.017u      2.350s      3.822w     77 calls
+| | BT2                             :      1.250u      0.717s      1.167w     77 calls
+| | | ABCD:new                      :      1.250u      0.717s      1.167w     77 calls
+| | | | ABCD:S                      :      0.250u      0.233s      0.223w     77 calls
+| | | | ABCD:A                      :      0.233u      0.083s      0.218w     77 calls
+| | | | ABCD:axpy                   :      0.667u      0.367s      0.571w     77 calls
+| | FT2                             :      0.083u      0.133s      0.168w     77 calls
+| | WmbejT2                         :      0.917u      0.517s      0.857w     77 calls
+| | CT2                             :      0.817u      0.567s      0.844w     77 calls
+cctriples                           :      7.483u      0.533s      4.978w      5 calls
+| ET_RHF                            :      7.417u      0.417s      4.723w      5 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:45:36 2025
+Timers Off: Sun Nov 23 16:46:17 2025
+
+Wall Time:       40.60 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      1.100u      0.000s      0.679w      5 calls
+Libint2ERI::Libint2ERI              :      0.183u      0.017s      0.123w     15 calls
+HF: Form core H                     :      0.017u      0.000s      0.013w      5 calls
+HF: Form S/X                        :      0.000u      0.000s      0.002w      5 calls
+HF: Guess                           :      0.283u      0.000s      0.175w      5 calls
+SAD Guess                           :      0.250u      0.000s      0.166w      5 calls
+HF: Form G                          :      0.133u      0.000s      0.080w     58 calls
+JK: D                               :      0.000u      0.000s      0.001w     58 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     58 calls
+JK: JK                              :      0.133u      0.000s      0.077w     58 calls
+PK computes JK                      :      0.133u      0.000s      0.077w     58 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     58 calls
+HF: Form F                          :      0.000u      0.017s      0.001w     58 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     58 calls
+HF: DIIS                            :      1.133u      0.033s      0.328w     53 calls
+HF: Form C                          :      0.100u      0.017s      0.025w     53 calls
+ccenergy                            :     10.433u      5.050s     12.021w      5 calls
+F build                             :      0.800u      0.217s      0.619w     75 calls
+Wmbej build                         :      2.317u      0.600s      1.814w     75 calls
+C->Wmbej                            :      0.083u      0.050s      0.089w     75 calls
+F->Wmbej                            :      0.517u      0.317s      0.542w     75 calls
+E->Wmbej                            :      0.383u      0.050s      0.311w     75 calls
+X->Wmbej                            :      1.267u      0.133s      0.815w     75 calls
+Z                                   :      0.433u      0.083s      0.271w     75 calls
+T2 Build                            :      3.800u      1.983s      3.528w     75 calls
+BT2                                 :      1.267u      0.500s      1.078w     75 calls
+ABCD:new                            :      1.267u      0.500s      1.078w     75 calls
+ABCD:S                              :      0.250u      0.067s      0.210w     75 calls
+ABCD:A                              :      0.200u      0.083s      0.203w     75 calls
+ABCD:axpy                           :      0.567u      0.250s      0.521w     75 calls
+FT2                                 :      0.133u      0.083s      0.154w     75 calls
+WmbejT2                             :      0.883u      0.467s      0.774w     75 calls
+CT2                                 :      0.717u      0.583s      0.791w     75 calls
+cctriples                           :      7.433u      0.550s      4.948w      5 calls
+ET_RHF                              :      7.417u      0.433s      4.696w      5 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      1.100u      0.000s      0.679w      5 calls
+| Libint2ERI::Libint2ERI            :      0.133u      0.000s      0.083w     10 calls
+HF: Form core H                     :      0.017u      0.000s      0.013w      5 calls
+HF: Form S/X                        :      0.000u      0.000s      0.002w      5 calls
+HF: Guess                           :      0.283u      0.000s      0.175w      5 calls
+| SAD Guess                         :      0.250u      0.000s      0.166w      5 calls
+HF: Form G                          :      0.133u      0.000s      0.080w     58 calls
+| JK: D                             :      0.000u      0.000s      0.001w     58 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w     58 calls
+| JK: JK                            :      0.133u      0.000s      0.077w     58 calls
+| | PK computes JK                  :      0.133u      0.000s      0.077w     58 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w     58 calls
+HF: Form F                          :      0.000u      0.017s      0.001w     58 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     58 calls
+HF: DIIS                            :      1.133u      0.033s      0.328w     53 calls
+HF: Form C                          :      0.100u      0.017s      0.025w     53 calls
+Libint2ERI::Libint2ERI              :      0.050u      0.017s      0.040w      5 calls
+ccenergy                            :     10.433u      5.050s     12.021w      5 calls
+| F build                           :      0.800u      0.217s      0.619w     75 calls
+| Wmbej build                       :      2.317u      0.600s      1.814w     75 calls
+| | C->Wmbej                        :      0.083u      0.050s      0.089w     75 calls
+| | F->Wmbej                        :      0.517u      0.317s      0.542w     75 calls
+| | E->Wmbej                        :      0.383u      0.050s      0.311w     75 calls
+| | X->Wmbej                        :      1.267u      0.133s      0.815w     75 calls
+| Z                                 :      0.433u      0.083s      0.271w     75 calls
+| T2 Build                          :      3.800u      1.983s      3.528w     75 calls
+| | BT2                             :      1.267u      0.500s      1.078w     75 calls
+| | | ABCD:new                      :      1.267u      0.500s      1.078w     75 calls
+| | | | ABCD:S                      :      0.250u      0.067s      0.210w     75 calls
+| | | | ABCD:A                      :      0.200u      0.083s      0.203w     75 calls
+| | | | ABCD:axpy                   :      0.567u      0.250s      0.521w     75 calls
+| | FT2                             :      0.133u      0.083s      0.154w     75 calls
+| | WmbejT2                         :      0.883u      0.467s      0.774w     75 calls
+| | CT2                             :      0.717u      0.583s      0.791w     75 calls
+cctriples                           :      7.433u      0.550s      4.948w      5 calls
+| ET_RHF                            :      7.417u      0.433s      4.696w      5 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:47:17 2025
+Timers Off: Sun Nov 23 16:48:01 2025
+
+Wall Time:       43.42 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      2.117u      0.017s      1.283w      8 calls
+Libint2ERI::Libint2ERI              :      0.367u      0.000s      0.192w     24 calls
+HF: Form core H                     :      0.017u      0.000s      0.020w      8 calls
+HF: Form S/X                        :      0.017u      0.000s      0.004w      8 calls
+HF: Guess                           :      0.450u      0.017s      0.276w      8 calls
+SAD Guess                           :      0.417u      0.017s      0.261w      8 calls
+HF: Form G                          :      0.183u      0.000s      0.139w    102 calls
+JK: D                               :      0.000u      0.000s      0.001w    102 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w    102 calls
+JK: JK                              :      0.183u      0.000s      0.134w    102 calls
+PK computes JK                      :      0.183u      0.000s      0.134w    102 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w    102 calls
+HF: Form F                          :      0.000u      0.000s      0.001w    102 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    102 calls
+HF: DIIS                            :      2.333u      0.117s      0.498w     94 calls
+HF: Form C                          :      0.100u      0.000s      0.045w     94 calls
+ccenergy                            :     20.567u     11.383s     24.733w      8 calls
+F build                             :      1.783u      0.417s      1.203w    155 calls
+Wmbej build                         :      4.583u      1.550s      3.676w    155 calls
+C->Wmbej                            :      0.283u      0.100s      0.187w    155 calls
+F->Wmbej                            :      0.900u      0.900s      1.094w    155 calls
+E->Wmbej                            :      0.717u      0.317s      0.632w    155 calls
+X->Wmbej                            :      2.533u      0.167s      1.643w    155 calls
+Z                                   :      0.833u      0.100s      0.549w    155 calls
+T2 Build                            :      7.833u      4.383s      7.350w    155 calls
+BT2                                 :      2.517u      1.083s      2.218w    155 calls
+ABCD:new                            :      2.517u      1.083s      2.218w    155 calls
+ABCD:S                              :      0.467u      0.200s      0.425w    155 calls
+ABCD:A                              :      0.567u      0.133s      0.416w    155 calls
+ABCD:axpy                           :      1.167u      0.550s      1.076w    155 calls
+FT2                                 :      0.317u      0.167s      0.318w    155 calls
+WmbejT2                             :      1.883u      0.917s      1.637w    155 calls
+CT2                                 :      1.367u      1.367s      1.672w    155 calls
+cctriples                           :     10.400u      0.783s      6.937w      7 calls
+ET_RHF                              :     10.317u      0.667s      6.575w      7 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      2.117u      0.017s      1.283w      8 calls
+| Libint2ERI::Libint2ERI            :      0.233u      0.000s      0.129w     16 calls
+HF: Form core H                     :      0.017u      0.000s      0.020w      8 calls
+HF: Form S/X                        :      0.017u      0.000s      0.004w      8 calls
+HF: Guess                           :      0.450u      0.017s      0.276w      8 calls
+| SAD Guess                         :      0.417u      0.017s      0.261w      8 calls
+HF: Form G                          :      0.183u      0.000s      0.139w    102 calls
+| JK: D                             :      0.000u      0.000s      0.001w    102 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w    102 calls
+| JK: JK                            :      0.183u      0.000s      0.134w    102 calls
+| | PK computes JK                  :      0.183u      0.000s      0.134w    102 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w    102 calls
+HF: Form F                          :      0.000u      0.000s      0.001w    102 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    102 calls
+HF: DIIS                            :      2.333u      0.117s      0.498w     94 calls
+HF: Form C                          :      0.100u      0.000s      0.045w     94 calls
+Libint2ERI::Libint2ERI              :      0.133u      0.000s      0.064w      8 calls
+ccenergy                            :     20.567u     11.383s     24.733w      8 calls
+| F build                           :      1.783u      0.417s      1.203w    155 calls
+| Wmbej build                       :      4.583u      1.550s      3.676w    155 calls
+| | C->Wmbej                        :      0.283u      0.100s      0.187w    155 calls
+| | F->Wmbej                        :      0.900u      0.900s      1.094w    155 calls
+| | E->Wmbej                        :      0.717u      0.317s      0.632w    155 calls
+| | X->Wmbej                        :      2.533u      0.167s      1.643w    155 calls
+| Z                                 :      0.833u      0.100s      0.549w    155 calls
+| T2 Build                          :      7.833u      4.383s      7.350w    155 calls
+| | BT2                             :      2.517u      1.083s      2.218w    155 calls
+| | | ABCD:new                      :      2.517u      1.083s      2.218w    155 calls
+| | | | ABCD:S                      :      0.467u      0.200s      0.425w    155 calls
+| | | | ABCD:A                      :      0.567u      0.133s      0.416w    155 calls
+| | | | ABCD:axpy                   :      1.167u      0.550s      1.076w    155 calls
+| | FT2                             :      0.317u      0.167s      0.318w    155 calls
+| | WmbejT2                         :      1.883u      0.917s      1.637w    155 calls
+| | CT2                             :      1.367u      1.367s      1.672w    155 calls
+cctriples                           :     10.400u      0.783s      6.937w      7 calls
+| ET_RHF                            :     10.317u      0.667s      6.575w      7 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Nov 23 16:48:17 2025
+Timers Off: Sun Nov 23 16:49:18 2025
+
+Wall Time:       61.55 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+Total PK formation time             :      2.767u      0.017s      1.668w     10 calls
+Libint2ERI::Libint2ERI              :      0.367u      0.033s      0.240w     30 calls
+HF: Form core H                     :      0.000u      0.000s      0.026w     10 calls
+HF: Form S/X                        :      0.000u      0.000s      0.005w     10 calls
+HF: Guess                           :      0.633u      0.017s      0.353w     10 calls
+SAD Guess                           :      0.550u      0.017s      0.334w     10 calls
+HF: Form G                          :      0.283u      0.017s      0.171w    124 calls
+JK: D                               :      0.017u      0.000s      0.001w    124 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w    124 calls
+JK: JK                              :      0.250u      0.017s      0.165w    124 calls
+PK computes JK                      :      0.250u      0.017s      0.165w    124 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w    124 calls
+HF: Form F                          :      0.000u      0.000s      0.001w    124 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    124 calls
+HF: DIIS                            :      2.383u      0.067s      0.509w    114 calls
+HF: Form C                          :      0.033u      0.000s      0.056w    114 calls
+ccenergy                            :     21.350u     11.667s     25.457w     10 calls
+F build                             :      1.783u      0.267s      1.260w    157 calls
+Wmbej build                         :      4.983u      1.717s      3.887w    157 calls
+C->Wmbej                            :      0.350u      0.117s      0.197w    157 calls
+F->Wmbej                            :      1.100u      0.917s      1.186w    157 calls
+E->Wmbej                            :      0.700u      0.400s      0.665w    157 calls
+X->Wmbej                            :      2.717u      0.217s      1.718w    157 calls
+Z                                   :      0.733u      0.117s      0.576w    157 calls
+T2 Build                            :      7.967u      4.633s      7.538w    157 calls
+BT2                                 :      2.600u      1.483s      2.305w    157 calls
+ABCD:new                            :      2.600u      1.483s      2.305w    157 calls
+ABCD:S                              :      0.550u      0.350s      0.446w    157 calls
+ABCD:A                              :      0.433u      0.200s      0.440w    157 calls
+ABCD:axpy                           :      1.367u      0.700s      1.109w    157 calls
+FT2                                 :      0.300u      0.167s      0.330w    157 calls
+WmbejT2                             :      1.950u      0.850s      1.677w    157 calls
+CT2                                 :      1.550u      1.233s      1.672w    157 calls
+cctriples                           :     14.733u      1.167s      9.892w     10 calls
+ET_RHF                              :     14.633u      0.983s      9.376w     10 calls
+
+--------------------------------------------------------------------------------------
+Total PK formation time             :      2.767u      0.017s      1.668w     10 calls
+| Libint2ERI::Libint2ERI            :      0.250u      0.017s      0.161w     20 calls
+HF: Form core H                     :      0.000u      0.000s      0.026w     10 calls
+HF: Form S/X                        :      0.000u      0.000s      0.005w     10 calls
+HF: Guess                           :      0.633u      0.017s      0.353w     10 calls
+| SAD Guess                         :      0.550u      0.017s      0.334w     10 calls
+HF: Form G                          :      0.283u      0.017s      0.171w    124 calls
+| JK: D                             :      0.017u      0.000s      0.001w    124 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w    124 calls
+| JK: JK                            :      0.250u      0.017s      0.165w    124 calls
+| | PK computes JK                  :      0.250u      0.017s      0.165w    124 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w    124 calls
+HF: Form F                          :      0.000u      0.000s      0.001w    124 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    124 calls
+HF: DIIS                            :      2.383u      0.067s      0.509w    114 calls
+HF: Form C                          :      0.033u      0.000s      0.056w    114 calls
+Libint2ERI::Libint2ERI              :      0.117u      0.017s      0.079w     10 calls
+ccenergy                            :     21.350u     11.667s     25.457w     10 calls
+| F build                           :      1.783u      0.267s      1.260w    157 calls
+| Wmbej build                       :      4.983u      1.717s      3.887w    157 calls
+| | C->Wmbej                        :      0.350u      0.117s      0.197w    157 calls
+| | F->Wmbej                        :      1.100u      0.917s      1.186w    157 calls
+| | E->Wmbej                        :      0.700u      0.400s      0.665w    157 calls
+| | X->Wmbej                        :      2.717u      0.217s      1.718w    157 calls
+| Z                                 :      0.733u      0.117s      0.576w    157 calls
+| T2 Build                          :      7.967u      4.633s      7.538w    157 calls
+| | BT2                             :      2.600u      1.483s      2.305w    157 calls
+| | | ABCD:new                      :      2.600u      1.483s      2.305w    157 calls
+| | | | ABCD:S                      :      0.550u      0.350s      0.446w    157 calls
+| | | | ABCD:A                      :      0.433u      0.200s      0.440w    157 calls
+| | | | ABCD:axpy                   :      1.367u      0.700s      1.109w    157 calls
+| | FT2                             :      0.300u      0.167s      0.330w    157 calls
+| | WmbejT2                         :      1.950u      0.850s      1.677w    157 calls
+| | CT2                             :      1.550u      1.233s      1.672w    157 calls
+cctriples                           :     14.733u      1.167s      9.892w     10 calls
+| ET_RHF                            :     14.633u      0.983s      9.376w     10 calls
+
+**************************************************************************************

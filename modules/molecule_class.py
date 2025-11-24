@@ -196,24 +196,7 @@ class Molecule:
             print(masses)
             self.masses = np.array(masses)
 
-    @classmethod
-    def from_submolecules_list(cls, submolecules: List['Molecule'], name: str = "Combined Molecule"):
-        """ 
-        Create a Molecule by combining a list of submolecules
 
-        Args:
-            submolecules: List of Molecule objects to combine
-            name: Name for the combined molecule
-
-        Returns:
-            Molecule: A new Molecule instance
-        """
-        combined_molecule = cls(name)
-        
-        for submol in submolecules:
-            combined_molecule.add_atoms_batch(submol.atom_labels, submol.coordinates, submol.masses)
-        
-        return combined_molecule
 
 
     

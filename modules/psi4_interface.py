@@ -6,16 +6,12 @@ import os
 import time
 
 
-#TODO maybe remove this in the end
-def remove_digits(text):
-    """Remove all digits from a string"""
-    return ''.join(char for char in text if not char.isdigit())
 
 class Psi4Calculator:
     """
     A class to perform QM calculations using Psi4
     """
-    def __init__(self, molecule = None, memory = "500 MB", num_threads=1,ls_of_molecules = None):
+    def __init__(self, molecule = None, memory = "500 MB", num_threads=1,ls_of_molecules = None, method="ccsd(t)", basis_set="cc-pvdz"):
         """ 
         Initializes the Psi4Calculator with a Molecule object and calulation setting
 
@@ -29,133 +25,148 @@ class Psi4Calculator:
         self.ls_of_molecules = ls_of_molecules
         self.memory = memory
         self.num_threads = num_threads
-        self.method = "ccsd(t)"
-        self.basis_set = "cc-pvdz"
-        self.geom = None # Here the Geometry Input for the Psi_4 calculation is written
+        self.method = method
+        self.basis_set = basis_set
+        
+        # Configure Psi4 settings 
         psi4.set_memory(self.memory)
         psi4.set_num_threads(self.num_threads)
-        # Set the PSI4 Output Path
         psi4.set_output_file("psi4_output.dat",False)
 
 
-    def build_geometry_string(self):
+    def build_geometry_string(self,molecule):
         """ 
         Uses the Molecule object to build the geometry string for psi4
-
-        # Example how this geometry can look in Z-Matrix Coords
-        h2o = psi4.geometry(
-        O
-        H 1 0.96
-        H 1 0.96 2 104.5
         """
-        geom = f"{self.molecule.charge} {self.molecule.spin_mult}\n"
-        for atom, (x,y,z) in zip(self.molecule.atom_labels, self.molecule.coordinates):
-            geom += f" {remove_digits(atom)} {x:.8f} {y:.8f} {z:.8f}\n"
-
-        print(geom)
-        self.geom = geom 
+        geom = f"{molecule.charge} {molecule.spin_mult}\n"
+        for atom, (x,y,z) in zip(molecule.atom_labels, molecule.coordinates):
+            geom += f" {self.remove_digits(atom)} {x:.8f} {y:.8f} {z:.8f}\n"
+        return geom
     
-    def single_point_calc(self):
+    #TODO maybe remove this in the end
+    @staticmethod 
+    def remove_digits(text):
+        """Remove all digits from a string"""
+        return ''.join(char for char in text if not char.isdigit())
+
+
+
+    def single_point_calc(self,molecule=None):
         """ 
         Run a single point calculation
+
+        Args:
+            molecule: Molecule object for which to run the calculation. If None, uses self.molecule
         """
-        geom = self.geom
+        target_molecule = molecule if molecule is not None else self.molecule
+        if target_molecule is None:
+            raise ValueError("No molecule provided for single point calculation")
+        
+        geom = self.build_geometry_string(target_molecule)
         mol = psi4.geometry(geom)
         method = f"{self.method}/{self.basis_set}"
-        energy = psi4.energy(method, molecule=mol)
-        print(energy)
+        energy, wfn  = psi4.energy(method, molecule=mol, return_wfn=True)
+        
+        print(f"Single Point Energy for {target_molecule.name}: {energy} Hartree") 
+        return energy
+        
 
-    def geometry_optimization(self):
+    def geometry_optimization(self, molecule=None):
         """
         Run a geometry optimization
         """
-        geom = self.geom
-        mol = psi4.geometry(geom) 
+        target_molecule = molecule if molecule is not None else self.molecule
+        if target_molecule is None:
+            raise ValueError("No molecule provided for geometry optimization")
+        
+        geom = self.build_geometry_string(target_molecule)
+        mol = psi4.geometry(geom)
         method = f"{self.method}/{self.basis_set}"
-        scf_e = psi4.optimize(method, molecule=mol) 
+        optimized_energy = psi4.optimize(method, molecule=mol)
+        print(f"Optimized Energy for {target_molecule.name}: {optimized_energy} Hartree")
+        return optimized_energy
+        
+    
  
-    def batch_single_point_calc(self):
+    def batch_single_point_calc(self, parallel=False, n_processes=None):
         """ 
         Run single point calculations for a list of Molecule objects
+
+        If parallel is True, uses multiprocessing to speed up calculations
+
         """
-        # Start timer
+        if self.ls_of_molecules is None:
+            raise ValueError("No list of molecules provided for batch calculation")
+        
         time_start = time.time()
 
-        energies = []
-        for mol_obj in self.ls_of_molecules:
-            geom = f"{mol_obj.charge} {mol_obj.spin_mult}\n"
-            for atom, (x,y,z) in zip(mol_obj.atom_labels, mol_obj.coordinates):
-                geom += f" {remove_digits(atom)} {x:.8f} {y:.8f} {z:.8f}\n"
-            mol = psi4.geometry(geom)
-            method = f"{self.method}/{self.basis_set}"
-            energy = psi4.energy(method, molecule=mol)
-            energies.append(energy)
-            print(f"Molecule: {mol_obj.name}, Energy: {energy}")
+        if parallel:
+            results = self._batch_single_point_calc_parallel(n_processes=n_processes)
+        else:
+            results = self._single_point_calc_serial()
 
         time_end = time.time()
         print(f"Total time for batch calculations: {time_end - time_start:.2f} seconds")
+        return results
+    
+    def _single_point_calc_serial(self):
+        """ 
+        Run a batch calculation serially 
+        """
+        energies = []
+        for mol_obj in self.ls_of_molecules:
+            geom = self.build_geometry_string(mol_obj)
+            mol = psi4.geometry(geom)
+            method = f"{self.method}/{self.basis_set}"
+            energy = psi4.energy(method, molecule=mol)
+            print(f"Molecule: {mol_obj.name}, Energy: {energy} Hartree")
+            energies.append((mol_obj, energy))
         return energies
-    
-    @staticmethod
-    def single_point_calc_worker(args):
+
+    def _batch_single_point_calc_parallel(self, n_processes=None):
         """ 
-        Worker function for a parallel execution of single point calculations
-
-        Its important to set the scratch file right here
+        Run a batch calculation in parallel using multiprocessing
         """
-        mol_obj, method, basis_set = args
-        scratch = tempfile.mkdtemp(prefix="psi4_scratch_")
-        os.environ["PSI_SCRATCH"] = scratch 
-        psi4.core.set_output_file(os.devnull)
-        
-
-
-        geom = f"{mol_obj.charge} {mol_obj.spin_mult}\n"
-        for atom, (x,y,z) in zip(mol_obj.atom_labels, mol_obj.coordinates):
-            geom += f" {remove_digits(atom)} {x:.8f} {y:.8f} {z:.8f}\n"
-        mol = psi4.geometry(geom)
-        
-        energy = psi4.energy(f"{method}/{basis_set}", molecule=mol)
-
-        return (mol_obj.name, energy) 
-    
-    @staticmethod
-    def psi_worker(args):
-        import psi4 
-        import os, tempfile
-
-        mol_obj, method, basis_set = args
-        scratch = tempfile.mkdtemp(prefix="psi4_scratch_")
-        os.environ["PSI_SCRATCH"] = scratch
-        psi4.core.set_output_file(os.devnull)
-
-        geom = f"{mol_obj.charge} {mol_obj.spin_mult}\n"
-        for atom, (x,y,z) in zip(mol_obj.atom_labels, mol_obj.coordinates):
-            geom += f" {remove_digits(atom)} {x:.8f} {y:.8f} {z:.8f}\n"
-        mol = psi4.geometry(geom)
-        E = psi4.energy(f"{method}/{basis_set}", molecule=mol)
-        return (mol_obj.name, E)
-
-    def batch_single_point_calc_parallel(self, n_processes=None):
-        """ 
-        Run single point calculations for a list of molecule objects in parallel
-        
-        Note that we need to create the right scratch directory for each process to avoid conflicts
-        """
-        time_start = time.time()
-
         if n_processes is None:
-            n_processes = cpu_count()
+            n_processes = cpu_count() - 3 # Leave some CPUs free
 
         args = [(m, self.method, self.basis_set) for m in self.ls_of_molecules]
 
         with Pool(processes=n_processes) as pool:
-            results = pool.map(Psi4Calculator.psi_worker, args)
+            results = pool.map(self._psi4_worker, args)
 
-        for name, E in results:
-            print(f"Molecule: {name}, Energy: {E}")
+        for mol, E in results:
+            print(f"Molecule: {mol.name}, Energy: {E} Hartree")
+        return results
 
-        time_end = time.time()
-        print(f"Total time for parallel batch calculations: {time_end - time_start:.2f} seconds")
+    @staticmethod
+    def _psi4_worker(args):
+        """ 
+        Worker function for parallel execution of single point batch calculations
+        
+        Note each worker needs to reimport psi4 and set a temporary scratch
+        """
+        import psi4 
+        import tempfile
+        import os
 
-    
+        mol_obj, method, basis_set = args
+
+        # Set up scratch 
+        scratch = tempfile.mkdtemp(prefix="psi4_scratch_")
+        os.environ["PSI4_SCRATCH"] = scratch # Set scratch for this process
+        psi4.core.set_output_file(os.devnull) # Supress output file
+
+        try:
+            geom = f"{mol_obj.charge} {mol_obj.spin_mult}\n"
+            for atom, (x,y,z) in zip(mol_obj.atom_labels, mol_obj.coordinates):
+                geom += f" {Psi4Calculator.remove_digits(atom)} {x:.8f} {y:.8f} {z:.8f}\n"
+            mol = psi4.geometry(geom)
+            full_method = f"{method}/{basis_set}"
+            energy = psi4.energy(full_method, molecule=mol)
+            return (mol_obj, energy)
+        finally:
+            # Clean up scratch
+            import shutil
+            shutil.rmtree(scratch, ignore_errors=True)
+        

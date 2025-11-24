@@ -276,7 +276,9 @@ class ConfigSampler:
             "type": "cube",
             "size": size,
             "axes": (self.x_axis, self.y_axis, self.z_axis),
-            "corners": cube_cornes
+            "corners": cube_cornes,
+            "min_corner": np.min(cube_cornes, axis=0),
+            "max_corner": np.max(cube_cornes, axis=0)
         }
 
         if plot_cube:
@@ -291,7 +293,7 @@ class ConfigSampler:
         # This function can be implemented in the future
         pass
 
-    def place_submolecule_uniformly(self,submolecules,submol_trans_id, submol_fixed_id,num_samples=10, volume_type="cube", plot_samples=False):
+    def place_submolecule_uniformly(self,submolecules,submol_trans_id, submol_fixed_id,num_samples=10, volume_type="cube",max_attempts=None, min_distance=0.8,plot_samples=False):
         """ 
         Places a submolecule uniformly within the sampling volume
         
@@ -302,68 +304,125 @@ class ConfigSampler:
             num_samples: Number of samples to generate
             volume_type: Type of sampling volume ("cube" or "sphere")
         """
-        volume = self.sampling_volumes.get(volume_type)
+        if volume_type not in self.sampling_volumes:
+            raise ValueError(f"Volume type '{volume_type}' not found in sampling volumes")
 
-        submol_trans = submolecules[submol_trans_id]
-        submol_fixed = submolecules[submol_fixed_id]
+        if max_attempts is None:
+            max_attempts = num_samples * 10
+
+        volume = self.sampling_volumes[volume_type]
+        submol_trans = submolecules[submol_trans_id] # Submolecule to be translated
+        submol_fixed = submolecules[submol_fixed_id] # Submolecule to remain fixed
 
         sampled_mols = []
+        sucessful_samples = 0
+        attempts = 0
+        while sucessful_samples < num_samples and attempts < max_attempts:
+            attempts += 1
 
-        # Workflow:
-        # For each sample for the pick uniformly a random position in the volume
-        # Then translate the submolecule to this position
-        # Then make a new molecule object that contains both submolecules
-        for i in range(num_samples):
-            # TODO this is not optimal maybe there is a better option so work with this sampling
-            random_pos = self.random_position_cube(volume)
-            # Create a copy of the submolecule to be translated
-            submol_copy = Molecule(name=f"{submol_trans.name}_sample_{i+1}")
-            submol_copy.atom_labels = submol_trans.atom_labels.copy()
-            submol_copy.coordinates = submol_trans.coordinates.copy()
-            submol_copy.masses = submol_trans.masses.copy()
-            self.place_submolecule_position(submol_copy, random_pos)
-            # Create a new molecule object that contains both submolecules
-            new_mol = Molecule(name=f"sampled_molecule_{i+1}")
-            new_mol.add_atoms_batch(submol_fixed.atom_labels, submol_fixed.coordinates, submol_fixed.masses)
-            new_mol.add_atoms_batch(submol_copy.atom_labels, submol_copy.coordinates, submol_copy.masses)
+            # Generate a random position
+            if volume_type == "cube":
+                position = self._get_uniform_position_cube(volume)
+            else:
+                raise NotImplementedError("Only 'cube' volume type is implemented")
+            
+            # Check minimum distance
+            if not self._check_minimum_distance(position, submol_trans, submol_fixed, min_distance=min_distance):
+                print(f"Sample {attempts}: Minimum distance not respected, trying again.")
+                continue
+
+            # Create new molecule with placed submolecule
+            new_mol = self._create_placed_molecule(submol_trans, submol_fixed, position, sucessful_samples)
             sampled_mols.append(new_mol)
-
-        print(sampled_mols)
-
+            sucessful_samples += 1
+            print(f"Sample {attempts}: Successfully placed submolecule at {position}")
+        
+        if sucessful_samples < num_samples:
+            print(f"Warning: Only {sucessful_samples} samples were generated out of requested {num_samples} after {attempts} attempts.")
+        
         if plot_samples:
-            cube_cornes = volume["corners"]
-            Plotting().plot_uniform_sampling(sampled_mols,cube_cornes)
+            cube_corners = volume.get("corners", None)
+            Plotting().plot_uniform_sampling(sampled_mols, cube_corners=cube_corners)
 
         return sampled_mols
 
+            
+            
 
 
-    def random_position_cube(self, cube_volume):
+    def _get_uniform_position_cube(self,volume):
         """ 
-        Generates a random position within the cube volume
+        Uniformly samples a position within a cube volume
+        """
+        if volume["type"] != "cube":
+            raise ValueError("Volume type must be 'cube' for this method")
         
-        For this we obtain the min and max corners of the cube and take for each axis a random value between these two
+        min_corner = volume["min_corner"]
+        max_corner = volume["max_corner"]
+
+
+        in_cube_volume=False
+        while not in_cube_volume:
+            rand_x = np.random.uniform(min_corner[0], max_corner[0])
+            rand_y = np.random.uniform(min_corner[1], max_corner[1])
+            rand_z = np.random.uniform(min_corner[2], max_corner[2])
+            position = np.array([rand_x, rand_y, rand_z])
+            in_cube_volume = self._check_position_in_cube(position, volume)
+        return position
+
+    def _check_position_in_cube(self,position,volume):
+        """ 
+        Checks if a given position is inside a cube volume
         """
-        corners = cube_volume["corners"]
-        min_corner = np.min(corners, axis=0)
-        max_corner = np.max(corners, axis=0)
+        if volume["type"] != "cube":
+            raise ValueError("Volume type must be 'cube' for this method")
+        min_corner = volume["min_corner"]
+        max_corner = volume["max_corner"]
+        return np.all(position >= min_corner) and np.all(position <= max_corner)
 
-        random_x = np.random.uniform(min_corner[0], max_corner[0])
-        random_y = np.random.uniform(min_corner[1], max_corner[1])
-        random_z = np.random.uniform(min_corner[2], max_corner[2])
+    def _check_minimum_distance(self,position,submol_trans,submol_fixed,min_distance=0.8):
+        """ 
+        Checks if the minimum distance between two submolecules is respected
+        """ 
+        # TODO Implement also Center of Mass here
+        trans_center = np.mean(submol_trans.coordinates, axis=0)
+        translation_vector =  position - trans_center
+        translated_coords = submol_trans.coordinates + translation_vector
 
-        return np.array([random_x, random_y, random_z])
+        for fixed_atom in submol_fixed.coordinates:
+            for trans_atom in translated_coords:
+                distance = np.linalg.norm(fixed_atom - trans_atom)
+                if distance < min_distance:
+                    return False
+                
+        return True
     
-    def place_submolecule_position(self,submolecule,position):
+    def _create_placed_molecule(self,submol_trans,submol_fixed,position,sample_id):
+        """ 
+        Creates a new Molecule object with the placed submolecule
+        """ 
+        submol_copy = Molecule(name=f"{submol_trans.name}_sample_{sample_id}")
+        submol_copy.atom_labels = submol_trans.atom_labels.copy()
+        submol_copy.coordinates = submol_trans.coordinates.copy()
+        submol_copy.masses = submol_trans.masses.copy()
+
+        # Place the copy at the target position
+        self._place_submolecule_at_position(submol_copy, position)
+
+        # Create new combined molecule
+        new_mol = Molecule(name=f"sampled_molecule_{sample_id}")
+        new_mol.add_atoms_batch(submol_fixed.atom_labels, submol_fixed.coordinates)
+        new_mol.add_atoms_batch(submol_copy.atom_labels, submol_copy.coordinates)
+        return new_mol
+    
+    def _place_submolecule_at_position(self,submolecule, position):
         """
-        Places a submolecule at a given position in space
+        Places the submolecule at the given position
         """
-        # TODO maybe use com here
-        translation_vector = position - np.mean(submolecule.coordinates, axis=0)
+        # TODO Implement center of mass here as well
+        submol_center = np.mean(submolecule.coordinates, axis=0)
+        translation_vector = position - submol_center
         submolecule.coordinates += translation_vector
-
-
-
 
 
     

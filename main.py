@@ -16,6 +16,7 @@ from molecule_class import Molecule
 from transformations import Transformation, ConfigSampler
 from plotting import Plotting
 from psi4_interface import Psi4Calculator
+from cluster import MolecularCluster
 
 
 
@@ -39,23 +40,26 @@ if __name__ == "__main__":
     molecule = Molecule.from_xyz(xyz_content)
     cov_bonds, hydrogen_bonds = molecule.degree_of_covalence()
     submolecules = molecule.find_submolecules(cov_bonds)
-    
-    #Plotting().plot_molecule_3d(molecule, cov_bonds=[(bond[0], bond[1]) for bond in cov_bonds], hydrogen_bonds=[(bond[0], bond[1]) for bond in hydrogen_bonds])
+    submolecules_labels = [submol.atom_labels for submol in submolecules]
     transformation = Transformation() 
     
     ref_frame, center_point = transformation.set_reference_frame_submolecule(submolecules = submolecules, submol_index=0, molecule=molecule, method="com", print_info=False, plot_frame=True)
 
+    calculator = Psi4Calculator(molecule=molecule, method="scf", basis_set="sto-3g", memory="400 MB", num_threads=1)
+    calculator.single_point_calc()
 
     config_sampler = ConfigSampler(molecule, ref_frame, center_point)
     
-    sampling_cube = config_sampler.create_cube_volume(plot_cube=True)
+    sampling_cube = config_sampler.create_cube_volume(plot_cube=True, size=5)
 
-    sampled_mols = config_sampler.place_submolecule_uniformly(submolecules, submol_trans_id=1,submol_fixed_id=0, num_samples=10, volume_type="cube", plot_samples=True)
+    sampled_mols = config_sampler.place_submolecule_uniformly(submolecules, submol_trans_id=1,submol_fixed_id=0, num_samples=100, volume_type="cube", plot_samples=True)
 
     calculator = Psi4Calculator(ls_of_molecules=sampled_mols)
+    results = calculator.batch_single_point_calc(parallel=True,n_processes=8)
 
-    calculator.batch_single_point_calc()
-    calculator.batch_single_point_calc_parallel(n_processes=5)
-    
-    #calculator.build_geometry_string()
-    #calculator.geometry_optimization()
+    # Initialize Cluster Analysis
+    energies = [energy for mol, energy in results]
+    cluster_analysis = MolecularCluster(sampled_molecules=sampled_mols, energies=energies)
+    cluster_analysis.calculate_com_features(submol_atom_labels=submolecules_labels)
+    cluster_analysis.cluster_kmeans(n_clusters=3)
+    cluster_analysis.visualize_cluster_com()

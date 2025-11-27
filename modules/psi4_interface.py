@@ -4,7 +4,7 @@ from multiprocessing import Pool, cpu_count
 import tempfile
 import os
 import time
-
+from molecule_class import Molecule
 
 
 class Psi4Calculator:
@@ -83,9 +83,14 @@ class Psi4Calculator:
         mol = psi4.geometry(geom)
         method = f"{self.method}/{self.basis_set}"
         optimized_energy = psi4.optimize(method, molecule=mol)
+        # Update molecule coordinates after optimization
+        optimized_coords = mol.save_string_xyz()
+        new_molecule = Molecule.from_xyz(optimized_coords, name=target_molecule.name + "_optimized")
+        target_molecule.coordinates = new_molecule.coordinates
         print(f"Optimized Energy for {target_molecule.name}: {optimized_energy} Hartree")
         return optimized_energy
-        
+
+             
     
  
     def batch_single_point_calc(self, parallel=False, n_processes=None):
@@ -139,6 +144,96 @@ class Psi4Calculator:
             print(f"Molecule: {mol.name}, Energy: {E} Hartree")
         return results
 
+    def batch_geometry_optimization(self,parallel=False,n_processes=None):
+        """ 
+        Run geometry optimizations for a list of Molecule objects
+        
+        If parallel is True, uses multiprocessing to speed up calculations
+        """
+        if self.ls_of_molecules is None:
+            raise ValueError("No list of molecules provided for batch geometry optimization")
+        
+        time_start = time.time()
+
+        if parallel:
+            results = self._batch_geometry_optimization_parallel(n_processes=n_processes)
+        else:
+            results = self._geometry_optimization_serial()
+
+        time_end = time.time()
+        print(f"Total time for batch geometry optimizations: {time_end - time_start:.2f} seconds")
+        return results
+    
+    def _geometry_optimization_serial(self):
+        """
+        Perform a batch geometry optimization serially
+        """
+
+        results = []
+        for mol_obj in self.ls_of_molecules:
+            geom = self.build_geometry_string(mol_obj)
+            mol = psi4.geometry(geom)
+            method = f"{self.method}/{self.basis_set}"
+            optimized_energy = psi4.optimize(method, molecule=mol)
+            # Update molecule coordinates after optimization
+            optimized_coords = mol.save_string_xyz()
+            new_molecule = Molecule.from_xyz(optimized_coords, name=mol_obj.name + "_optimized")
+            mol_obj.coordinates = new_molecule.coordinates
+            print(f"Molecule: {mol_obj.name}, Optimized Energy: {optimized_energy} Hartree")
+            results.append((mol_obj, optimized_energy))
+        return results
+    
+    def _batch_geometry_optimization_parallel(self, n_processes=None):
+        """
+        Performs a batch geometry optimization in parallel using multiprocessing
+        """
+        if n_processes is None:
+            n_processes = cpu_count() - 3 # Leave some CPUs free
+
+        args = [(m, self.method, self.basis_set) for m in self.ls_of_molecules]
+
+        with Pool(processes=n_processes) as pool:
+            results = pool.map(self._psi4_worker_geom_opt, args)
+
+    
+    @staticmethod
+    def _psi4_worker_geom_opt(args):
+        """ 
+        Worker function for parallel execution of geometry optimizations
+        
+        Note each worker needs to reimport psi4 and set a temporary scratch
+        """
+        import tempfile
+        import os
+        import shutil
+        mol_obj, method, basis_set = args
+
+        # Set up scratch 
+        scratch = tempfile.mkdtemp(prefix="psi4_scratch_")
+        os.environ["PSI4_SCRATCH"] = scratch # Set scratch for this process
+        os.environ["PSI_SCRATCH"] = scratch # Set scratch for this process
+        import psi4
+        psi4.core.set_output_file(os.devnull) # Supress output file
+
+        try:
+            geom = f"{mol_obj.charge} {mol_obj.spin_mult}\n"
+            for atom, (x,y,z) in zip(mol_obj.atom_labels, mol_obj.coordinates):
+                geom += f" {Psi4Calculator.remove_digits(atom)} {x:.8f} {y:.8f} {z:.8f}\n"
+            mol = psi4.geometry(geom)
+            full_method = f"{method}/{basis_set}"
+            optimized_energy = psi4.optimize(full_method, molecule=mol)
+            # Update molecule coordinates after optimization
+            optimized_coords = mol.save_string_xyz()
+            new_molecule = Molecule.from_xyz(optimized_coords, name=mol_obj.name + "_optimized")
+            mol_obj.coordinates = new_molecule.coordinates
+            return (mol_obj, optimized_energy)
+        finally:
+            # Clean up scratch
+            import shutil
+            shutil.rmtree(scratch, ignore_errors=True)
+            psi4.core.clean() # Clean up psi4 core for this worker
+
+
     @staticmethod
     def _psi4_worker(args):
         """ 
@@ -146,16 +241,22 @@ class Psi4Calculator:
         
         Note each worker needs to reimport psi4 and set a temporary scratch
         """
-        import psi4 
         import tempfile
         import os
+        import shutil
+
 
         mol_obj, method, basis_set = args
 
         # Set up scratch 
         scratch = tempfile.mkdtemp(prefix="psi4_scratch_")
         os.environ["PSI4_SCRATCH"] = scratch # Set scratch for this process
+        os.environ["PSI_SCRATCH"] = scratch # Set scratch for this process
+
+        # Initialization of psi4 now
+        import psi4
         psi4.core.set_output_file(os.devnull) # Supress output file
+
 
         try:
             geom = f"{mol_obj.charge} {mol_obj.spin_mult}\n"
@@ -169,4 +270,5 @@ class Psi4Calculator:
             # Clean up scratch
             import shutil
             shutil.rmtree(scratch, ignore_errors=True)
+            psi4.core.clean() # Clean up psi4 core for this worker
         

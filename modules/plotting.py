@@ -424,3 +424,43 @@ class Plotting:
         plt.savefig("cylinder_sampling_3d_plot.png")
         #plt.show()
         plt.close()
+
+    # Write a main plott sampled molecules function which checks the given sampling volume
+    def plot_sampled_molecules(self,sampled_molecules,sampling_type="Sphere", radius=None, center_point=None):
+        """  
+        Plots the sampled molecules and the sampling volume in 3D
+
+        Distinguishes between different sampling types
+        """
+
+        if sampling_type == "Sphere":
+            # Plot sphere with radius around center point
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            # Create sphere surface
+            u = np.linspace(0, 2 * np.pi, 100)
+            v = np.linspace(0, np.pi, 100)
+            x = radius * np.outer(np.cos(u), np.sin(v)) + center_point[0]
+            y = radius * np.outer(np.sin(u), np.sin(v)) + center_point[1]
+            z = radius * np.outer(np.ones(np.size(u)), np.cos(v)) + center_point[2]
+            ax.plot_surface(x, y, z, color='cyan', alpha=0.3)
+            # Plot sampled molecules
+            for mol in sampled_molecules:
+                coords = mol.coordinates
+                elements = mol.atom_labels
+                # Remove digits from element symbols
+                elements = [''.join(filter(str.isalpha, el)) for el in elements]
+                colors = [self.color_dict.get(el, "green") for el in elements]
+                sizes = [self.size_dict.get(el, 70) for el in elements]
+
+                for i, (x, y, z) in enumerate(coords):
+                    ax.scatter(x, y, z, color=colors[i], s=sizes[i], alpha=0.5)
+            ax.set_xlabel('X (Å)')
+            ax.set_ylabel('Y (Å)')
+            ax.set_zlabel('Z (Å)')
+            plt.title("3D Sampled Molecules in Sphere")
+            plt.savefig("sampled_molecules_sphere_3d_plot.png")
+            #plt.show()
+            plt.close()
+
+    

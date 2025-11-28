@@ -222,6 +222,21 @@ class Molecule:
             masses = [self.get_atomic_mass(elem) for elem in atom_labels_without_digits]
             self.masses = np.array(masses)
 
+    def get_mass_by_label(self,atom_label: str) -> float:
+        """ 
+        Get atomic mass of atom by its label
+        """
+        index = np.where(self.atom_labels == atom_label)[0]
+        if index.size == 0:
+            raise ValueError(f"Atom label {atom_label} not found in molecule")
+        return self.masses[index[0]]
+
+    def parse_psi4_xyz(self, psi4_xyz: str) -> None:
+        """ 
+        Function to parse the Psi4 xyz format and initialize a new molecule object
+        """
+
+
 class SubMolecule(Molecule):
     """   
     A subclass representing a submolecule within a larger molecule
@@ -251,4 +266,12 @@ class SubMolecule(Molecule):
         Returns the list of atom labels in the submolecule
         """
         return self.atom_labels.tolist()
+    
+    def get_index_in_parent(self) -> List[int]:
+        """ 
+        Returns the indices of the submolecule's atom in the parent molecule
+        """
+        parent_labels = self.parent.atom_labels.tolist()
+        indices = [parent_labels.index(label) for label in self.atom_labels]
+        return indices
     

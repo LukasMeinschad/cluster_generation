@@ -31,6 +31,22 @@ class Transformation:
 
         return center_point
     
+    def center_point_coords(self,coords: np.ndarray, masses: Optional[np.ndarray] = None, method: str = "centroid") -> np.ndarray:
+        """ 
+        Determine the center point for a set of coordinates 
+        """
+        
+        if method == "centroid":
+            center_point = np.mean(coords,axis=0)
+        elif method == "com":
+            if masses is None:
+                raise ValueError("Masses must be provided to calculate center of mass")
+            center_point = np.sum(masses[:, np.newaxis] * coords, axis=0) / np.sum(masses)
+        else:
+            raise ValueError("Method must be 'centroid' or 'com'")
+
+        return center_point
+    
     def com(self,molecule: Union["Molecule", "Submolecule"]) -> np.ndarray:
         """ 
          Calculates the center of mass for a given molecule or submolecule
@@ -180,7 +196,51 @@ class Transformation:
             Plotting().plot_reference_frame(molecule, reference_frame=ref_frame, reference_frame_origin=np.zeros(3))
         return ref_frame, center_point
     
-     
+
+    def set_reference_frame_labels(self,
+                                   molecule: Union["Molecule", "SubMolecule"],
+                                   atom_labels=List[int],
+                                   method: str = "centroid",
+                                   print_info: bool = False,
+                                   plot_frame: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+        """ 
+        Sets the reference frame to a molecules center and principal axes based on given atom labels
+        """ 
+        if len(atom_labels) < 3:
+            raise ValueError("At least 3 atom labels must be provided to define a reference frame")
+        # Extract coordinates of the specified atom labels
+        label_coords = []
+        label_masses = []
+        for label in atom_labels:
+            coord = molecule.get_coords_by_label(label)
+            label_coords.append(coord)
+            label_masses.append(molecule.get_mass_by_label(label))
+        label_coords = np.array(label_coords)
+        label_masses = np.array(label_masses)
+        if method == "centroid":
+            center_point = self.center_point_coords(label_coords, method=method)
+        elif method == "com":
+            center_point = self.center_point_coords(label_coords, masses=label_masses, method=method)
+        
+        centered_coords = label_coords - center_point
+        # Update molecule coordinates
+        molecule.coordinates = molecule.coordinates - center_point
+        # Calculate inertia tensor and principal axes
+        I = self.inertia_tensor(centered_coords,label_masses)
+        eigval_I, eigvec_I = np.linalg.eigh(I)
+        ref_frame = np.array([eigvec_I[:,0], eigvec_I[:,1], eigvec_I[:,2]]).T
+        if print_info:
+            print(f"Molecule center (based on labels {atom_labels}): {center_point}")
+            print(f"Inertia tensor eigenvalues: {eigval_I}")
+            print(f"Reference frame axes:")
+            print(f"X: {ref_frame[:,0]}")
+            print(f"Y: {ref_frame[:,1]}") 
+            print(f"Z: {ref_frame[:,2]}")
+        if plot_frame:
+            Plotting().plot_reference_frame(molecule, reference_frame=ref_frame, reference_frame_origin=np.zeros(3))
+        return ref_frame, center_point
+
+        
 
     @classmethod
     def inertia_tensor(cls, centered_coords,masses):

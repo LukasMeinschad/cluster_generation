@@ -3,6 +3,9 @@ from typing import List, Optional, Tuple, Union
 import matplotlib.pyplot as plt
 from plotting import Plotting
 from molecule_class import Molecule
+import timeit
+from transformations import Transformation
+
 
 class ConfigSampler:
     """
@@ -112,21 +115,60 @@ class ConfigSampler:
 
         For this we sample in spherical coordinates (with distribution correction for uniformity) and then convert to cartesian
         """
-        phi = np.random.uniform(0, 2 * np.pi, num_points)  # azimuthal angle
-        u = np.random.uniform(-1, 1, num_points)  # cos(polar angle)
-        theta = np.arccos(u)  # polar angle
-        r = radius * np.cbrt(np.random.random(num_points))  # cube-root for uniform distribution in volume
 
-        x = r * np.sin(theta) * np.cos(phi)
-        y = r * np.sin(theta) * np.sin(phi)
-        z = r * np.cos(theta)
+        # Precompute random points
+        random_data = np.random.random((num_points, 3))
+
+        phi = 2 * np.pi * random_data[:,0]  # azimuthal angle
+        u = 2 * random_data[:,1] - 1  # cos(polar angle)
+        r = radius *  np.cbrt(random_data[:,2])  # cube-root for uniform distribution in volume
+
+        # Precompute sqrt(1-u^2) for sin(theta)
+        sin_theta = np.sqrt(1 - u**2)
+
+        cos_phi = np.cos(phi)
+        sin_phi = np.sin(phi)
+
+        x = r * sin_theta * cos_phi
+        y = r * sin_theta * sin_phi
+        z = r * u
 
         pts_local = np.column_stack((x, y, z)) + self.center_point
+
 
         if plot_sampling:
             raise NotImplementedError("3D sphere sampling plot not implemented yet")
 
         return pts_local 
+    
+    def test_sampling_speed(self, sampling_type: str):
+        """  
+        Helper function to test the speed of the different sampling functions implemented
+        """
+        if sampling_type == "sphere":
+            pts = [1000, 10000, 100000,]
+            for n in pts:
+                start_time = timeit.default_timer()
+                self.sample_sphere(radius=5.0, num_points=n)
+                end_time = timeit.default_timer()
+                print(f"Sphere sampling of {n} points took {end_time - start_time:.6f} seconds")
+
+    def generate_spherical_grid(self,grid_dim=4):
+        """ 
+        Generates a spherical grid of points which are later used for sampling the rotational space of a submolecule//molecule
+
+        returns:
+        A list of unit vectors representing points on the sphere
+        """  
+        phi = np.linspace(0, np.pi, grid_dim)
+        theta = np.linspace(0, 2 * np.pi, grid_dim)
+        phi_grid, theta_grid = np.meshgrid(phi, theta)
+        x = np.sin(phi_grid) * np.cos(theta_grid)
+        y = np.sin(phi_grid) * np.sin(theta_grid)
+        z = np.cos(phi_grid)
+        unit_vectors = np.column_stack([x.ravel(), y.ravel(), z.ravel()])
+        return unit_vectors
+        
     
     def sample_submol_cone(self,
                            submolecule,
@@ -156,6 +198,127 @@ class ConfigSampler:
             new_mol.coordinates = new_coords
             sampled_mols.append(new_mol)
         return sampled_mols 
+
+    def _generate_template_molecule(self, mol):
+        """ 
+        Creates a template molecule with shared properties for sampling
+        """
+        template_mol = Molecule(name="template_molecule")
+        template_mol.atom_labels = mol.atom_labels.copy()
+        template_mol.masses = mol.masses.copy()
+        return template_mol
+
+
+    def sample_submol_sphere(self, 
+                         submolecule: "SubMolecule",
+                         radius: float,
+                         num_points: int = 100,
+                         rotation: bool = True,
+                         rotational_grid_dim: int = 4,
+                         plot_sampling: bool = False) -> List:
+        """ 
+        Samples a submolecule within a spherical volume, the other atoms in the molecule remain fixed
+
+        If rotation is True, for each translation a set of rotations will be generated
+        """ 
+    
+        mol = submolecule.parent
+        submol_indices = submolecule.get_index_in_parent()
+        submol_center = np.mean(submolecule.coordinates, axis=0)
+
+        # Sample points already at self.center_point 
+        sampled_points = self.sample_sphere(radius, num_points)
+    
+        # Create template molecule without coordinates (shared properties)
+        template_mol = self._generate_template_molecule(mol)
+
+        # Calculate translation vectors for submolecule
+        translation_vectors = sampled_points - submol_center
+
+        if rotation:
+            # Generate rotational grid
+            rotation_unit_vectors = self.generate_spherical_grid(grid_dim=rotational_grid_dim)
+
+            # Compute reference frame once
+            trans_ref_frame, submol_center = Transformation().set_reference_frame_submolecule(
+                submolecule, mol, method="com", print_info=False, plot_frame=True
+            )
+
+            # Allocation of total list, much faster than appending
+            total_mols = len(rotation_unit_vectors) * len(translation_vectors)
+            sampled_mols = [None] * total_mols
+
+            # Precompute base coordinates and mask
+            base_coords = mol.coordinates.copy()
+            mask = np.zeros(base_coords.shape[0], dtype=bool)
+            mask[submol_indices] = True
+
+            mol_counter = 0
+            for rot_idx, rot_vec in enumerate(rotation_unit_vectors):
+                # Rotate submolecule once per rotation vector
+                rotated_coords = Transformation().rotate_molecule_to_point(
+                    submolecule,
+                    center_point=submol_center,
+                    ref_frame=trans_ref_frame,
+                    target_point=rot_vec + submol_center
+                )
+
+                # Apply all translations for this rotation
+                for trans_idx, translation_vector in enumerate(translation_vectors):
+                    new_mol = Molecule(name=f"sphere_sample_rot{rot_idx}_trans{trans_idx}")
+                    new_mol.atom_labels = template_mol.atom_labels
+                    new_mol.masses = template_mol.masses
+
+                    # Efficient coordinate assignment
+                    new_coords = base_coords.copy()
+                    new_coords[mask] = rotated_coords + translation_vector
+                    new_mol.coordinates = new_coords
+
+                    sampled_mols[mol_counter] = new_mol
+                    mol_counter += 1
+        else:
+            # Use optimized batch generation
+            sampled_mols = self._generate_molecules_batch_optimized(
+                template_mol, mol.coordinates, submol_indices, translation_vectors
+            )
+
+        if plot_sampling:
+            Plotting().plot_sampled_molecules(
+                sampled_mols, sampling_type="Sphere", center_point=self.center_point, radius=radius
+            )
+        return sampled_mols
+
+    def _generate_molecules_batch_optimized(self, template, base_coords, submol_indices, translation_vectors):
+        """ 
+        Optimized helper function for batch molecule generation
+        """
+        num_points = len(translation_vectors)
+    
+        # Create mask for efficient coordinate updates
+        mask = np.zeros(base_coords.shape[0], dtype=bool)
+        mask[submol_indices] = True
+    
+        # Extract submolecule coordinates once
+        submolecule_coords = base_coords[submol_indices]
+    
+        # Pre-allocate list
+        sampled_mols = [None] * num_points
+    
+        for i in range(num_points):
+            new_mol = Molecule(name=f"sphere_sample_{i}")
+
+            # Copy shared properties (these are references, not deep copies)
+            new_mol.atom_labels = template.atom_labels
+            new_mol.masses = template.masses
+
+            # Efficient coordinate assignment using the mask
+            new_coords = base_coords.copy()
+            new_coords[mask] = submolecule_coords + translation_vectors[i]
+            new_mol.coordinates = new_coords
+
+            sampled_mols[i] = new_mol
+    
+        return sampled_mols
 
 
     # TODO REFACTOR BELOW HERE

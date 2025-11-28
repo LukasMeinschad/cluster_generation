@@ -1,4 +1,503 @@
 ==================================================
-Cluster Generation Log - 2025-11-27 23:14:36
+Cluster Generation Log - 2025-11-28 23:19:11
 ==================================================
+
+--------------------------------------------------
+Molecule Information - 2025-11-28 23:19:11
+--------------------------------------------------
+Number of Atoms: 6
+Atom Labels and Coordinates:
+O1: 0.201314, -0.134199, -0.381182
+H1: 1.108269, 0.030545, -0.168985
+H2: -0.263863, -0.069249, 0.433908
+O2: 3.065134, 0.522246, 0.059028
+H3: 3.258178, 1.291057, -0.449968
+H4: 3.669082, -0.140400, -0.230019
+Covalent Bonds (4):
+  O1 - H1 (Degree: 1.004)
+  O1 - H2 (Degree: 1.010)
+  O2 - H3 (Degree: 1.008)
+  O2 - H4 (Degree: 1.008)
+Hydrogen Bonds (1):
+  H1 - O2 (Degree: 0.321)
+
+--------------------------------------------------
+SCF Batch Calculation Results - 2025-11-28 23:19:26
+--------------------------------------------------
+Sampled Molecule 1: 
+SCF Energy: -152.442025 Hartree
+
+Sampled Molecule 2: 
+SCF Energy: -152.439075 Hartree
+
+Sampled Molecule 3: 
+SCF Energy: -152.462214 Hartree
+
+Sampled Molecule 4: 
+SCF Energy: -152.462861 Hartree
+
+Sampled Molecule 5: 
+SCF Energy: -151.293776 Hartree
+
+Sampled Molecule 6: 
+SCF Energy: -152.456493 Hartree
+
+Sampled Molecule 7: 
+SCF Energy: -152.464420 Hartree
+
+Sampled Molecule 8: 
+SCF Energy: -152.434969 Hartree
+
+Sampled Molecule 9: 
+SCF Energy: -152.409492 Hartree
+
+Sampled Molecule 10: 
+SCF Energy: -152.306300 Hartree
+
+Sampled Molecule 11: 
+SCF Energy: -152.468666 Hartree
+
+Sampled Molecule 12: 
+SCF Energy: -152.447458 Hartree
+
+Sampled Molecule 13: 
+SCF Energy: -152.465228 Hartree
+
+Sampled Molecule 14: 
+SCF Energy: -152.458797 Hartree
+
+Sampled Molecule 15: 
+SCF Energy: -151.096966 Hartree
+
+Sampled Molecule 16: 
+SCF Energy: -152.427874 Hartree
+
+Sampled Molecule 17: 
+SCF Energy: -152.459032 Hartree
+
+Sampled Molecule 18: 
+SCF Energy: -152.456849 Hartree
+
+Sampled Molecule 19: 
+SCF Energy: -150.116163 Hartree
+
+Sampled Molecule 20: 
+SCF Energy: -152.443592 Hartree
+
+Sampled Molecule 21: 
+SCF Energy: -152.463333 Hartree
+
+Sampled Molecule 22: 
+SCF Energy: -152.457789 Hartree
+
+Sampled Molecule 23: 
+SCF Energy: -152.450766 Hartree
+
+Sampled Molecule 24: 
+SCF Energy: -150.917300 Hartree
+
+Sampled Molecule 25: 
+SCF Energy: -152.461251 Hartree
+
+Sampled Molecule 26: 
+SCF Energy: -152.419779 Hartree
+
+Sampled Molecule 27: 
+SCF Energy: -152.459383 Hartree
+
+Sampled Molecule 28: 
+SCF Energy: -152.444178 Hartree
+
+Sampled Molecule 29: 
+SCF Energy: -152.466183 Hartree
+
+Sampled Molecule 30: 
+SCF Energy: -152.271995 Hartree
+
+Sampled Molecule 31: 
+SCF Energy: -152.459480 Hartree
+
+Sampled Molecule 32: 
+SCF Energy: -152.458773 Hartree
+
+Sampled Molecule 33: 
+SCF Energy: -152.444848 Hartree
+
+Sampled Molecule 34: 
+SCF Energy: -151.262935 Hartree
+
+Sampled Molecule 35: 
+SCF Energy: -152.463102 Hartree
+
+Sampled Molecule 36: 
+SCF Energy: -152.425076 Hartree
+
+Sampled Molecule 37: 
+SCF Energy: -152.466084 Hartree
+
+Sampled Molecule 38: 
+SCF Energy: -152.460819 Hartree
+
+Sampled Molecule 39: 
+SCF Energy: -152.447600 Hartree
+
+Sampled Molecule 40: 
+SCF Energy: -152.274896 Hartree
+
+Sampled Molecule 41: 
+SCF Energy: -152.462214 Hartree
+
+Sampled Molecule 42: 
+SCF Energy: -152.442025 Hartree
+
+Sampled Molecule 43: 
+SCF Energy: -152.439075 Hartree
+
+Sampled Molecule 44: 
+SCF Energy: -152.462861 Hartree
+
+Sampled Molecule 45: 
+SCF Energy: -152.434969 Hartree
+
+Sampled Molecule 46: 
+SCF Energy: -151.293776 Hartree
+
+Sampled Molecule 47: 
+SCF Energy: -152.464420 Hartree
+
+Sampled Molecule 48: 
+SCF Energy: -152.456493 Hartree
+
+Sampled Molecule 49: 
+SCF Energy: -152.409492 Hartree
+
+Sampled Molecule 50: 
+SCF Energy: -152.306300 Hartree
+
+Sampled Molecule 51: 
+SCF Energy: -152.458625 Hartree
+
+Sampled Molecule 52: 
+SCF Energy: -152.451097 Hartree
+
+Sampled Molecule 53: 
+SCF Energy: -152.463362 Hartree
+
+Sampled Molecule 54: 
+SCF Energy: -152.460874 Hartree
+
+Sampled Molecule 55: 
+SCF Energy: -152.423007 Hartree
+
+Sampled Molecule 56: 
+SCF Energy: -152.464808 Hartree
+
+Sampled Molecule 57: 
+SCF Energy: -152.458078 Hartree
+
+Sampled Molecule 58: 
+SCF Energy: -152.262739 Hartree
+
+Sampled Molecule 59: 
+SCF Energy: -152.024918 Hartree
+
+Sampled Molecule 60: 
+SCF Energy: -152.456974 Hartree
+
+Sampled Molecule 61: 
+SCF Energy: -152.457524 Hartree
+
+Sampled Molecule 62: 
+SCF Energy: -152.465835 Hartree
+
+Sampled Molecule 63: 
+SCF Energy: -151.004993 Hartree
+
+Sampled Molecule 64: 
+SCF Energy: -152.466421 Hartree
+
+Sampled Molecule 65: 
+SCF Energy: -152.421114 Hartree
+
+Sampled Molecule 66: 
+SCF Energy: -152.465635 Hartree
+
+Sampled Molecule 67: 
+SCF Energy: -152.464196 Hartree
+
+Sampled Molecule 68: 
+SCF Energy: -152.439951 Hartree
+
+Sampled Molecule 69: 
+SCF Energy: -152.291316 Hartree
+
+Sampled Molecule 70: 
+SCF Energy: -152.459480 Hartree
+
+Sampled Molecule 71: 
+SCF Energy: -152.458773 Hartree
+
+Sampled Molecule 72: 
+SCF Energy: -152.444848 Hartree
+
+Sampled Molecule 73: 
+SCF Energy: -152.425076 Hartree
+
+Sampled Molecule 74: 
+SCF Energy: -152.463102 Hartree
+
+Sampled Molecule 75: 
+SCF Energy: -151.262935 Hartree
+
+Sampled Molecule 76: 
+SCF Energy: -152.460819 Hartree
+
+Sampled Molecule 77: 
+SCF Energy: -152.466084 Hartree
+
+Sampled Molecule 78: 
+SCF Energy: -152.447600 Hartree
+
+Sampled Molecule 79: 
+SCF Energy: -152.274896 Hartree
+
+Sampled Molecule 80: 
+SCF Energy: -152.442025 Hartree
+
+Sampled Molecule 81: 
+SCF Energy: -152.462214 Hartree
+
+Sampled Molecule 82: 
+SCF Energy: -152.439075 Hartree
+
+Sampled Molecule 83: 
+SCF Energy: -152.462861 Hartree
+
+Sampled Molecule 84: 
+SCF Energy: -152.434969 Hartree
+
+Sampled Molecule 85: 
+SCF Energy: -151.293776 Hartree
+
+Sampled Molecule 86: 
+SCF Energy: -152.464420 Hartree
+
+Sampled Molecule 87: 
+SCF Energy: -152.456493 Hartree
+
+Sampled Molecule 88: 
+SCF Energy: -152.306300 Hartree
+
+Sampled Molecule 89: 
+SCF Energy: -152.409492 Hartree
+
+Sampled Molecule 90: 
+SCF Energy: -152.457510 Hartree
+
+Sampled Molecule 91: 
+SCF Energy: -152.449725 Hartree
+
+Sampled Molecule 92: 
+SCF Energy: -152.454963 Hartree
+
+Sampled Molecule 93: 
+SCF Energy: -151.086453 Hartree
+
+Sampled Molecule 94: 
+SCF Energy: -152.462230 Hartree
+
+Sampled Molecule 95: 
+SCF Energy: -152.424621 Hartree
+
+Sampled Molecule 96: 
+SCF Energy: -152.468419 Hartree
+
+Sampled Molecule 97: 
+SCF Energy: -152.461059 Hartree
+
+Sampled Molecule 98: 
+SCF Energy: -152.251374 Hartree
+
+Sampled Molecule 99: 
+SCF Energy: -152.324794 Hartree
+
+Sampled Molecule 100: 
+SCF Energy: -152.457462 Hartree
+
+Sampled Molecule 101: 
+SCF Energy: -152.452196 Hartree
+
+Sampled Molecule 102: 
+SCF Energy: -152.455774 Hartree
+
+Sampled Molecule 103: 
+SCF Energy: -151.221160 Hartree
+
+Sampled Molecule 104: 
+SCF Energy: -152.452168 Hartree
+
+Sampled Molecule 105: 
+SCF Energy: -152.428364 Hartree
+
+Sampled Molecule 106: 
+SCF Energy: -152.457420 Hartree
+
+Sampled Molecule 107: 
+SCF Energy: -152.463872 Hartree
+
+Sampled Molecule 108: 
+SCF Energy: -152.429655 Hartree
+
+Sampled Molecule 109: 
+SCF Energy: -152.024293 Hartree
+
+Sampled Molecule 110: 
+SCF Energy: -152.459480 Hartree
+
+Sampled Molecule 111: 
+SCF Energy: -152.458773 Hartree
+
+Sampled Molecule 112: 
+SCF Energy: -152.444848 Hartree
+
+Sampled Molecule 113: 
+SCF Energy: -151.262935 Hartree
+
+Sampled Molecule 114: 
+SCF Energy: -152.463102 Hartree
+
+Sampled Molecule 115: 
+SCF Energy: -152.425076 Hartree
+
+Sampled Molecule 116: 
+SCF Energy: -152.460819 Hartree
+
+Sampled Molecule 117: 
+SCF Energy: -152.466084 Hartree
+
+Sampled Molecule 118: 
+SCF Energy: -152.447600 Hartree
+
+Sampled Molecule 119: 
+SCF Energy: -152.274896 Hartree
+
+Sampled Molecule 120: 
+SCF Energy: -152.462214 Hartree
+
+Sampled Molecule 121: 
+SCF Energy: -152.442025 Hartree
+
+Sampled Molecule 122: 
+SCF Energy: -152.439075 Hartree
+
+Sampled Molecule 123: 
+SCF Energy: -151.293776 Hartree
+
+Sampled Molecule 124: 
+SCF Energy: -152.462861 Hartree
+
+Sampled Molecule 125: 
+SCF Energy: -152.434969 Hartree
+
+Sampled Molecule 126: 
+SCF Energy: -152.456493 Hartree
+
+Sampled Molecule 127: 
+SCF Energy: -152.409492 Hartree
+
+Sampled Molecule 128: 
+SCF Energy: -152.464420 Hartree
+
+Sampled Molecule 129: 
+SCF Energy: -152.306300 Hartree
+
+Sampled Molecule 130: 
+SCF Energy: -152.468666 Hartree
+
+Sampled Molecule 131: 
+SCF Energy: -152.447458 Hartree
+
+Sampled Molecule 132: 
+SCF Energy: -152.465228 Hartree
+
+Sampled Molecule 133: 
+SCF Energy: -151.096966 Hartree
+
+Sampled Molecule 134: 
+SCF Energy: -152.458797 Hartree
+
+Sampled Molecule 135: 
+SCF Energy: -152.427874 Hartree
+
+Sampled Molecule 136: 
+SCF Energy: -152.459032 Hartree
+
+Sampled Molecule 137: 
+SCF Energy: -152.456849 Hartree
+
+Sampled Molecule 138: 
+SCF Energy: -152.443592 Hartree
+
+Sampled Molecule 139: 
+SCF Energy: -150.116163 Hartree
+
+Sampled Molecule 140: 
+SCF Energy: -152.463333 Hartree
+
+Sampled Molecule 141: 
+SCF Energy: -152.457789 Hartree
+
+Sampled Molecule 142: 
+SCF Energy: -152.450766 Hartree
+
+Sampled Molecule 143: 
+SCF Energy: -150.917300 Hartree
+
+Sampled Molecule 144: 
+SCF Energy: -152.461251 Hartree
+
+Sampled Molecule 145: 
+SCF Energy: -152.419779 Hartree
+
+Sampled Molecule 146: 
+SCF Energy: -152.459383 Hartree
+
+Sampled Molecule 147: 
+SCF Energy: -152.466183 Hartree
+
+Sampled Molecule 148: 
+SCF Energy: -152.444178 Hartree
+
+Sampled Molecule 149: 
+SCF Energy: -152.271995 Hartree
+
+Sampled Molecule 150: 
+SCF Energy: -152.459480 Hartree
+
+Sampled Molecule 151: 
+SCF Energy: -152.458773 Hartree
+
+Sampled Molecule 152: 
+SCF Energy: -152.463102 Hartree
+
+Sampled Molecule 153: 
+SCF Energy: -151.262935 Hartree
+
+Sampled Molecule 154: 
+SCF Energy: -152.444848 Hartree
+
+Sampled Molecule 155: 
+SCF Energy: -152.425076 Hartree
+
+Sampled Molecule 156: 
+SCF Energy: -152.460819 Hartree
+
+Sampled Molecule 157: 
+SCF Energy: -152.466084 Hartree
+
+Sampled Molecule 158: 
+SCF Energy: -152.447600 Hartree
+
+Sampled Molecule 159: 
+SCF Energy: -152.274896 Hartree
 

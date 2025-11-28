@@ -15,6 +15,15 @@ class MolecularCluster:
         self.labels = None
         self.cluster_centers = None
 
+    def select_n_lowest_energy(self, n=5):
+        """ 
+        Selects the n lowest energy configurations from the sampled molecules
+        """
+        energy_indices = np.argsort(self.energies)[:n]
+        lowest_energy_mols = [self.sampled_molecules[i] for i in energy_indices]
+        lowest_energies = [self.energies[i] for i in energy_indices]
+        return lowest_energy_mols, lowest_energies
+
     def calculate_com_features(self, submol_atom_labels, center_type="centroid"):
         """ 
         Calculate a feature matrix based on the COM/geometric distances and energies

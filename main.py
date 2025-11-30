@@ -48,30 +48,42 @@ if __name__ == "__main__":
     molecule = Molecule.from_xyz(xyz_content)
     covalent_bonds, hydrogen_bonds = molecule.get_bonds()
     submolecules = molecule.fragment_by_connectivity()
+ 
+    hbond_configs = molecule.hbond_acceptor_configurations()
+    logger.write_hbond_configurations(hbond_configs) 
 
     logger.write_molecule_info(molecule)
 
-    Transformation = Transformation()
+    Transformation = Transformation(logger=logger)
     ref_frame, center_point = Transformation.set_reference_frame_submolecule(submolecule=submolecules[0],parent_molecule=molecule,method="com")
 
 
 
-    Sampler = ConfigSampler(reference_frame=ref_frame, center_point=center_point, molecule=molecule) 
+
+    Sampler = ConfigSampler(reference_frame=ref_frame, center_point=center_point, molecule=molecule, logger=logger) 
     
-    sampled_mols = Sampler.sample_submol_sphere(submolecule=submolecules[1],radius = 3, num_points=10, rotation=True,rotational_grid_dim=4,plot_sampling=False)
+    sampled_mols = Sampler.sample_submol_sphere(submolecule=submolecules[1],radius = 5, num_points=300, rotation=True,rotational_grid_dim=8,plot_sampling=False)
     time_end = time.time() 
 
     Calculator = Psi4Calculator(ls_of_molecules=sampled_mols, method="MP2")
-    results = Calculator.batch_single_point_calc(parallel=True,n_processes=8)
+    results = Calculator.batch_single_point_calc(parallel=True,n_processes=10)
     logger.write_scf_batch_result(results)
 
+    sucessful_mols, energies = zip(*results)
+    Cluster_obj = MolecularCluster(sampled_molecules=sucessful_mols, energies=np.array(energies))
+    Cluster_obj.calculate_rmsd_features(include_energy=True, normalize_features=True)
+    cluster_info = Cluster_obj.cluster_kmeans_silhouette_analysis(max_clusters=10, plot_analysis=True)
 
-    Cluster_obj = MolecularCluster(sampled_molecules=sampled_mols, energies=[energy for _, energy in results])
-    lowest_energy_mols, lowest_energies = Cluster_obj.select_n_lowest_energy(n=2)
+    Cluster_obj.visalize_cluster_2d() 
+
+    cluster_reps = Cluster_obj.obtain_cluster_representatives(method="lowest_energy")
+
+    
+
 
     #Perform geomtry optimization with the 5 lowest energy mols
-    Calculator = Psi4Calculator(ls_of_molecules=lowest_energy_mols, method="MP2")
-    opt_results = Calculator.batch_geometry_optimization(parallel=True,n_processes=8)
+    Calculator = Psi4Calculator(ls_of_molecules=cluster_reps, method="MP2")
+    opt_results = Calculator.batch_geometry_optimization(parallel=True,n_processes=10)
     logger.write_optimization_xyz_batch(opt_results)
     
     

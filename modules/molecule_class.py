@@ -13,6 +13,11 @@ class Molecule:
 
     # Elements table 
     ptable = fetch_table("elements")
+ 
+
+    # Internal list of hydrogen bond donors and acceptors
+    hbond_donors = ["O", "N", "F"] 
+    hbond_acceptors = ["H", "D"]
     
     def __init__(self, name: str = "Unnamed Molecule"):
         """ 
@@ -157,6 +162,50 @@ class Molecule:
         self.hydrogen_bonds = hydrogen_bonds
         return covalent_bonds, hydrogen_bonds
     
+    def hbond_donor_configurations(self) -> List["SubMolecule"]:
+        """
+        Function that searches for hydrogen bond donors in the system and then gives back their neigbouring 
+        atoms
+
+        Example would be:
+        
+        + H-O-H
+        + H-N-H-H
+        + H-O-C
+        """
+        donor_indices = self._get_hbond_donors()
+        configurations = []
+        for donor_idx in donor_indices:
+            # Find covalently bonded neighbours
+            neighbours = []
+            for bond in self.covalent_bonds:
+                if self.atom_labels[donor_idx] in bond:
+                    # Get the other atom in the bond
+                    other_atom = bond[0] if bond[1] == self.atom_labels[donor_idx] else bond[1]
+                    neighbours.append(other_atom)
+            # Create SubMolecule for this configuration
+            indices = [donor_idx] + [np.where(self.atom_labels == n)[0][0] for n in neighbours]
+            submol = SubMolecule.from_parent_fragment(self, indices, fragment_index=donor_idx)
+            configurations.append(submol)
+        return configurations
+
+
+    def _get_hbond_donors(self):
+        """ 
+        Helper function that searches for hydrogen bond donors in the molecule
+
+        Returns:
+            Indices of hydrogen bond donor atoms
+        """
+        donor_indices = []
+        for idx, label in enumerate(self.atom_labels):
+            element_symbol = self._remove_digits_from_label(label)
+            if element_symbol in self.hbond_donors:
+                donor_indices.append(idx)
+        return donor_indices
+
+
+
     def fragment_by_connectivity(self) -> List["SubMolecule"]:
         """ 
         Fragments the molecule into connected components based on covalent bonds
@@ -234,7 +283,46 @@ class Molecule:
     def parse_psi4_xyz(self, psi4_xyz: str) -> None:
         """ 
         Function to parse the Psi4 xyz format and initialize a new molecule object
+        
+        Coordinates are given in the following format:
+
+        Charge SpinMultiplicity
+        Element1   x1   y1   z2
         """
+        lines = [line.strip() for line in psi4_xyz.strip().split("\n") if line.strip()]
+        if len(lines) < 2:
+            raise ValueError("Invalid Psi4 XYZ format: insufficient lines")
+        
+        # First line is charge and spin multiplicity
+        charge_spin = lines[0].split()
+        if len(charge_spin) != 2:
+            raise ValueError("Invalid Psi4 XYZ format: first line must contain charge and spin multiplicity")
+        self.charge = int(charge_spin[0])
+        self.spin_mult = int(charge_spin[1])
+
+        atom_labels = []
+        coordinates_list = []
+        for line in lines[1:]:
+            parts = line.split()
+            if len(parts) >= 4:
+                element = parts[0]
+                try:
+                    coords = [float(parts[1]), float(parts[2]), float(parts[3])]
+                    atom_labels.append(element)
+                    coordinates_list.append(coords)
+                except ValueError as e:
+                    raise ValueError(f"Invalid coordinate values in line: '{line}'") from e
+        # Count Atoms and enumerate
+        element_count = {}
+        atom_labels_enum = []
+        for element in atom_labels:
+            if element not in element_count:
+                element_count[element] = 0
+            element_count[element] +=1
+            atom_labels_enum.append(f"{element}{element_count[element]}")
+        if atom_labels:
+            self.add_atoms_batch(atom_labels_enum,np.array(coordinates_list)) 
+        return self 
 
 
 class SubMolecule(Molecule):

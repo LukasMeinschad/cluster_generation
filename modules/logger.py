@@ -30,6 +30,37 @@ class Logger:
             f.write(f"Cluster Generation Log - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write("="*50 + "\n\n")
 
+    def write_message_block(self, message: str):
+        """ 
+        Writes a messsage block to the log file with timestamp
+        
+        General formatting is 
+
+        -----------
+        Timestamp
+        ---------
+        Message
+        """
+        with open(self.out_file, self.mode) as f:
+            f.write("-"*50 + "\n")
+            f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write("-"*50 + "\n")
+            f.write(f"{message}\n\n")
+
+    def write_hbond_configurations(self,configurations):
+        """ 
+        Writes the hydrogen bond donor
+        """
+        with open(self.out_file, self.mode) as f:
+            f.write("-"*50 + "\n")
+            f.write(f"Hydrogen Bond Donor Configurations - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write("-"*50 + "\n")
+            for idx, config in enumerate(configurations):
+                f.write(f"Configuration {idx+1}: {config}\n")
+                f.write(f"Atom Labels and Coordinates:\n")
+                for label, coord in zip(config.atom_labels, config.coordinates):
+                    f.write(f"{label}: {coord[0]:.6f}, {coord[1]:.6f}, {coord[2]:.6f}\n")
+                f.write("\n")
     def write_molecule_info(self,molecule):
         """ 
         Writes molecule information to the log file, i.e atom lables, coordinates, bonds, etc.

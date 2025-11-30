@@ -11,8 +11,14 @@ class Transformation:
     """
     Class that performs transformation of molecules in R^3
     """
-    def __init__(self, name: str = "Transformation"):
+    def __init__(self, name: str = "Transformation", logger: Optional["Logger"] = None):
+        """ 
+        Initializes the Transformation class
+
+        Optionally one can provide a Logger object to log information about the transformations
+        """
         self.name = None
+        self.logger = logger
 
 
     def center_point(self,molecule: Union["Molecule", "Submolecule"], method: str = "centroid") -> np.ndarray:
@@ -194,6 +200,14 @@ class Transformation:
             print(f"Z: {ref_frame[:,2]}")
         if plot_frame:
             Plotting().plot_reference_frame(molecule, reference_frame=ref_frame, reference_frame_origin=np.zeros(3))
+        
+        if self.logger is not None:
+            message = f"Set reference frame based on molecule with center at {center_point} using method '{method}'"
+            message += f"\nInertia tensor eigenvalues: {eigval_I}"
+            message += f"\nReference frame axes:\nX: {ref_frame[:,0]}\nY: {ref_frame[:,1]}\nZ: {ref_frame[:,2]}"
+            self.logger.write_message_block(message)
+
+        
         return ref_frame, center_point
     
 
@@ -319,6 +333,12 @@ class Transformation:
             print(f"Z: {ref_frame[:,2]}")
         if plot_frame:
             Plotting().plot_reference_frame(submolecule, reference_frame=ref_frame, reference_frame_origin=np.zeros(3))
+
+        if self.logger is not None:
+            message = f"Set reference frame based on submolecule with center at {center_point} using method '{method}'"
+            message += f"\nInertia tensor eigenvalues: {eigval_I}"
+            message += f"\nReference frame axes:\nX: {ref_frame[:,0]}\nY: {ref_frame[:,1]}\nZ: {ref_frame[:,2]}"
+            self.logger.write_message_block(message)
         return ref_frame, center_point
     
 
@@ -341,6 +361,24 @@ class Transformation:
         rotated_coords = np.dot(molecule.coordinates, R.T)
         
         return rotated_coords
+
+    def hbond_configuration_ref_frame(self,
+                                      configuration: "SubMolecule",
+                                      parent_molecule: Optional["Molecule"] = None,
+                                      method: str = "centroid",
+                                      ref_type: str = "Inertia",
+                                      print_info: bool = False,
+                                      plot_frame: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+        """ 
+        Defines a local reference frame based on a hydrogen bond donor configuration.
+
+        The method can be "centroid", "com" or "donor_atom" to define the center point.
+
+        The ref_type can be "Inertia" to use the principal axes of the configuration or "bond" to align the z-axis along the hydrogen bond donor bond vector.
+        """
+        if len(configuration.coordinates) < 2:
+            raise ValueError("Configuration must have at least 2 atoms to define a reference frame")
+        # TODO implement from here
 
 
     @staticmethod

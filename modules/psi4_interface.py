@@ -350,7 +350,8 @@ class Psi4Calculator:
             # Update molecule coordinates
             optimized_coords = mol.save_string_xyz()
 
-            new_molecule = Molecule.from_xyz(optimized_coords, name=mol_obj.name + "_optimized")
+            # Parse optimized coordinates back into Molecule object
+            new_molecule = Molecule().parse_psi4_xyz(optimized_coords) 
             mol_obj.coordinates = new_molecule.coordinates
 
             return {

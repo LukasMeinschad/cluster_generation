@@ -11,10 +11,19 @@ class ConfigSampler:
     """
     Simplified Class for sampling molecular configurations
     """
-    def __init__(self,reference_frame: np.ndarray, center_point: np.ndarray, molecule):
+    def __init__(self,reference_frame: np.ndarray, center_point: np.ndarray, molecule, logger: Optional["Logger"] = None):
+        """ 
+        Initializes the ConfigSampler with a reference frame and center point
+
+        Optionally one can provide a Logger object to log sampling information
+        """
+
         self.reference_frame = reference_frame  
         self.center_point = center_point
         self.sampled_configurations = []
+
+        # Optional logger
+        self.logger = logger
     
     def sample_cone(self, 
                     apex: np.ndarray,
@@ -286,6 +295,13 @@ class ConfigSampler:
             Plotting().plot_sampled_molecules(
                 sampled_mols, sampling_type="Sphere", center_point=self.center_point, radius=radius
             )
+
+        if self.logger is not None:
+            message = f"Sampled {len(sampled_mols)} configurations of submolecule '{submolecule.name}' within sphere of radius {radius} Å, centered at {self.center_point}."
+            if rotation:
+                message += f" Each translation included {len(rotation_unit_vectors)} rotations."
+            self.logger.write_message_block(message)
+        
         return sampled_mols
 
     def _generate_molecules_batch_optimized(self, template, base_coords, submol_indices, translation_vectors):

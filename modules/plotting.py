@@ -112,10 +112,10 @@ class Plotting:
         # Make Legend in outside box
         ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
         plt.title("3D Molecule with Reference Frame")
-        plt.savefig("molecule_reference_frame_plot.png")
+        #plt.savefig("molecule_reference_frame_plot.png")
 
-        #plt.show()
-        plt.close()
+        plt.show()
+        #plt.close()
 
 
     def plot_cube(self, cube_corners):
@@ -463,4 +463,46 @@ class Plotting:
             #plt.show()
             plt.close()
 
-    
+        if sampling_type == "Cone":
+            # Plot cone with given parameters
+            # TODO implement this 
+            pass
+
+
+    def plot_ref_frame_hbond_config(self, molecule, ref_frame, center_point):
+        """
+        Helper function that plots the reference frame of a local hbond donor configuration
+
+        For this we use the center point of this configuration and the corresponding reference frame obtained 
+        via the diagonalization of the inertia tensor
+        """ 
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        coords = molecule.coordinates
+        elements = molecule.atom_labels
+        # Remove digits from element symbols
+        elements = [''.join(filter(str.isalpha, el)) for el in elements]
+        colors = [self.color_dict.get(el, "green") for el in elements]
+        sizes = [self.size_dict.get(el, 70) for el in elements]
+
+        for i, (x, y, z) in enumerate(coords):
+            ax.scatter(x, y, z, color=colors[i], s=sizes[i], label=elements[i] if i == 0 or elements[i] != elements[i-1] else "") 
+        
+        # Plot reference frame as arrows
+        origin = center_point
+        x_axis = ref_frame[:,0]
+        y_axis = ref_frame[:,1]
+        z_axis = ref_frame[:,2]
+        ax.quiver(origin[0], origin[1], origin[2], x_axis[0], x_axis[1], x_axis[2], color='r', length=1.0, normalize=True, label='X axis')
+        ax.quiver(origin[0], origin[1], origin[2], y_axis[0], y_axis[1], y_axis[2], color='g', length=1.0, normalize=True, label='Y axis')
+        ax.quiver(origin[0], origin[1], origin[2], z_axis[0], z_axis[1], z_axis[2], color='b', length=1.0, normalize=True, label='Z axis')
+        ax.set_xlabel('X (Å)')
+        ax.set_ylabel('Y (Å)')
+        ax.set_zlabel('Z (Å)')
+        # Make Legend in outside box
+        ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
+        plt.title("3D Molecule with Hbond Config Reference Frame")
+
+        plt.show()
+        plt.close()

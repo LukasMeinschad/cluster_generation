@@ -119,6 +119,16 @@ class Molecule:
             raise ValueError(f"Atom label {atom_label} not found in molecule")
         return self.coordinates[indices]
 
+    def get_coords_by_labels(self,atom_labels: List[str]) -> np.ndarray:
+        """ 
+        Get coordinates of multiple atoms by their labels
+        """
+        coords_list = []
+        for label in atom_labels:
+            coords = self.get_coords_by_label(label)
+            coords_list.append(coords)
+        return np.vstack(coords_list) 
+
 
     @classmethod
     def get_covalent_radius(cls,element_label: str) -> float:
@@ -190,6 +200,15 @@ class Molecule:
         return configurations
 
 
+    def get_bond_vector(self, bond: Tuple[str, str]) -> np.ndarray:
+        """ 
+        Function to get the bond vector between a bond-tuple
+        """
+        coords1, coords2 = self._get_bond_coordinates(bond)
+        bond_vector = coords2 - coords1
+        return bond_vector
+
+
     def _get_hbond_donors(self):
         """ 
         Helper function that searches for hydrogen bond donors in the molecule
@@ -203,6 +222,17 @@ class Molecule:
             if element_symbol in self.hbond_donors:
                 donor_indices.append(idx)
         return donor_indices
+
+
+    def _get_bond_coordinates(self, bond: Tuple[str, str]) -> Tuple[np.ndarray, np.ndarray]:
+        """ 
+        Helper function to get the coordinates of two atoms involved in a bond
+        """
+        atom1_label, atom2_label = bond[0], bond[1]
+        coords1 = self.get_coords_by_label(atom1_label)
+        coords2 = self.get_coords_by_label(atom2_label)
+        return coords1, coords2
+    
 
 
 

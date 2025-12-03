@@ -15331,3 +15331,1485 @@ Module                                       User      System        Wall       
 --------------------------------------------------------------------------------------
 
 **************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:30:55 2025
+Timers Off: Mon Dec  1 16:30:56 2025
+
+Wall Time:        0.91 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:31:10 2025
+Timers Off: Mon Dec  1 16:31:19 2025
+
+Wall Time:        9.35 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:33:53 2025
+Timers Off: Mon Dec  1 16:34:00 2025
+
+Wall Time:        6.56 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+DFH: sparsity prep                  :      0.200u      0.000s      0.136w      9 calls
+Libint2ERI::Libint2ERI              :      0.317u      0.000s      0.197w     43 calls
+DFH: initialize()                   :      0.783u      0.017s      0.502w      9 calls
+DFH: AO Construction                :      0.350u      0.017s      0.215w      9 calls
+DFH: AO-Met. Contraction            :      0.050u      0.000s      0.054w      9 calls
+HF: Form core H                     :      0.033u      0.000s      0.024w      9 calls
+
+HF: Form S/X                        :      0.017u      0.000s      0.004w      9 calls
+HF: Guess                           :      0.650u      0.000s      0.409w      9 calls
+SAD Guess                           :      0.633u      0.000s      0.390w      9 calls
+Host: sv1-c724
+HF: Form G                          :      0.200u      0.000s      0.144w     98 calls
+
+JK: D                               :      0.000u      0.000s      0.001w     98 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     98 calls
+JK: JK                              :      0.200u      0.000s      0.138w     98 calls
+DFH: compute_JK()                   :      0.200u      0.000s      0.137w     98 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     98 calls
+DFH: compute_J                      :      0.067u      0.000s      0.036w     98 calls
+Timers On : Mon Dec  1 16:33:53 2025
+DFH: compute_K                      :      0.067u      0.000s      0.095w     98 calls
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:33:50 2025
+Timers Off: Mon Dec  1 16:34:00 2025
+
+Wall Time:        9.97 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:34:17 2025
+Timers Off: Mon Dec  1 16:34:22 2025
+
+Wall Time:        4.60 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+DFH: sparsity prep                  :      0.117u      0.000s      0.089w      6 calls
+Libint2ERI::Libint2ERI              :      0.233u      0.000s      0.132w     28 calls
+DFH: initialize()                   :      0.500u      0.017s      0.325w      6 calls
+DFH: AO Construction                :      0.217u      0.000s      0.135w      6 calls
+DFH: AO-Met. Contraction            :      0.067u      0.000s      0.034w      6 calls
+HF: Form core H                     :      0.000u      0.000s      0.016w      6 calls
+HF: Form S/X                        :      0.017u      0.000s      0.002w      6 calls
+HF: Guess                           :      0.433u      0.033s      0.264w      6 calls
+SAD Guess                           :      0.417u      0.033s      0.252w      6 calls
+HF: Form G                          :      0.150u      0.000s      0.093w     64 calls
+JK: D                               :      0.000u      0.000s      0.001w     64 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     64 calls
+JK: JK                              :      0.150u      0.000s      0.089w     64 calls
+DFH: compute_JK()                   :      0.150u      0.000s      0.089w     64 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     64 calls
+DFH: compute_J                      :      0.033u      0.000s      0.025w     64 calls
+DFH: compute_K                      :      0.117u      0.000s      0.059w     64 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     64 calls
+HF: Form F                          :      0.000u      0.000s      0.001w     64 calls
+HF: Form D                          :      0.000u      0.000s      0.001w     63 calls
+HF: DIIS                            :      0.333u      0.017s      0.226w     57 calls
+HF: Form C                          :      0.050u      0.000s      0.036w     57 calls
+DFMP2 Singles                       :      0.017u      0.000s      0.000w      5 calls
+DFMP2 Aia                           :      0.233u      0.000s      0.143w      5 calls
+
+DFMP2 (A|mn)                        :      0.150u      0.000s      0.094w      5 calls
+
+DFMP2 (A|mn)C_mi                    :      0.017u      0.000s      0.003w      5 calls
+Host: sv1-c724
+DFMP2 (A|mi)C_na                    :      0.000u      0.000s      0.001w      5 calls
+
+DFMP2 Aia Write                     :      0.000u      0.000s      0.002w      5 calls
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:34:17 2025
+DFMP2 Bia                           :      0.083u      0.000s      0.056w      5 calls
+Timers Off: Mon Dec  1 16:34:22 2025
+
+Wall Time:        4.60 seconds
+
+                                                       Time (seconds)
+DFMP2 Metric                        :      0.083u      0.000s      0.044w      5 calls
+Module                                       User      System        Wall        Calls
+DFMP2 Aia Read                      :      0.000u      0.000s      0.002w      5 calls
+DFMP2 (ia|A)(A|Q)                   :      0.000u      0.000s      0.003w      5 calls
+DFMP2 Bia Write                     :      0.000u      0.000s      0.002w      5 calls
+DFMP2 Energy                        :      0.000u      0.000s      0.011w      5 calls
+DFH: sparsity prep                  :      0.133u      0.000s      0.090w      6 calls
+Libint2ERI::Libint2ERI              :      0.217u      0.000s      0.133w     28 calls
+DFMP2 Bia Read                      :      0.000u      0.000s      0.001w     10 calls
+DFH: initialize()                   :      0.567u      0.000s      0.326w      6 calls
+
+--------------------------------------------------------------------------------------
+DFH: AO Construction                :      0.217u      0.000s      0.135w      6 calls
+DFH: AO-Met. Contraction            :      0.067u      0.000s      0.034w      6 calls
+DFH: sparsity prep                  :      0.117u      0.000s      0.089w      6 calls
+HF: Form core H                     :      0.000u      0.000s      0.015w      6 calls
+HF: Form S/X                        :      0.017u      0.000s      0.002w      6 calls
+HF: Guess                           :      0.433u      0.033s      0.265w      6 calls
+SAD Guess                           :      0.417u      0.033s      0.252w      6 calls
+HF: Form G                          :      0.200u      0.000s      0.092w     62 calls
+
+JK: D                               :      0.000u      0.000s      0.001w     62 calls
+Host: sv1-c724
+
+JK: USO2AO                          :      0.000u      0.000s      0.000w     62 calls
+JK: JK                              :      0.183u      0.000s      0.088w     62 calls
+DFH: compute_JK()                   :      0.183u      0.000s      0.088w     62 calls
+Timers On : Mon Dec  1 16:34:17 2025
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     62 calls
+DFH: compute_J                      :      0.033u      0.000s      0.023w     62 calls
+Timers Off: Mon Dec  1 16:34:22 2025
+DFH: compute_K                      :      0.133u      0.000s      0.060w     62 calls
+
+Wall Time:        4.60 seconds
+
+                                                       Time (seconds)
+JK: AO2USO                          :      0.000u      0.000s      0.000w     62 calls
+Module                                       User      System        Wall        Calls
+HF: Form F                          :      0.000u      0.000s      0.001w     62 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     62 calls
+HF: DIIS                            :      0.317u      0.033s      0.221w     56 calls
+HF: Form C                          :      0.067u      0.000s      0.035w     56 calls
+DFMP2 Singles                       :      0.000u      0.000s      0.000w      5 calls
+DFMP2 Aia                           :      0.233u      0.017s      0.143w      5 calls
+DFMP2 (A|mn)                        :      0.167u      0.017s      0.094w      5 calls
+DFH: sparsity prep                  :      0.117u      0.000s      0.075w      5 calls
+Libint2ERI::Libint2ERI              :      0.200u      0.017s      0.114w     25 calls
+DFH: initialize()                   :      0.417u      0.050s      0.265w      5 calls
+DFH: AO Construction                :      0.200u      0.000s      0.108w      5 calls
+DFH: AO-Met. Contraction            :      0.017u      0.000s      0.027w      5 calls
+HF: Form core H                     :      0.050u      0.000s      0.013w      5 calls
+HF: Form S/X                        :      0.000u      0.000s      0.002w      5 calls
+HF: Guess                           :      0.350u      0.017s      0.218w      5 calls
+SAD Guess                           :      0.333u      0.017s      0.208w      5 calls
+HF: Form G                          :      0.167u      0.000s      0.075w     58 calls
+JK: D                               :      0.000u      0.000s      0.001w     58 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     58 calls
+JK: JK                              :      0.150u      0.000s      0.072w     58 calls
+DFH: compute_JK()                   :      0.150u      0.000s      0.071w     58 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     58 calls
+DFH: compute_J                      :      0.017u      0.000s      0.016w     58 calls
+DFH: compute_K                      :      0.133u      0.000s      0.052w     58 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     58 calls
+HF: Form F                          :      0.000u      0.000s      0.001w     58 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     58 calls
+HF: DIIS                            :      0.300u      0.000s      0.194w     53 calls
+HF: Form C                          :      0.017u      0.000s      0.033w     53 calls
+DFMP2 Singles                       :      0.000u      0.000s      0.000w      5 calls
+DFMP2 Aia                           :      0.250u      0.000s      0.146w      5 calls
+DFMP2 (A|mn)                        :      0.150u      0.000s      0.096w      5 calls
+DFMP2 (A|mn)C_mi                    :      0.017u      0.000s      0.002w      5 calls
+DFMP2 (A|mi)C_na                    :      0.017u      0.000s      0.001w      5 calls
+DFMP2 Aia Write                     :      0.000u      0.000s      0.002w      5 calls
+DFMP2 Bia                           :      0.083u      0.000s      0.055w      5 calls
+DFMP2 Metric                        :      0.050u      0.000s      0.044w      5 calls
+DFMP2 Aia Read                      :      0.017u      0.000s      0.002w      5 calls
+DFMP2 (ia|A)(A|Q)                   :      0.000u      0.000s      0.003w      5 calls
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:34:14 2025
+Timers Off: Mon Dec  1 16:34:22 2025
+
+Wall Time:        8.20 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:35:08 2025
+Timers Off: Mon Dec  1 16:35:11 2025
+
+Wall Time:        3.40 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:41:32 2025
+Timers Off: Mon Dec  1 16:41:32 2025
+
+Wall Time:        0.97 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:41:36 2025
+Timers Off: Mon Dec  1 16:41:37 2025
+
+Wall Time:        0.93 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:41:54 2025
+Timers Off: Mon Dec  1 16:42:52 2025
+
+Wall Time:       57.85 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:44:26 2025
+Timers Off: Mon Dec  1 16:45:06 2025
+
+Wall Time:       40.56 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:53:28 2025
+Timers Off: Mon Dec  1 16:53:29 2025
+
+Wall Time:        1.03 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:53:43 2025
+Timers Off: Mon Dec  1 16:53:44 2025
+
+Wall Time:        1.23 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:53:39 2025
+Timers Off: Mon Dec  1 16:53:44 2025
+
+Wall Time:        4.58 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:55:46 2025
+Timers Off: Mon Dec  1 16:55:47 2025
+
+Wall Time:        1.38 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:56:37 2025
+Timers Off: Mon Dec  1 16:56:38 2025
+
+Wall Time:        1.33 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:59:51 2025
+Timers Off: Mon Dec  1 16:59:55 2025
+
+Wall Time:        4.66 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+DFH: sparsity prep                  :      0.150u      0.000s      0.089w      6 calls
+Libint2ERI::Libint2ERI              :      0.233u      0.017s      0.130w     28 calls
+DFH: initialize()                   :      0.517u      0.017s      0.324w      6 calls
+DFH: AO Construction                :      0.200u      0.000s      0.136w      6 calls
+DFH: AO-Met. Contraction            :      0.067u      0.000s      0.034w      6 calls
+HF: Form core H                     :      0.000u      0.000s      0.015w      6 calls
+HF: Form S/X                        :      0.000u      0.000s      0.002w      6 calls
+HF: Guess                           :      0.483u      0.000s      0.265w      6 calls
+SAD Guess                           :      0.400u      0.000s      0.252w      6 calls
+HF: Form G                          :      0.233u      0.000s      0.101w     70 calls
+JK: D                               :      0.000u      0.000s      0.001w     70 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     70 calls
+JK: JK                              :      0.217u      0.000s      0.097w     70 calls
+DFH: compute_JK()                   :      0.217u      0.000s      0.097w     70 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     70 calls
+DFH: compute_J                      :      0.050u      0.000s      0.026w     70 calls
+DFH: compute_K                      :      0.167u      0.000s      0.066w     70 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     70 calls
+HF: Form F                          :      0.000u      0.000s      0.001w     70 calls
+HF: Form D                          :      0.000u      0.000s      0.001w     70 calls
+HF: DIIS                            :      0.317u      0.000s      0.248w     64 calls
+HF: Form C                          :      0.033u      0.000s      0.040w     64 calls
+DFMP2 Singles                       :      0.000u      0.000s      0.000w      5 calls
+DFMP2 Aia                           :      0.233u      0.000s      0.142w      5 calls
+DFMP2 (A|mn)                        :      0.150u      0.000s      0.093w      5 calls
+DFMP2 (A|mn)C_mi                    :      0.000u      0.000s      0.003w      5 calls
+DFMP2 (A|mi)C_na                    :      0.000u      0.000s      0.001w      5 calls
+DFMP2 Aia Write                     :      0.000u      0.000s      0.002w      5 calls
+DFMP2 Bia                           :      0.067u      0.000s      0.057w      5 calls
+DFMP2 Metric                        :      0.050u      0.000s      0.044w      5 calls
+DFMP2 Aia Read                      :      0.000u      0.000s      0.002w      5 calls
+DFMP2 (ia|A)(A|Q)                   :      0.017u      0.000s      0.003w      5 calls
+DFMP2 Bia Write                     :      0.000u      0.000s      0.002w      5 calls
+DFMP2 Energy                        :      0.000u      0.033s      0.011w      5 calls
+
+DFMP2 Bia Read                      :      0.000u      0.000s      0.001w     10 calls
+
+--------------------------------------------------------------------------------------
+DFH: sparsity prep                  :      0.150u      0.000s      0.089w      6 calls
+| Libint2ERI::Libint2ERI            :      0.117u      0.000s      0.057w      6 calls
+Host: sv1-c724
+DFH: initialize()                   :      0.517u      0.017s      0.324w      6 calls
+
+| Libint2ERI::Libint2ERI            :      0.083u      0.017s      0.049w     12 calls
+| DFH: AO Construction              :      0.200u      0.000s      0.136w      6 calls
+| DFH: AO-Met. Contraction          :      0.067u      0.000s      0.034w      6 calls
+HF: Form core H                     :      0.000u      0.000s      0.015w      6 calls
+Timers On : Mon Dec  1 16:59:51 2025
+HF: Form S/X                        :      0.000u      0.000s      0.002w      6 calls
+HF: Guess                           :      0.483u      0.000s      0.265w      6 calls
+| SAD Guess                         :      0.400u      0.000s      0.252w      6 calls
+Timers Off: Mon Dec  1 16:59:55 2025
+HF: Form G                          :      0.233u      0.000s      0.101w     70 calls
+| 
+Wall Time:        4.65 seconds
+
+JK: D                             :      0.000u      0.000s      0.001w     70 calls
+                                                       Time (seconds)
+| Module                                       User      System        Wall        Calls
+JK: USO2AO                        :      0.000u      0.000s      0.000w     70 calls
+| JK: JK                            :      0.217u      0.000s      0.097w     70 calls
+| | DFH: compute_JK()               :      0.217u      0.000s      0.097w     70 calls
+| | | DFH: Grabbing AOs             :      0.000u      0.000s      0.000w     70 calls
+| | | DFH: compute_J                :      0.050u      0.000s      0.026w     70 calls
+| | | DFH: compute_K                :      0.167u      0.000s      0.066w     70 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w     70 calls
+HF: Form F                          :      0.000u      0.000s      0.001w     70 calls
+HF: Form D                          :      0.000u      0.000s      0.001w     70 calls
+HF: DIIS                            :      0.317u      0.000s      0.248w     64 calls
+HF: Form C                          :      0.033u      0.000s      0.040w     64 calls
+DFMP2 Singles                       :      0.000u      0.000s      0.000w      5 calls
+DFMP2 Aia                           :      0.233u      0.000s      0.142w      5 calls
+| Libint2ERI::Libint2ERI            :      0.033u      0.000s      0.024w      5 calls
+| DFMP2 (A|mn)                      :      0.150u      0.000s      0.093w      5 calls
+| DFMP2 (A|mn)C_mi                  :      0.000u      0.000s      0.003w      5 calls
+| DFMP2 (A|mi)C_na                  :      0.000u      0.000s      0.001w      5 calls
+| DFMP2 Aia Write                   :      0.000u      0.000s      0.002w      5 calls
+DFMP2 Bia                           :      0.067u      0.000s      0.057w      5 calls
+| DFMP2 Metric                      :      0.050u      0.000s      0.044w      5 calls
+| | Libint2
+Host: sv1-c724
+
+Timers On : Mon Dec  1 16:57:48 2025
+Timers Off: Mon Dec  1 16:59:56 2025
+
+Wall Time:      127.71 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 17:53:51 2025
+Timers Off: Mon Dec  1 17:53:52 2025
+
+Wall Time:        0.93 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 17:54:08 2025
+Timers Off: Mon Dec  1 17:54:09 2025
+
+Wall Time:        0.93 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 17:54:21 2025
+Timers Off: Mon Dec  1 17:54:22 2025
+
+Wall Time:        0.92 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 17:54:31 2025
+Timers Off: Mon Dec  1 17:54:47 2025
+
+Wall Time:       16.41 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 17:58:02 2025
+Timers Off: Mon Dec  1 17:58:26 2025
+
+Wall Time:       24.80 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 17:58:31 2025
+Timers Off: Mon Dec  1 17:58:40 2025
+
+Wall Time:        9.85 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 18:07:01 2025
+Timers Off: Mon Dec  1 18:07:04 2025
+
+Wall Time:        2.82 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 18:07:19 2025
+Timers Off: Mon Dec  1 18:07:21 2025
+
+Wall Time:        1.33 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 18:08:32 2025
+Timers Off: Mon Dec  1 18:08:33 2025
+
+Wall Time:        0.86 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 18:08:50 2025
+Timers Off: Mon Dec  1 18:08:57 2025
+
+Wall Time:        6.39 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 18:09:30 2025
+Timers Off: Mon Dec  1 18:11:05 2025
+
+Wall Time:       94.67 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 18:09:30 2025
+Timers Off: Mon Dec  1 18:11:05 2025
+
+Wall Time:       94.65 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+DFH: sparsity prep                  :      3.783u      0.033s      2.322w    160 calls
+
+Host: sv1-c724
+
+
+
+Timers On : Mon Dec  1 18:09:30 2025
+Host: sv1-c724
+Timers Off: Mon Dec  1 18:11:05 2025
+
+Wall Time:       94.61 seconds
+
+
+                                                       Time (seconds)
+Host: sv1-c724
+Module                                       User      System        Wall        Calls
+
+DFH: sparsity prep                  :      3.833u      0.033s      2.294w    160 calls
+Libint2ERI::Libint2ERI              :      5.933u      0.067s      3.515w    800 calls
+Timers On : Mon Dec  1 18:09:30 2025
+DFH: initialize()                   :     13.583u      0.317s      8.299w    160 calls
+DFH: AO Construction                :      5.417u      0.000s      3.415w    160 calls
+DFH: AO-Met. Contraction            :      1.550u      0.000s      0.851w    160 calls
+Timers On : Mon Dec  1 18:09:30 2025
+HF: Form core H                     :      0.500u      0.017s      0.413w    160 calls
+Timers Off: Mon Dec  1 18:11:05 2025
+HF: Form S/X                        :      0.133u      0.000s      0.065w    160 calls
+HF: Guess                           :     11.900u      0.117s      7.081w    160 calls
+SAD Guess                           :     11.300u      0.117s      6.736w    160 calls
+
+Wall Time:       94.64 seconds
+
+HF: Form G                          :      4.383u      0.000s      2.546w   1870 calls
+Timers Off: Mon Dec  1 18:11:05 2025
+                                                       Time (seconds)
+JK: D                               :      0.033u      0.000s      0.020w   1870 calls
+JK: USO2AO                          :      0.000u      0.000s      0.005w   1870 calls
+JK: JK                              :      4.150u      0.000s      2.435w   1870 calls
+Module                                       User      System        Wall        Calls
+DFH: compute_JK()                   :      4.117u      0.000s      2.422w   1870 calls
+
+Wall Time:       94.64 seconds
+
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.002w   1870 calls
+DFH: compute_J                      :      1.067u      0.000s      0.602w   1870 calls
+                                                       Time (seconds)
+DFH: compute_K                      :      2.867u      0.000s      1.689w   1870 calls
+JK: AO2USO                          :      0.000u      0.000s      0.002w   1870 calls
+Module                                       User      System        Wall        Calls
+HF: Form F                          :      0.050u      0.000s      0.021w   1870 calls
+HF: Form D                          :      0.033u      0.000s      0.015w   1870 calls
+HF: DIIS                            :     10.433u      0.450s      6.590w   1710 calls
+HF: Form C                          :      1.800u      0.133s      1.077w   1710 calls
+DFMP2 Singles                       :      0.017u      0.000s      0.009w    160 calls
+DFMP2 Aia                           :      7.500u      0.067s      4.654w    160 calls
+DFMP2 (A|mn)                        :      5.117u      0.050s      3.062w    160 calls
+DFMP2 (A|mn)C_mi                    :      0.150u      0.017s      0.082w    160 calls
+DFMP2 (A|mi)C_na                    :      0.067u      0.000s      0.047w    160 calls
+DFMP2 Aia Write                     :      0.067u      0.000s      0.067w    160 calls
+DFMP2 Bia                           :      2.583u      0.133s      1.807w    160 calls
+DFMP2 Metric                        :      2.283u      0.083s      1.413w    160 calls
+DFMP2 Aia Read                      :      0.050u      0.033s      0.076w    160 calls
+DFMP2 (ia|A)(A|Q)                   :      0.117u      0.000s      0.103w    160 calls
+DFMP2 Bia Write                     :      0.083u      0.017s      0.067w    160 calls
+DFMP2 Energy                        :      0.383u      0.150s      0.372w    160 calls
+DFMP2 Bia Read                      :      0.017u      0.033s      0.018w    320 calls
+
+--------------------------------------------------------------------------------------
+DFH: sparsity prep                  :      3.833u      0.033s      2.294w    160 calls
+| DFH: sparsity prep                  :      4.033u      0.033s      2.329w    160 calls
+DFH: sparsity prep                  :      3.817u      0.000s      2.285w    160 calls
+Libint2ERI::Libint2ERI            :      2.350u      0.033s      1.428w    160 calls
+Libint2ERI::Libint2ERI              :      5.933u      0.033s      3.467w    800 calls
+Libint2ERI::Libint2ERI              :      5.767u      0.033s      3.514w    800 calls
+DFH: initialize()                   :     13.583u      0.317s      8.299w    160 calls
+| DFH: initialize()                   :     13.550u      0.267s      8.246w    160 calls
+DFH: initialize()                   :     13.483u      0.183s      8.281w    160 calls
+Libint2ERI::Libint2ERI            :      2.200u      0.033s      1.279w    320 calls
+DFH: AO Construction                :      5.467u      0.033s      3.383w    160 calls
+| DFH: AO-Met. Contraction            :      1.567u      0.000s      0.848w    160 calls
+DFH: AO Construction                :      5.750u      0.000s      3.407w    160 calls
+DFH: AO Construction              :      5.417u      0.000s      3.415w    160 calls
+HF: Form core H                     :      0.383u      0.050s      0.413w    160 calls
+| DFH: AO-Met. Contraction            :      1.200u      0.000s      0.846w    160 calls
+HF: Form S/X                        :      0.117u      0.017s      0.064w    160 calls
+DFH: AO-Met. Contraction          :      1.550u      0.000s      0.851w    160 calls
+HF: Form core H                     :      0.617u      0.000s      0.419w    160 calls
+HF: Guess                           :     11.550u      0.083s      7.006w    160 calls
+HF: Form core H                     :      0.500u      0.017s      0.413w    160 calls
+HF: Form S/X                        :      0.150u      0.017s      0.065w    160 calls
+SAD Guess                           :     11.050u      0.067s      6.665w    160 calls
+HF: Form G                          :      4.400u      0.000s      2.589w   1872 calls
+HF: Guess                           :     11.433u      0.217s      7.045w    160 calls
+JK: D                               :      0.033u      0.000s      0.021w   1872 calls
+SAD Guess                           :     10.933u      0.200s      6.702w    160 calls
+JK: USO2AO                          :      0.017u      0.000s      0.006w   1872 calls
+JK: JK                              :      4.267u      0.000s      2.476w   1872 calls
+HF: Form G                          :      4.333u      0.000s      2.612w   1886 calls
+DFH: compute_JK()                   :      4.233u      0.000s      2.462w   1872 calls
+JK: D                               :      0.050u      0.000s      0.022w   1886 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.002w   1872 calls
+JK: USO2AO                          :      0.017u      0.000s      0.006w   1886 calls
+DFH: compute_J                      :      1.233u      0.000s      0.633w   1872 calls
+DFH: compute_K                      :      2.833u      0.000s      1.690w   1872 calls
+JK: JK                              :      4.100u      0.000s      2.496w   1886 calls
+JK: AO2USO                          :      0.000u      0.000s      0.002w   1872 calls
+DFH: compute_JK()                   :      4.050u      0.000s      2.482w   1886 calls
+HF: Form F                          :      0.017u      0.000s      0.022w   1872 calls
+HF: Form D                          :      0.033u      0.000s      0.016w   1872 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.002w   1886 calls
+HF: DIIS                            :     10.400u      0.583s      6.682w   1712 calls
+DFH: compute_J                      :      0.950u      0.000s      0.641w   1886 calls
+HF: Form C                          :      1.767u      0.017s      1.073w   1712 calls
+DFMP2 Singles                       :      0.000u      0.000s      0.009w    160 calls
+DFH: compute_K                      :      2.833u      0.000s      1.702w   1886 calls
+DFMP2 Aia                           :      7.450u      0.100s      4.568w    160 calls
+JK: AO2USO                          :      0.000u      0.000s      0.002w   1886 calls
+DFMP2 (A|mn)                        :      4.950u      0.050s      2.997w    160 calls
+DFMP2 (A|mn)C_mi                    :      0.150u      0.000s      0.086w    160 calls
+HF: Form F                          :      0.017u      0.000s      0.022w   1886 calls
+DFMP2 (A|mi)C_na                    :      0.067u      0.000s      0.048w    160 calls
+HF: Form D                          :      0.017u      0.000s      0.016w   1886 calls
+DFMP2 Aia Write                     :      0.083u      0.033s      0.067w    160 calls
+DFMP2 Bia                           :      2.600u      0.183s      1.816w    160 calls
+HF: DIIS                            :     10.667u      0.483s      6.771w   1726 calls
+DFMP2 Metric                        :      2.200u      0.067s      1.424w    160 calls
+HF: Form C                          :      1.567u      0.100s      1.098w   1726 calls
+DFMP2 Aia Read                      :      0.050u      0.033s      0.075w    160 calls
+DFMP2 Singles                       :      0.050u      0.000s      0.009w    160 calls
+DFMP2 (ia|A)(A|Q)                   :      0.217u      0.000s      0.102w    160 calls
+DFMP2 Bia Write                     :      0.100u      0.083s      0.067w    160 calls
+DFMP2 Aia                           :      7.433u      0.067s      4.579w    160 calls
+DFMP2 Energy                        :      0.317u      0.117s      0.369w    160 calls
+DFMP2 (A|mn)                        :      5.183u      0.017s      3.005w    160 calls
+DFMP2 Bia Read                      :      0.033u      0.017s      0.017w    320 calls
+
+--------------------------------------------------------------------------------------
+DFMP2 (A|mn)C_mi                    :      0.033u      0.000s      0.084w    160 calls
+DFH: sparsity prep                  :      3.817u      0.000s      2.285w    160 calls
+DFMP2 (A|mi)C_na                    :      0.083u      0.000s      0.048w    160 calls
+| Libint2ERI::Libint2ERI            :      2.333u      0.000s      1.426w    160 calls
+DFMP2 Aia Write                     :      0.050u      0.033s      0.067w    160 calls
+DFH: initialize()                   :     13.550u      0.267s      8.246w    160 calls
+DFMP2 Bia                           :      2.717u      0.200s      1.830w    160 calls
+| Libint2ERI::Libint2ERI            :      2.183u      0.033s      1.252w    320 calls
+DFMP2 Metric                        :      2.300u      0.133s      1.432w    160 calls
+| DFH: AO Construction              :      5.467u      0.033s      3.383w    160 calls
+DFMP2 Aia Read                      :      0.050u      0.050s      0.077w    160 calls
+| DFMP2 (ia|A)(A|Q)                   :      0.133u      0.000s      0.105w    160 calls
+DFH: AO-Met. Contraction          :      1.567u      0.000s      0.848w    160 calls
+HF: Form core H                     :      0.383u      0.050s      0.413w    160 calls
+DFMP2 Bia Write                     :      0.117u      0.017s      0.067w    160 calls
+HF: Form S/X                        :      0.117u      0.017s      0.064w    160 calls
+DFMP2 Energy                        :      0.417u      0.100s      0.368w    160 calls
+HF: Guess                           :     11.550u      0.083s      7.006w    160 calls
+| DFMP2 Bia Read                      :      0.017u      0.017s      0.018w    320 calls
+SAD Guess                         :     11.050u      0.067s      6.665w    160 calls
+
+--------------------------------------------------------------------------------------
+HF: Form G                          :      4.400u      0.000s      2.589w   1872 calls
+| JK: D                             :      0.033u      0.000s      0.021w   1872 calls
+DFH: sparsity prep                  :      4.033u      0.033s      2.329w    160 calls
+| | JK: USO2AO                        :      0.017u      0.000s      0.006w   1872 calls
+| Libint2ERI::Libint2ERI            :      2.450u      0.033s      1.464w    160 calls
+JK: JK                            :      4.267u      0.000s      2.476w   1872 calls
+| | DFH: compute_JK()               :      4.233u      0.000s      2.462w   1872 calls
+DFH: initialize()                   :     13.483u      0.183s      8.281w    160 calls
+| | | | DFH: Grabbing AOs             :      0.000u      0.000s      0.002w   1872 calls
+| | | Libint2ERI::Libint2ERI            :      2.100u      0.000s      1.259w    320 calls
+DFH: compute_J                :      1.233u      0.000s      0.633w   1872 calls
+| DFH: AO Construction              :      5.750u      0.000s      3.407w    160 calls
+| DFH: AO-Met. Contraction          :      1.200u      0.000s      0.846w    160 calls
+HF: Form core H                     :      0.617u      0.000s      0.419w    160 calls
+HF: Form S/X                        :      0.150u      0.017s      0.065w    160 calls
+HF: Guess                           :     11.433u      0.217s      7.045w    160 calls
+| 
+Host: sv1-c724
+
+SAD Guess                         :     10.933u      0.200s      6.702w    160 calls
+Timers On : Mon Dec  1 18:09:30 2025
+HF: Form G                          :      4.333u      0.000s      2.612w   1886 calls
+| JK: D                             :      0.050u      0.000s      0.022w   1886 calls
+| JK: USO2AO                        :      0.017u      0.000s      0.006w   1886 calls
+| JK: JK                            :      4.100u      0.000s      2.496w   1886 calls
+| | DFH: compute_JK()               :      4.050u      0.000s      2.482w   1886 calls
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 18:11:07 2025
+Timers Off: Mon Dec  1 18:11:52 2025
+
+
+Wall Time:       44.45 seconds
+
+                                                       Time (seconds)
+Host: sv1-c724
+Module                                       User      System        Wall        Calls
+
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+Timers On : Mon Dec  1 18:11:07 2025
+Timers Off: Mon Dec  1 18:11:52 2025
+
+Wall Time:       44.44 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+
+Host: sv1-c724
+
+Host: sv1-c724
+
+Timers On : Mon Dec  1 18:09:26 2025
+Timers Off: Mon Dec  1 18:11:52 2025
+
+Wall Time:      146.35 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Tue Dec  2 12:30:35 2025
+Timers Off: Tue Dec  2 12:30:36 2025
+
+Wall Time:        0.87 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Tue Dec  2 12:30:43 2025
+Timers Off: Tue Dec  2 12:30:44 2025
+
+Wall Time:        0.93 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Tue Dec  2 12:30:54 2025
+Timers Off: Tue Dec  2 12:41:07 2025
+
+Wall Time:      612.50 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+DFH: sparsity prep                  :     25.533u      0.083s     15.453w   1085 calls
+Libint2ERI::Libint2ERI              :     38.717u      0.100s     23.398w   5425 calls
+DFH: initialize()                   :     80.683u      1.550s     49.525w   1085 calls
+DFH: AO Construction                :     30.017u      0.017s     18.007w   1085 calls
+
+DFH: AO-Met. Contraction            :      7.650u      0.000s      4.600w   1085 calls
+HF: Form core H                     :      2.933u      0.200s      2.786w   1085 calls
+Host: sv1-c724
+HF: Form S/X                        :      0.700u      0.067s      0.434w   1085 calls
+
+HF: Guess                           :     77.750u      1.017s     47.097w   1085 calls
+SAD Guess                           :     73.967u      0.933s     44.789w   1085 calls
+HF: Form G                          :     23.183u      0.100s     13.968w  12151 calls
+JK: D                               :      0.150u      0.000s      0.131w  12151 calls
+JK: USO2AO                          :      0.050u      0.000s      0.034w  12151 calls
+JK: JK                              :     21.983u      0.083s     13.226w  12151 calls
+Timers On : Tue Dec  2 12:30:54 2025
+DFH: compute_JK()                   :     21.883u      0.083s     13.142w  12151 calls
+DFH: Grabbing AOs                   :      0.083u      0.000s      0.014w  12151 calls
+DFH: compute_J                      :      4.267u      0.017s      2.946w  12151 calls
+Timers Off: Tue Dec  2 12:41:07 2025
+DFH: compute_K                      :     16.183u      0.067s      9.413w  12151 calls
+JK: AO2USO                          :      0.050u      0.000s      0.015w  12151 calls
+HF: Form F                          :      0.250u      0.000s      0.133w  12151 calls
+
+Wall Time:      612.53 seconds
+
+HF: Form D                          :      0.133u      0.000s      0.100w  12151 calls
+HF: DIIS                            :     66.250u      3.617s     42.024w  11066 calls
+                                                       Time (seconds)
+HF: Form C                          :     11.183u      0.450s      6.865w  11066 calls
+DFMP2 Singles                       :      0.067u      0.017s      0.060w   1085 calls
+Module                                       User      System        Wall        Calls
+DFMP2 Aia                           :     50.033u      0.450s     31.073w   1085 calls
+DFMP2 (A|mn)                        :     33.733u      0.183s     20.372w   1085 calls
+
+DFMP2 (A|mn)C_mi                    :      0.883u      0.000s      0.530w   1085 calls
+DFMP2 (A|mi)C_na                    :      0.583u      0.000s      0.314w   1085 calls
+Host: sv1-c724
+DFMP2 Aia Write                     :      0.567u      0.117s      0.444w   1085 calls
+
+DFMP2 Bia                           :     18.100u      1.017s     12.086w   1085 calls
+
+DFMP2 Metric                        :     15.000u      0.683s      9.428w   1085 calls
+DFMP2 Aia Read                      :      0.600u      0.100s      0.510w   1085 calls
+DFMP2 (ia|A)(A|Q)                   :      0.933u      0.067s      0.701w   1085 calls
+DFMP2 Bia Write                     :      0.733u      0.100s      0.448w   1085 calls
+Host: sv1-c724
+DFMP2 Energy                        :      2.150u      0.817s      2.459w   1085 calls
+Timers On : Tue Dec  2 12:30:54 2025
+
+DFMP2 Bia Read                      :      0.200u      0.050s      0.119w   2170 calls
+
+
+--------------------------------------------------------------------------------------
+Timers Off: Tue Dec  2 12:41:07 2025
+DFH: sparsity prep                  :     25.533u      0.083s     15.453w   1085 calls
+| 
+Host: sv1-c724
+
+Timers On : Tue Dec  2 12:30:54 2025
+Timers Off: Tue Dec  2 12:41:07 2025
+
+Wall Time:      612.49 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+Host: sv1-c724
+
+Timers On : Tue Dec  2 12:41:22 2025
+Timers Off: Tue Dec  2 12:42:00 2025
+
+Host: sv1-c724
+
+Wall Time:       37.67 seconds
+
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+Timers On : Tue Dec  2 12:41:22 2025
+Timers Off: Tue Dec  2 12:42:00 2025
+
+Host: sv1-c724
+
+
+Wall Time:       37.66 seconds
+
+                                                       Time (seconds)
+Timers On : Tue Dec  2 12:41:22 2025
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+Timers Off: Tue Dec  2 12:42:00 2025
+
+**************************************************************************************
+
+Wall Time:       37.62 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+
+Host: sv1-c724
+
+Timers On : Tue Dec  2 12:41:22 2025
+Timers Off: Tue Dec  2 12:42:00 2025
+
+Host: sv1-c724
+
+Timers On : Tue Dec  2 12:30:52 2025
+Timers Off: Tue Dec  2 12:42:00 2025
+
+Wall Time:      668.34 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 12:24:09 2025
+Timers Off: Wed Dec  3 12:24:10 2025
+
+Wall Time:        1.01 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 12:24:30 2025
+Timers Off: Wed Dec  3 12:24:32 2025
+
+Wall Time:        2.44 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+DFH: sparsity prep                  :      0.033u      0.017s      0.032w      2 calls
+Libint2ERI::Libint2ERI              :      0.067u      0.017s      0.048w     10 calls
+DFH: initialize()                   :      0.150u      0.000s      0.091w      2 calls
+
+DFH: AO Construction                :      0.050u      0.000s      0.028w      2 calls
+DFH: AO-Met. Contraction            :      0.000u      0.000s      0.008w      2 calls
+Host: sv1-c724
+HF: Form core H                     :      0.033u      0.000s      0.005w      2 calls
+
+HF: Form S/X                        :      0.000u      0.000s      0.001w      2 calls
+HF: Guess                           :      0.133u      0.000s      0.090w      2 calls
+SAD Guess                           :      0.133u      0.000s      0.085w      2 calls
+Timers On : Wed Dec  3 12:24:30 2025
+HF: Form G                          :      0.017u      0.000s      0.024w     22 calls
+
+JK: D                               :      0.000u      0.000s      0.000w     22 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     22 calls
+Timers Off: Wed Dec  3 12:24:32 2025
+Host: sv1-c724
+JK: JK                              :      0.017u      0.000s      0.022w     22 calls
+
+Wall Time:        2.44 seconds
+
+
+DFH: compute_JK()                   :      0.017u      0.000s      0.022w     22 calls
+                                                       Time (seconds)
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     22 calls
+Module                                       User      System        Wall        Calls
+DFH: compute_J                      :      0.000u      0.000s      0.005w     22 calls
+Timers On : Wed Dec  3 12:24:30 2025
+DFH: compute_K                      :      0.017u      0.000s      0.016w     22 calls
+
+JK: AO2USO                          :      0.000u      0.000s      0.000w     22 calls
+Timers Off: Wed Dec  3 12:24:32 2025
+HF: Form F                          :      0.000u      0.000s      0.000w     22 calls
+Host: sv1-c724
+HF: Form D                          :      0.000u      0.000s      0.000w     22 calls
+
+Wall Time:        2.44 seconds
+
+DFH: sparsity prep                  :      0.033u      0.017s      0.032w      2 calls
+HF: DIIS                            :      0.117u      0.017s      0.078w     20 calls
+
+                                                       Time (seconds)
+HF: Form C                          :      0.000u      0.000s      0.012w     20 calls
+Libint2ERI::Libint2ERI              :      0.067u      0.017s      0.049w     10 calls
+Module                                       User      System        Wall        Calls
+DFMP2 Singles                       :      0.000u      0.000s      0.000w      2 calls
+DFH: initialize()                   :      0.133u      0.000s      0.100w      2 calls
+DFMP2 Aia                           :      0.100u      0.000s      0.057w      2 calls
+DFH: AO Construction                :      0.067u      0.000s      0.033w      2 calls
+DFMP2 (A|mn)                        :      0.067u      0.000s      0.037w      2 calls
+Timers On : Wed Dec  3 12:24:30 2025
+DFH: AO-Met. Contraction            :      0.000u      0.000s      0.010w      2 calls
+DFMP2 (A|mn)C_mi                    :      0.000u      0.000s      0.001w      2 calls
+HF: Form core H                     :      0.033u      0.000s      0.005w      2 calls
+DFMP2 (A|mi)C_na                    :      0.000u      0.000s      0.001w      2 calls
+Timers Off: Wed Dec  3 12:24:32 2025
+HF: Form S/X                        :      0.000u      0.000s      0.001w      2 calls
+DFMP2 Aia Write                     :      0.000u      0.000s      0.001w      2 calls
+
+Wall Time:        2.44 seconds
+
+HF: Guess                           :      0.133u      0.000s      0.089w      2 calls
+DFMP2 Bia                           :      0.033u      0.000s      0.022w      2 calls
+                                                       Time (seconds)
+SAD Guess                           :      0.133u      0.000s      0.085w      2 calls
+DFH: sparsity prep                  :      0.033u      0.000s      0.032w      2 calls
+DFMP2 Metric                        :      0.033u      0.000s      0.017w      2 calls
+Module                                       User      System        Wall        Calls
+HF: Form G                          :      0.033u      0.000s      0.025w     22 calls
+Libint2ERI::Libint2ERI              :      0.083u      0.000s      0.049w     10 calls
+DFMP2 Aia Read                      :      0.000u      0.000s      0.001w      2 calls
+JK: D                               :      0.000u      0.000s      0.000w     22 calls
+DFMP2 (ia|A)(A|Q)                   :      0.000u      0.000s      0.001w      2 calls
+DFH: initialize()                   :      0.183u      0.017s      0.107w      2 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     22 calls
+DFMP2 Bia Write                     :      0.000u      0.000s      0.001w      2 calls
+JK: JK                              :      0.033u      0.000s      0.024w     22 calls
+DFMP2 Energy                        :      0.017u      0.000s      0.005w      2 calls
+DFH: AO Construction                :      0.067u      0.000s      0.040w      2 calls
+DFH: compute_JK()                   :      0.033u      0.000s      0.024w     22 calls
+DFMP2 Bia Read                      :      0.000u      0.000s      0.000w      4 calls
+DFH: AO-Met. Contraction            :      0.033u      0.000s      0.012w      2 calls
+
+--------------------------------------------------------------------------------------
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     22 calls
+HF: Form core H                     :      0.000u      0.000s      0.005w      2 calls
+DFH: sparsity prep                  :      0.033u      0.017s      0.032w      2 calls
+DFH: compute_J                      :      0.000u      0.000s      0.005w     22 calls
+DFH: sparsity prep                  :      0.050u      0.000s      0.031w      2 calls
+HF: Form S/X                        :      0.000u      0.000s      0.001w      2 calls
+| DFH: compute_K                      :      0.033u      0.000s      0.017w     22 calls
+Libint2ERI::Libint2ERI              :      0.050u      0.017s      0.048w     10 calls
+HF: Guess                           :      0.133u      0.000s      0.090w      2 calls
+Libint2ERI::Libint2ERI            :      0.033u      0.017s      0.021w      2 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     22 calls
+DFH: initialize()                   :      0.150u      0.017s      0.103w      2 calls
+SAD Guess                           :      0.133u      0.000s      0.085w      2 calls
+DFH: initialize()                   :      0.150u      0.000s      0.091w      2 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     22 calls
+DFH: AO Construction                :      0.067u      0.000s      0.037w      2 calls
+| HF: Form G                          :      0.050u      0.000s      0.029w     23 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     22 calls
+DFH: AO-Met. Contraction            :      0.017u      0.000s      0.011w      2 calls
+Libint2ERI::Libint2ERI            :      0.033u      0.000s      0.018w      4 calls
+JK: D                               :      0.000u      0.000s      0.000w     23 calls
+HF: DIIS                            :      0.083u      0.017s      0.075w     20 calls
+| HF: Form core H                     :      0.000u      0.000s      0.005w      2 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     23 calls
+HF: Form C                          :      0.000u      0.000s      0.012w     20 calls
+DFH: AO Construction              :      0.050u      0.000s      0.028w      2 calls
+HF: Form S/X                        :      0.000u      0.000s      0.001w      2 calls
+JK: JK                              :      0.050u      0.000s      0.027w     23 calls
+DFMP2 Singles                       :      0.000u      0.000s      0.000w      2 calls
+| HF: Guess                           :      0.150u      0.000s      0.089w      2 calls
+DFH: compute_JK()                   :      0.050u      0.000s      0.027w     23 calls
+DFH: AO-Met. Contraction          :      0.000u      0.000s      0.008w      2 calls
+DFMP2 Aia                           :      0.100u      0.000s      0.058w      2 calls
+SAD Guess                           :      0.133u      0.000s      0.085w      2 calls
+HF: Form core H                     :      0.033u      0.000s      0.005w      2 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     23 calls
+DFMP2 (A|mn)                        :      0.067u      0.000s      0.039w      2 calls
+HF: Form S/X                        :      0.000u      0.000s      0.001w      2 calls
+HF: Form G                          :      0.050u      0.000s      0.029w     23 calls
+DFH: compute_J                      :      0.017u      0.000s      0.006w     23 calls
+DFMP2 (A|mn)C_mi                    :      0.000u      0.000s      0.001w      2 calls
+HF: Guess                           :      0.133u      0.000s      0.090w      2 calls
+JK: D                               :      0.000u      0.000s      0.000w     23 calls
+DFH: compute_K                      :      0.033u      0.000s      0.019w     23 calls
+| DFMP2 (A|mi)C_na                    :      0.000u      0.000s      0.001w      2 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     23 calls
+SAD Guess                         :      0.133u      0.000s      0.085w      2 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     23 calls
+DFMP2 Aia Write                     :      0.000u      0.000s      0.001w      2 calls
+JK: JK                              :      0.050u      0.000s      0.028w     23 calls
+HF: Form G                          :      0.017u      0.000s      0.024w     22 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     23 calls
+| DFH: compute_JK()                   :      0.050u      0.000s      0.028w     23 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     23 calls
+JK: D                             :      0.000u      0.000s      0.000w     22 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     23 calls
+| HF: DIIS                            :      0.150u      0.017s      0.079w     21 calls
+JK: USO2AO                        :      0.000u      0.000s      0.000w     22 calls
+DFH: compute_J                      :      0.017u      0.000s      0.007w     23 calls
+| JK: JK                            :      0.017u      0.000s      0.022w     22 calls
+DFH: compute_K                      :      0.017u      0.000s      0.019w     23 calls
+| | DFH: compute_JK()               :      0.017u      0.000s      0.022w     22 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     23 calls
+| | | HF: Form F                          :      0.000u      0.000s      0.000w     23 calls
+DFH: Grabbing AOs             :      0.000u      0.000s      0.000w     22 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     23 calls
+| | | HF: DIIS                            :      0.100u      0.000s      0.081w     21 calls
+DFH: compute_J                :      0.000u      0.000s      0.005w     22 calls
+| | | HF: Form C                          :      0.050u      0.000s      0.013w     21 calls
+DFH: compute_K                :      0.017u      0.000s      0.016w     22 calls
+DFMP2 Singles                       :      0.000u      0.000s      0.000w      2 calls
+| DFMP2 Aia                           :      0.100u      0.000s      0.057w      2 calls
+JK: AO2USO                        :      0.000u      0.000s      0.000w     22 calls
+DFMP2 (A|mn)                        :      0.067u      0.000s      0.038w      2 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     22 calls
+DFMP2 (A|mn)C_mi                    :      0.000u      0.000s      0.001w      2 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     22 calls
+DFMP2 (A|mi)C_na                    :      0.000u      0.000s      0.001w      2 calls
+HF: DIIS                            :      0.117u      0.017s      0.078w     20 calls
+DFMP2 Aia Write                     :      0.000u      0.000s      0.001w      2 calls
+HF: Form C                          :      0.000u      0.000s      0.012w     20 calls
+DFMP2 Bia                           :      0.033u      0.000s      0.023w      2 calls
+DFMP2 Singles                       :      0.000u      0.000s      0.000w      2 calls
+DFMP2 Metric                        :      0.033u      0.000s      0.018w      2 calls
+DFMP2 Aia                           :      0.100u      0.000s      0.057w      2 calls
+DFMP2 Aia Read                      :      0.000u      0.000s      0.001w      2 calls
+| DFMP2 (ia|A)(A|Q)                   :      0.000u      0.000s      0.001w      2 calls
+Libint2ERI::Libint2ERI            :      0.000u      0.000s      0.010w      2 calls
+DFMP2 Bia Write                     :      0.000u      0.000s      0.001w      2 calls
+| HF: Form C                          :      0.017u      0.000s      0.013w     21 calls
+DFMP2 Energy                        :      0.000u      0.017s      0.005w      2 calls
+DFMP2 (A|mn)                      :      0.067u      0.000s      0.037w      2 calls
+| DFMP2 Bia Read                      :      0.000u      0.000s      0.000w      4 calls
+
+--------------------------------------------------------------------------------------
+DFMP2 (A|mn)C_mi                  :      0.000u      0.000s      0.001w      2 calls
+DFMP2 Singles                       :      0.000u      0.000s      0.000w      2 calls
+| DFH: sparsity prep                  :      0.050u      0.000s      0.031w      2 calls
+DFMP2 Bia                           :      0.033u      0.000s      0.022w      2 calls
+DFMP2 Aia                           :      0.100u      0.000s      0.056w      2 calls
+DFMP2 (A|mi)C_na                  :      0.000u      0.000s      0.001w      2 calls
+| | DFMP2 (A|mn)                        :      0.067u      0.000s      0.037w      2 calls
+DFMP2 Metric                        :      0.033u      0.000s      0.018w      2 calls
+Libint2ERI::Libint2ERI            :      0.017u      0.000s      0.020w      2 calls
+DFMP2 Aia Write                   :      0.000u      0.000s      0.001w      2 calls
+DFMP2 (A|mn)C_mi                    :      0.000u      0.000s      0.001w      2 calls
+DFMP2 Aia Read                      :      0.000u      0.000s      0.001w      2 calls
+DFMP2 (A|mi)C_na                    :      0.000u      0.000s      0.001w      2 calls
+DFH: initialize()                   :      0.150u      0.017s      0.103w      2 calls
+DFMP2 Bia                           :      0.033u      0.000s      0.022w      2 calls
+DFMP2 Aia Write                     :      0.000u      0.000s      0.001w      2 calls
+| DFMP2 (ia|A)(A|Q)                   :      0.000u      0.000s      0.001w      2 calls
+| DFMP2 Bia                           :      0.033u      0.000s      0.022w      2 calls
+Libint2ERI::Libint2ERI            :      0.017u      0.017s      0.017w      4 calls
+DFMP2 Bia Write                     :      0.000u      0.000s      0.001w      2 calls
+DFMP2 Metric                        :      0.033u      0.000s      0.017w      2 calls
+DFMP2 Metric                      :      0.033u      0.000s      0.017w      2 calls
+| DFMP2 Aia Read                      :      0.000u      0.000s      0.001w      2 calls
+| | DFMP2 Energy                        :      0.000u      0.000s      0.004w      2 calls
+DFH: AO Construction              :      0.067u      0.000s      0.037w      2 calls
+DFMP2 (ia|A)(A|Q)                   :      0.000u      0.000s      0.001w      2 calls
+DFMP2 Bia Read                      :      0.000u      0.000s      0.000w      4 calls
+| Libint2ERI::Libint2ERI          :      0.000u      0.000s      0.000w      2 calls
+DFMP2 Bia Write                     :      0.000u      0.000s      0.001w      2 calls
+
+--------------------------------------------------------------------------------------
+DFH: AO-Met. Contraction          :      0.017u      0.000s      0.011w      2 calls
+| DFMP2 Energy                        :      0.000u      0.000s      0.004w      2 calls
+DFH: sparsity prep                  :      0.033u      0.017s      0.032w      2 calls
+DFMP2 Aia Read                    :      0.000u      0.000s      0.001w      2 calls
+HF: Form core H                     :      0.000u      0.000s      0.005w      2 calls
+| DFMP2 Bia Read                      :      0.000u      0.000s      0.000w      4 calls
+| Libint2ERI::Libint2ERI            :      0.033u      0.017s      0.021w      2 calls
+HF: Form S/X                        :      0.000u      0.000s      0.001w      2 calls
+
+--------------------------------------------------------------------------------------
+DFMP2 (ia|A)(A|Q)                 :      0.000u      0.000s      0.001w      2 calls
+DFH: initialize()                   :      0.133u      0.000s      0.100w      2 calls
+HF: Guess                           :      0.150u      0.000s      0.089w      2 calls
+| | DFH: sparsity prep                  :      0.033u      0.000s      0.032w      2 calls
+| Libint2ERI::Libint2ERI            :      0.033u      0.000s      0.018w      4 calls
+DFMP2 Bia Write                   :      0.000u      0.000s      0.001w      2 calls
+| SAD Guess                         :      0.133u      0.000s      0.085w      2 calls
+| DFMP2 Energy                        :      0.017u      0.000s      0.005w      2 calls
+Libint2ERI::Libint2ERI            :      0.033u      0.000s      0.021w      2 calls
+DFH: AO Construction              :      0.067u      0.000s      0.033w      2 calls
+HF: Form G                          :      0.050u      0.000s      0.029w     23 calls
+| | | DFH: initialize()                   :      0.183u      0.017s      0.107w      2 calls
+DFH: AO-Met. Contraction          :      0.000u      0.000s      0.010w      2 calls
+DFMP2 Bia Read                    :      0.000u      0.000s      0.000w      4 calls
+JK: D                             :      0.000u      0.000s      0.000w     23 calls
+| HF: Form core H                     :      0.033u      0.000s      0.005w      2 calls
+
+**************************************************************************************
+| Libint2ERI::Libint2ERI            :      0.033u      0.000s      0.018w      4 calls
+HF: Form S/X                        :      0.000u      0.000s      0.001w      2 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w     23 calls
+| DFH: AO Construction              :      0.067u      0.000s      0.040w      2 calls
+| JK: JK                            :      0.050u      0.000s      0.028w     23 calls
+DFH: AO-Met. Contraction          :      0.033u      0.000s      0.012w      2 calls
+| | DFH: compute_JK()               :      0.050u      0.000s      0.028w     23 calls
+| | | DFH: Grabbing AOs             :      0.000u      0.000s      0.000w     23 calls
+| | | DFH: compute_J                :      0.017u      0.000s      0.007w     23 calls
+| | | DFH: compute_K                :      0.017u      0.000s      0.019w     23 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w     23 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     23 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     23 calls
+HF: DIIS                            :      0.100u      0.000s      0.081w     21 calls
+HF: Form C                          :      0.050u      0.000s      0.013w     21 calls
+DFMP2 Singles                       :      0.000u      0.000s      0.000w      2 calls
+DFMP2 Aia                           :      0.100u      0.000s      0.057w      2 calls
+| Libint2ERI::Libint2ERI            :      0.017u      0.000s      0.010w      2 calls
+| DFMP2 (A|mn)                      :      0.067u      0.000s      0.038w      2 calls
+| 
+Host: sv1-c724
+
+Timers On : Wed Dec  3 12:24:27 2025
+Timers Off: Wed Dec  3 12:24:32 2025
+
+Wall Time:        5.33 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 12:27:51 2025
+Timers Off: Wed Dec  3 12:27:52 2025
+
+Wall Time:        0.99 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 12:28:09 2025
+Timers Off: Wed Dec  3 12:28:12 2025
+
+Wall Time:        3.47 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 12:29:44 2025
+Timers Off: Wed Dec  3 12:29:45 2025
+
+Wall Time:        1.00 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 12:30:20 2025
+Timers Off: Wed Dec  3 12:30:22 2025
+
+Wall Time:        2.21 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 12:30:31 2025
+Timers Off: Wed Dec  3 12:30:32 2025
+
+Wall Time:        1.77 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 12:31:52 2025
+Timers Off: Wed Dec  3 12:31:57 2025
+
+Wall Time:        5.30 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 12:56:44 2025
+Timers Off: Wed Dec  3 12:56:45 2025
+
+Wall Time:        0.96 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 13:03:48 2025
+Timers Off: Wed Dec  3 13:03:49 2025
+
+Wall Time:        0.94 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 13:07:02 2025
+Timers Off: Wed Dec  3 13:07:03 2025
+
+Wall Time:        0.93 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 13:07:18 2025
+Timers Off: Wed Dec  3 13:07:19 2025
+
+Wall Time:        0.95 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 13:08:12 2025
+Timers Off: Wed Dec  3 13:08:13 2025
+
+Wall Time:        0.97 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Wed Dec  3 13:19:06 2025
+Timers Off: Wed Dec  3 13:19:07 2025
+
+Wall Time:        0.98 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************

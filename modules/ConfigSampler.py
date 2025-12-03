@@ -162,6 +162,72 @@ class ConfigSampler:
                 end_time = timeit.default_timer()
                 print(f"Sphere sampling of {n} points took {end_time - start_time:.6f} seconds")
 
+    def sample_plane_along_vector(self,
+                                  center_point: np.ndarray,
+                                  normal_vector: np.ndarray,
+                                  direction_vector: np.ndarray,
+                                  s_length: int,
+                                  t_params: np.array = np.array([0,5]),
+                                  num_points: int = 100,
+                                  plot_sampling: bool = False
+                                  ):
+        """
+        Function aims to sample points on a plane given by 
+
+        + a center point
+        + a normal vector
+        + a direction vector inside the plane
+        + a second direction vector orthogonal to the first one
+        + length parameters are given in the form [s,t] which say how long we go along the direction vector
+
+        Equation for the plane is given by:
+        p(s,t) = center_point + s * dir_vector1 + t * dir_vector2
+        """
+        d = direction_vector / np.linalg.norm(direction_vector)
+        n = normal_vector / np.linalg.norm(normal_vector)
+        # Compute second in-plane direction vector
+        d2 = np.cross(n, d)
+        norm_d2 = np.linalg.norm(d2)
+        if norm_d2 < 1e-6:
+            raise ValueError("Direction vector cannot be parallel to normal vector")
+        d2 /= norm_d2
+
+        # Starting point is center_point and we sample along t and s
+        s_values = np.random.uniform(0, s_length, num_points) 
+        t_values = np.random.uniform(t_params[0], t_params[1], num_points)     
+
+
+        sampled_points = center_point + np.outer(s_values, d) + np.outer(t_values, d2)
+
+        if plot_sampling:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            ax.scatter(sampled_points[:, 0], sampled_points[:, 1], sampled_points[:, 2], c='b', marker='o')
+            ax.set_title('Plane Sampling')
+
+            # Draw center point and vectors
+            ax.quiver(center_point[0], center_point[1], center_point[2],
+                      normal_vector[0], normal_vector[1], normal_vector[2],
+                      length=1.0, color='r', label='Normal Vector')
+            ax.quiver(center_point[0], center_point[1], center_point[2],
+                      direction_vector[0], direction_vector[1], direction_vector[2],
+                        length=1.0, color='g', label='Direction Vector')
+            ax.quiver(center_point[0], center_point[1], center_point[2],
+                      d2[0], d2[1], d2[2],
+                      length=1.0, color='m', label='Second Direction Vector')
+            
+            
+            
+            plt.legend()
+            plt.xlabel('X')
+            plt.ylabel('Y')
+            plt.savefig('plane_sampling.png')
+            plt.close()
+        
+        return sampled_points
+
+
+
     def generate_spherical_grid(self,grid_dim=4):
         """ 
         Generates a spherical grid of points which are later used for sampling the rotational space of a submolecule//molecule
@@ -178,35 +244,7 @@ class ConfigSampler:
         unit_vectors = np.column_stack([x.ravel(), y.ravel(), z.ravel()])
         return unit_vectors
         
-    
-    def sample_submol_cone(self,
-                           submolecule,
-                           apex: np.ndarray,
-                           axis: np.ndarray,
-                           height: float,
-                           base_radius: float,
-                           num_points: int = 100,
-                           plot_sampling: bool = False) -> List:
-        """ 
-        Samples a submolecule within a cone volume, the other atoms in the molecule remain fixed+
-        """ 
-        sampled_mols = []
-        sampled_points = self.sample_cone(apex, axis, height, base_radius, num_points, plot_sampling)
-        for i, point in enumerate(sampled_points):
-            # Translate submolecule to sampled point
-            translation_vector = point - np.mean(submolecule.coordinates, axis=0)
-            # Acess parent molecule
-            mol = submolecule.parent
-            new_mol = Molecule(name=f"cone_sample_{i}")
-            new_mol.atom_labels = mol.atom_labels.copy()
-            new_mol.masses = mol.masses.copy()
-            new_coords = mol.coordinates.copy()
-            # Translate submolecule atoms
-            submol_indices = [idx for idx, label in enumerate(mol.atom_labels) if label in submolecule.atom_labels]
-            new_coords[submol_indices] += translation_vector
-            new_mol.coordinates = new_coords
-            sampled_mols.append(new_mol)
-        return sampled_mols 
+ 
 
     def _generate_template_molecule(self, mol):
         """ 
@@ -303,6 +341,82 @@ class ConfigSampler:
             self.logger.write_message_block(message)
         
         return sampled_mols
+    
+    def sample_submol_cone(self,
+                           submolecule: "SubMolecule",
+                           apex: np.ndarray,
+                            axis: np.ndarray,
+                            height: float,
+                            base_radius: float,
+                            num_points: int = 100,
+                            rotation: bool = True,
+                            rotational_grid_dim: int = 4,
+                            plot_sampling: bool = False) -> List:
+        """ 
+        Implementation of the submolecule sampling within a cone volume
+
+        For this one needs to provide the apex point of the cone and the axis vector. If rotation is true,
+        """
+        mol = submolecule.parent
+        submol_indices = submolecule.get_index_in_parent()
+        submol_center = np.mean(submolecule.coordinates, axis=0)
+        
+        # Sample points already at self.center_point 
+        sampled_points = self.sample_cone(apex, axis, height, base_radius, num_points)
+        
+        # Create template molecule without coordinates (shared properties)
+        template_mol = self._generate_template_molecule(mol)
+        
+        # Calculate translation vectors for submolecule
+        translation_vectors = sampled_points - submol_center
+
+        if rotation:
+            # Generate rotational grid
+            rotation_unit_vectors = self.generate_spherical_grid(grid_dim=rotational_grid_dim)
+
+            # Compute reference frame once
+            trans_ref_frame, submol_center = Transformation().set_reference_frame_submolecule(
+                submolecule, mol, method="com", print_info=False, plot_frame=True
+            )
+            # Allocation of total list, much faster than appending
+            total_mols = len(rotation_unit_vectors) * len(translation_vectors)
+            sampled_mols = [None] * total_mols
+            mol_counter = 0
+            # Precompute base coordinates and mask
+            base_coords = mol.coordinates.copy()
+            mask = np.zeros(base_coords.shape[0], dtype=bool)
+            mask[submol_indices] = True
+            for rot_idx, rot_vec in enumerate(rotation_unit_vectors):
+                # Rotate submolecule once per rotation vector
+                rotated_coords = Transformation().rotate_molecule_to_point(
+                    submolecule,
+                    center_point=submol_center,
+                    ref_frame=trans_ref_frame,
+                    target_point=rot_vec + submol_center
+                )
+                # Apply all translations for this rotation
+                for trans_idx, translation_vector in enumerate(translation_vectors):
+                    new_mol = Molecule(name=f"cone_sample_rot{rot_idx}_trans{trans_idx}")
+                    new_mol.atom_labels = template_mol.atom_labels
+                    new_mol.masses = template_mol.masses
+                    
+                    # Efficient coordinate assignment
+                    new_coords = base_coords.copy()
+                    new_coords[mask] = rotated_coords + translation_vector
+                    new_mol.coordinates = new_coords
+                    sampled_mols[mol_counter] = new_mol
+                    mol_counter += 1
+        else:
+            # Use optimized batch generation
+            sampled_mols = self._generate_molecules_batch_optimized(
+                template_mol, mol.coordinates, submol_indices, translation_vectors
+            )
+
+        
+        return sampled_mols 
+            
+
+
 
     def _generate_molecules_batch_optimized(self, template, base_coords, submol_indices, translation_vectors):
         """ 

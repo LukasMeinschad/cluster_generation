@@ -5,7 +5,7 @@ from plotting import Plotting
 from molecule_class import Molecule
 from itertools import combinations
 from typing import List, Tuple, Optional, Union
-
+import matplotlib.pyplot as plt
 
 class Transformation:
     """
@@ -378,8 +378,94 @@ class Transformation:
         """
         if len(configuration.coordinates) < 2:
             raise ValueError("Configuration must have at least 2 atoms to define a reference frame")
-        # TODO implement from here
+        
+        # Calculate the center of the configuration
+        center_point = self.center_point(configuration, method=method)
+        
+        if print_info:
+            print(f"Configuration center: {center_point}")
 
+        # Center the configuration coordinates 
+        
+        # Obtain the inertia tensor and principal axes at current position
+        I = self.inertia_tensor(configuration.coordinates, configuration.masses)
+        eigval_I, eigvec_I = np.linalg.eigh(I)
+        ref_frame = np.array([eigvec_I[:,0], eigvec_I[:,1], eigvec_I[:,2]]).T
+
+        if plot_frame:
+            # Plot parent molecule and reference frame
+            if parent_molecule is not None:
+                Plotting().plot_ref_frame_hbond_config(parent_molecule, ref_frame, center_point)
+
+        return ref_frame, center_point
+    
+    def get_hbond_donor_vector(self, configuration: "SubMolecule", 
+                               molecule: "Molecule", 
+                               plot_vector = True) -> np.ndarray:
+        """ 
+        Returns a unit vector points outwards from the hydrogen bond donor atom in the configuration
+
+
+        + For this we first identify the two vectors going from the neighbours to the donors
+        + Then we set the origin of these vectors to the donor atom
+        + Then we compute the angle of these two vectors and bisect them to get the outward pointing vector
+        """
+        donor_label = configuration.atom_labels[0] # TODO maybe here we could get a problem if the label is false
+        donor_coords = configuration.get_coords_by_label(donor_label)[0]
+        neighbour_labels = configuration.atom_labels[1:]
+        neighbour_coords = configuration.get_coords_by_labels(neighbour_labels)
+        vecs_to_donor = donor_coords - neighbour_coords  # Vectors pointing towards the donor
+        vecs_to_donor_unit = vecs_to_donor / np.linalg.norm(vecs_to_donor, axis=1)[:, np.newaxis]  # Normalize
+
+        # Bisect the vectors is sum of unit vectors
+        bisect_vector = np.sum(vecs_to_donor_unit, axis=0)
+        bisect_vector_unit = bisect_vector / np.linalg.norm(bisect_vector)
+        # but the origin of the bisect vector is at the donor, we want it to point outwards
+        if plot_vector:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            # Plot the molecule
+            ax.scatter(molecule.coordinates[:,0], molecule.coordinates[:,1], molecule.coordinates[:,2], c='b', s=50, label='Molecule Atoms')
+            # Plot the donor atom
+            ax.scatter(donor_coords[0], donor_coords[1], donor_coords[2], c='r', s=100, label='H-Bond Donor')
+            # Plot the bisect vector
+            ax.quiver(donor_coords[0], donor_coords[1], donor_coords[2],
+                      bisect_vector_unit[0], bisect_vector_unit[1], bisect_vector_unit[2],
+                      length=1.0, color='g', label='Outward Bisect Vector')
+            ax.set_xlabel('X')
+            ax.set_ylabel('Y')
+            ax.set_zlabel('Z')
+            ax.legend()
+            plt.title("Hydrogen Bond Donor Outward Vector")
+            #plt.show()
+            plt.close()
+        # This unit vector can then be used for sampling along a cone around it
+
+        return bisect_vector_unit, donor_coords
+    
+
+
+
+
+
+    # TODO this is shit 
+    def align_ref_to_donor(self,
+                           ref_frame: np.ndarray,
+                           configuration: "SubMolecule",
+                           molecule: Union["Molecule", "Submolecule"],
+                           plot_frame: bool = False) -> np.ndarray:
+        """ 
+        Function that aligns the reference frame to the hydrogen bond donor and then finds the vector that point outwards from the donor
+        """
+        # Identify donor atom and its bonded atom
+        donor_label = configuration.atom_labels[0] # TODO maybe here we could get a problem if the label is false
+        donor_coords = configuration.get_coords_by_label(donor_label)[0]
+        print(f"Donor coords: {donor_coords}")
+        # Donor coords are now the center of the reference frame
+        if plot_frame:
+            Plotting().plot_reference_frame(molecule, reference_frame=ref_frame, reference_frame_origin=donor_coords)
+
+    
 
     @staticmethod
     def align_vectors(a: np.ndarray,b: np.ndarray) -> np.ndarray:

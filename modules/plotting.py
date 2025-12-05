@@ -114,8 +114,8 @@ class Plotting:
         plt.title("3D Molecule with Reference Frame")
         #plt.savefig("molecule_reference_frame_plot.png")
 
-        plt.show()
-        #plt.close()
+        #plt.show()
+        plt.close()
 
 
     def plot_cube(self, cube_corners):

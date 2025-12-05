@@ -5,6 +5,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
 from typing import List, Tuple, Optional, Dict, Any
+import time
 
 
 
@@ -12,13 +13,14 @@ class MolecularCluster:
     """ 
     A class to perform various clustering algorithms on the sampled molecular configurations
     """
-    def __init__(self, sampled_molecules: List, energies: List[float]):
+    def __init__(self, sampled_molecules: List, energies: List[float], logger = None):
         """
         Initializes the MolecularCluster with sampled molecules and their respective energies
         
         Args:
             sampled_molecules (List): List of sampled Molecule objects
             energies (List[float]): List of energies corresponding to the sampled molecules
+            logger: Logger object
         """
 
         self.sampled_molecules = sampled_molecules
@@ -28,8 +30,144 @@ class MolecularCluster:
         self.cluster_centers = None 
         self.cluster_info = None
         self.scaler = StandardScaler()
+        self.logger = logger
 
+
+        # Hydrogen bond analysis attributed 
+        self.sampled_molecules_valid_hbond = []
+
+    def analyze_h_bond_configurations(self, plot_info: bool = False):
+        """
+        Function to analyze possible hydrogen bond configurations in the sampled molecules
+
+        For each sampled molecule, the covalent and hydrogen bonds are identified. Then, the hydrogen bond configurations and their angles are calculated and stored.
+        """
+        # For all the sampled molecules run the get_bonds function
+        start_time = time.time()
+        covalent_bonds_list = []
+        hydrogen_bonds_list = []
+        for mol in self.sampled_molecules:
+            cov_bonds, h_bonds = mol.get_bonds()
+            covalent_bonds_list.append(cov_bonds)
+            hydrogen_bonds_list.append(h_bonds) 
+
+        # Get hydrogen bond configurations of all molecules
+        # Get angles as well
+        hbond_configurations_all = []
+        hbond_configurations_angles_all = []
+        valid_hbond_configurations_all = []
+        valid_hbond_configurations_angles = []
+        for mol in self.sampled_molecules:
+            hbond_configs = mol.hbond_configurations()
+            hbond_configurations_all.append(hbond_configs)
+            angles = mol.get_angles_of_hbond_configurations()
+            hbond_configurations_angles_all.append(angles)
+            valid_configs = mol.get_valid_hydrogen_bond_configurations(angle_threshold=150.0)
+            valid_hbond_configurations_all.append(valid_configs)
+            valid_angles = mol._get_angle_of_valid_hbond_configurations()
+            valid_hbond_configurations_angles.append(valid_angles)
+
+
+        # Obtain mols with valid hydrogen bond configurations
+        filtered_mols = []
+        for mol, valid_configs in zip(self.sampled_molecules, valid_hbond_configurations_all):
+            if len(valid_configs) > 0:
+                filtered_mols.append(mol)
         
+        self.sampled_molecules_valid_hbond = filtered_mols
+        
+
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        
+
+
+        if self.logger:
+            # Make a message of basic statistics
+            total_mols = len(self.sampled_molecules)
+            avg_hbonds = np.mean([len(hbonds) for hbonds in hydrogen_bonds_list])
+            msg = f"Analyzed {total_mols} sampled molecules for hydrogen bond configurations.\n"
+            msg += f"Average number of hydrogen bonds per molecule: {avg_hbonds:.2f}\n"
+            # Find maximum number of hydrogen bonds in any molecule
+            max_hbonds = max([len(hbonds) for hbonds in hydrogen_bonds_list])
+            msg += f"Maximum number of hydrogen bonds in a molecule: {max_hbonds}\n"
+            msg += f"Time taken for analysis: {elapsed_time:.2f} seconds\n"
+            self.logger.write_message_block(msg)
+
+
+        if plot_info:
+            # Plot a histogramm of the number of hydrogen bonds per molecule
+            num_hbonds = [len(hbonds) for hbonds in hydrogen_bonds_list]
+            plt.figure(figsize=(8, 6))
+            plt.hist(num_hbonds, bins=range(0, max(num_hbonds)+2), alpha=0.7, color='blue', edgecolor='black')
+            plt.title('Distribution of Hydrogen Bonds per Sampled Molecule')
+            plt.xlabel('Number of Hydrogen Bonds')
+            plt.ylabel('Frequency')
+            plt.grid(axis='y', alpha=0.75)
+            plt.savefig("hydrogen_bond_distribution.png")
+            plt.close()
+
+            # Plot histogramm of total hydrogen bond configurations angles
+            all_angles = [angle for angles in hbond_configurations_angles_all for angle in angles]
+            plt.figure(figsize=(8, 6))
+            plt.hist(all_angles, bins=30, alpha=0.7, color='green', edgecolor='black')
+            plt.title('Distribution of Hydrogen Bond Configuration Angles')
+            plt.xlabel('Angle (degrees)')
+            plt.ylabel('Frequency')
+            plt.grid(axis='y', alpha=0.75)
+            plt.savefig("hydrogen_bond_configuration_angles.png")
+            plt.close()
+
+            # Plot histogramm of valid hydrogen bond configurations angles
+            valid_hbond_configurations_angles = [angle for angles in valid_hbond_configurations_angles for angle in angles]
+
+            plt.figure(figsize=(8, 6))
+            plt.hist(valid_hbond_configurations_angles, bins=30, alpha=0.7, color='orange', edgecolor='black')
+            plt.title('Distribution of Valid Hydrogen Bond Configuration Angles')
+            plt.xlabel('Angle (degrees)')
+            plt.ylabel('Frequency')
+            plt.grid(axis='y', alpha=0.75)
+            plt.savefig("valid_hydrogen_bond_configuration_angles.png")
+            plt.close()
+
+    # TODO refactor this plotting function to make it better visually appealing
+    def plot_energy_distribution(self):
+        """
+        Function that plots the energy distribution of the sampled molecules
+        """
+        plt.figure(figsize=(8, 6))
+        plt.hist(self.energies, bins=30, alpha=0.7, color='cyan', edgecolor='black')
+        plt.title('Energy Distribution of Sampled Molecules')
+        plt.xlabel('Energy (Hartree)')
+        plt.ylabel('Frequency')
+        plt.grid(axis='y', alpha=0.75)
+        plt.savefig("energy_distribution_sampled_molecules.png")
+        plt.close() 
+
+
+    def plot_energy_distribution_of_valid_hbond_molecules(self):
+        """  
+        Function that plots the energy distribution of the sampled molecules that have valid hydrogen bond configurations
+        """            
+        if not self.sampled_molecules_valid_hbond:
+            raise ValueError("No valid hydrogen bond configurations analyzed yet. Please run analyze_h_bond_configurations first.")
+        
+        # Obtain energies of the valid hbond molecules
+        valid_energies = []
+        for mol in self.sampled_molecules_valid_hbond:
+            idx = self.sampled_molecules.index(mol)
+            valid_energies.append(self.energies[idx])
+        
+        plt.figure(figsize=(8, 6))
+        plt.hist(valid_energies, bins=30, alpha=0.7, color='purple', edgecolor='black')
+        plt.title('Energy Distribution of Sampled Molecules with Valid Hydrogen Bond Configurations')
+        plt.xlabel('Energy (Hartree)')
+        plt.ylabel('Frequency')
+        plt.grid(axis='y', alpha=0.75)
+        plt.savefig("energy_distribution_valid_hbond_molecules.png")
+        plt.close()
+
 
     def select_n_lowest_energy(self, n: int =5) -> Tuple[List, List[float]]: 
         """ 

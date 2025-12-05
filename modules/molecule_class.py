@@ -17,7 +17,7 @@ class Molecule:
 
     # Internal list of hydrogen bond donors and acceptors
     hbond_donors = ["O", "N", "F"] 
-    hbond_acceptors = ["H", "D"]
+    hbond_accecptors = ["O", "N", "F"]
     
     def __init__(self, name: str = "Unnamed Molecule"):
         """ 
@@ -35,6 +35,13 @@ class Molecule:
         # Bonds
         self.covalent_bonds = []
         self.hydrogen_bonds = []
+
+        # Hydrogen bond configurations
+        self.hbond_configurations_list = []
+        self.hbond_donor_configurations_list = []
+        self.hbond_configurations_angles = []
+        self.valid_hbond_configurations = []
+
 
     @staticmethod 
     def _remove_digits_from_label(label: str) -> str:
@@ -172,6 +179,123 @@ class Molecule:
         self.hydrogen_bonds = hydrogen_bonds
         return covalent_bonds, hydrogen_bonds
     
+    def hbond_configurations(self) -> List["SubMolecule"]:
+        """
+        Find possible HBond Configurations in a molecule
+
+        For this we search for triples of atoms were:
+
+        + Acceptor ----- H-Donor
+        + Donor and H are covalently bonded
+        """
+        # First get all H-bond donors and acceptors
+        donor_indices = self._get_hbond_donors()
+        acceptor_indices = self._get_hbond_acceptors()
+        configurations = []
+        # Iterate over all Triples
+        for donor_idx in donor_indices:
+            for acceptor_idx in acceptor_indices:
+                # Case that donor and acceptor are the same atom
+                if donor_idx == acceptor_idx:
+                    continue  
+                # Obtain all covalent bonds of the donor
+                cov_bonds = self._get_covalent_bonds_label(self.atom_labels[donor_idx])
+                # Obtain all hydrogen bonds of the acceptor
+                h_bonds = self._get_hydrogen_bonds_label(self.atom_labels[acceptor_idx])
+                # Check if there is a common H atom
+                for cov_bond in cov_bonds:
+                    for h_bond in h_bonds:
+                        # Find common atom
+                        common_atoms = set(cov_bond).intersection(set(h_bond))
+                        # Check that common atom is not the donor or acceptor itself
+                        common_atoms.discard(self.atom_labels[donor_idx])
+                        common_atoms.discard(self.atom_labels[acceptor_idx])
+                        if common_atoms:
+                            common_atom = common_atoms.pop()
+                            # Create SubMolecule for this configuration in the form Donor-H  Acceptor
+                            indices = [donor_idx] + [np.where(self.atom_labels == common_atom)[0][0]] + [acceptor_idx]
+                            submol = SubMolecule.from_parent_fragment(self, indices, fragment_index=donor_idx)
+                            configurations.append(submol)
+        self.hbond_configurations_list = configurations
+        return configurations  
+
+    def get_angles_of_hbond_configurations(self) -> List[float]:
+        """
+        Calculates the angles in the hydrogen bond configurations of the molecule
+
+        The hbond configurations is again defined as:
+
+        + Acceptor ----- H-Donor
+
+        And is invoked with the function hbond_configurations()
+        """
+        if not self.hbond_configurations_list:
+            self.hbond_configurations_list = self.hbond_configurations()
+
+        angles = []
+        for config in self.hbond_configurations_list:
+            if len(config.atom_labels) != 3:
+                continue # Skip invalid configurations
+            donor_label = config.atom_labels[0]
+            hydrogen_label = config.atom_labels[1]
+            acceptor_label = config.atom_labels[2]
+            donor_coords = config.get_coords_by_label(donor_label)[0]
+            hydrogen_coords = config.get_coords_by_label(hydrogen_label)[0]
+            acceptor_coords = config.get_coords_by_label(acceptor_label)[0]
+            
+            v = donor_coords - hydrogen_coords
+            w = acceptor_coords - hydrogen_coords
+            cos_theta = np.dot(v, w) / (np.linalg.norm(v) * np.linalg.norm(w))
+            angle = np.arccos(cos_theta) * (180.0 / np.pi)  # Convert to degrees
+            angles.append(angle)
+        
+        # Add the angles to the molecule object
+        self.hbond_configurations_angles = angles
+
+        return angles
+    
+    def get_valid_hydrogen_bond_configurations(self, angle_threshold: float = 150.0) -> List["Submolecule"]:
+        """
+        Function that filters the hydrogen bond configurations based on an angle criterion 
+        The angle is defined as the angle between the Donor-Hydrogen-Acceptor atoms
+        If the angle is larger than the threshold, the configuration is considered valid
+        """
+        if not self.hbond_configurations_list:
+            self.hbond_configurations_list = self.hbond_configurations()
+        
+        if not self.hbond_configurations_angles:
+            self.hbond_configurations_angles = self.get_angles_of_hbond_configurations()
+        
+        valid_configurations = []
+        for config, angle in zip(self.hbond_configurations_list, self.hbond_configurations_angles):
+            if angle >= angle_threshold:
+                valid_configurations.append(config)
+        
+        self.valid_hbond_configurations = valid_configurations
+        return valid_configurations
+
+    def _get_angle_of_valid_hbond_configurations(self) -> List[float]:
+        """    
+        Helper function that returns the angles of the valid hydrogen bond configurations
+        """ 
+        angles = []
+        for config in self.valid_hbond_configurations:
+            if len(config.atom_labels) != 3:
+                continue # Skip invalid configurations
+            donor_label = config.atom_labels[0]
+            hydrogen_label = config.atom_labels[1]
+            acceptor_label = config.atom_labels[2]
+            donor_coords = config.get_coords_by_label(donor_label)[0]
+            hydrogen_coords = config.get_coords_by_label(hydrogen_label)[0]
+            acceptor_coords = config.get_coords_by_label(acceptor_label)[0]
+            
+            v = donor_coords - hydrogen_coords
+            w = acceptor_coords - hydrogen_coords
+            cos_theta = np.dot(v, w) / (np.linalg.norm(v) * np.linalg.norm(w))
+            angle = np.arccos(cos_theta) * (180.0 / np.pi)  # Convert to degrees
+            angles.append(angle)
+        return angles
+    
     def hbond_donor_configurations(self) -> List["SubMolecule"]:
         """
         Function that searches for hydrogen bond donors in the system and then gives back their neigbouring 
@@ -197,6 +321,8 @@ class Molecule:
             indices = [donor_idx] + [np.where(self.atom_labels == n)[0][0] for n in neighbours]
             submol = SubMolecule.from_parent_fragment(self, indices, fragment_index=donor_idx)
             configurations.append(submol)
+
+        self.hbond_donor_configurations_list = configurations
         return configurations
 
 
@@ -208,6 +334,25 @@ class Molecule:
         bond_vector = coords2 - coords1
         return bond_vector
 
+    def _get_covalent_bonds_label(self, label: str) -> List[Tuple[str, str]]:
+        """
+        Helper function that returns all covalent bonds where the given label is involved
+        """
+        bonds = []
+        for bond in self.covalent_bonds:
+            if label in bond:
+                bonds.append((bond[0], bond[1]))
+        return bonds
+    
+    def _get_hydrogen_bonds_label(self, label: str) -> List[Tuple[str, str]]:
+        """
+        Helper function that returns all hydrogen bond where the given label is involved
+        """
+        bonds = []
+        for bond in self.hydrogen_bonds:
+            if label in bond:
+                bonds.append((bond[0], bond[1]))
+        return bonds
 
     def _get_hbond_donors(self):
         """ 
@@ -223,6 +368,16 @@ class Molecule:
                 donor_indices.append(idx)
         return donor_indices
 
+    def _get_hbond_acceptors(self):
+        """
+        Helper function that searches for hydrogen bond acceptors in the molecule
+        """
+        acceptor_indices = []
+        for idx, label in enumerate(self.atom_labels):
+            element_symbol = self._remove_digits_from_label(label)
+            if element_symbol in self.hbond_accecptors:
+                acceptor_indices.append(idx)
+        return acceptor_indices
 
     def _get_bond_coordinates(self, bond: Tuple[str, str]) -> Tuple[np.ndarray, np.ndarray]:
         """ 
@@ -392,4 +547,6 @@ class SubMolecule(Molecule):
         parent_labels = self.parent.atom_labels.tolist()
         indices = [parent_labels.index(label) for label in self.atom_labels]
         return indices
+    
+
     

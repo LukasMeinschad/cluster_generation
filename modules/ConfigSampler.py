@@ -24,7 +24,136 @@ class ConfigSampler:
 
         # Optional logger
         self.logger = logger
-    
+
+        # Store the sampling region parameters for r
+        self.sampling_region = { 
+            "form": None, # "sphere", "cone", "rectangle" etc.
+            "parameters": {} # Dictionary to hold relevant parameters
+        }
+
+
+    def sample_rectangle(self,
+                         center_point: np.ndarray,
+                         dir_vector1: np.ndarray,
+                         dir_vector2: np.ndarray,
+                         length1: float,
+                         length2, float,
+                         num_points: int = 100,
+                         plot_sampling: bool = False) -> np.ndarray:
+        """
+        Sample a rectangular region defined by two directions vectors and the respective lenghts  
+
+        length1: Half-length along dir_vector1, full length is 2*length1
+        length2: Half-length along dir_vector2, full length is 2*length2
+        """
+        dir1 = dir_vector1 / np.linalg.norm(dir_vector1)
+        dir2 = dir_vector2 / np.linalg.norm(dir_vector2)
+
+        # Ensure that dir1 and dir2 are orthogonal
+        dir2 = dir2 - np.dot(dir2, dir1) * dir1
+        dir2 /= np.linalg.norm(dir2)
+
+        # Generate random parameters in [-1,1] range
+        u = np.random.uniform(-1, 1, num_points)
+        v = np.random.uniform(-1, 1, num_points)
+
+        # Scale parameters by the half lengths
+        u_scaled = u * length1 
+        v_scaled = v * length2
+
+        # Calculate sampled points
+        sampled_points = center_point + np.outer(u_scaled, dir1) + np.outer(v_scaled, dir2)
+
+        if plot_sampling:
+            raise NotImplementedError("Rectangle sampling plot not implemented yet")
+
+        return sampled_points
+
+    def sample_submol_rectangle(self,
+                                submolecule: "SubMolecule",
+                                center_point: np.ndarray,
+                                dir_vector1: np.ndarray,
+                                dir_vector2: np.ndarray,
+                                length1: float,
+                                length2: float,
+                                num_points: int = 100,
+                                rotation: bool = False,
+                                rotational_grid_dim: int = 4,
+                                plot_sampling: bool = False) -> List:
+        """  
+        Samples a submolecule within a rectangular volume, the other atoms in the molecule remain fixed
+        """
+        
+        # Save parameters of sampling region
+        self.sampling_region["form"] = "rectangle"
+        self.sampling_region["parameters"] = {
+            "center_point": center_point,
+            "dir_vector1": dir_vector1,
+            "dir_vector2": dir_vector2,
+            "length1": length1,
+            "length2": length2,
+            "num_points": num_points
+        }
+        
+        
+        mol = submolecule.parent
+        submol_indices = submolecule.get_index_in_parent()
+        submol_center = np.mean(submolecule.coordinates, axis=0)
+        # Sample points already at self.center_point
+        sampled_points = self.sample_rectangle(center_point, dir_vector1, dir_vector2, length1, length2, num_points)
+        # Create template molecule without coordinates (shared properties)
+        template_mol = self._generate_template_molecule(mol)
+        # Calculate translation vectors for submolecule
+        translation_vectors = sampled_points - submol_center
+        # Use optimized batch generation
+        if rotation:
+            # Generate rotational grid
+            rotation_unit_vectors = self.generate_spherical_grid(grid_dim=rotational_grid_dim)
+            # Compute reference frame once
+            trans_ref_frame, submol_center = Transformation().set_reference_frame_submolecule(
+                submolecule, mol, method="com", print_info=False, plot_frame=True
+            )
+
+            # Allocation of total list, much faster than appending
+            total_mols = len(rotation_unit_vectors) * len(translation_vectors)
+            sampled_mols = [None] * total_mols
+            mol_counter = 0
+            # Precompute base coordinates and mask
+            base_coords = mol.coordinates.copy()
+            mask = np.zeros(base_coords.shape[0], dtype=bool)
+            mask[submol_indices] = True
+
+            mol_counter = 0
+            for rot_idx, rot_vec in enumerate(rotation_unit_vectors):
+                # Rotate submolecule once per rotation vector
+                rotated_coords = Transformation().rotate_molecule_to_point(
+                    submolecule,
+                    center_point=submol_center,
+                    ref_frame=trans_ref_frame,
+                    target_point=rot_vec + submol_center
+                )
+
+                # Apply all translations for this rotation
+                for trans_idx, translation_vector in enumerate(translation_vectors):
+                    new_mol = Molecule(name=f"rectangle_sample_rot{rot_idx}_trans{trans_idx}")
+                    new_mol.atom_labels = template_mol.atom_labels
+                    new_mol.masses = template_mol.masses
+                    # Efficient coordinate assignment
+                    new_coords = base_coords.copy()
+                    new_coords[mask] = rotated_coords + translation_vector
+                    new_mol.coordinates = new_coords
+                    sampled_mols[mol_counter] = new_mol
+                    mol_counter += 1
+        else:
+            sampled_mols = self._generate_molecules_batch_optimized(
+                template_mol, mol.coordinates, submol_indices, translation_vectors
+            )
+
+        if plot_sampling:
+            raise NotImplementedError("Rectangle submolecule sampling plot not implemented yet")
+        
+        return sampled_mols
+
     def sample_cone(self, 
                     apex: np.ndarray,
                     axis: np.ndarray,
@@ -268,6 +397,16 @@ class ConfigSampler:
 
         If rotation is True, for each translation a set of rotations will be generated
         """ 
+
+        # TODO: Check this function again here
+
+        # Save parameters of sampling region
+        self.sampling_region["form"] = "sphere"
+        self.sampling_region["parameters"] = {
+            "radius": radius,
+            "num_points": num_points
+        }
+
     
         mol = submolecule.parent
         submol_indices = submolecule.get_index_in_parent()

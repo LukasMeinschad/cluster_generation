@@ -91,21 +91,23 @@ if __name__ == "__main__":
 #
     sampled_mols = Sampler.sample_submol_sphere(submolecule=submolecules[1],radius = 5, num_points=100, rotation=True,rotational_grid_dim=6,plot_sampling=False)
 #    sampled_mols = Sampler.sample_submol_cone(submolecule=submolecules[1],apex=cone_apex,axis=cone_axis,height=8,base_radius=4,num_points=300,rotation=True,rotational_grid_dim=6,plot_sampling=False)
+    #sampled_mols = Sampler.sample_submol_rectangle(submolecule=submolecules[1], center_point=center_point, dir_vector1=ref_frame[:,0], dir_vector2=ref_frame[:,1], length1=5, length2=5, num_points=20, rotation=True, rotational_grid_dim=4, plot_sampling=False)
+    
     logger.write_trajectory_sampling(sampled_mols)
-#    
+
 #    
     time_end = time.time() 
 #
-    Calculator = Psi4Calculator(ls_of_molecules=sampled_mols, method="MP2")
+    Calculator = Psi4Calculator(ls_of_molecules=sampled_mols, method="HF")
     results = Calculator.batch_single_point_calc(parallel=True,n_processes=20)
     logger.write_scf_batch_result(results)
 #
     sucessful_mols, energies = zip(*results)
-    Cluster_obj = MolecularCluster(sampled_molecules=sucessful_mols, energies=np.array(energies), logger=logger)
+    Cluster_obj = MolecularCluster(sampled_molecules=sucessful_mols, energies=np.array(energies), logger=logger, reference_molecule=molecule, sampling_region=Sampler.sampling_region)
     Cluster_obj.analyze_h_bond_configurations(plot_info=True)
-    Cluster_obj.plot_energy_distribution()
+    Cluster_obj.plot_energy_distribution(bins=50, top_percent=20, diff_to_min=True)
     Cluster_obj.plot_energy_distribution_of_valid_hbond_molecules()
-
+    #Cluster_obj.plot_energies_sampling_region(diff_to_mean=True)
 
 #    Cluster_obj.calculate_rmsd_features(include_energy=True, normalize_features=True)
 #    cluster_info = Cluster_obj.cluster_kmeans_silhouette_analysis(max_clusters=10, plot_analysis=True)

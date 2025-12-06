@@ -1,10 +1,178 @@
 import numpy as np
 import itertools
+from dataclasses import dataclass
 from typing import Tuple, List, Optional # for type hints
 from mendeleev.fetch import fetch_table
 import networkx as nx
 from string import digits
-import itertools
+
+
+""" 
+Note that we use dataclasses as a decorator to simplify classes that are mainly used to store data 
+"""
+
+
+
+@dataclass
+class Bond:
+    """   
+    Represents a bond between two atoms
+    """
+    atom1: str 
+    atom2: str 
+    strength: float 
+
+    def involves(self, atom_label: str) -> bool:
+        """  
+        Checks if a atom is involved in the bond
+        """
+        return atom_label in (self.atom1, self.atom2)
+    
+    def get_other_atom(self, atom_label: str) -> str: 
+        """
+        Get other atom in the bond 
+        """
+        if self.atom1 == atom_label:
+            return self.atom2
+        elif self.atom2 == atom_label:
+            return self.atom1
+        else:
+            raise ValueError(f"Atom {atom_label} not involved in bond between {self.atom1} and {self.atom2}")
+
+@dataclass 
+class HBondConfiguration: 
+    """  
+    Represents a hydrogen bond configuration in the molecule: Donor-H...Acceptor
+    """
+    donor_idx: int 
+    hydrogen_idx: int 
+    acceptor_idx: int 
+    angle: Optional[float] = None
+
+    def is_valid(self, threshold: float = 150.0) -> bool:
+        """  
+        Check if configuration is valid based on an angle threshold
+        """ 
+        return self.angle is not None and self.angle >= threshold
+    
+class GeometryCalculator:
+    """  
+    Class that handles geometric calculations for molecules
+    """
+    @staticmethod 
+    def calculate_distance(coords1: np.ndarray, coords2: np.ndarray) -> float: 
+        """
+        Function that calculates the Euclidean distance between two points 
+        """ 
+        return np.linalg.norm(coords1 - coords2)
+
+    @staticmethod 
+    def calculate_angle(coords1: np.ndarray, coords2: np.ndarray, coords3: np.ndarray) -> float: 
+        """  
+        Calculates the angle at coords2 formed by coords1 - coords2 - coords3
+        """
+        v1 = coords1 - coords2
+        v2 = coords3 - coords2
+
+        cos_theta = np.dot(v1,v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)) 
+        # Clamp for numerical stability
+        cos_theta = np.clip(cos_theta, -1.0, 1.0)  
+        angle = np.arccos(cos_theta)
+        return np.degrees(angle)
+
+    @staticmethod
+    def calculate_bond_strength(distance: float, cov_radius_sum: float) -> float: 
+        """
+        Calculates the bond strength based on the distance and sum of covalent radii
+        """ 
+        return np.exp(-((distance / cov_radius_sum) - 1))
+    
+class BondClassifier:
+    """  
+    Classifies bonds as covalent or hydrogen bonds
+    """
+    
+    COVALENT_THRESHOLD = 0.7
+    HYDROGEN_BOND_LOWER = 0.3
+    HYDROGEN_BOND_UPPER = 0.7
+
+    def __init__(self, molecule: " Molecule"):
+        """  
+        Initializes the BondClassifier with a molecule
+        """
+        self.molecule = molecule
+        self.geometry = GeometryCalculator()
+
+    def classify_bond(self, idx1: int, idx2: int) -> Optional[Bond]: 
+        """  
+        Classify the bond between two atoms
+        Returns Bond object with type or None if no bond
+        """
+        label1 = self.molecule.atom_labels[idx1]
+        label2 = self.molecule.atom_labels[idx2] 
+        distance = self.geometry.calculate_distance(
+            self.molecule.coordinates[idx1],
+            self.molecule.coordinates[idx2]
+        )
+        radius_sum = (
+            self.molecule.get_covalent_radius(label1) +
+            self.molecule.get_covalent_radius(label2)
+        )
+        strength = self.geometry.calculate_bond_strength(distance, radius_sum)
+        if strength >= self.COVALENT_THRESHOLD:
+            return Bond(atom1=label1, atom2=label2, strength=strength)
+        elif self.HYDROGEN_BOND_LOWER <= strength < self.HYDROGEN_BOND_UPPER:
+            if self._is_hydrogen_bond(label1, label2):
+                return Bond(atom1=label1, atom2=label2, strength=strength)
+
+    def _is_hydrogen_bond(self, label1: str, label2: str) -> bool:
+        """   
+        Check if bond involves H and O/N/F for hydrogen bond
+        """
+        elements = {
+            MMolecule._remove_digits_from_label(label1),
+            MMolecule._remove_digits_from_label(label2)
+        }
+        return "H" in elements and any(elem in elements for elem in ["O", "N", "F"])
+        
+class HydrogenBondAnalyzer:
+    """
+    Analyzes hydrogen bond configurations in a molecule
+    """ 
+    def __init__(self,molecule: "Molecule"):
+        """
+        Initializes the HydrogenBondAnalyzer with a molecule
+        """
+        self.molecule = molecule
+        self.geometry = GeometryCalculator()
+
+    def find_configurations(self) -> List[HBondConfiguration]:
+        """   
+        Finds all possible H-Bond configurations: Donor-H...Acceptor
+        """
+        configurations = []
+        donor_indices = self._get_donor_indices() 
+        acceptor_indices = self._get_acceptor_indices()
+
+    #TODO finish restructuring here
+
+    def _get_donor_indices(self) -> List[int]: 
+        """   
+        Get the indices of potential H-bond donors
+        """
+        return [ 
+            idx for idx, label in enumerate(self.molecule.atom_labels)
+            if Molecule._remove_digits_from_label(label) in self.molecule.hbond_donors
+        ]
+    
+    def _get_acceptor_indices(self) -> List[int]: 
+        """   
+        Get the indices of potential H-bond acceptors
+        """
+        return [ 
+            idx for idx, label in enumerate(self.molecule.atom_labels)
+            if Molecule._remove_digits_from_label(label) in self.molecule.hbond_accecptors
+        ]
 
 class Molecule:
     """ 

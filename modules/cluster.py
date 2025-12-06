@@ -13,7 +13,7 @@ class MolecularCluster:
     """ 
     A class to perform various clustering algorithms on the sampled molecular configurations
     """
-    def __init__(self, sampled_molecules: List, energies: List[float], logger = None):
+    def __init__(self, sampled_molecules: List, energies: List[float], reference_molecule: Optional["Molecule"], logger = None, sampling_region: Optional[Dict[str, Any]] = None):
         """
         Initializes the MolecularCluster with sampled molecules and their respective energies
         
@@ -27,14 +27,133 @@ class MolecularCluster:
         self.energies = energies
         self.feature_matrix = None
         self.labels = None
+
+        self.reference_molecule = reference_molecule
+
         self.cluster_centers = None 
         self.cluster_info = None
         self.scaler = StandardScaler()
         self.logger = logger
 
+        # Optional for plotting are Sampling region parameters
+        self.sampling_region = sampling_region if sampling_region is not None else {}
+        
+        # Sampling Stats
+        self.stats = self.basic_statistics()
+
 
         # Hydrogen bond analysis attributed 
         self.sampled_molecules_valid_hbond = []
+
+    def basic_statistics(self) -> Dict[str, Any]:
+        """   
+        Computes basic statistics of the molecular cluster
+        """
+        total_molecules = len(self.sampled_molecules)
+        avg_energy = np.mean(self.energies)
+        min_energy = np.min(self.energies)
+        max_energy = np.max(self.energies)
+        median_energy = np.median(self.energies)
+        std_energy = np.std(self.energies)
+
+        # calculate 25th and 75th percentiles
+        percentile_25 = np.percentile(self.energies, 25)
+        percentile_75 = np.percentile(self.energies, 75)
+
+        # Calculate interquartile range (IQR)
+        iqr = percentile_75 - percentile_25
+
+
+
+        stats = {
+            "total_molecules": total_molecules,
+            "average_energy": avg_energy,
+            "minimum_energy": min_energy,
+            "maximum_energy": max_energy,
+            "median_energy": median_energy,
+            "std_energy": std_energy,
+            "25_perc_energy": percentile_25,
+            "75_perc_energy": percentile_75,
+            "iqr_energy": iqr
+        }
+        if self.logger:
+            msg = "Molecular Cluster Basic Statistics:\n"
+            for key, value in stats.items():
+                msg += f"{key.replace('_', ' ').title()}: {value}\n"
+            self.logger.write_message_block(msg)
+
+
+
+
+
+    def plot_energies_sampling_region(self, diff_to_min: bool = False, log_scale: bool = False,
+                                       top_percent: Optional[float] = None,
+                                       diff_to_mean: bool = False):
+        """   
+        Function to plot the energies of the sampled molecules in relation to their sampling region
+        """
+        if not self.sampling_region:
+            raise ValueError("Sampling region information not available.")
+
+        if diff_to_min:
+            min_energy = min(self.energies)
+            energies = [energy - min_energy for energy in self.energies]
+        else:
+            energies = self.energies
+
+        if diff_to_mean:
+            mean_energy = np.mean(self.energies)
+            energies = [energy - mean_energy for energy in self.energies]
+
+
+        if top_percent is not None:
+            if not (0 < top_percent < 100):
+                raise ValueError("top_percent must be between 0 and 100")
+            n_mols_to_plot = int(len(energies) * (top_percent / 100))
+            sorted_indices = np.argsort(energies)
+            selected_indices = sorted_indices[:n_mols_to_plot]
+            energies = [energies[i] for i in selected_indices]
+        
+        if self.sampling_region["form"] == "rectangle":
+            # For this we plot a 2D scatter plot with the two direction vectors as axes
+            dir_vector1 = self.sampling_region["parameters"]["dir_vector1"]
+            dir_vector2 = self.sampling_region["parameters"]["dir_vector2"]
+            length1 = self.sampling_region["parameters"]["length1"]
+            length2 = self.sampling_region["parameters"]["length2"]
+            center_point = self.sampling_region["parameters"]["center_point"]
+
+            # We calculate the center of each molecule and the difference to the center point
+            coords_list = []
+            for mol in self.sampled_molecules:
+                coords = mol.coordinates
+                mol_center = np.mean(coords, axis=0)
+                diff_vector = mol_center - center_point
+                coord1 = np.dot(diff_vector, dir_vector1) / np.linalg.norm(dir_vector1)
+                coord2 = np.dot(diff_vector, dir_vector2) / np.linalg.norm(dir_vector2)
+                coords_list.append((coord1, coord2))
+            coords_array = np.array(coords_list)
+
+            if top_percent is not None:
+                coords_array = coords_array[selected_indices]
+
+            plt.figure(figsize=(8, 6))
+            scatter = plt.scatter(coords_array[:,0], coords_array[:,1], c=energies, cmap='viridis', alpha=0.7)
+            if diff_to_min:
+                plt.colorbar(scatter, label=f'Energy Difference to Minimum {min_energy:.4f} (Hartree)')
+            elif diff_to_mean:
+                plt.colorbar(scatter, label=f'Energy Difference to Mean {mean_energy:.4f} (Hartree)')
+            else:
+                plt.colorbar(scatter, label='Energy (Hartree)')
+            plt.title('Energies of Sampled Molecules in Sampling Rectangle')
+            plt.xlabel('Projection onto Direction Vector 1')
+            plt.ylabel('Projection onto Direction Vector 2')
+            
+            
+            if log_scale:
+                plt.yscale('log')
+            
+            plt.grid(True)
+            plt.savefig("energies_sampling_rectangle.png")
 
     def analyze_h_bond_configurations(self, plot_info: bool = False):
         """
@@ -132,16 +251,42 @@ class MolecularCluster:
             plt.close()
 
     # TODO refactor this plotting function to make it better visually appealing
-    def plot_energy_distribution(self):
+    def plot_energy_distribution(self, bins: int = 50, density: bool = True, top_percent: Optional[float] = None, diff_to_min: bool = False):
         """
         Function that plots the energy distribution of the sampled molecules
+        
+        Args:
+            bins (int): Number of bins for the histogram
+            density (bool): Whether to normalize the histogram
+            top_percent (float, optional): If provided, only plots the top percentage of lowest energy molecules
+            diff_to_min (bool): If True, plots the energy difference to the minimum energy instead of absolute energies
         """
+
+        if top_percent is not None:
+            if not (0 < top_percent < 100):
+                raise ValueError("plot_top_percent must be between 0 and 100")
+            n_mols_to_plot = int(len(self.energies) * (top_percent / 100))
+            sorted_indices = np.argsort(self.energies)
+            selected_indices = sorted_indices[:n_mols_to_plot]
+            energies_to_plot = [self.energies[i] for i in selected_indices]
+        else:
+            energies_to_plot = self.energies
+
+        if diff_to_min:
+            min_energy = min(energies_to_plot)
+            energies_to_plot = [energy - min_energy for energy in energies_to_plot]
+        
+
+
         plt.figure(figsize=(8, 6))
-        plt.hist(self.energies, bins=30, alpha=0.7, color='cyan', edgecolor='black')
+        plt.hist(energies_to_plot, bins=bins, alpha=0.7, color='cyan', edgecolor='black', density=density)
         plt.title('Energy Distribution of Sampled Molecules')
-        plt.xlabel('Energy (Hartree)')
+        plt.xlabel('Energy / (Hartree)')
         plt.ylabel('Frequency')
         plt.grid(axis='y', alpha=0.75)
+        if diff_to_min:
+            plt.xlabel(f'Energy Difference to Minimum {min_energy:.2f} / (Hartree)')
+        plt.tight_layout()
         plt.savefig("energy_distribution_sampled_molecules.png")
         plt.close() 
 

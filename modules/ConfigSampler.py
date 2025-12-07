@@ -590,7 +590,7 @@ class ConfigSampler:
         return sampled_mols
 
 
-    # TODO REFACTOR BELOW HERE
+    # TODO Delete From here
 
     def generate_spherical_grid_centers(self, center_point,ref_frame,radius,grid_dim=4, plot_sampling=False):
         """

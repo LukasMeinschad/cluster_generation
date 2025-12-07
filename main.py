@@ -41,48 +41,34 @@ if __name__ == "__main__":
     with open(args.i[0], "r") as file:
         xyz_content = file.read()
     
-
-    logger = Logger(out_file="cluster_generation.log", mode="w")
+    # Initialize Logger
+    logger = Logger(out_file="cluster_gen.out", mode= "w")
     logger.write_header()
-    # Switch to append mode for further logging
-    logger = Logger(out_file="cluster_generation.log", mode="a")
+    # Swith to append mode for further logging
+    logger = Logger(out_file="cluster_gen.out", mode="a")
 
     molecule = Molecule.from_xyz(xyz_content)
-    covalent_bonds, hydrogen_bonds = molecule.get_bonds()
-    submolecules = molecule.fragment_by_connectivity()
+    molecule.compute_bonds()
 
-
-
-#    # Initialize molecular graph
-#    MolGraph =    MolGraph = MolecularGraph(molecule=molecule, bonds=covalent_bonds, logger=logger) 
-#    automorphisms = MolGraph.find_automorphism_group()
-#    MolGraph.draw_euclidean_graph()
-
-
-#    # First get reference frame and center
-    Transformation = Transformation(logger=logger)
-    ref_frame, center_point = Transformation.set_reference_frame_submolecule(submolecule=submolecules[0],parent_molecule=molecule,method="com")
-#
-#
-    # Obtain hbond donor configurations of the centered molecule
-    hbond_configs = molecule.hbond_donor_configurations()
-    logger.write_hbond_configurations(hbond_configs) 
+    # Log Molecule Info
     logger.write_molecule_info(molecule)
-    cone_axis, cone_apex = Transformation.get_hbond_donor_vector(configuration=hbond_configs[0],molecule=molecule,plot_vector=True)
+
+
+    # Get Submolecules
+    submolecules = molecule.fragment_by_connectivity()
+    logger.write_submolecule_info(submolecules)
     
+    # Find possible H-bond configurations 
+    configurations = molecule.find_hbond_configurations()
+    valid_configurations = molecule.get_valid_hbond_configurations(angle_threshold= 150.0)
+    logger.write_hbond_configurations(configurations)
+
+    # Set Reference Frame to submolecule 0
+    Transformation = Transformation()
+    ref_frame = Transformation.set_reference_frame(molecule=submolecules[0], method="com")
+    logger.write_reference_frame_info(ref_frame)
 
 
-#
-#
-#    # Get symmetry properties of the molecule
-#    SymmetryAnalyzer = MoleculeSymmetry(molecule=molecule, logger=logger)
-#    SymmetryAnalyzer.rotor_classification()
-#    SymmetryAnalyzer.distance_matrix()
-#    # Obtain ref_frame of local hbond donor configuration
-#    #ref_frame_don_1, _ = Transformation.hbond_configuration_ref_frame(configuration=hbond_configs[0],parent_molecule=molecule,method="com")
-#    #Transformation.align_ref_to_donor(ref_frame=ref_frame, configuration=hbond_configs[0], molecule=molecule, plot_frame=True)
-#
-#
     Sampler = ConfigSampler(reference_frame=ref_frame, center_point=center_point, molecule=molecule, logger=logger) 
 #
 #    # Test sampling along a plane

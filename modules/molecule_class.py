@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from mendeleev.fetch import fetch_table
 import networkx as nx
 from string import digits
-
+import time 
+import matplotlib.pyplot as plt
 
 # Dataclass are used for simpler data structures
 
@@ -238,13 +239,19 @@ class Molecule:
         self.atom_labels = np.array([], dtype=object)
         self.coordinates = np.empty((0, 3), dtype=np.float64)
         self.masses = np.array([], dtype=np.float64)
-        
+        self.vdw_radii = np.array([], dtype=np.float64)
+        self.covalent_radii = np.array([], dtype=np.float64)
+
+
         self.charge = 0
         self.spin_mult = 1
         
         self._covalent_bonds: List[Bond] = []
         self._hydrogen_bonds: List[Bond] = []
         self._bonds_computed = False
+
+        # Optional for Molecular Volume
+        self.volume = None
     
     # Static and class methods
     @staticmethod
@@ -314,6 +321,20 @@ class Molecule:
         radius_pm = row.iloc[0]["covalent_radius_pyykko"]
         return radius_pm / 100  # Convert pm to Angstroms
     
+    @classmethod 
+    def get_vdw_radius(cls, element_label: str) -> float:
+        """   
+        Helper Method to get the VDW radius of an element in Angstroms
+        """
+        element_symbol = cls._remove_digits_from_label(element_label)
+        row = cls.ptable[cls.ptable["symbol"] == element_symbol]
+
+        if row.empty:
+            raise ValueError(f"Element {element_symbol} not found in periodic table")
+        
+        radius_pm = row.iloc[0]["vdw_radius"]
+        return radius_pm / 100  # Convert pm to Angstroms
+    
     # Atom management
     def add_atom(self, atom_label: str, coordinates: List[float]) -> None:
         """Add single atom to molecule"""
@@ -326,6 +347,10 @@ class Molecule:
         
         element_symbol = self._remove_digits_from_label(atom_label)
         mass = self._get_atomic_mass(element_symbol)
+        vdw_radius = self.get_vdw_radius(atom_label)
+        self.vdw_radii = np.append(self.vdw_radii, vdw_radius)
+        covalent_radius = self.get_covalent_radius(atom_label)
+        self.covalent_radii = np.append(self.covalent_radii, covalent_radius)
         self.masses = np.append(self.masses, mass)
         
         self._bonds_computed = False
@@ -341,6 +366,10 @@ class Molecule:
         self.coordinates = np.vstack([self.coordinates, coordinates])
         
         masses = self._calculate_masses_batch(atom_labels)
+        vdw_radii = np.array([self.get_vdw_radius(label) for label in atom_labels])
+        covalent_radii = np.array([self.get_covalent_radius(label) for label in atom_labels])
+        self.vdw_radii = np.append(self.vdw_radii, vdw_radii)
+        self.covalent_radii = np.append(self.covalent_radii, covalent_radii)
         self.masses = np.append(self.masses, masses)
         
         self._bonds_computed = False
@@ -461,6 +490,16 @@ class Molecule:
             submolecules.append(submol)
         
         return submolecules
+
+    def center_of_mass(self) -> np.ndarray:
+        """Calculate center of mass of the molecule"""
+        total_mass = np.sum(self.masses)
+        com = np.sum(self.coordinates.T * self.masses, axis=1) / total_mass
+        return com
+    
+    def geometric_center(self) -> np.ndarray:
+        """Calculate geometric center of the molecule"""
+        return np.mean(self.coordinates, axis=0)
     
     # Fragmentation
     def fragment_by_connectivity(self) -> List["SubMolecule"]:
@@ -507,6 +546,38 @@ class Molecule:
             self.add_atoms_batch(atom_data['labels'], atom_data['coordinates'])
         
         return self
+    
+    def compute_volume_mc(self, n_points = 800000) -> float:
+        """  
+        Estimates the molecular volume using Monte Carlo Integration
+
+        Here the Integral is estimated by I = V * (N_inside / N_total)
+        where V is the volume of the bounding box, N_inside is the number of random points inside the molecule,
+        """
+        coords = self.coordinates 
+        radii = self.vdw_radii 
+
+        # Find bounding box with min/max coordinates, ad padding by max VDW radius
+        min_coords = np.min(coords - radii[:, np.newaxis], axis=0)
+        max_coords = np.max(coords + radii[:, np.newaxis], axis=0)
+        box_dims = max_coords - min_coords
+        box_volume = np.prod(box_dims)
+        # Generate random points
+        random_points = np.random.uniform(min_coords, max_coords, size=(n_points, 3))
+
+        # Vectorize distance calculation
+        coords_expanded = coords[:, np.newaxis, :]  # Shape (n_atoms, 1, 3)
+        points_expanded = random_points[np.newaxis, :, :]  # Shape (1, n_points, 3)
+        distances = np.linalg.norm(coords_expanded - points_expanded, axis=2)  # Shape (n_atoms, n_points)
+        inside_mask = np.any(distances <= radii[:, np.newaxis], axis=0)  # Shape (n_points,)
+        # Count points inside
+        inside_count = np.sum(inside_mask)
+        volume = (inside_count / n_points) * box_volume
+        self.volume = volume
+        return volume
+
+    
+
 
 
 class SubMolecule(Molecule):
@@ -516,6 +587,7 @@ class SubMolecule(Molecule):
         super().__init__(name)
         self.parent = parent
         self.fragment_index: Optional[int] = None
+        self.volume: Optional[float] = None
     
     @classmethod
     def from_parent_fragment(
@@ -532,7 +604,10 @@ class SubMolecule(Molecule):
         submolecule.coordinates = parent_molecule.coordinates[atom_indices].copy()
         submolecule.masses = parent_molecule.masses[atom_indices].copy()
         submolecule.parent = parent_molecule
+        submolecule.parent_indices = atom_indices.copy()
         submolecule.fragment_index = fragment_index
+        submolecule.vdw_radii = parent_molecule.vdw_radii[atom_indices].copy()
+        submolecule.covalent_radii = parent_molecule.covalent_radii[atom_indices].copy()
         return submolecule
     
     def get_atom_labels(self) -> List[str]:
@@ -544,8 +619,73 @@ class SubMolecule(Molecule):
         if self.parent is None:
             raise ValueError("SubMolecule has no parent")
         
+        if self.parent_indices is not None:
+            return self.parent_indices.copy()
+
         parent_labels = self.parent.atom_labels.tolist()
-        return [parent_labels.index(label) for label in self.atom_labels]
+        indices = [parent_labels.index(label) for label in self.atom_labels]
+        return indices 
+    def compute_volume_mc(self, n_points = 800000) -> float:
+        """   
+        Estimate molecular volume using Monte Carlo Integration
 
+        In the current implementation we use 800,000 random points for a good balance between accuracy and speed.
+        """
+        coords = self.coordinates 
+        radii = self.vdw_radii
 
+        # Find bounding box with min/max coordinates, ad padding by max VDW radius
+        min_coords = np.min(coords - radii[:, np.newaxis], axis=0)
+        max_coords = np.max(coords + radii[:, np.newaxis], axis=0)
+        box_dims = max_coords - min_coords
+        box_volume = np.prod(box_dims)
 
+        # Generate random points 
+        random_points = np.random.uniform(min_coords, max_coords, size=(n_points, 3))
+
+        # Vectorizes distance calculation
+        coords_expanded = coords[:, np.newaxis, :]  # Shape (n_atoms, 1, 3)
+        points_expanded = random_points[np.newaxis, :, :]  # Shape (1, n_points, 3)
+
+        distances = np.linalg.norm(coords_expanded - points_expanded, axis=2)  # Shape (n_atoms, n_points)
+
+        inside_mask = np.any(distances <= radii[:, np.newaxis], axis=0)  # Shape (n_points,)
+
+        # Count points inside
+        inside_count = np.sum(inside_mask)
+        volume = (inside_count / n_points) * box_volume
+
+        self.volume = volume
+        return volume
+    
+    # ===================== Submolecule Testing Functions ====================== 
+
+    def check_convergence_and_speed_mc(self, n_points_list: List[int] = [1000, 5000, 10000, 50000, 100000, 200000, 500000, 800000]) -> Dict[int, float]:
+        """   
+        Test convergence and speed of Monte Carlo volume estimation
+        """
+        times = []
+        volumes = []
+        # Plot two subfigures: speed vs n_points and volume v.s n_points
+        for n_points in n_points_list:
+            start_time = time.time()
+            volume = self.compute_volume_mc(n_points=n_points)
+            end_time = time.time()
+            elapsed = end_time - start_time
+
+            times.append(elapsed)
+            volumes.append(volume)
+        fig = plt.figure(figsize=(12, 5))
+        axs = fig.subplots(1, 2)
+        axs[0].plot(n_points_list, times, marker='o')
+        axs[0].set_xlabel("Number of Points")
+        axs[0].set_ylabel("Computation Time (s)")
+        axs[0].set_title("MC Volume Estimation Speed") 
+        axs[0].grid(True)
+        axs[1].plot(n_points_list, volumes, marker='o', color='orange')
+        axs[1].set_xlabel("Number of Points")
+        axs[1].set_ylabel("Estimated Volume (Å³)")
+        axs[1].set_title("MC Volume Estimation Convergence")
+        axs[1].grid(True)
+        plt.tight_layout()
+        plt.savefig("figures/mc_volume_convergence_speed.png")

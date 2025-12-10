@@ -324,6 +324,26 @@ class Logger:
             "Reference Frame Details",
             "\n".join(lines)
         )
+
+    # =================== Sampling Logging ====================
+    def write_sampling_statistics(self, Sampler: Any) -> None:
+        """   
+        Writes sampling statistics collected during the sampling process.
+        For this we need the ConfigSampler object.
+        """
+        lines = [
+            "Sampling Statistics:",
+            f"Sampling Region: {Sampler.sampling_region.shape}",
+            f"Sampling Parameters: {Sampler.sampling_region.parameters}",
+            f"Number of Sampled Configurations: {Sampler.sampling_statistics['num_samples']}",
+            f"Sampling Time (s): {Sampler.sampling_statistics['sampling_time']:.4f}",
+            f"Average Distance to Center (Å): {Sampler.sampling_statistics['avg_distance_to_center']:.4f}"
+        ]
+        self.write_section(
+            "Sampling Statistics",
+            "\n".join(lines)
+        )
+
     
     # ==================== Calculation Results ====================
     

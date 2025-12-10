@@ -293,10 +293,12 @@ class Transformation:
         """
         if center is None:
             center = GeometryOps.center_of_mass(coords, masses)
-        centered_coords = coords - center
+        
 
+        coords_new = coords.copy()
+        coords_new -= center
         # Compute inertia tensor
-        I = GeometryOps.inertia_tenstor(centered_coords, masses)
+        I = GeometryOps.inertia_tenstor(coords_new, masses)
         eigenvalues, eigenvectors = np.linalg.eigh(I)
 
         # Eigenvectors are columns of the Reference Frame axes
@@ -340,6 +342,40 @@ class Transformation:
             print(f"Y: {ref_frame.y_axis}")
             print(f"Z: {ref_frame.z_axis}")
         
+        return ref_frame
+    
+    def set_reference_frame_submolecule(
+            self,
+            submolecule: "Submolecule",
+            method: str = "centroid",
+            print_info: bool = False,
+        ) -> ReferenceFrame:
+        """   
+        Computes the Reference Frame based on a Submolecule
+
+        Further aligns all atoms in the parent Molecule accordingly
+        """
+        if len(submolecule.coordinates) < 3:
+            raise ValueError("Submolecule must have at least 3 atoms to define a reference frame")
+        # Center Submolecule
+        center = self.get_center(submolecule, method=method)
+        submolecule.coordinates -= center
+        ref_frame = self.compute_reference_frame(
+            submolecule.coordinates,
+            submolecule.masses,
+            center=np.zeros(3) # Already centered
+        )
+        # Translate Parent Molecule
+        if hasattr(submolecule, 'parent') and submolecule.parent is not None: 
+            parent_mol = submolecule.parent
+            parent_mol.coordinates -= center
+        if print_info:
+            print(f"Submolecule center: {center}")
+            print(f"Inertia tensor eigenvalues: {ref_frame.eigenvalues}")
+            print(f"Reference frame axes:")
+            print(f"X: {ref_frame.x_axis}")
+            print(f"Y: {ref_frame.y_axis}")
+            print(f"Z: {ref_frame.z_axis}")
         return ref_frame
     
     def set_reference_frame_from_atoms(

@@ -575,8 +575,14 @@ class Molecule:
         volume = (inside_count / n_points) * box_volume
         self.volume = volume
         return volume
-
     
+    def get_coordinates_array(self) -> np.ndarray:
+        """Get coordinates as numpy array"""
+        return self.coordinates.copy()
+
+    def get_atom_labels(self) -> List[str]:
+        """Get list of atom labels"""
+        return self.atom_labels.tolist() 
 
 
 

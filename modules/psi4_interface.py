@@ -10,6 +10,7 @@ import pickle
 import os 
 import time 
 import shutil 
+from tqdm import tqdm
 from pathlib import Path 
 from contextlib import contextmanager
 import matplotlib.pyplot as plt
@@ -26,6 +27,7 @@ class CalculationType(Enum):
     SINGLE_POINT = "single_point"
     GEOMETRY_OPTIMIZATION = "geometry_optimization"
     FREQUENCY = "frequency"
+    OPT_FREQ = "opt_freq"
     PROPERTY = "property"
 
 @dataclass 
@@ -37,6 +39,8 @@ class CalculationResult:
     calculation_type: CalculationType
     sucess: bool 
     energy: Optional[float] = None 
+    frequencies: Optional[List[float]] = None
+    hessian: Optional[np.ndarray] = None 
     error: Optional[str] = None
     timestamp: str = field(default_factory = lambda: time.strftime("%Y%m%d_%H%M%S")) # Auto-generate the time-stamp
     method: Optional[str] = None 
@@ -52,6 +56,7 @@ class CalculationResult:
             "calculation_type": self.calculation_type.value,
             "sucess": self.sucess,
             "energy": self.energy,
+            "frequencies": self.frequencies,
             "error": self.error,
             "timestamp": self.timestamp,
             "method": self.method,
@@ -305,6 +310,74 @@ class Psi4Worker:
             finally:
                 psi4.core.clean() # Clean up psi4 core after worker
 
+
+    def optimization_and_frequency_worker(args: Tuple) -> CalculationResult:
+        """  
+        Worker Function for combined optimization and frequency calculation
+
+        
+        1. Perform geometry optimization using psi4.geometry()
+        2. Perform frequency calculatio with psi4.frequency() 
+        """ 
+        molecule, config_dict = args 
+        config = Psi4Config(**config_dict)
+        with ScratchManager.temporary_scratch():
+            import psi4 
+            psi4.core.set_output_file(os.devnull) # Supress output file
+
+            start_time = time.time() 
+            
+            try:
+                # Build geometry 
+                geom_str = GeometryBuilder.build_psi4_geometry(molecule)
+                mol = psi4.geometry(geom_str)
+
+                # Optimize
+                method_str = f"{config.method}/{config.basis_set}"
+                energy = psi4.optimize(method_str, molecule=mol)
+
+                # Frequency Calculation we need to return the wfn to get the frequencies
+                scf_e, scf_wfn = psi4.frequency(method_str, molecule=mol, return_wfn=True)
+
+
+                # Update molecule coordinates 
+                optimized_coords = mol.save_string_xyz()
+                optimized_mol = Molecule.from_xyz(
+                    optimized_coords, 
+                    name = f"{molecule.name}_opt_freq"
+                )
+                molecule.coordinates = optimized_mol.coordinates
+                wall_time = time.time() - start_time
+
+                return CalculationResult(
+                    molecule =molecule,
+                    calculation_type = CalculationType.OPT_FREQ,
+                    sucess = True,
+                    energy = energy,
+                    frequencies = scf_wfn.frequencies().to_array(),
+                    hessian = scf_wfn.hessian().to_array(),
+                    method = config.method,
+                    basis_set = config.basis_set,
+                    wall_time = wall_time
+                )
+            except Exception as e:
+                wall_time = time.time() - start_time
+                return CalculationResult(
+                    molecule =molecule,
+                    calculation_type = CalculationType.OPT_FREQ,
+                    sucess = False,
+                    error = str(e),
+                    method = config.method,
+                    basis_set = config.basis_set,
+                    wall_time = wall_time
+                )
+            finally:
+                psi4.core.clean() # Clean up psi4 core after worker
+
+            
+
+
+        
 # ============================ Main Calculator Class ===========================
 class Psi4Calculator:
     """  
@@ -393,6 +466,27 @@ class Psi4Calculator:
             self._print_result(result)
 
         return result.energy if result.sucess else None
+    
+    def optimization_and_frequency(self, molecule: Molecule) -> Optional[float]:
+        """   
+        Perform geometry optimization followed by frequency calculation
+        Args:
+            molecule: Molecule object to optimize and calculate frequencies for
+        Returns:
+            Optimized energy in Hartree or None if failed
+        """
+        result = self._run_calculation(
+            molecule = molecule,
+            worker_func = Psi4Worker.optimization_and_frequency_worker 
+        )
+
+        if self.save_results:
+            self.results_manager.add_result(result)
+        if self.verbose:
+            self._print_result(result)
+
+        return result.energy if result.sucess else None
+
     
     # =========================== Batch Calculation Methods ==========================
 
@@ -524,18 +618,21 @@ class Psi4Calculator:
 
         results = []
 
-        for i, arg in enumerate(args,1):
-            if self.verbose:
-                mol_name = arg[0].name
-                print(f"[{i}/{len(args)}] Processing molecule: {mol_name}...")
-            result = worker_func(arg)
-            results.append(result)
+        with tqdm(total=len(args),
+                  desc="Processing molecules",
+                  unit="mol",
+                  bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]") as pbar:
+            
+            for arg in args:
+                result = worker_func(arg)
+                results.append(result)
+                pbar.update(1)
 
-            if self.verbose:
-                if result.sucess:
-                    print(f"    Sucess: Energy = {result.energy} Hartree")
-                else:
-                    print(f"    Failed: Error = {result.error}")
+                if self.verbose:
+                    if result.sucess:
+                        pbar.write(f"  ✓ {result.molecule.name}: {result.energy:.6f} Ha")
+                    else:
+                        pbar.write(f"  ✗ {result.molecule.name}: {result.error[:30]}")
         return results
     
     def _execute_parallel(self,
@@ -551,15 +648,22 @@ class Psi4Calculator:
         results = []
 
         with Pool(processes = n_processes) as pool:
-            for i, result in enumerate(pool.imap_unordered(worker_func, args),1):
-                results.append(result)
-                if self.verbose:
-                    mol_name = result.molecule.name
-                    print(f"[{i}/{len(args)}] Processed molecule: {mol_name}...")
-                    if result.sucess:
-                        print(f"    Sucess: Energy = {result.energy} Hartree")
-                    else:
-                        print(f"    Failed: Error = {result.error}")
+            # Use progress bar with the most important info
+            with tqdm(total = len(args),
+                      desc="Processing molecules",
+                      unit="mol",
+                      bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]") as pbar:
+
+                for result in pool.imap_unordered(worker_func, args):
+                    results.append(result)
+                    pbar.update(1)
+
+                    if self.verbose:
+                        if result.sucess:
+                            pbar.write(f"  ✓ {result.molecule.name}: {result.energy:.6f} Ha")
+                        else:
+                            pbar.write(f"  ✗ {result.molecule.name}: {result.error[:30]}")
+                
         return results
 
     def _print_result(self, result: CalculationResult) -> None:
@@ -595,6 +699,54 @@ class Psi4Calculator:
     
     # ============================== Test Methods =============================================
 
+    def determine_method_and_basis_set_combinations(self,
+                                                    molecule: Molecule,
+                                                    methods: List[str] = ["hf", "b3lyp", "pbe0", "mp2", "ccsd", "ccsd(t)"],
+                                                    basis_sets: List[str] = ["sto-3g", "3-21g", "6-31g", "6-311g(d,p)", "cc-pvdz", "cc-pvtz", "def2-svp", "def2-tzvp"]
+                                                    ) -> List[Tuple[str, str, float]]:
+        """"   
+        Tests different method and basis set combinations for a given molecule
+        """
+        results = {}
+        for method in methods:
+            for basis in basis_sets:
+                start_time = time.time()
+                self.config.method = method 
+                self.config.basis_set = basis
+                energy = self.single_point_energy(molecule)
+                end_time = time.time()
+                elapsed = end_time - start_time
+
+                if energy is not None:
+                    results[(method, basis)] = (energy, elapsed)
+                    if self.verbose:
+                        print(f"Method: {method}, Basis Set: {basis}, Energy: {energy} Hartree, Time: {elapsed:.2f} seconds")
+                else:
+                    if self.verbose:
+                        print(f"Method: {method}, Basis Set: {basis} failed.")
+        
+        # Make for each method a subplot showing basis set vs energy
+        # We have 6 methods -> 2 rows, 3 columns
+        fig, axs = plt.subplots(2, 3, figsize=(18, 10))
+        axs = axs.flatten()
+        for i, method in enumerate(methods):
+            method_results = [(basis, results[(method, basis)][0]) for basis in basis_sets if (method, basis) in results]
+            if not method_results:
+                continue
+            basis_labels = [b[0] for b in method_results]
+            energies = [b[1] for b in method_results]
+            axs[i].plot(basis_labels, energies, marker='o')
+            axs[i].set_title(f'Method: {method.upper()}')
+            axs[i].set_xlabel('Basis Set')
+            axs[i].set_ylabel('Energy (Hartree)')
+            axs[i].grid(True)
+            axs[i].tick_params(axis='x', rotation=45)
+        plt.tight_layout()
+        plt.savefig("figures/method_basis_set_combinations.png")
+
+
+        return results 
+
     def test_basis_set_convergence(self,
             molecule: Molecule,
             method="hf"):
@@ -620,24 +772,65 @@ class Psi4Calculator:
                 "cc-pvqz"
             ]
             results = []
+            times = []
             for basis in basis_sets:
+                start_time = time.time()
                 self.config.method = method
                 self.config.basis_set = basis
                 energy = self.single_point_energy(molecule)
                 results.append((basis, energy))
                 if self.verbose:
                     print(f"Basis Set: {basis}, Energy: {energy} Hartree")
+                elapsed = time.time() - start_time
+                times.append(elapsed)
 
-            # Plot SCF Energy vs Basis Set
+            # Two subplots the call energy vs basis set and time vs basis set
+            fig, (ax1, ax2) = plt.subplots(2,1, figsize=(8,10))
             basis_labels = [b[0] for b in results]
             energies = [b[1] for b in results]
-            plt.figure(figsize=(8,6))
-            plt.plot(basis_labels, energies, marker='o')
-            plt.title(f'Basis Set Convergence for {molecule.name} using {method.upper()}')
-            plt.xlabel('Basis Set')
-            plt.ylabel('SCF Energy (Hartree)')
-            plt.grid(True)
+            ax1.plot(basis_labels, energies, marker='o')
+            ax1.set_title(f'Basis Set Convergence using {method.upper()}')
+            ax1.set_xlabel('Basis Set')
+            ax1.set_ylabel('Energy (Hartree)')
+            ax1.grid(True)
+            times_minutes = [t/60.0 for t in times]
+            ax2.plot(basis_labels, times_minutes, marker='o', color='orange')
+            ax2.set_title(f'Calculation Time vs Basis Set using {method.upper()}')
+            ax2.set_xlabel('Basis Set')
+            ax2.set_ylabel('Time (Minutes)')
+            ax2.grid(True)
+            plt.tight_layout()
             plt.savefig("figures/basis_set_convergence.png")
+            plt.close() 
+
+
+
+    def test_threading_performance(self, 
+            molecule: Molecule,
+            method="hf",
+            basis_set="cc-pvtz",
+            max_threads: int = 10):
+            """
+            Small helper function to test speedup from threading
+            """ 
+            thread_counts = list(range(1, max_threads + 1))
+            times = []
+            for n_threads in thread_counts:
+                self.config.method = method
+                self.config.basis_set = basis_set 
+                self.config.num_threads = n_threads
+                start_time = time.time()
+                energy = self.single_point_energy(molecule)
+                elapsed = time.time() - start_time
+                times.append(elapsed)
+                if self.verbose:
+                    print(f"Threads: {n_threads}, Energy: {energy} Hartree, Time: {elapsed:.2f} seconds")
+            # Plotting the results
+            plt.figure(figsize=(8,6))
+            plt.plot(thread_counts, times, marker='o')
+            plt.title(f'Threading Performance using {method.upper()} / {basis_set.upper()}')
+            plt.xlabel('Number of Threads')
+            plt.ylabel('Time (Seconds)')
+            plt.grid(True)
+            plt.savefig("figures/threading_performance.png")
             plt.close()
-            return results
-    

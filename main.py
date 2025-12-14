@@ -17,7 +17,7 @@ from transformations import Transformation
 from plotting import Plotting
 from psi4_interface import Psi4Calculator, Psi4Config
 from cluster import MolecularCluster
-from symmetry import MoleculeSymmetry
+from symmetry import SymmetryAnalyzer
 from graph import MolecularGraph
 
 
@@ -52,19 +52,33 @@ if __name__ == "__main__":
 
     molecule = Molecule.from_xyz(xyz_content)
 
-    config = Psi4Config(method = "hf", basis_set="cc-pvdz", memory="1 GB", num_threads=1)
+    
+    if args.test:
+        # Run through all tests and check which one was selected
+        for test in args.test:
+            if test == "method_basis_combinations":
+                # Initialize Psi4 Calculator 
+                config = Psi4Config(method = "hf", basis_set="cc-pvdz", memory="1 GB", num_threads=1)
+                calc = Psi4Calculator(config=config, verbose=False)
+                results = calc.determine_method_and_basis_set_combinations(molecule=molecule)
+                logger.write_method_basis_combinations(results)
 
+    #calc.test_basis_set_convergence(molecule=molecule, method="CCSD(T)")
+
+    # Test computation of frequency 
+    config = Psi4Config(method = "hf", basis_set="cc-pvdz", memory="2 GB", num_threads=1)
     calc = Psi4Calculator(config=config, verbose=True)
-
-    calc.test_basis_set_convergence(molecule=molecule, method="ccsd(t)")
-
-
-
 
     
 
     molecule.compute_bonds()
 
+    SymmetryAnalyzer = SymmetryAnalyzer(molecule=molecule)
+    SymmetryAnalyzer.check_linearity()
+    SymmetryAnalyzer.check_inversion_center()
+    SymmetryAnalyzer.check_planarity()
+    SymmetryAnalyzer.find_symmetry_planes(tolerance=1e-4)    
+    SymmetryAnalyzer.find_all_rotation_axes()
     # Log Molecule Info
     logger.write_molecule_info(molecule)
 
@@ -95,7 +109,7 @@ if __name__ == "__main__":
     sampled_mols = Sampler.sample_submol_sphere(submolecule=submolecules[1],
                                                 center = ref_frame.origin, 
                                                 radius=5,  
-                                                num_points=100, 
+                                                num_points=2, 
                                                 rotation=True, 
                                                 rotation_grid_dim=4, 
                                                 rotation_method="spherical")
@@ -106,42 +120,23 @@ if __name__ == "__main__":
     #                                       method="sphere",
     #                                       rotation=False)
     
-    calc = Psi4Calculator(config=config, verbose=True)
-    #results = calc.batch_single_point_energy(molecules=sampled_mols, parallel = True, n_processes=10)
-
-    #print(calc.get_results_summary())
+    calc = Psi4Calculator(config=config, verbose=False)
+    results = calc.batch_single_point_energy(molecules=sampled_mols, parallel = True, n_processes=30)
+    
+    energies = [energy for _, energy in results]
+    
 
 
     Sampler.calculate_sampling_statistics(sampled_mols, submolecule=submolecules[1])
     logger.write_sampling_statistics(Sampler)
     logger.write_trajectory_sampling(sampled_mols)
 
+    Cluster = MolecularCluster(sampled_molecules = sampled_mols,
+                               energies = energies,
+                                reference_molecule = submolecules[1],
+                                logger=logger)
+    Cluster.analyze_hydrogen_bonds()
+    Cluster.plot_hydrogen_bond_statistics()
+    Cluster.plot_energy_distribution()
 
 
-  #  Calculator = Psi4Calculator(ls_of_molecules=sampled_mols, method="HF")
-  #  results = Calculator.batch_single_point_calc(parallel=True,n_processes=20)
-  #  logger.write_scf_batch_result(results)
-#
-  #  sucessful_mols, energies = zip(*results)
-  #  Cluster_obj = MolecularCluster(sampled_molecules=sucessful_mols, energies=np.array(energies), logger=logger, reference_molecule=molecule, sampling_region=Sampler.sampling_region)
-  #  Cluster_obj.analyze_h_bond_configurations(plot_info=True)
-  #  Cluster_obj.plot_energy_distribution(bins=50, top_percent=20, diff_to_min=True)
-  #  Cluster_obj.plot_energy_distribution_of_valid_hbond_molecules()
-  #  #Cluster_obj.plot_energies_sampling_region(diff_to_mean=True)
-
-#    Cluster_obj.calculate_rmsd_features(include_energy=True, normalize_features=True)
-#    cluster_info = Cluster_obj.cluster_kmeans_silhouette_analysis(max_clusters=10, plot_analysis=True)
-#
-#    Cluster_obj.visalize_cluster_2d() 
-#
-#    cluster_reps = Cluster_obj.obtain_cluster_representatives(method="lowest_energy")
-#
-#    
-#
-#
-#    #Perform geomtry optimization with the 5 lowest energy mols
-#    Calculator = Psi4Calculator(ls_of_molecules=cluster_reps, method="MP2")
-#    opt_results = Calculator.batch_geometry_optimization(parallel=True,n_processes=10)
-#    logger.write_optimization_xyz_batch(opt_results)
-    
-    

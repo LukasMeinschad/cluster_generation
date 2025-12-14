@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import List, Tuple, Optional, Any, TextIO
+from typing import List, Tuple, Optional, Any, TextIO, Dict
 from enum import Enum
 from contextlib import contextmanager
 from pathlib import Path
@@ -346,7 +346,34 @@ class Logger:
 
     
     # ==================== Calculation Results ====================
-    
+
+    def write_method_basis_combinations(self, results: Dict[str, List[str]]) -> None:
+        """  
+        Writes the Results of the method and basis set combination determination.
+
+        Args:
+            results: Dictionary with methods as keys and list of viable basis sets as values
+
+        Result is build up like this 
+        results = {(method, basis): (energy, elapsed_time)}
+        """
+        lines = ["Analysis of Method and Basis Set Combinations:", 
+                 f"Total Combinations tested: {sum(len(bases) for bases in results.values())}",
+                    ""]
+        
+        for (method, basis_set), (energy, elapsed_time) in results.items():
+            lines.extend([
+                f"Method: {method}, Basis Set: {basis_set}",
+                f"  SCF Energy: {energy:.8f} Hartree",
+                f"  Calculation Time: {elapsed_time:.4f} seconds",
+                ""
+            ])
+        self.write_section(
+            "Method and Basis Set Combinations",
+            "\n".join(lines)
+        )
+        
+        
     def write_scf_batch_result(
         self, 
         results: List[Tuple[Any, float]]
@@ -410,7 +437,49 @@ class Logger:
             f"Optimization Results ({len(results)} structures)",
             "\n".join(lines)
         )
-    
+
+    # ==================== Clustering Results ====================
+    def write_cluster_statistics(
+            self,
+            cluster_statistics: Dict[str, Any]) -> None:
+        """  
+        Writes the Basic Statistics of the Clustering Analysis
+        """
+        lines = [
+            "Basic Clustering Statistics:",
+            f"Max Energy: {cluster_statistics['max_energy']:.6f} Hartree",
+            f"Min Energy: {cluster_statistics['min_energy']:.6f} Hartree",
+            f"Mean Energy: {cluster_statistics['mean_energy']:.6f} Hartree",
+            f"Std Dev Energy: {cluster_statistics['std_energy']:.6f} Hartree",
+            f"Median Energy: {cluster_statistics['median_energy']:.6f} Hartree",
+            f"IQR Energy: {cluster_statistics['iqr_energy']:.6f} Hartree",
+            f"Mid IQR Energy: {cluster_statistics['mid_iqr_energy']:.6f} Hartree",
+        ] 
+        self.write_section(
+            "Clustering Statistics",
+            "\n".join(lines)
+        )
+
+    def write_hbond_analysis(
+            self,
+            hbond_statistics: Dict[str, Any]) -> None:
+        """  
+        Writes the Hydrogen Bond Analysis Results
+        """
+        lines = [
+            "Hydrogen Bond Analysis:",
+            f"Max H-Bonds in Sampled Molecules: {hbond_statistics['max_hbonds']}",
+            f"Min H-Bonds in Sampled Molecules: {hbond_statistics['min_hbonds']}",
+            f"Mean H-Bonds in Sampled Molecules: {hbond_statistics['mean_hbonds']:.2f}",
+            f"Std Dev of H-Bonds in Sampled Molecules: {hbond_statistics['std_hbonds']:.2f}",
+            f"Median H-Bonds in Sampled Molecules: {hbond_statistics['median_hbonds']}",
+        ] 
+        self.write_section(
+            "Hydrogen Bond Analysis Results",
+            "\n".join(lines)
+        )
+
+
     # ==================== File Export Methods ====================
     
     @staticmethod

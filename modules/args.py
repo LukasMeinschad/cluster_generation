@@ -17,6 +17,14 @@ def get_args():
         help="Path to input XYZ file containing the molecular structure"
     )
 
+    parser.add_argument(
+        "--test",
+        # User can choose multiple tests from the list
+        nargs="+",
+        choices=["method_basis_combinations"],
+        help="""Choose tests to perform:\n
+              method_basis_combinations: Determine viable method and basis set combinations for the molecule"""
+    )
 
     args = parser.parse_args()
     return args

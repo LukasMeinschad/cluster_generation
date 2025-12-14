@@ -1,17 +1,41 @@
-2025-12-10:14:35:18,175 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'function_kwargs': {}}
-2025-12-10:14:35:18,179 INFO     [psi4.driver.driver:523] Compute energy(): method=ccsd(t), basis=sto-3g, molecule=default, nre=36.55723494966064
-2025-12-10:14:35:19,281 INFO     [psi4.driver.driver:526] Return energy(): -150.02260054366414
-2025-12-10:14:35:19,321 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'CCTRANSORT__WFN': 'CCSD_T', 'function_kwargs': {}}
-2025-12-10:14:35:19,325 INFO     [psi4.driver.driver:523] Compute energy(): method=ccsd(t), basis=3-21g, molecule=default, nre=36.55723494966064
-2025-12-10:14:35:20,860 INFO     [psi4.driver.driver:526] Return energy(): -151.4463272091115
-2025-12-10:14:35:20,889 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'CCTRANSORT__WFN': 'CCSD_T', 'function_kwargs': {}}
-2025-12-10:14:35:20,892 INFO     [psi4.driver.driver:523] Compute energy(): method=ccsd(t), basis=6-311g(d,p), molecule=default, nre=36.55723494966064
-2025-12-10:14:35:28,143 INFO     [psi4.driver.driver:526] Return energy(): -152.60005162028764
-2025-12-10:14:35:28,201 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'CCTRANSORT__WFN': 'CCSD_T', 'function_kwargs': {}}
-2025-12-10:14:35:28,205 INFO     [psi4.driver.driver:523] Compute energy(): method=ccsd(t), basis=cc-pvdz, molecule=default, nre=36.55723494966064
-2025-12-10:14:35:32,518 INFO     [psi4.driver.driver:526] Return energy(): -152.49520568689155
-2025-12-10:14:35:32,560 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'CCTRANSORT__WFN': 'CCSD_T', 'function_kwargs': {}}
-2025-12-10:14:35:32,563 INFO     [psi4.driver.driver:523] Compute energy(): method=ccsd(t), basis=cc-pvtz, molecule=default, nre=36.55723494966064
-2025-12-10:14:36:39,331 INFO     [psi4.driver.driver:526] Return energy(): -152.6999862404176
-2025-12-10:14:36:39,625 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'CCTRANSORT__WFN': 'CCSD_T', 'function_kwargs': {}}
-2025-12-10:14:36:39,628 INFO     [psi4.driver.driver:523] Compute energy(): method=ccsd(t), basis=cc-pvqz, molecule=default, nre=36.55723494966064
+
+    -----------------------------------------------------------------------
+          Psi4: An Open-Source Ab Initio Electronic Structure Package
+                               Psi4 1.9.1 release
+
+                         Git: Rev {} zzzzzzz 
+
+
+    D. G. A. Smith, L. A. Burns, A. C. Simmonett, R. M. Parrish,
+    M. C. Schieber, R. Galvelis, P. Kraus, H. Kruse, R. Di Remigio,
+    A. Alenaizan, A. M. James, S. Lehtola, J. P. Misiewicz, M. Scheurer,
+    R. A. Shaw, J. B. Schriber, Y. Xie, Z. L. Glick, D. A. Sirianni,
+    J. S. O'Brien, J. M. Waldrop, A. Kumar, E. G. Hohenstein,
+    B. P. Pritchard, B. R. Brooks, H. F. Schaefer III, A. Yu. Sokolov,
+    K. Patkowski, A. E. DePrince III, U. Bozkaya, R. A. King,
+    F. A. Evangelista, J. M. Turney, T. D. Crawford, C. D. Sherrill,
+    J. Chem. Phys. 152(18) 184108 (2020). https://doi.org/10.1063/5.0006002
+
+                            Additional Code Authors
+    E. T. Seidl, C. L. Janssen, E. F. Valeev, M. L. Leininger,
+    J. F. Gonthier, R. M. Richard, H. R. McAlexander, M. Saitow, X. Wang,
+    P. Verma, M. H. Lechner, A. Jiang, S. Behnle, A. G. Heide,
+    M. F. Herbst, and D. L. Poole
+
+             Previous Authors, Complete List of Code Contributors,
+                       and Citations for Specific Modules
+    https://github.com/psi4/psi4/blob/master/codemeta.json
+    https://github.com/psi4/psi4/graphs/contributors
+    http://psicode.org/psi4manual/master/introduction.html#citing-psifour
+
+    -----------------------------------------------------------------------
+
+
+    Psi4 started on: Sunday, 14 December 2025 06:18PM
+
+    Process ID: 1392952
+    Host:       sv1-c724
+    PSIDATADIR: /home/lme/.conda/envs/p4env/share/psi4
+    Memory:     1.9 GiB
+    Threads:    1
+    

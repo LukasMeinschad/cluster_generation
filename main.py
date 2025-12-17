@@ -74,13 +74,11 @@ if __name__ == "__main__":
     molecule.compute_bonds()
 
     SymmetryAnalyzer = SymmetryAnalyzer(molecule=molecule)
-    SymmetryAnalyzer.check_linearity()
-    SymmetryAnalyzer.check_inversion_center()
-    SymmetryAnalyzer.check_planarity()
-    SymmetryAnalyzer.find_symmetry_planes(tolerance=1e-4)    
-    SymmetryAnalyzer.find_all_rotation_axes()
+    symmetry_info = SymmetryAnalyzer.analyze_full_symmetry(tolerance=1e-3) 
+    #SymmetryAnalyzer.test_analysis_speed()
     # Log Molecule Info
     logger.write_molecule_info(molecule)
+    logger.write_symmetry_analysis(symmetry_info)
 
     # Get Submolecules
     submolecules = molecule.fragment_by_connectivity()
@@ -96,6 +94,7 @@ if __name__ == "__main__":
     # Set Reference Frame to submolecule 0
     Transformation = Transformation()
     ref_frame = Transformation.set_reference_frame_submolecule(submolecule=submolecules[0])
+    
     logger.write_reference_frame_info(ref_frame)
 
     submolecules = molecule.fragment_by_connectivity()
@@ -133,9 +132,14 @@ if __name__ == "__main__":
 
     Cluster = MolecularCluster(sampled_molecules = sampled_mols,
                                energies = energies,
-                                reference_molecule = submolecules[1],
+                                reference_molecule = molecule,
                                 logger=logger)
+    Cluster.get_total_symmetry_elements_samples()
+    Cluster.plot_symmetry_elements_distribution()
     Cluster.analyze_hydrogen_bonds()
+
+    Cluster.compute_feature_matrix()
+
     Cluster.plot_hydrogen_bond_statistics()
     Cluster.plot_energy_distribution()
 

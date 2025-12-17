@@ -253,6 +253,17 @@ class Molecule:
         # Optional for Molecular Volume
         self.volume = None
     
+    @staticmethod
+    def from_labels_and_coords(
+        atom_labels = List[str],
+        coordinates = np.ndarray,
+        name: Optional[str] = None
+        ) -> 'Molecule':
+        """Create Molecule from atom labels and coordinates"""
+        molecule = Molecule(name or "Custom Molecule")
+        molecule.add_atoms_batch(atom_labels, coordinates)
+        return molecule
+
     # Static and class methods
     @staticmethod
     def _remove_digits_from_label(label: str) -> str:

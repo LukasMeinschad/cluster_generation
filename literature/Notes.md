@@ -55,3 +55,23 @@ Convert this in Cartesian coordinates:
 + $x = r \sin(\theta) \cos(\phi)$
 + $y = r \sin(\theta) \sin(\phi)$
 + $z = r \cos(\theta)$
+
+# Rotation Quaternions
+
+In 3-D space according to Euler's rotation theorem any rotation can be described by a given angle $\theta$ around a fixed axis. The euler axis is usually represented by a unit vector $\vec{u}$
+
+![alt text](image.png)
+
+Quaternions give a simple way to represent this axis-angle representation using four real numbers. Euclidean vectors such as $(a_x, a_y,a_z)$ can be represented via $a_x i + a_y j + a_z k$ where $i,j,k$ are unit vectors representing the cartesian axes.
+
+Any rotation of an angle $\theta$ around an axis is defined by the unit vector
+
+$$u = (u_x, u_y, u_z) = u_x i + u_y j + u_z k$$
+
+This can be represented by a unit quaternion $q$ since the quaternion product
+
+$$(0 + u_x i + u_y j + u_z k) (0 - u_x i - u_y j - u_z k) = 1$$
+
+we can derive using the Taylor series of the exponential function that:
+
+$$q = cos(\frac{\theta}{2}) + usin(\frac{\theta}{2})

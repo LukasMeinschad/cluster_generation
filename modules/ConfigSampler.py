@@ -7,7 +7,7 @@ import time
 from plotting import Plotting
 from molecule_class import Molecule 
 from transformations import Transformation, ReferenceFrame
-
+from scipy.spatial.distance import cdist
 
 @dataclass
 class SamplingRegion:
@@ -352,42 +352,60 @@ class ConfigSampler:
     def calculate_sampling_statistics(self, sampled_mols: List[Molecule], submolecule: "Submolecule") -> None: 
         """  
         Calculate basic sampling statistics and store them in self.sampling_statistics
+
+
+        The following statistics of the sampling are calculated:
+
+        + Number of Samples 
+        + Total Sampling Volume 
+        + Average Distance to Center
+        + Nearest Neighbour Distances
+        + Minimum Pairwise Distances
         
         Args:
             sampled_mols (List[Molecule]): List of sampled molecules
             submolecule (SubMolecule): The submolecule that was sampled
         
         """
-        if not sampled_mols or self.sampling_region is None:
-            return ValueError("No sampled molecules or sampling region defined")
-
-        # TODO complete this statistics calculation
-
-
-        # Number of Samples
+        if not sampled_mols:
+            raise ValueError("No sampled molecules provided for statistics calculation")
+        if self.sampling_region is None:
+            raise ValueError("Sampling region not defined")
         num_samples = len(sampled_mols)
+        self.sampling_statistics["num_samples"] = num_samples
 
-        # Calculate the total sampling volume 
-        total_sampling_volume = self._get_sampling_region_volume()
+        # Calculate Total Sampling Volume
+        total_volume = self._get_sampling_region_volume()
+        self.sampling_statistics["total_sampling_volume"] = total_volume
 
-        # Calculate average distance to reference center
+        # Calculate Average Distance to Center
         center = self.sampling_region.center
-        distances = []
-        # Get indices of submolecule in parent
-        submol_indices = submolecule.get_index_in_parent()
+        distances_to_center = []
         for mol in sampled_mols:
-            submol_coords = mol.coordinates[submol_indices]
+            submol_coords = mol.coordinates[submolecule.get_index_in_parent()]
             submol_center = np.mean(submol_coords, axis=0)
             dist = np.linalg.norm(submol_center - center)
-            distances.append(dist)
-        avg_distance_to_center = np.mean(distances)
+            distances_to_center.append(dist)
+        avg_distance_to_center = np.mean(distances_to_center)
+        self.sampling_statistics["avg_distance_to_center"] = avg_distance_to_center
 
-
-        self.sampling_statistics["num_samples"] = num_samples
-        self.sampling_statistics["total_sampling_volume"] = total_sampling_volume
-        self.sampling_statistics["avg_distance_to_center"] = avg_distance_to_center        
+        # Calculate Pairwise Distances between sampled configurations
+        submol_centers = []
+        for mol in sampled_mols:
+            submol_coords = mol.coordinates[submolecule.get_index_in_parent()]
+            submol_center = np.mean(submol_coords, axis=0)
+            submol_centers.append(submol_center)
+        submol_centers = np.array(submol_centers)
+        pairwise_dists = cdist(submol_centers, submol_centers)
+        # Set diagonal to infinity to ignore self-distances
+        np.fill_diagonal(pairwise_dists, np.inf)
+        min_pairwise_dist = np.min(pairwise_dists)
+        self.sampling_statistics["min_nn_distance"] = min_pairwise_dist
+        # Calculate average nearest neighbour distance
+        nearest_neighbour_dists = np.min(pairwise_dists, axis=1)
+        avg_nearest_neighbour_dist = np.mean(nearest_neighbour_dists)
+        self.sampling_statistics["avg_nearest_neighbour_distance"] = avg_nearest_neighbour_dist 
         
-
 
     def _get_sampling_region_volume(self) -> float:
         """   
@@ -661,6 +679,29 @@ class ConfigSampler:
         if plot:
             raise NotImplementedError("Rectangle sampling plot not implemented yet")
         return points
+
+    # TODO finish this method
+    def sample_along_bond_coordinate(
+            self,
+            submolecule: "SubMolecule",
+            bond_vector: np.ndarray,
+            start_distance: float,
+            end_distance: float,
+            step_size: float,
+            name_prefix: str = "bond_coord",
+            plot_pes: bool = False
+        ) -> List[Molecule]:
+        """   
+        Samples a submolecule along a bond coordinate and determines the Potential Energy Surface (PES)
+        """
+        parent = submolecule.parent
+        submol_indices = submolecule.get_index_in_parent()
+        template = self._create_template_molecule(parent)
+        bond_vector = bond_vector / np.linalg.norm(bond_vector)
+        distances = np.arange(start_distance, end_distance + step_size, step_size)
+        sampled_mols = []
+        
+    
     
     def sample_submol_rectangle(
         self,
@@ -1197,7 +1238,6 @@ class ConfigSampler:
                 ])
                 # Nearest Neighbour Distances
                 # We use cdist this computes the distance between all pairs efficiently
-                from scipy.spatial.distance import cdist
                 dist_matrix = cdist(centers, centers)
                 # Set Diagonal to infinity to ignore self-distances
                 np.fill_diagonal(dist_matrix, np.inf)

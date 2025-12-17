@@ -26,7 +26,156 @@ class ReferenceFrame:
     def z_axis(self) -> np.ndarray:
         """ Returns the z-axis of the reference frame """
         return self.axes[:,2]
+
+@dataclass
+class Quaternion:
+    """
+    Quaternion class to represent:
+    q = w + xi + yj + zk
+    """
+    w: float # scalar part
+    x: float # i component 
+    y: float # j component 
+    z: float # k component
+
+    @staticmethod 
+    def from_axis_angle(axis: np.ndarray, angle_rad: float) -> "Quaternion":
+        """  
+        Creates a Quaternion from an axis and angle representation 
+        q = cos(θ/2) + sin(θ/2)(xi + yj + zk)
+        """
+        axis_normalizes = GeometryOps.normalize_vector(axis)
+        half_angle = angle_rad / 2.0
+        sin_half = np.sin(half_angle)
+        cos_half = np.cos(half_angle)
+        return Quaternion(
+            w=cos_half,
+            x=axis_normalizes[0] * sin_half,
+            y=axis_normalizes[1] * sin_half,
+            z=axis_normalizes[2] * sin_half
+        )
     
+    @staticmethod 
+    def from_two_vectors(v1: np.ndarray, v2: np.ndarray) -> "Quaternion":
+        """
+        Creates a quaternion that rotates vector v1 to vector v2 
+
+        + First normalize both vectors 
+        + The ncompute dot and cross product d = v1 * v2 and c = v1 x v2
+        + If d =-1 the vectors are opposite and we have to choose rotation axis manually
+        + The quaternion that carries out this rotation by:
+                + w = sqrt((1 + d) / 2)
+                + (x,y,z) = c / (2w)
+        """
+        v1_norm = GeometryOps.normalize_vector(v1)
+        v2_norm = GeometryOps.normalize_vector(v2)
+        
+        # Parallel case 
+        if np.allclose(v1_norm, v2_norm):
+            return Quaternion(1.0, 0.0, 0.0, 0.0) # Idenity Quaternion
+        
+        # Antiparallel case 
+        if np.allclose(v1_norm, -v2_norm):
+            # Find the orthogonal vector
+            if abs(v1_norm[0]) > 1e-8 or abs(v1_norm[1]) > 1e-8:
+                ortho = np.array([-v1_norm[1], v1_norm[0], 0.0])
+            else:
+                ortho = np.array([0.0, -v1_norm[2], v1_norm[1]])
+            ortho = GeometryOps.normalize_vector(ortho)
+            return Quaternion(0.0, ortho[0], ortho[1], ortho[2])
+        
+        # General Case
+        d = np.dot(v1_norm,v2_norm)
+        c = np.cross(v1_norm,v2_norm)
+        w = np.sqrt((1 + d) / 2.0)
+        xyz = c / (2.0 * w)
+
+        return Quaternion(w, xyz[0], xyz[1], xyz[2])
+
+    def normalize(self) -> "Quaternion":
+        """  
+        Normalizes the quaternion to unit length
+        """
+        norm = np.sqrt(self.w**2 + self.x**2 + self.y**2 + self.z**2)
+        if norm < 1e-8:
+            raise ValueError("Cannot normalize zero-length quaternion")
+        return Quaternion(
+            w=self.w / norm,
+            x=self.x / norm,
+            y=self.y / norm,
+            z=self.z / norm
+        )
+    
+    def conjugate(self) -> "Quaternion":
+        """  
+        Returns the conjugate quaternion 
+        q = w - xi - yj - zk
+        """
+        return Quaternion(
+            w=self.w,
+            x=-self.x,
+            y=-self.y,
+            z=-self.z
+        )
+    
+    def multiply(self, other: "Quaternion") -> "Quaternion":
+        """
+        Multiplies two quaternions
+        if t = rs then we have components
+        + t_0 = (r_0s_0 - r_1s_1 - r_2s_2 - r_3s_3)
+        + t_1 = (r_0s_1 + r_1s_0 + r_2s_3 - r_3s_2)
+        + t_2 = (r_0s_2 + r_1s_3 + r_2s_0 - r_3s_1)
+        + t_3 = (r_0s_3 - r_1s_2 + r_2s_1 + r_3s_0)
+        """
+        w = (self.w * other.w - self.x * other.x - self.y * other.y - self.z * other.z)
+        x = (self.w * other.x + self.x * other.w + self.y * other.z - self.z * other.y)
+        y = (self.w * other.y - self.x * other.z + self.y * other.w + self.z * other.x)
+        z = (self.w * other.z + self.x * other.y - self.y * other.x + self.z * other.w)
+        return Quaternion(w, x, y, z)
+    
+    def to_rotation_matrix(self) -> np.ndarray:
+        """  
+        Converts a quaternion to a rotation matrix
+        """
+        w,x,y,z = self.w, self.x, self.y, self.z
+
+        return np.array([
+            [1- 2*y**2 - 2*z**2, 2*x*y - 2*w*z, 2*x*z + 2*w*y],
+            [2*x*y + 2*w*z, 1 - 2*x**2 - 2*z**2, 2*y*z - 2*w*x],
+            [2*x*z - 2*w*y, 2*y*z + 2*w*x, 1- 2*x**2 - 2*y**2]
+        ])
+    
+    def rotate_point(self, point: np.ndarray) -> np.ndarray:
+        """  
+        Rotates a point using quaternion rotation:
+        1. Convert the point to be rotated into a pure quaternion p = 0 + xi + yj + zk
+        2. Perform the rutation using qpq^-1
+        """ 
+    
+        # Convert point to pure quaternion
+        p = Quaternion(0.0, point[0], point[1], point[2])
+        # Rotate using qpq^-1
+        q_conj = self.conjugate()
+        p_rotated = self.multiply(p).multiply(q_conj)
+        return np.array([p_rotated.x, p_rotated.y, p_rotated.z])
+
+    def rotate_points(self, points: np.ndarray) -> np.ndarray:
+        """   
+        Rotates multiple points using vectorized quaternion rotation
+        We use the fast Method given by John D. Cook 
+        https://www.johndcook.com/blog/2021/06/16/faster-quaternion-rotations/
+
+        Let t = 2(q_1, q_2,q_3) x (v_1, v_2, v_3) = (t_1, t_2, t_3)
+        Then the rotated vector v' is given by:
+        v = (v_1, v_2, v_3) + q_0 t + q x t
+        """ 
+        q0, q1, q2, q3 = self.w, self.x, self.y, self.z
+        q_vec = np.array([q1, q2, q3])
+        t = 2.0 * np.cross(q_vec, points)
+
+        v_rotated = points + q0 * t + np.cross(q_vec, t)
+        return v_rotated
+
 class GeometryOps:
     """   
     Class for static geometric operations
@@ -136,6 +285,22 @@ class GeometryOps:
         
         # Rodrigues Formula
         return np.eye(3) + v_x + (v_x @ v_x) * ((1 - c) / (s**2))
+    
+    @staticmethod 
+    def rotation_matrix_quaternion(axis: np.ndarray, angle_rad: float) -> np.ndarray:
+        """  
+        Constructs a rotation matrix from an axis and angle using quaternions
+        """
+        q = Quaternion.from_axis_angle(axis, angle_rad)
+        return q.to_rotation_matrix()
+    
+    @staticmethod 
+    def align_vectors_quaternion(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        """  
+        Constructs a rotation matrix that aligns vector a to vector b using quaternions
+        """
+        q = Quaternion.from_two_vectors(a, b)
+        return q.to_rotation_matrix()
 
 
     
@@ -243,6 +408,39 @@ class Transformation:
 
         if in_place:
             molecule.coordinates = new_coords
+            return None
+        else:
+            return new_coords
+        
+    def rotate_quaternion(
+            self, 
+            molecue: Union["Molecule", "Submolecule"],
+            axis: Union[List[float], np.ndarray],
+            angle_degree: float, 
+            in_place: bool = True
+        ) -> Optional[np.ndarray]:
+        """   
+        Rotates the molecule using quaternion rotation
+        
+        Args:
+            molecue: Molecule or Submolecule object
+            axis: Rotation axis
+            angle_degree: Rotation angle in degrees
+            in_place: Whether to modify the molecule in place or return new coordinates 
+        """
+        axis_array = np.asarray(axis, dtype=np.float64)
+        angle_rad = np.radians(angle_degree)
+
+        q = Quaternion.from_axis_angle(axis_array, angle_rad)
+        q = q.normalize()
+
+        
+        # Still use rotation matrix because of linear algebra speed
+        R = q.to_rotation_matrix()
+        new_coords = molecue.coordinates @ R.T 
+
+        if in_place:
+            molecue.coordinates = new_coords
             return None
         else:
             return new_coords
@@ -596,4 +794,50 @@ class Transformation:
         plt.grid()
         # Save in the figues path
         plt.savefig("figures/rotation_speed_test.png")
+        plt.close()
+
+    def compare_rotate_methods_speed(
+            self,
+            molecule: Union["Molecule", "Submolecule"]
+        ) -> None:
+        """
+        Compares the speed of the rotate and rotate_quaternion methods over N=[1000,5000,10000,50000,100000] iterations
+ 
+        """
+        iterations = [1000, 5000, 10000, 50000, 100000]
+        times_rodrigues = []
+        times_quaternion = []
+        random_axis = np.random.rand(3)
+        random_angle = np.random.uniform(0, 360)
+
+        for N in iterations:
+            # Rodrigues method
+            start_time = time.time()
+            for _ in range(N):
+                self.rotate(molecule, random_axis, random_angle, in_place=False)
+            end_time = time.time()
+            times_rodrigues.append(end_time - start_time)
+
+            # Quaternion method
+            start_time = time.time()
+            for _ in range(N):
+                self.rotate_quaternion(molecule, random_axis, random_angle, in_place=False)
+            end_time = time.time()
+            times_quaternion.append(end_time - start_time)
+        
+
+
+        
+
+        # Plotting
+        plt.figure()
+        plt.plot(iterations, times_rodrigues, marker='o', label='Rodrigues')
+        plt.plot(iterations, times_quaternion, marker='o', label='Quaternion')
+        plt.xlabel("Number of Iterations")
+        plt.ylabel("Time (s)")
+        plt.title("Rotation Method Speed Comparison")
+        plt.legend()
+        plt.grid()
+        # Save in the figues path
+        plt.savefig("figures/rotation_method_speed_comparison.png")
         plt.close()

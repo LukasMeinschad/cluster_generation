@@ -333,11 +333,11 @@ class Logger:
         """
         lines = [
             "Sampling Statistics:",
-            f"Sampling Region: {Sampler.sampling_region.shape}",
-            f"Sampling Parameters: {Sampler.sampling_region.parameters}",
-            f"Number of Sampled Configurations: {Sampler.sampling_statistics['num_samples']}",
-            f"Sampling Time (s): {Sampler.sampling_statistics['sampling_time']:.4f}",
-            f"Average Distance to Center (Å): {Sampler.sampling_statistics['avg_distance_to_center']:.4f}"
+            f"Number of Samples: {Sampler.sampling_statistics.get('num_samples', 'N/A')}",
+            f"Total Sampling Volume: {Sampler.sampling_statistics.get('total_sampling_volume', 'N/A')}",
+            f"Average Distance to Center: {Sampler.sampling_statistics.get('avg_distance_to_center', 'N/A')}",
+            f"Minimum Nearest Neighbour Distance: {Sampler.sampling_statistics.get('min_nn_distance', 'N/A')}",
+            f"Average Nearest Neighbour Distance: {Sampler.sampling_statistics.get('avg_nearest_neighbour_distance', 'N/A')}",
         ]
         self.write_section(
             "Sampling Statistics",
@@ -478,6 +478,33 @@ class Logger:
             "Hydrogen Bond Analysis Results",
             "\n".join(lines)
         )
+
+    # =================== Symmetry Analysis Logging ====================
+    def write_symmetry_analysis(
+            self,
+            symmetry_info: Dict[str, Any]) -> None:
+        """  
+        Writes the Symmetry Analysis Results
+        """
+        lines = [
+            "Symmetry Analysis Results:",
+            f"Point Group: {symmetry_info.get('point_group', 'Unknown')}",
+            f"Total Symmetry Elements: {symmetry_info.get('total_symmetry_elements', 0)}",
+            f"Is Linear: {symmetry_info.get('is_linear', False)}",
+            f"Is Planar: {symmetry_info.get('is_planar', False)}",
+            f"Has Inversion Center: {symmetry_info.get('has_inversion', False)}",
+            f"Symmetry Planes: {symmetry_info['symmetry_planes']}",
+            f"Rotation Axes: {symmetry_info['rotation_axes']}",
+            f"Improper Axes: {symmetry_info['improper_rotation_axes']}",
+            f"Number of Symmetry Planes: {symmetry_info.get('n_sigma', 0)}",
+            f"Number of C2 Axes: {symmetry_info.get('n_C2', 0)}",
+            f"Number of Cn Axes: {symmetry_info.get('n_Cn', 0)}",
+            f"Number of Sn Axes: {symmetry_info.get('n_Sn', 0)}",
+        ] 
+        self.write_section(
+            "Symmetry Analysis",
+            "\n".join(lines)
+    )
 
 
     # ==================== File Export Methods ====================

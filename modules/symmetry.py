@@ -1,634 +1,1040 @@
 import numpy as np
 from molecule_class import Molecule
-from modules.logger import Logger
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 from itertools import combinations
+import time
+import random 
+import matplotlib.pyplot as plt
 
-
-
-""" 
-The symmetry detection module presented here is based on the paper 
-https://doi.org/10.1016/j.cpc.2017.01.019 - SYVA: A program to analyze symmetry of molecules based on vector algebra
-Authors: László Gyevi-Nagy, Gyula Tasi 
+"""
+Symmetry detection module based on:
+https://doi.org/10.1016/j.cpc.2017.01.019
+'SYVA: A program to analyze symmetry of molecules based on vector algebra'
+Authors: László Gyevi-Nagy, Gyula Tasi
 """
 
+
 class SymmetryAnalyzer:
+    """
+    A class to analyze the symmetry properties of a molecule.
+    
+    Attributes:
+        molecule: Molecule object to analyze
+        point_group: Detected point group (str)
+        linear: Whether molecule is linear (bool)
+        planar: Whether molecule is planar (bool)
+        has_inversion: Whether molecule has inversion center (bool)
+    """
+    
     def __init__(self, molecule: Molecule):
-        """   
-        A class to analyze the symmetry properties of a molecule
-        """
-        self.molecule = molecule 
-        self.point_group = None 
-        self.linear = False 
+        self.molecule = molecule
+        self.point_group = None
+        self.linear = False
+        self.planar = False
+        self.has_inversion = False
+
+        # Store the symmetry info
+        self.symmetry_info = {}
+
+
+        self._coords = None
+        self._com = None
+        self._rel_coords = None
+        self._atom_labels = None
+
+    # ==================== Helper Methods ====================
+    
+    def _initialize_coordinates(self):
+        """Cache coordinates and center of mass for performance."""
+        if self._coords is None:
+            self._coords = self.molecule.get_coordinates_array()
+            self._com = self.molecule.center_of_mass()
+            self._rel_coords = self._coords - self._com
+            self._atom_labels = self.remove_digits(self.molecule.get_atom_labels())
 
     @staticmethod
     def remove_digits(symbols: List[str]) -> List[str]:
-        """   
-        Removes digits from a list of atom symbols
-        E.g. ['C1', 'H2', 'O'] -> ['C', 'H', 'O']
+        """
+        Removes digits from atom symbols.
+        Example: ['C1', 'H2', 'O3'] -> ['C', 'H', 'O']
         """
         return [''.join(filter(str.isalpha, symbol)) for symbol in symbols]
 
-    def check_linearity(self, tolerance: float = 1e-5):
-        """   
-        Checks if a given molecule is linear
-
-        For this:
-
-        + Calculate the position vectors of all atoms relative to the center of mass P_i - P_com
-        + The molecule is linear when the difference vectors betwenn all vectors are parallel
-
-        |(P_i - P_com) * (P_j - P_com) / ||P_i - P_com|| * ||P_j - P_com|| | = 1 for all i,j
+    def check_structure_equivalence(
+        self,
+        coords1: np.ndarray,
+        coords2: np.ndarray,
+        labels1: List[str],
+        labels2: List[str],
+        tolerance: float = 1e-5
+    ) -> bool:
         """
-        coords = self.molecule.get_coordinates_array() # Get coordinates as numpy array
-        com = self.molecule.center_of_mass()
-        rel_coords = coords - com  # Position vectors relative to center of mass
-        n_atoms = rel_coords.shape[0]
-        for i,j in combinations(range(n_atoms), 2):
-            vec_i = rel_coords[i] 
-            vec_j = rel_coords[j]
-            norm_i = np.linalg.norm(vec_i)
-            norm_j = np.linalg.norm(vec_j)
-            if norm_i < tolerance or norm_j < tolerance:
-                continue  # Skip zero-length vectors
-            cos_angle = np.dot(vec_i, vec_j) / (norm_i * norm_j)
-            if not (np.isclose(cos_angle, 1.0, atol=tolerance) or np.isclose(cos_angle, -1.0, atol=tolerance)):
-                self.linear = False
-                print("Non-Linear Molecule Detected.")
-                return self.linear
-        self.linear = True
-        print("Linear Molecule Detected.")
-        return self.linear
-    
-    def check_inversion_center(self,tolerance: float = 1e-5) -> bool:
-        """
-        Checks if a given molecule has a inversion center at the com 
-
-        We have an inversion center if every atom at position P_i, there exists an
-        corresponding atom of the same element at position -P_i (relative to com)
-        """
-        coords = self.molecule.get_coordinates_array() 
-        com = self.molecule.center_of_mass()
-        rel_coords = coords - com
-
-        # Get atom symbols and remove digits
-        atom_labels = self.remove_digits(self.molecule.get_atom_labels())
+        Checks if two molecular structures are equivalent.
         
-        n_atoms = len(atom_labels)
-        matched = [False] * n_atoms  # Track matched atoms
-
-        for i in range(n_atoms):
-            if matched[i]:
-                continue 
-            inv_pos = -rel_coords[i] 
-            found_partner = False 
-
-            # Look for matching atom at inverted position
-            for j in range(n_atoms):
-                if i == j or matched[j]:
-                    continue 
-
-                # Check if same element type 
-                if atom_labels[i] != atom_labels[j]:
-                    continue
-
-                # Check if positions match within tolerance
-                distance = np.linalg.norm(rel_coords[j] - inv_pos) 
-                if distance < tolerance:
-                    matched[i] = True
-                    matched[j] = True
-                    found_partner = True
-                    break
-            
-            # If atom is at center of mass it matches itself
-            if np.linalg.norm(rel_coords[i]) < tolerance:
-                matched[i] = True
-                found_partner = True
-            if not found_partner:
-                print("No Inversion Center Detected.")
-                return False
-            
-        print("Inversion Center Detected.")
-        return all(matched)
-    
-    def check_planarity(self,tolerance: float = 1e-5) -> bool:
-        """  
-        Checks if all atoms of the molecule lie in the same plane 
-
-        Method:
-        1. Calculate position vectors relative to the center of mass (P_i - P_com)
-        2. Generate normal vector n as cross product of two differnce vectors 
-              n = (P_2 - P_1) x (P_3 - P_1)
-        3. Check if all difference vectors are orthogonal to n:
-              |(P_i - P_1) . n| / ||P_i - P_1|| * ||n|| = 0 for all i
-        """
-        coords = self.molecule.get_coordinates_array() 
-        com = self.molecule.center_of_mass() 
-        rel_coords = coords - com 
-        n_atoms = rel_coords.shape[0] 
-
-        if n_atoms < 3:
-            print("Molecule has less than 3 atoms, considered planar.")
-            return True  # Less than 3 atoms are always planar
-        
-        # Find two non-parallel vectors to define the plane
-        normal_vector = None
-        for i in range(n_atoms):
-            if np.linalg.norm(rel_coords[i]) < tolerance:
-                continue # Skip zero-length vectors
-            for j in range(i+1, n_atoms):
-                if np.linalg.norm(rel_coords[j]) < tolerance:
-                    continue 
-
-                # Check if vectors are not parallel
-                vec_i = rel_coords[i]
-                vec_j = rel_coords[j]
-                cross_prod = np.cross(vec_i, vec_j)
-                cross_norm = np.linalg.norm(cross_prod)
-
-                if cross_norm >= tolerance:
-                    # Found two non-parallel vectors, use their cross product as normal vector 
-                    normal_vector = cross_prod / cross_norm 
-                    break
-
-            if normal_vector is not None:
-                break
-
-        if normal_vector is None:
-            print("All atoms are collinear, considered planar.")
-            return True  # All atoms are collinear, considered planar
-        
-        # Check if all atoms are orthogonal to the normal vector
-        for i in range(n_atoms):
-            vec_i = rel_coords[i] 
-
-            # Skip zero-length vectors (atoms at center of mass)
-            if np.linalg.norm(vec_i) < tolerance: 
-                continue    
-
-            # Calculate the dot product
-            dot_product = np.dot(vec_i, normal_vector)
-
-            if not np.isclose(dot_product, 0.0, atol=tolerance):
-                print("Non-Planar Molecule Detected.")
-                return False
-        print("Planar Molecule Detected.")
-        return True
-
-    def get_plane_normal(self, tolerance: float = 1e-5) -> np.ndarray:
-        """  
-        Calculates the normal vector of the molecular plane for a planar molecule
-        """
-        coords = self.molecule.get_coordinates_array()
-        com = self.molecule.center_of_mass()
-        rel_coords = coords - com
-        n_atoms = len(rel_coords)
-
-        # Find two non-parallel vectors to define the plane
-        for i in range(n_atoms):
-            if np.linalg.norm(rel_coords[i]) < tolerance:
-                continue 
-
-            for j in range(i+1, n_atoms):
-                if np.linalg.norm(rel_coords[j]) < tolerance:
-                    continue 
-
-                # Check if vectors are not parallel
-                vec_i = rel_coords[i]
-                vec_j = rel_coords[j]
-                cross_prod = np.cross(vec_i, vec_j)
-                cross_norm = np.linalg.norm(cross_prod)
-
-                if cross_norm >= tolerance:
-                    # Found two non-parallel vectors, use their cross product as normal vector 
-                    normal_vector = cross_prod / cross_norm 
-                    return normal_vector
-        raise ValueError("Cannot determine plane normal: all atoms may be collinear.")
-    
-    def reflect_point(self, point: np.ndarray, normal: np.ndarray, plane_point: np.ndarray = None) -> np.ndarray:
-        """  
-        Reflects a point across a plane defined by a normal vector and a point on a plane 
-
-        P' = P - 2 * proj_n(P - P_0)
-        where proj_n(v) = (v cdot n) /(n cdot n) * n
-        """
-        if plane_point is None:
-            plane_point = np.zeros(3)
-
-        # Normalize the normal vector
-        n = normal / np.linalg.norm(normal)
-        # vector from plane point to the point to be reflected
-        v = point - plane_point
-
-        # Projection of v onto n 
-        proj = np.dot(v, n) * n
-
-        # Reflected point
-        reflected_point = point - 2 * proj
-
-        return reflected_point
-
-    def check_structure_equivalence(self, 
-                                    coords1: np.ndarray,
-                                    coords2: np.ndarray,
-                                    labels1: List[str],
-                                    labels2: List[str],
-                                    tolerance: float = 1e-5) -> bool:
-        """   
-        Checks if two molecular structures are equivalent (same atoms at same positions)
+        Two structures are equivalent if each atom in structure 1 has a
+        corresponding atom of the same element at the same position in structure 2.
         
         Args:
             coords1: Coordinates of first structure
             coords2: Coordinates of second structure
             labels1: Atom labels of first structure
             labels2: Atom labels of second structure
-            tolerance: Distance tolerance for matching atoms
-        
+            tolerance: Distance tolerance for matching
+            
         Returns:
-            True if structures are equivalent, False otherwise
+            True if structures are equivalent
         """
         n_atoms = len(labels1)
         if n_atoms != len(labels2):
-            return False  # Different number of atoms
-        
-        matched = [False] * n_atoms  # Track matched atoms
+            return False
+
+        matched = [False] * n_atoms
 
         for i in range(n_atoms):
             found_match = False
             for j in range(n_atoms):
                 if matched[j]:
-                    continue 
+                    continue
 
-                # Check if same element type
+                # Check same element type
                 if labels1[i] != labels2[j]:
                     continue
 
-                # check if positions match 
+                # Check position match
                 distance = np.linalg.norm(coords1[i] - coords2[j])
                 if distance < tolerance:
                     matched[j] = True
                     found_match = True
                     break
+
             if not found_match:
-                return False  # No matching atom found
+                return False
+
+        return all(matched)
+
+    # ==================== Basic Symmetry Checks ====================
+
+    def check_linearity(self, tolerance: float = 1e-5) -> bool:
+        """
+        Checks if the molecule is linear.
+        
+        A molecule is linear when all position vectors (relative to COM)
+        are parallel or anti-parallel:
+        |(P_i - P_com) · (P_j - P_com)| / (||P_i|| * ||P_j||) = 1
+        
+        Args:
+            tolerance: Numerical tolerance
             
-        return all(matched) 
-    
+        Returns:
+            True if molecule is linear
+        """
+        self._initialize_coordinates()
+        n_atoms = len(self._rel_coords)
+
+        for i, j in combinations(range(n_atoms), 2):
+            vec_i = self._rel_coords[i]
+            vec_j = self._rel_coords[j]
+            
+            norm_i = np.linalg.norm(vec_i)
+            norm_j = np.linalg.norm(vec_j)
+
+            if norm_i < tolerance or norm_j < tolerance:
+                continue
+
+            cos_angle = np.abs(np.dot(vec_i, vec_j)) / (norm_i * norm_j)
+            
+            if not np.isclose(cos_angle, 1.0, atol=tolerance):
+                self.linear = False
+                return False
+
+        self.linear = True
+        return True
+
+    def check_planarity(self, tolerance: float = 1e-5) -> bool:
+        """
+        Checks if all atoms lie in the same plane.
+        
+        Method:
+        1. Find normal vector n from cross product of two non-parallel vectors
+        2. Check if all position vectors are orthogonal to n
+        
+        Args:
+            tolerance: Numerical tolerance
+            
+        Returns:
+            True if molecule is planar
+        """
+        self._initialize_coordinates()
+        n_atoms = len(self._rel_coords)
+
+        if n_atoms < 3:
+            self.planar = True
+            return True
+
+        # Find two non-parallel vectors
+        normal_vector = None
+        for i in range(n_atoms):
+            if np.linalg.norm(self._rel_coords[i]) < tolerance:
+                continue
+
+            for j in range(i + 1, n_atoms):
+                if np.linalg.norm(self._rel_coords[j]) < tolerance:
+                    continue
+
+                cross_prod = np.cross(self._rel_coords[i], self._rel_coords[j])
+                cross_norm = np.linalg.norm(cross_prod)
+
+                if cross_norm > tolerance:
+                    normal_vector = cross_prod / cross_norm
+                    break
+
+            if normal_vector is not None:
+                break
+
+        if normal_vector is None:
+            self.planar = True
+            return True
+
+        # Check orthogonality to normal
+        for i in range(n_atoms):
+            if np.linalg.norm(self._rel_coords[i]) < tolerance:
+                continue
+
+            dot_product = np.abs(np.dot(self._rel_coords[i], normal_vector))
+            
+            if dot_product > tolerance:
+                self.planar = False
+                return False
+
+        self.planar = True
+        return True
+
+    def check_inversion_center(self, tolerance: float = 1e-5) -> bool:
+        """
+        Checks if molecule has an inversion center at the COM.
+        
+        An inversion center exists if for every atom at P_i, there exists
+        an atom of the same element at -P_i (relative to COM).
+        
+        Args:
+            tolerance: Distance tolerance
+            
+        Returns:
+            True if inversion center exists
+        """
+        self._initialize_coordinates()
+        n_atoms = len(self._atom_labels)
+        matched = [False] * n_atoms
+
+        for i in range(n_atoms):
+            if matched[i]:
+                continue
+
+            # Atom at center of mass
+            if np.linalg.norm(self._rel_coords[i]) < tolerance:
+                matched[i] = True
+                continue
+
+            # Look for inverted partner
+            inv_pos = -self._rel_coords[i]
+            found_partner = False
+
+            for j in range(n_atoms):
+                if i == j or matched[j]:
+                    continue
+
+                if self._atom_labels[i] != self._atom_labels[j]:
+                    continue
+
+                distance = np.linalg.norm(self._rel_coords[j] - inv_pos)
+                if distance < tolerance:
+                    matched[i] = True
+                    matched[j] = True
+                    found_partner = True
+                    break
+
+            if not found_partner:
+                self.has_inversion = False
+                return False
+
+        self.has_inversion = True
+        return True
+
+    def get_molecular_axis(self, tolerance: float = 1e-5) -> np.ndarray:
+        """
+        Returns the normalized direction vector of the molecular axis.
+        Only valid for linear molecules.
+        
+        Returns:
+            Normalized direction vector
+            
+        Raises:
+            ValueError: If molecule is not linear
+        """
+        if not self.linear:
+            raise ValueError("Molecule is not linear.")
+
+        self._initialize_coordinates()
+
+        for vec in self._rel_coords:
+            norm = np.linalg.norm(vec)
+            if norm > tolerance:
+                return vec / norm
+
+        raise ValueError("Cannot determine molecular axis.")
+
+    def get_plane_normal(self, tolerance: float = 1e-5) -> np.ndarray:
+        """
+        Returns the normalized normal vector of the molecular plane.
+        Only valid for planar molecules.
+        
+        Returns:
+            Normalized normal vector
+            
+        Raises:
+            ValueError: If molecule is not planar or normal cannot be determined
+        """
+        self._initialize_coordinates()
+        n_atoms = len(self._rel_coords)
+
+        for i in range(n_atoms):
+            if np.linalg.norm(self._rel_coords[i]) < tolerance:
+                continue
+
+            for j in range(i + 1, n_atoms):
+                if np.linalg.norm(self._rel_coords[j]) < tolerance:
+                    continue
+
+                cross_prod = np.cross(self._rel_coords[i], self._rel_coords[j])
+                cross_norm = np.linalg.norm(cross_prod)
+
+                if cross_norm > tolerance:
+                    return cross_prod / cross_norm
+
+        raise ValueError("Cannot determine plane normal.")
+
+    # ==================== Transformation Operations ====================
+
+    def reflect_point(
+        self,
+        point: np.ndarray,
+        normal: np.ndarray,
+        plane_point: np.ndarray = None
+    ) -> np.ndarray:
+        """
+        Reflects a point across a plane.
+        
+        P' = P - 2 * proj_n(P - P0)
+        where proj_n(v) = (v · n / ||n||²) * n
+        
+        Args:
+            point: Point to reflect
+            normal: Normal vector of plane
+            plane_point: Point on plane (default: origin)
+            
+        Returns:
+            Reflected point
+        """
+        if plane_point is None:
+            plane_point = np.zeros(3)
+
+        n = normal / np.linalg.norm(normal)
+        v = point - plane_point
+        proj = np.dot(v, n) * n
+
+        return point - 2 * proj
+
+    def rodrigues_rotation(
+        self,
+        point: np.ndarray,
+        axis: np.ndarray,
+        angle: float,
+        axis_point: np.ndarray = None
+    ) -> np.ndarray:
+        """
+        Rotates a point around an axis using Rodrigues' formula.
+        
+        P' = P + sin(φ) * (d × P) + (1 - cos(φ)) * (d × (d × P))
+        
+        Args:
+            point: Point to rotate
+            axis: Rotation axis (will be normalized)
+            angle: Rotation angle in radians
+            axis_point: Point on axis (default: origin)
+            
+        Returns:
+            Rotated point
+        """
+        if axis_point is None:
+            axis_point = np.zeros(3)
+
+        d = axis / np.linalg.norm(axis)
+        p = point - axis_point
+
+        sin_phi = np.sin(angle)
+        cos_phi = np.cos(angle)
+
+        cross1 = np.cross(d, p)
+        cross2 = np.cross(d, cross1)
+
+        p_rotated = p + sin_phi * cross1 + (1 - cos_phi) * cross2
+
+        return p_rotated + axis_point
+
+    def improper_rotation(
+        self,
+        point: np.ndarray,
+        axis: np.ndarray,
+        order: int,
+        axis_point: np.ndarray = None
+    ) -> np.ndarray:
+        """
+        Performs improper rotation: rotation followed by reflection.
+        
+        S_n = C_n + σ_h
+        
+        Args:
+            point: Point to transform
+            axis: Rotation axis
+            order: Order of rotation
+            axis_point: Point on axis (default: origin)
+            
+        Returns:
+            Transformed point
+        """
+        if axis_point is None:
+            axis_point = np.zeros(3)
+
+        angle = 2 * np.pi / order
+        rotated = self.rodrigues_rotation(point, axis, angle, axis_point)
+        reflected = self.reflect_point(rotated, axis, axis_point)
+
+        return reflected
+
+    # ==================== Symmetry Element Detection ====================
+
     def find_symmetry_planes(self, tolerance: float = 1e-5) -> List[Dict[str, Any]]:
         """
-        Finds all symmetry planes of the molecule
-
-        A symmetry plane either:
-        1. Contains all atoms (molecular plane for planar molecules)
-        2. Contains some atoms and reflects pairs of atoms into each other
-
-        Method:
-        - For planaer molecules: Check if the molecule plane is a symmetry plane
-        - For all molecules: Generate candidate planes from pairs of atoms with same element using normal vector n = P_i - P_j
-        - Test each plane by reflecting all atoms and checking structure equivalence
-        """
-        coords = self.molecule.get_coordinates_array()  
-        com = self.molecule.center_of_mass() 
-        rel_coords = coords - com 
-        atom_labels = self.remove_digits(self.molecule.get_atom_labels())
-        n_atoms = len(atom_labels)
-
-        symmetry_planes = []
+        Finds all symmetry planes (mirror planes).
         
-        #1. Check if molecular plane is symmetry plane for planar molecules
-        if self.check_planarity(tolerance=tolerance):
+        Returns:
+            List of dicts with keys: 'normal', 'point', 'type', 'defining_atoms'
+        """
+        
+        self._initialize_coordinates()
+        n_atoms = len(self._atom_labels)
+        symmetry_planes = []
+
+        # 1. Check molecular plane for planar molecules
+        if self.planar:
             try:
-                plane_normal = self.get_plane_normal(tolerance=tolerance)
-                # Reflect all atoms across the molecular plane
+                plane_normal = self.get_plane_normal(tolerance)
                 reflected_coords = np.array([
-                    self.reflect_point(rel_coords[i], plane_normal,)
+                    self.reflect_point(self._rel_coords[i], plane_normal)
                     for i in range(n_atoms)
                 ])
-                # Check structure equivalence
-                if self.check_structure_equivalence(rel_coords, reflected_coords, atom_labels, atom_labels, tolerance=tolerance):
+
+                if self.check_structure_equivalence(
+                    self._rel_coords, reflected_coords,
+                    self._atom_labels, self._atom_labels, tolerance
+                ):
                     symmetry_planes.append({
-                        "normal": plane_normal,
-                        "point": com,
-                        "type": "molecular_plane"
+                        'normal': plane_normal,
+                        'point': self._com,
+                        'type': 'molecular_plane',
+                        'defining_atoms': 'all'
                     })
-                    print(f"Symmetry Plane Detected: Molecular Plane")
             except ValueError:
-                pass  # Cannot determine plane normal
+                pass
 
-        #2. Generate candiate planes from pairs of atoms
+        # 2. Test candidate planes from atom pairs
         tested_normals = []
-        for i,j in combinations(range(n_atoms),2):
-            #Generate normal vector as difference between position vectors
-            normal_candidate = rel_coords[i] - rel_coords[j]
+        
+        for i, j in combinations(range(n_atoms), 2):
+            normal_candidate = self._rel_coords[i] - self._rel_coords[j]
             norm = np.linalg.norm(normal_candidate)
-            if norm < tolerance:
-                continue  # Skip zero-length normals
 
-            normal_candidate /= norm  # Normalize
-            # Check if this direction of opposite direction has already been tested 
-            is_duplicate = False 
-            for tested_normal in tested_normals: 
-                dot_product = abs(np.dot(normal_candidate, tested_normal))
-                if np.isclose(dot_product, 1.0, atol=tolerance):
-                    is_duplicate = True
-                    break
-            
+            if norm < tolerance:
+                continue
+
+            normal_candidate /= norm
+
+            # Check for duplicate directions
+            is_duplicate = any(
+                np.abs(np.dot(normal_candidate, tested)) > (1 - tolerance)
+                for tested in tested_normals
+            )
+
             if is_duplicate:
                 continue
 
             tested_normals.append(normal_candidate)
 
-            # Test reflection through plane
+            # Test reflection
             reflected_coords = np.array([
-                self.reflect_point(rel_coords[k], normal_candidate) 
+                self.reflect_point(self._rel_coords[k], normal_candidate)
                 for k in range(n_atoms)
             ])
 
-            # Check if reflected structure matches original
-            if self.check_structure_equivalence(rel_coords, reflected_coords, atom_labels, atom_labels, tolerance=tolerance):
+            if self.check_structure_equivalence(
+                self._rel_coords, reflected_coords,
+                self._atom_labels, self._atom_labels, tolerance
+            ):
                 symmetry_planes.append({
-                    "normal": normal_candidate,
-                    "point": com, 
-                    "type": "reflection_plane",
-                    "defining_atoms": (i, j)
+                    'normal': normal_candidate,
+                    'point': self._com,
+                    'type': 'reflection_plane',
+                    'defining_atoms': (i, j)
                 })
-                print(f"Symmetry Plane Detected: Atoms {i} and {j}")
 
-        print(f"Total Symmetry Planes Found: {len(symmetry_planes)}")
         return symmetry_planes
-    
-    def rodrigues_rotation(self, point: np.ndarray, axis: np.ndarray, angle: float, axis_point: np.ndarray = None) -> np.ndarray:
-        """    
-        Rotates a point around an axis using Rodrigues' rotation formula 
 
-        P' = P + sin(theta) * d x P + (1- cos(theda)) * d x (d x P)
-        where d is the unit vector along the rotation axis
-
+    def check_rotation_axis(
+        self,
+        axis: np.ndarray,
+        order: int,
+        tolerance: float = 1e-5
+    ) -> bool:
+        """
+        Checks if an axis is a C_n rotation axis.
+        
         Args:
-            point: Point to be rotated
-            axis: Rotation axis (unit vector)
-            angle: Rotation angle in radians
-            axis_point: A point on the rotation axis (default is origin)
-
+            axis: Direction vector
+            order: Rotation order
+            tolerance: Distance tolerance
+            
         Returns:
-            Rotated point as numpy array
+            True if axis is a C_n symmetry axis
         """
-        if axis_point is None:
-            # Default to origin
-            axis_point = np.zeros(3)
+        self._initialize_coordinates()
+        n_atoms = len(self._atom_labels)
         
-        # Normalize axis direction 
-        d = axis / np.linalg.norm(axis) 
-
-        # Shit to origin if needed 
-        p = point - axis_point 
-
-        # Apply Rodgrigues Formula 
-        sin_phi = np.sin(angle)
-        cos_phi = np.cos(angle) 
-        cross1 = np.cross(d,p)
-        cross2 = np.cross(d, cross1) 
-
-        p_rotated = p + sin_phi * cross1 + (1- cos_phi) * cross2 
-
-        # Shift back
-        return p_rotated + axis_point
-
-    def check_rotation_axis(self, axis: np.ndarray, order:int, 
-                            axis_point: np.ndarray = None,
-                            tolerance: float = 1e-5) -> bool:
-        """  
-        Checks if a given axis is a symmetry axis of given order 
-        
-        Args:
-            axis: Direction vector of axis 
-            order: Order of rotation (n for C_n axis)
-            axis_point: Point on the axis (default is center of mass)
-            tolerance: Distance tolerance for positon matching
-        """
-        if axis_point is None:
-            axis_point = self.molecule.center_of_mass()
-        
-        coords = self.molecule.get_coordinates_array()
-        atom_labels = self.remove_digits(self.molecule.get_atom_labels())
-        n_atoms = len(atom_labels) 
-
-        # Rotation angle for C_n axis
         angle = 2 * np.pi / order
 
-        # Rotate all atoms
-        rotated_coords = np.array([ 
-            self.rodrigues_rotation(coords[i], axis, angle, axis_point) 
+        rotated_coords = np.array([
+            self.rodrigues_rotation(self._coords[i], axis, angle, self._com)
             for i in range(n_atoms)
         ])
 
-        # Check if rotated structure matches original
-        return self.check_structure_equivalence(coords, rotated_coords, atom_labels, atom_labels, tolerance=tolerance)
+        return self.check_structure_equivalence(
+            self._coords, rotated_coords,
+            self._atom_labels, self._atom_labels, tolerance
+        )
 
-    def get_molecular_axis(self,tolerance: float = 1e-5) -> np.ndarray:
-        """  
-        Returns the direction vector of the molecular axis for linear molecules 
-
-        Returns:
-            Direction vector as numpy array
-        """    
-        if not self.linear:
-            raise ValueError("Molecule is not linear, molecular axis undefined.")
-        coords = self.molecule.get_coordinates_array()
-        com = self.molecule.center_of_mass()
-        rel_coords = coords - com
-
-        # Find the first non zero vector as reference 
-        for vec in rel_coords:
-            if np.linalg.norm(vec) >= tolerance:
-                axis = vec / np.linalg.norm(vec)
-                return axis
-        raise ValueError("Cannot determine molecular axis: all atoms may be at center of mass.")
-
-
-
-    def find_c2_axes(self, tolerance: float = 1e-5) -> List[Dict[str,Any]]:
+    def find_c2_axes(self, tolerance: float = 1e-5) -> List[Dict[str, Any]]:
         """
-        Finds all possible C2 axes
-
-        The direction vectors of C2 axes from atoms i and j:
-        d = (P_i + P_j) / ||P_i + P_j||
-
+        Finds all C2 rotation axes.
+        
+        Direction vector: d = (P_i + P_j) / ||P_i + P_j||
+        
         Returns:
-            List of detected C2 axes with their direction and a point on the axis
+            List of C2 axes
         """
-        coords = self.molecule.get_coordinates_array()
-        atom_labels = self.remove_digits(self.molecule.get_atom_labels()) 
-        n_atoms = len(atom_labels)
-
+        
+        self._initialize_coordinates()
+        n_atoms = len(self._atom_labels)
+        
         c2_axes = []
-        tested_axes = [] 
-        for i,j in combinations(range(n_atoms),2):
-            # Direction vector for C2 axis
-            d = coords[i] + coords[j]
-            norm = np.linalg.norm(d)
-            if norm < tolerance:
-                continue  # Skip zero-length vectors
-            
-            d /= norm  # Normalize
+        tested_axes = []
 
-            # Check if this direction is already tested 
-            is_duplicate = False
-            for tested_axis in tested_axes:
-                dot_product = abs(np.dot(d, tested_axis))
-                if np.isclose(dot_product, 1.0, atol=tolerance):
-                    is_duplicate = True
-                    break
+        for i, j in combinations(range(n_atoms), 2):
+            d = self._coords[i] + self._coords[j]
+            norm = np.linalg.norm(d)
+
+            if norm < tolerance:
+                continue
+
+            d /= norm
+
+            # Check duplicate
+            is_duplicate = any(
+                np.abs(np.dot(d, tested)) > (1 - tolerance)
+                for tested in tested_axes
+            )
 
             if is_duplicate:
                 continue
 
             tested_axes.append(d)
 
-            # Check if this is a C2 axis
-            if self.check_rotation_axis(d, order=2, tolerance=tolerance):
+            if self.check_rotation_axis(d, 2, tolerance):
                 c2_axes.append({
-                    "axis": d,
-                    "order": 2,
-                    "point": self.molecule.center_of_mass(),
-                    "defining_atoms": (i,j),
-                    "type": "C2"
+                    'axis': d,
+                    'order': 2,
+                    'point': self._com,
+                    'type': 'C2',
+                    'defining_atoms': (i, j)
                 })
-                print(f"C2 Axis Detected: Atoms {i} and {j}")
 
-        print(f"Total C2 Axes Found: {len(c2_axes)}")
         return c2_axes
-    
-    def find_cn_axes(self, max_order: int=8, tolerance: float = 1e-5) -> List[Dict[str,Any]]:
+
+    def find_cn_axes(
+        self,
+        max_order: int = 8,
+        tolerance: float = 1e-5
+    ) -> List[Dict[str, Any]]:
         """
-        Finds all possible Cn axes up to a given maximum order
-
-        Direction vectors for three atoms (i,j,k):
-        d = (P_i - P_j) x (P_j - P_k) / ||(P_i - P_j) x (P_j - P_k)||   
-
-        Consider cases where atoms i,j,k correspond to adjacent vertices of a regular polygon 
-
+        Finds all Cn rotation axes (n > 2).
+        
+        Direction vector: d = (P_i - P_j) × (P_j - P_k) / ||...||
+        
         Args:
-            max_order: Maximum order of rotation axes to search for
-            tolerance: Distance tolerance for position matching
+            max_order: Maximum order to test
+            tolerance: Distance tolerance
+            
         Returns:
-            List of detected Cn axes with their direction, order, and a point on the axis
+            List of Cn axes
         """
-        coords = self.molecule.get_coordinates_array()
-        atom_labels = self.remove_digits(self.molecule.get_atom_labels()) 
-        n_atoms = len(atom_labels)
-
+        
+        self._initialize_coordinates()
+        n_atoms = len(self._atom_labels)
+        
         cn_axes = []
         tested_axes = []
-        # Test linear molecule axis:
+
+        # Test linear molecule axis
         if self.linear:
             try:
-                axis = self.get_molecular_axis(tolerance=tolerance)
-                # Linear molecules have C_infinity symmetry, we test higher orders 
+                axis = self.get_molecular_axis(tolerance)
                 for order in range(3, max_order + 1):
-                    if self.check_rotation_axis(axis, order, tolerance=tolerance):
+                    if self.check_rotation_axis(axis, order, tolerance):
                         cn_axes.append({
-                            "axis": axis,
-                            "order": order,
-                            "point": self.molecule.center_of_mass(),
-                            "type": f"C{order}",
-                            "defining_atoms": "molecular_axis"
+                            'axis': axis,
+                            'order': order,
+                            'point': self._com,
+                            'type': f'C{order}',
+                            'defining_atoms': 'molecular_axis'
                         })
-                        print(f"C{order} Axis Detected: Linear Molecule Axis")
-                return cn_axes  # No need to search further
+                return cn_axes
             except ValueError:
-                pass  # Cannot determine molecular axis
-        # Test planar molecule perpendicular axes 
-        if self.check_planarity(tolerance=tolerance):
-            try:
-                axis = self.get_plane_normal(tolerance=tolerance)
-                for order in range(3, max_order + 1):
-                    if self.check_rotation_axis(axis, order, tolerance=tolerance):
-                        cn_axes.append({
-                            "axis": axis,
-                            "order": order,
-                            "point": self.molecule.center_of_mass(),
-                            "type": f"C{order}",
-                            "defining_atoms": "plane_normal"
-                        })
-                        print(f"C{order} Axis Detected: Planar Molecule Normal")
-            except ValueError:
-                pass  # Cannot determine plane normal
+                pass
 
-        # Test axes from triplets of atoms
-        for i,j,k in combinations(range(n_atoms),3):
-            # Calculate the direction vector 
-            v1 = coords[i] - coords[j]
-            v2 = coords[j] - coords[k]
+        # Test planar molecule perpendicular axis
+        if self.planar:
+            try:
+                axis = self.get_plane_normal(tolerance)
+                for order in range(3, max_order + 1):
+                    if self.check_rotation_axis(axis, order, tolerance):
+                        cn_axes.append({
+                            'axis': axis,
+                            'order': order,
+                            'point': self._com,
+                            'type': f'C{order}',
+                            'defining_atoms': 'plane_normal'
+                        })
+            except ValueError:
+                pass
+
+        # Test axes from atom triplets
+        for i, j, k in combinations(range(n_atoms), 3):
+            v1 = self._coords[i] - self._coords[j]
+            v2 = self._coords[j] - self._coords[k]
 
             cross_prod = np.cross(v1, v2)
             norm = np.linalg.norm(cross_prod)
-            if norm < tolerance:
-                continue  # Skip zero-length normals
-            d = cross_prod / norm  # Normalize
 
-            # Check if duplicate
-            is_duplicate = False
-            for tested_axis in tested_axes:
-                dot_product = abs(np.dot(d, tested_axis))
-                if np.isclose(dot_product, 1.0, atol=tolerance):
-                    is_duplicate = True
-                    break
+            if norm < tolerance:
+                continue
+
+            d = cross_prod / norm
+
+            # Check duplicate
+            is_duplicate = any(
+                np.abs(np.dot(d, tested)) > (1 - tolerance)
+                for tested in tested_axes
+            )
 
             if is_duplicate:
                 continue
 
             tested_axes.append(d)
 
-            # Test different orders
-            for order in range(3, max_order + 1):
-                if self.check_rotation_axis(d, order, tolerance=tolerance):
+            # Test orders from high to low
+            for order in range(max_order, 2, -1):
+                if self.check_rotation_axis(d, order, tolerance):
                     cn_axes.append({
-                        "axis": d,
-                        "order": order,
-                        "point": self.molecule.center_of_mass(),
-                        "type": f"C{order}",
-                        "defining_atoms": (i,j,k)
+                        'axis': d,
+                        'order': order,
+                        'point': self._com,
+                        'type': f'C{order}',
+                        'defining_atoms': (i, j, k)
                     })
-                    print(f"C{order} Axis Detected: Atoms {i}, {j}, {k}")
-        print(f"Total Cn Axes Found: {len(cn_axes)}")
+                    break  # Only record highest order
+
         return cn_axes
-    
-    def find_all_rotation_axes(self, max_order: int=8, tolerance: float = 1e-5) -> Dict[str, List[Dict[str,Any]]]:
-        """  
-        Finds all rotation axes (Cn) up to a given maximum order
 
-        Args:
-            max_order: Maximum order of rotation axes to search for
-            tolerance: Distance tolerance for position matching
+    def find_all_rotation_axes(
+        self,
+        max_order: int = 8,
+        tolerance: float = 1e-5
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Finds all proper rotation axes.
+        
         Returns:
-            Dictionary with lists of detected rotation axes by order
+            Dict with 'C2' and 'Cn' keys containing lists of axes
         """
-        print("\n ======== Searching for Rotation Axes ======== \n")
 
-        # find C2 axes
-        print("Searching for C2 Axes...")
-        c2_axes = self.find_c2_axes(tolerance=tolerance)
+        c2_axes = self.find_c2_axes(tolerance)
+        cn_axes = self.find_cn_axes(max_order, tolerance)
 
-        # Find higher order Cn axes 
-        cn_axes = self.find_cn_axes(max_order=max_order, tolerance=tolerance)
+        return {'C2': c2_axes, 'Cn': cn_axes}
 
-        all_axes = {
-            "C2": c2_axes,
-            "Cn": cn_axes
-        }
-        return all_axes
-    
-    # TODO Implement Improper Rotation Axes shit and complete this lines of pure evil 
+    def check_improper_rotation_axis(
+        self,
+        axis: np.ndarray,
+        order: int,
+        tolerance: float = 1e-5
+    ) -> bool:
+        """
+        Checks if an axis is an S_n improper rotation axis.
+        
+        Args:
+            axis: Direction vector
+            order: Rotation order
+            tolerance: Distance tolerance
+            
+        Returns:
+            True if axis is an S_n axis
+        """
+        self._initialize_coordinates()
+        n_atoms = len(self._atom_labels)
 
-    def determine_point_group(self,tolerance: float=1e-5) -> str:
-        """  
-        Determines the point group of the molecule based on the symmetry elements 
- 
+        transformed_coords = np.array([
+            self.improper_rotation(self._coords[i], axis, order, self._com)
+            for i in range(n_atoms)
+        ])
+
+        return self.check_structure_equivalence(
+            self._coords, transformed_coords,
+            self._atom_labels, self._atom_labels, tolerance
+        )
+
+    def find_improper_rotation_axes(
+        self,
+        max_order: int = 8,
+        tolerance: float = 1e-5
+    ) -> List[Dict[str, Any]]:
+        """
+        Finds all improper rotation axes (Sn).
+        
+        Returns:
+            List of Sn axes
+        """
+        
+        self._initialize_coordinates()
+        n_atoms = len(self._coords)
+        
+        sn_axes = []
+        tested_axes = []
+
+        # Test molecular axis for linear molecules
+        if self.linear:
+            try:
+                axis = self.get_molecular_axis(tolerance)
+                for order in range(2, max_order + 1):
+                    if self.check_improper_rotation_axis(axis, order, tolerance):
+                        sn_axes.append({
+                            'axis': axis,
+                            'order': order,
+                            'point': self._com,
+                            'type': f'S{order}',
+                            'defining_atoms': 'molecular_axis'
+                        })
+                return sn_axes
+            except ValueError:
+                pass
+
+        # Test plane normal for planar molecules
+        if self.planar:
+            try:
+                axis = self.get_plane_normal(tolerance)
+                for order in range(2, max_order + 1):
+                    if self.check_improper_rotation_axis(axis, order, tolerance):
+                        sn_axes.append({
+                            'axis': axis,
+                            'order': order,
+                            'point': self._com,
+                            'type': f'S{order}',
+                            'defining_atoms': 'plane_normal'
+                        })
+            except ValueError:
+                pass
+
+        # Test axes from atom pairs
+        for i, j in combinations(range(n_atoms), 2):
+            d = self._coords[i] + self._coords[j]
+            norm = np.linalg.norm(d)
+
+            if norm < tolerance:
+                continue
+
+            d /= norm
+
+            is_duplicate = any(
+                np.abs(np.dot(d, tested)) > (1 - tolerance)
+                for tested in tested_axes
+            )
+
+            if is_duplicate:
+                continue
+
+            tested_axes.append(d)
+
+            for order in range(max_order, 1, -1):
+                if self.check_improper_rotation_axis(d, order, tolerance):
+                    sn_axes.append({
+                        'axis': d,
+                        'order': order,
+                        'point': self._com,
+                        'type': f'S{order}',
+                        'defining_atoms': (i, j)
+                    })
+                    break
+
+        # Test axes from atom triplets
+        for i, j, k in combinations(range(n_atoms), 3):
+            v1 = self._coords[i] - self._coords[j]
+            v2 = self._coords[j] - self._coords[k]
+
+            cross_prod = np.cross(v1, v2)
+            norm = np.linalg.norm(cross_prod)
+
+            if norm < tolerance:
+                continue
+
+            d = cross_prod / norm
+
+            is_duplicate = any(
+                np.abs(np.dot(d, tested)) > (1 - tolerance)
+                for tested in tested_axes
+            )
+
+            if is_duplicate:
+                continue
+
+            tested_axes.append(d)
+
+            for order in range(max_order, 1, -1):
+                if self.check_improper_rotation_axis(d, order, tolerance):
+                    sn_axes.append({
+                        'axis': d,
+                        'order': order,
+                        'point': self._com,
+                        'type': f'S{order}',
+                        'defining_atoms': (i, j, k)
+                    })
+                    print(f"S{order} Axis: Atoms {i}-{j}-{k}")
+                    break
+
+        return sn_axes
+
+    # ==================== Point Group Determination ====================
+
+    def determine_point_group(self, tolerance: float = 1e-5) -> str:
+        """
+        Determines the molecular point group based on symmetry elements.
+        
         Classification scheme:
-        1. Linear molecules: C∞v or D∞h
-        2. Special groups: T, O, I (tetrahedral, octahedral, icosahedral)
-        3. High symmetry groups with principal axis
-        4. Low symmetry groups: Cs, Ci, C1        
+        1. Linear: C∞v or D∞h
+        2. Special high symmetry: Td, Oh, Ih
+        3. Dihedral groups: Dnh, Dnd, Dn
+        4. Cyclic groups: Cnh, Cnv, Cn
+        5. Low symmetry: Cs, Ci, C1
+        
+        Args:
+            tolerance: Numerical tolerance
+            
+        Returns:
+            Point group symbol (str)
         """
-        print("\n ============== Determining Point group ============== \n")
+
+        # Linear molecules
+        if self.linear:
+            if self.has_inversion:
+                self.point_group = "D∞h"
+            else:
+                self.point_group = "C∞v"
+            return self.point_group
+
+        # Gather symmetry elements
+        symmetry_planes = self.find_symmetry_planes(tolerance)
+        rotation_axes = self.find_all_rotation_axes(tolerance=tolerance)
+        improper_axes = self.find_improper_rotation_axes(tolerance=tolerance)
+
+        n_sigma = len(symmetry_planes)
+        n_c2 = len(rotation_axes.get('C2', []))
+        cn_axes = rotation_axes.get('Cn', [])
+
+        
+        # Find principal axis (highest order Cn)
+        principal_order = 0
+        if n_c2 > principal_order:
+            principal_order = 2
+        else:
+            for axis in cn_axes:
+                if axis['order'] > principal_order:
+                    principal_order = axis['order']
+
+        # Classification logic
+        if principal_order == 0 and n_c2 == 0:
+            # No rotation axes
+            if n_sigma == 0:
+                if self.has_inversion:
+                    self.point_group = "Ci"
+                else:
+                    self.point_group = "C1"
+            else:
+                self.point_group = "Cs"
+                
+        elif principal_order >= 5:
+            # High-order axes suggest special groups
+            self.point_group = "Ih"
+            
+        elif principal_order == 4:
+            if n_c2 >= 4:
+                self.point_group = "Oh"
+            else:
+                if n_c2 >= principal_order:
+                    self.point_group = f"D{principal_order}h"
+                else:
+                    self.point_group = f"C{principal_order}v"
+                    
+        elif principal_order == 3:
+            if n_c2 >= 3:
+                self.point_group = "Td"
+            else:
+                if n_c2 >= principal_order:
+                    self.point_group = f"D{principal_order}"
+                else:
+                    if n_sigma > 0:
+                        self.point_group = f"C{principal_order}v"
+                    else:
+                        self.point_group = f"C{principal_order}"
+                        
+        elif principal_order == 2:
+            if n_c2 >= 2:
+                if n_sigma > 0:
+                    self.point_group = "D2h"
+                else:
+                    self.point_group = "D2"
+            else:
+                if n_sigma > 0:
+                    self.point_group = "C2v"
+                else:
+                    self.point_group = "C2"
+        else:
+            # Fallback for other cases
+            if n_sigma > 0:
+                self.point_group = f"C{principal_order}v"
+            else:
+                self.point_group = f"C{principal_order}"
+
+        return self.point_group
+
+    # ==================== Complete Analysis ====================
+
+    def analyze_full_symmetry(
+        self,
+        tolerance: float = 1e-5,
+        max_order: int = 8
+    ) -> Dict[str, Any]:
+        """
+        Performs complete symmetry analysis of the molecule.
+        
+        Args:
+            tolerance: Numerical tolerance for symmetry detection
+            max_order: Maximum order for rotation axes
+            
+        Returns:
+            Dictionary containing all symmetry information
+        """
+        start_time = time.time()  
+
+        # Basic checks
+        self.check_linearity(tolerance)
+        self.check_planarity(tolerance)
+        self.check_inversion_center(tolerance)
+
+        # Find symmetry elements
+        symmetry_planes = self.find_symmetry_planes(tolerance)
+        rotation_axes = self.find_all_rotation_axes(max_order, tolerance)
+        improper_axes = self.find_improper_rotation_axes(max_order, tolerance)
+
+        total_symmetry_elements = (
+            len(symmetry_planes) +
+            len(rotation_axes.get('C2', [])) +
+            len(rotation_axes.get('Cn', [])) +
+            len(improper_axes)
+        )
+
+        # Determine point group
+        point_group = self.determine_point_group(tolerance)
+
+        # Compile results
+        symmetry_info = {
+            'point_group': point_group,
+            'total_symmetry_elements': total_symmetry_elements,
+            'is_linear': self.linear,
+            'is_planar': self.planar,
+            'has_inversion': self.has_inversion,
+            'symmetry_planes': symmetry_planes,
+            'rotation_axes': rotation_axes,
+            'improper_rotation_axes': improper_axes,
+            'n_sigma': len(symmetry_planes),
+            'n_C2': len(rotation_axes.get('C2', [])),
+            'n_Cn': len(rotation_axes.get('Cn', [])),
+            'n_Sn': len(improper_axes)
+        }
+        end_time = time.time()
+        
+        self.symmetry_info = symmetry_info
+        return symmetry_info
+    
+    # ======================= Testing Methods ==========================
+
+    def test_analysis_speed(self, tolerance: float = 1e-5, max_order: int = 8) -> None:
+        """
+        Tests and prints the time taken for full symmetry analysis.
+        
+        Args:
+            tolerance: Numerical tolerance
+            max_order: Maximum order for rotation axes
+        """
+        # Initialize Random Molecules with N_atoms = 3, 5, 10, 20, 30, 50, 100
+        atom_counts = list(range(1, 25))
+        times = []
+        for n_atoms in atom_counts:
+            # Generate random coordinates
+            coords = np.random.rand(n_atoms, 3) * 10.0  # Random positions in 10x10x10 cube
+            atom_labels = random.choices(['H', 'C', 'N', 'O', 'F'], k=n_atoms)
+
+            # Create Molecule object
+            test_molecule = Molecule.from_labels_and_coords(atom_labels, coords) 
+
+            # Create SymmetryAnalyzer
+            analyzer = SymmetryAnalyzer(molecule=test_molecule)
+
+            # Time the analysis
+            start_time = time.time()
+            analyzer.analyze_full_symmetry(tolerance=tolerance, max_order=max_order)
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            times.append(elapsed_time)
+        
+        # Apply a polyfit to the data to determine the O(n^k) scaling
+        log_atoms = np.log(atom_counts)
+        log_times = np.log(times)
+        coeffs = np.polyfit(log_atoms, log_times, 1)
+        scaling_exponent = coeffs[0]
+        print(f"Estimated time complexity: O(n^{scaling_exponent:.2f})")
+
+        # Plot the results
+        plt.figure(figsize=(8, 6))  
+        plt.plot(atom_counts, times, marker='o')
+        plt.xlabel('Number of Atoms')
+        plt.ylabel('Analysis Time (s)')
+        plt.title('Symmetry Analysis Time vs Number of Atoms, Estimated O(n^{:.2f})'.format(scaling_exponent))
+        plt.grid(True) 
+        plt.savefig("figures/symmetry_analysis_time.png")
+        plt.close()

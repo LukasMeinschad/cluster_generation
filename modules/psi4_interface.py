@@ -287,6 +287,43 @@ class Psi4Worker:
             finally:
                 psi4.core.clean() # Clean up psi4 core after worker
 
+
+    @staticmethod
+    def hessian_worker(args: Tuple):
+        """ 
+        Worker functio nfor the Hessian calculation
+
+        Args:
+            args: Tuple containing (Molecule, config_dict)
+        """
+        molecule, config_dict = args 
+        config = Psi4Config(**config_dict)
+
+        with ScratchManager.temporary_scratch():
+            import psi4 
+            psi4.core.set_output_file(os.devnull)
+
+            start_time = time.time()
+
+            try:
+                geom_str = GeometryBuilder.build_psi4_geometry(molecule)
+                mol = psi4.geometry(geom_str)
+
+                # Calculate Hessian
+                method_str = f"{config.method}/{config.basis_set}"
+                hessian = psi4.hessian(method_str, molecule=mol)
+
+                # convert to numpy array
+                hessian_array = np.array(hessian)
+
+                wall_time = time.time() - start_time
+                return (molecule, hessian_array, True, None)
+            except Exception as e:
+                wall_time = time.time() - start_time
+                return (molecule, None, False, str(e))
+            finally:
+                psi4.core.clean() # Clean up psi4 core after worker 
+
             
 
 
@@ -530,6 +567,30 @@ class Psi4Calculator:
         gradient = self.compute_gradient(molecule)
         if gradient is not None:
             return -gradient
+        else:
+            return None
+
+    def compute_hessian(self, molecule: Molecule) -> Optional[np.ndarray]:
+        """  
+        Computes the Hessian matrix of second derivatives for a molecule
+
+
+        Returns the total non-mass-weighted electronic Hessian Matrix in Hartrees/Bohr^2
+        """
+        config_dict = {
+            "method": self.config.method,
+            "basis_set": self.config.basis_set,
+            "memory": self.config.memory,
+            "num_threads": self.config.num_threads,
+        }
+        molecule_copy, hessian, sucess, error = Psi4Worker.hessian_worker((molecule, config_dict))
+        if self.verbose:
+            if sucess:
+                print(f"Hessian calculation for {molecule.name} succeeded.")
+            else:
+                print(f"Hessian calculation for {molecule.name} failed: {error}")
+        if sucess:
+            return hessian
         else:
             return None
     

@@ -19,6 +19,7 @@ from psi4_interface import Psi4Calculator, Psi4Config
 from cluster import MolecularCluster
 from symmetry import SymmetryAnalyzer
 from graph import MolecularGraph
+from coord_projector import CoordinateProjector
 
 
 
@@ -74,10 +75,21 @@ if __name__ == "__main__":
     molecule.compute_bonds()
     Transformation = Transformation()
 
-    print(calc.compute_force(molecule=molecule))
+    gradient_cart = calc.compute_gradient(molecule=molecule)
+    hessian_cart = calc.compute_hessian(molecule=molecule)
+    
 
-
-
+    projector = CoordinateProjector(tolerance=1e-10)
+    coord_space = projector.setup_coordinate_space(coords=molecule.coordinates,
+                                                   masses=molecule.masses,
+                                                   linear=False)
+    hessian_int = projector.project_hessian(hessian=hessian_cart,
+                                            coord_space=coord_space,
+                                            full_space=False)
+    print("Hessian in internal coordinates:")
+    print(hessian_int)
+    print("Shape:", hessian_int.shape)
+   
 
 
 

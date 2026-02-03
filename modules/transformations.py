@@ -628,6 +628,180 @@ class Transformation:
             print(f"Z: {ref_frame.z_axis}")
 
         return ref_frame
+
+
+
+    # ======================== Functions for Stochastic Surface Walking ========================
+
+    @staticmethod
+    def mb_vector(mass: float, temperature: float = 300):
+        """   
+        Generates a normalized random vector following the Maxwell-Boltzmann velocity distribution
+
+        Args:
+            mass: Atomic mass in atomic mass units (amu)
+            temperature: Temperature in Kelvin
+
+        Returns:
+            np.ndarray
+        """
+        # Boltzmann Konstant eV/K
+        k_B = 8.617333262e-5 
+        sigma = np.sqrt(k_B * temperature / mass)
+        vector = np.random.normal(0,sigma,size=3) # 3 normally distributed components
+
+        # Normalize
+        norm = np.linalg.norm(vector)
+        if norm < 1e-8:
+            # Random unit vector if near zero
+            vector = np.random.rand(3)
+            norm = np.linalg.norm(vector)
+
+        return vector / norm 
+    
+    def find_non_neighboring_atoms(
+            self,
+            molecule: Union["Molecule", "Submolecule"],
+            distance_threshold: float = 3.0
+    ) -> List[Tuple[int,int]]:
+        """    
+        Finds all pairs of atoms that are not in close contact (distance > threshold)
+
+        Args:
+            molecule: Molecule or Submolecule object
+            distance_threshold: Minimum distance in Angstrom for atoms to be non-neighbouring
+        """
+        n_atoms = molecule.get_number_of_atoms()
+        non_neighboring_pairs = []
+
+        for i in range(n_atoms):
+            for j in range(i+1, n_atoms):
+                distance = np.linalg.norm(
+                    molecule.coordinates[i] - molecule.coordinates[j]
+                )
+                if distance > distance_threshold:
+                    non_neighboring_pairs.append((i,j))
+        
+        return non_neighboring_pairs
+    
+    def select_random_non_neighboring_pair(
+            self,
+            molecule: Union["Molecule", "Submolecule"],
+            distance_threshold: float = 3.0
+    ):
+        """   
+        Randomnly selects a pair of non_neighboruing atoms
+
+        Returns:
+            Tuple of (atom_A_idx,atom_B_idx) or None if no pairs exists
+        """
+        non_neighboring_pairs = self.find_non_neighboring_atoms(
+            molecule,
+            distance_threshold
+        )
+        if not non_neighboring_pairs:
+            return None 
+        
+        r_int = np.random.randint(len(non_neighboring_pairs))
+        return non_neighboring_pairs[r_int]
+
+    def compute_bond_formation_vector(
+            self,
+            molecule: Union["Molecule", "Submolecule"],
+            atom_A_idx: int,
+            atom_B_idx: int,
+            normalize: bool = True
+    ) -> np.ndarray:
+        """   
+        Computes the bond formation mode N_i^l between two atoms
+
+        N_i^l = (q_B - q_A) / |q_b - q_A|
+        """
+        q_A = molecule.coordinates[atom_A_idx]
+        q_B = molecule.coordinates[atom_B_idx]
+
+        v = q_B - q_A 
+
+        if normalize:
+            norm = np.linalg.norm(v)
+            if norm < 1e-8:
+                raise ValueError(f"Atoms {atom_A_idx} and {atom_B_idx} are in the same position")
+            return v / norm 
+        
+        return v
+
+    def generate_ssw_direction(
+            self,
+            molecule: Union["Molecule", "Submolecule"],
+            lambda_mix: Optional[float] = None,
+            temperature: float = 300.0,
+            use_total_mass: bool = True,
+            distance_threshold: float = 3.0
+    ) -> np.ndarray:
+        """   
+        Generates the initial random direction N_i^0 for SSW Climing
+
+        N_i^0 = (N_i^g + λ*N_i^l) / |N_i^g + λ*N_i^l|
+
+        + N_i^g: Random vector from MW-Distribution at Temp T
+        - N_i^l: Soft Local mode, currently --> Bond formation of non-neighboring atoms
+        - lambda = Random Mixing Parameter
+        """
+        # Generate random lambda if not provides
+        if lambda_mix is None:
+            lambda_mix = np.random.uniform(0.1,1.5)
+
+        # Get total mass
+        if use_total_mass:
+            effective_mass = molecule.get_total_mass()
+        else:
+            effective_mass = np.mean(molecule.masses)
+
+        # Generate N_i^g 
+        N_g = self.mb_vector(effective_mass, temperature)
+
+        # Generate Random-Pair
+        atom_pair = self.select_random_non_neighboring_pair(molecule,distance_threshold)
+        atom_A_idx, atom_B_idx = atom_pair 
+        N_l = self.compute_bond_formation_vector(
+            molecule,
+            atom_A_idx,
+            atom_B_idx,
+            normalize=True
+        )
+        N_0 = N_g + lambda_mix * N_l 
+        norm_0 = np.linalg.norm(N_0)
+
+        return N_0 / norm_0
+    
+
+    # ================== Dimer Method ================
+
+    def setup_dimer_images(
+            self,
+            R0: np.ndarray,
+            N: np.ndarray,
+            delta_R: float = 0.005
+    ) -> Tuple [np.ndarray, np.ndarray]:
+        """   
+        Sets up the two dimer images R1 and R2 seperated by 2* delta R
+        uses the local mode N created beforehand
+
+        R1 = R0 + N * ∆R
+        R2 = R= - N * ∆R
+        """
+        N_norm = GeometryOps.normalize_vector(N) # Ensure normalization
+
+        R1 = R0 + N_norm * delta_R
+        R2 = R0 - N_norm * delta_R 
+
+        return R1,R2 
+
+    
+        
+
+
+
     
     # ======================= Alignment Functions =========================
 

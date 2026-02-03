@@ -11,6 +11,148 @@ import time
 
 from symmetry import SymmetryAnalyzer
 
+class USRDescriptor:
+    """  
+    Class to compute the Ultra-fast Shape Recognition (USR) descriptor for a molecule
+
+    Paper : https://doi.org/10.1098/rspa.2007.1823
+    """
+    def __init__(self):
+        pass 
+
+    def calculate_centroid(self,molecule) -> np.ndarray:
+        """  
+        Calculates the geometric center of the molecule
+
+        Args:
+            molecule: Molecule object with coordinates attribute
+
+        Returns:
+            np.ndarray: Centroid coordinates
+        """
+        return np.mean(molecule.coordinates, axis=0)
+    
+    def euclidean_distance(self, coord1: np.ndarray, coord2: np.ndarray) -> float:
+        """   
+        Computes the Euclidean Distance between two 3D coords
+
+        Args:
+            coord1 (np.ndarray): First coordinate
+            coord2 (np.ndarray): Second coordinate
+
+        Returns:
+            float: Euclidean distance
+        """
+        return np.sqrt(np.sum((coord1 - coord2) ** 2))
+    
+    def find_closest_and_furthest_to_centroid(self, molecule) -> Tuple[int, int]:
+        """  
+        Finds the atoms closest and furthest from the centroid.
+
+        Args:
+            molecule: Molecule object with coordinates attribute
+        Returns:
+            Tuple[int, int]: Indices of closest and furthest atoms
+        """
+        centroid = self.calculate_centroid(molecule)
+        distances = []
+        for i, coord in enumerate(molecule.coordinates):
+            dist = self.euclidean_distance(coord, centroid)
+            distances.append((i, dist))
+        distances.sort(key=lambda x: x[1])
+
+        # Find closest and furthest
+        closest_index = distances[0][0]
+        furthest_index = distances[-1][0]
+        return closest_index, furthest_index
+    
+    def find_furthest_from_atom(self, molecule, atom_idx: int) -> int:
+        """
+        Find the atom furthest from a specified atom
+
+        Args:
+            molecule: Molecule object with coordinates attribute
+            atom_idx (int): Index of the reference atom
+        
+        Returns:
+            int: Index of the furthest atom
+        """
+        ref_coords = molecule.coordinates[atom_idx]
+        max_distance = 0
+        furthest_index = -1
+        for i, coord in enumerate(molecule.coordinates):
+            dist = self.euclidean_distance(coord, ref_coords)
+            if dist > max_distance:
+                max_distance = dist
+                furthest_index = i
+        return furthest_index
+    
+    def calculate_moments_to_point(self, molecule, reference_point: np.ndarray) -> Tuple[float, float, float]:
+        """   
+        Calculates the first three moments (mean, variance and skewness) of distances to a reference point
+
+        Args:
+            molecule: Molecule object with coordinates attribute
+            reference_point (np.ndarray): Reference point coordinates
+
+        Returns:
+            Tuple[float, float, float]: First three moments 
+        """
+        distances = []
+        for coord in molecule.coordinates:
+            dist = self.euclidean_distance(coord, reference_point)
+            distances.append(dist) 
+
+        distances = np.array(distances) # Convert to np array 
+        n_atoms = len(distances)
+
+        # First Moment (Mean)
+        mean = np.mean(distances)
+
+
+        # Second Moment (Variance)
+        variance = np.sum((distances - mean) ** 2) / n_atoms 
+
+        # Third Moment (Skewness)
+        if variance > 0:
+            numerator = np.sum((distances - mean) ** 3)
+            denominator = n_atoms * (variance ** 1.5) # Take 1.5 power because variance is squared
+            skewness = numerator / denominator
+        else:
+            skewness = 0.0
+
+        return mean, variance, skewness
+
+    def compute_usr_descriptor(self, molecule) -> np.ndarray:
+        """   
+        Computes the 12-dimensional USR descriptor for the molecule
+
+        This descriptor contains:
+        - 3 Moments from centroid 
+        - 3 Moments from closest atom to centroid
+        - 3 Moments from furthest atom to centroid
+        - 3 Moments from furthest atom from the furthest atom to centroid
+        """ 
+        # Calculate the reference points 
+        centroid = self.calculate_centroid(molecule)
+        closest_idx, furthest_idx = self.find_closest_and_furthest_to_centroid(molecule)
+        furthest_from_furthest_idx = self.find_furthest_from_atom(molecule, furthest_idx)
+
+        # Calculate the moments from each reference point 
+        moments_centroid = self.calculate_moments_to_point(molecule, centroid)
+        moments_closest = self.calculate_moments_to_point(molecule, molecule.coordinates[closest_idx])
+        moments_furthest = self.calculate_moments_to_point(molecule, molecule.coordinates[furthest_idx])
+        moments_furthest_from_furthest = self.calculate_moments_to_point(molecule, molecule.coordinates[furthest_from_furthest_idx])
+
+        # Combine all moments into a single descriptor
+        usr_descriptor = np.array([
+            *moments_centroid,
+            *moments_closest,
+            *moments_furthest,
+            *moments_furthest_from_furthest
+        ])  
+
+        return usr_descriptor
 
 
 class MolecularCluster:
@@ -322,8 +464,77 @@ class MolecularCluster:
             diff = coords - com
             rg = np.sqrt(np.sum(masses * np.sum(diff**2, axis=1)) / np.sum(masses))
             rg_values.append(rg)
-        return np.array(rg_values)
+        return np.array(rg_values) 
     
+    # =================== USR Descriptor Calculation ======================
+    def compute_usr_descriptors(self, use_multiprocessing: bool = True, n_processes: Optional[int] = None) -> np.ndarray:
+        """   
+        Computes USR descriptors for all sampled molecules 
+
+        Args:
+            use_multiprocessing (bool): Whether to use multiprocessing
+            n_processes (Optional[int]): Number of processes to use for multiprocessing
+
+        Returns:
+            np.ndarray: USR descriptor matrix
+        """
+        start_time = time.time()
+
+        if use_multiprocessing and len(self.sampled_molecules) > 1: 
+            if n_processes is None: 
+                n_processes = max(1, cpu_count() -1) 
+            
+            with Pool(processes = n_processes) as pool:
+                usr_descriptors = pool.map(self._compute_single_usr, self.sampled_molecules)
+        else:
+            # Sequential processing
+            usr_descriptors = [self._compute_single_usr(mol) for mol in self.sampled_molecules]
+
+        end_time = time.time()
+        print(f"USR descriptor computation completed in {end_time - start_time:.2f} seconds.")
+        return np.array(usr_descriptors)
+    
+    @staticmethod 
+    def _compute_single_usr(molecule) -> np.ndarray:
+        """    
+        Static method to compute the USR descriptor for a single molecule 
+        Required form multiprocessing        
+        
+        Args:
+            molecule: Molecule object
+        Returns:
+            np.ndarray: USR descriptor
+        """
+        usr_calc = USRDescriptor()
+        return usr_calc.compute_usr_descriptor(molecule)
+    
+    def compute_usr_similarity_matrix(self, usr_descriptors: np.ndarray = None) -> np.ndarray:
+        """   
+        Computes a pairwise similarity matrix based on the USR descritpros
+        Uses the Manhatten Distance as in the original USR paper 
+
+        Args:
+            usr_descriptors (np.ndarray): Precomputed USR descriptors. If None, computes them. 
+        Returns:
+            np.ndarray: Pairwise similarity matrix
+        """
+        if usr_descriptors is None:
+            usr_descriptors = self.compute_usr_descriptors()
+
+        n_molecules = len(usr_descriptors)
+        similarity_matrix = np.zeros((n_molecules, n_molecules))
+
+        for i in range(n_molecules):
+            for j in range(i + 1, n_molecules):
+                # Use Manhattan Distance
+                distance = np.sum(np.abs(usr_descriptors[i] - usr_descriptors[j]))
+                similarity_matrix[i, j] = distance
+                similarity_matrix[j, i] = distance  # Symmetric matrix
+        return similarity_matrix
+    
+    
+
+
     # ==================== Clustering Methods ======================
 
 
@@ -405,4 +616,22 @@ class MolecularCluster:
         plt.ylabel('Frequency')
         plt.grid(True)
         plt.savefig("figures/symmetry_elements_distribution.png")
+        plt.close()
+
+    def plot_usr_similarity_heatmap(self, usr_descriptors: np.ndarray = None):
+        """   
+        Plots a heatmap of the USR similarity matrix
+
+        Args:
+            usr_descriptors (np.ndarray): Precomputed USR descriptors. If None, computes them. 
+        """
+        similarity_matrix = self.compute_usr_similarity_matrix(usr_descriptors=usr_descriptors)
+
+        plt.figure(figsize=(10, 8))
+        plt.imshow(similarity_matrix, cmap='hot', interpolation='nearest')
+        plt.colorbar(label='USR Similarity (Manhattan Distance)')
+        plt.title('USR Similarity Heatmap')
+        plt.xlabel('Molecule Index')
+        plt.ylabel('Molecule Index')
+        plt.savefig("figures/usr_similarity_heatmap.png")
         plt.close()

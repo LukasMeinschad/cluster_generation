@@ -557,6 +557,12 @@ class Molecule:
             self.add_atoms_batch(atom_data['labels'], atom_data['coordinates'])
         
         return self
+
+    def get_total_mass(self):
+        """   
+        Returns the total mass of the molecule
+        """
+        return np.sum(self.masses)
     
     def compute_volume_mc(self, n_points = 800000) -> float:
         """  
@@ -594,6 +600,9 @@ class Molecule:
     def get_atom_labels(self) -> List[str]:
         """Get list of atom labels"""
         return self.atom_labels.tolist() 
+    
+    def get_number_of_atoms(self) -> int:
+        return len(self.coordinates)
 
 
 

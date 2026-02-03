@@ -251,6 +251,45 @@ class Psi4Worker:
             finally:
                 psi4.core.clean() # Clean up psi4 core after worker
 
+    @staticmethod 
+    def gradient_worker(args: Tuple):
+        """   
+        Worker function for gradient calculations
+
+        Args:
+            args: Tuple containing (Molecule, config_dict)
+        """
+        molecule, config_dict = args
+        config = Psi4Config(**config_dict)
+        with ScratchManager.temporary_scratch():
+            import psi4 
+            psi4.core.set_output_file(os.devnull) 
+
+            start_time = time.time()
+            try:
+                # Build geometry
+                geom_str = GeometryBuilder.build_psi4_geometry(molecule)
+                mol = psi4.geometry(geom_str)
+
+                # Calculate gradient
+                method_str = f"{config.method}/{config.basis_set}"
+                gradient = psi4.gradient(method_str, molecule=mol)
+
+                wall_time = time.time() - start_time
+
+                #TODO clean this up
+                return (molecule, np.array(gradient), True, None)
+            except Exception as e:
+                wall_time = time.time() - start_time 
+                # TODO clean this up
+                return (molecule, None, False, str(e))
+            
+            finally:
+                psi4.core.clean() # Clean up psi4 core after worker
+
+            
+
+
     @staticmethod
     def geometry_optimization_worker(args: Tuple) -> CalculationResult:
         """   
@@ -314,45 +353,59 @@ class Psi4Worker:
     def optimization_and_frequency_worker(args: Tuple) -> CalculationResult:
         """  
         Worker Function for combined optimization and frequency calculation
-
+        Includes a verification if a true minimum is found by checking for imaginary frequencies
         
-        1. Perform geometry optimization using psi4.geometry()
-        2. Perform frequency calculatio with psi4.frequency() 
+        1. Perform geometry optimization using psi4.optimize()
+        2. Perform frequency calculation using psi4.frequency()
+        3. Check if the structure is a true minimum (no imaginary frequencies)
         """ 
-        molecule, config_dict = args 
+        molecule, config_dict = args
         config = Psi4Config(**config_dict)
+
         with ScratchManager.temporary_scratch():
             import psi4 
-            psi4.core.set_output_file(os.devnull) # Supress output file
+            psi4.core.set_output_file(os.devnull) # Supress output file 
 
             start_time = time.time() 
-            
+
             try:
-                # Build geometry 
+                # Build the geometry
                 geom_str = GeometryBuilder.build_psi4_geometry(molecule)
                 mol = psi4.geometry(geom_str)
 
-                # Optimize
+                # Store original coordinates for RMSD calculation
+                original_coords = molecule.coordinates.copy()  
+
+                # Optimize 
                 method_str = f"{config.method}/{config.basis_set}"
                 energy = psi4.optimize(method_str, molecule=mol)
 
-                # Frequency Calculation we need to return the wfn to get the frequencies
-                scf_e, scf_wfn = psi4.frequency(method_str, molecule=mol, return_wfn=True)
-
-
-                # Update molecule coordinates 
-                optimized_coords = mol.save_string_xyz()
+                # Update molecule coordinates
+                optimizes_coords = mol.save_string_xyz()
                 optimized_mol = Molecule.from_xyz(
-                    optimized_coords, 
+                    optimizes_coords,
                     name = f"{molecule.name}_opt_freq"
                 )
                 molecule.coordinates = optimized_mol.coordinates
+
+                # Frequency calculation
+                scf_e, scf_wfn = psi4.frequency(method_str, molecule=mol, return_wfn=True)
+
+                # Extract frequencies
+                frequencies = scf_wfn.frequencies().to_array()
+
+                # Check for imaginary frequencies 
+                imaginary_freqs = [freq for freq in frequencies if freq < 0.0]
+                is_minimum = len(imaginary_freqs) == 0
+                num_imaginary = len(imaginary_freqs)
+                lowest_freq = min(imaginary_freqs) if imaginary_freqs else None
+
                 wall_time = time.time() - start_time
 
-                return CalculationResult(
-                    molecule =molecule,
+                result = CalculationResult(
+                    molecule = molecule,
                     calculation_type = CalculationType.OPT_FREQ,
-                    sucess = True,
+                    sucess = is_minimum,
                     energy = energy,
                     frequencies = scf_wfn.frequencies().to_array(),
                     hessian = scf_wfn.hessian().to_array(),
@@ -360,10 +413,13 @@ class Psi4Worker:
                     basis_set = config.basis_set,
                     wall_time = wall_time
                 )
+
+                # TODO add minimum verification details to result
+                return result
             except Exception as e:
                 wall_time = time.time() - start_time
                 return CalculationResult(
-                    molecule =molecule,
+                    molecule = molecule,
                     calculation_type = CalculationType.OPT_FREQ,
                     sucess = False,
                     error = str(e),
@@ -374,7 +430,6 @@ class Psi4Worker:
             finally:
                 psi4.core.clean() # Clean up psi4 core after worker
 
-            
 
 
         
@@ -444,7 +499,39 @@ class Psi4Calculator:
         if self.verbose:
             self._print_result(result)
 
-        return result.energy if result.sucess else None
+        return result.energy if result.sucess else None 
+    
+    def compute_gradient(self,molecule: Molecule) -> Optional[np.ndarray]:
+        """   
+        Computes the energy gradient for a molecule
+        """
+        config_dict = { 
+            "method": self.config.method,
+            "basis_set": self.config.basis_set,
+            "memory": self.config.memory,
+            "num_threads": self.config.num_threads,
+        }
+        molecule_copy, gradient, sucess, error = Psi4Worker.gradient_worker((molecule, config_dict))
+        if self.verbose:
+            if sucess:
+                print(f"Gradient calculation for {molecule.name} succeeded.")
+            else:
+                print(f"Gradient calculation for {molecule.name} failed: {error}")
+        if sucess:
+            return gradient
+        else:
+            return None
+
+    def compute_force(self,molecule) -> Optional[np.ndarray]:
+        """   
+        Computes the force of a molecule
+        Force = - Gradient
+        """
+        gradient = self.compute_gradient(molecule)
+        if gradient is not None:
+            return -gradient
+        else:
+            return None
     
     def geometry_optimization(self, molecule: Molecule) -> Optional[float]:
         """   
@@ -467,25 +554,35 @@ class Psi4Calculator:
 
         return result.energy if result.sucess else None
     
-    def optimization_and_frequency(self, molecule: Molecule) -> Optional[float]:
+    def optimization_and_frequency_calculation(self,
+                                    molecule: Molecule,
+                                    freq_threshold: float = -5):
         """   
-        Perform geometry optimization followed by frequency calculation
-        Args:
-            molecule: Molecule object to optimize and calculate frequencies for
-        Returns:
-            Optimized energy in Hartree or None if failed
-        """
-        result = self._run_calculation(
-            molecule = molecule,
-            worker_func = Psi4Worker.optimization_and_frequency_worker 
-        )
+        Performs geometry optimization followed by a frequency calculation with verification of a true minimum 
 
+        Args:
+            molecule: Molecule object to optimize and analyze
+            freq_threshold: Frequency threshold to consider imaginary frequencies
+        Returns:
+            Dictionary with Results 
+        """
+        config_dict = {
+            "method": self.config.method,
+            "basis_set": self.config.basis_set,
+            "memory": self.config.memory,
+            "num_threads": self.config.num_threads,
+        }
+        result = Psi4Worker.optimization_and_frequency_worker((molecule, config_dict))
         if self.save_results:
             self.results_manager.add_result(result)
         if self.verbose:
             self._print_result(result)
-
-        return result.energy if result.sucess else None
+        return {
+            "sucess": result.sucess,
+            "energy": result.energy,
+            "frequencies": result.frequencies,
+            "hessian": result.hessian}
+    
 
     
     # =========================== Batch Calculation Methods ==========================

@@ -689,19 +689,65 @@ class ConfigSampler:
             end_distance: float,
             step_size: float,
             name_prefix: str = "bond_coord",
-            plot_pes: bool = False
         ) -> List[Molecule]:
         """   
         Samples a submolecule along a bond coordinate and determines the Potential Energy Surface (PES)
         """
+        start_time = time.time()
+
         parent = submolecule.parent
         submol_indices = submolecule.get_index_in_parent()
         template = self._create_template_molecule(parent)
-        bond_vector = bond_vector / np.linalg.norm(bond_vector)
+
+        # Normalize the bond vector 
+        bond_vector = np.asarray(bond_vector, dtype=float)
+        bond_vector /= np.linalg.norm(bond_vector)
+
+        # Generate distance points
         distances = np.arange(start_distance, end_distance + step_size, step_size)
-        sampled_mols = []
+        num_points = len(distances)
+
+        # Store Sampling Region info
+        submol_center = np.mean(submolecule.coordinates, axis=0)
+        self.sampling_region = SamplingRegion(
+           shape = "line",
+           center = submol_center,
+           parameters={
+               "bond_vector": bond_vector,
+               "start_distance": start_distance,
+               "end_distance": end_distance,
+               "step_size": step_size,
+               "num_points": num_points
+           }
+        )
+
+        # Pre-allocate molecule list 
+        sampled_mols = [None] * num_points 
+
+        # Get original submolecule center
+        original_submol_center = np.mean(submolecule.coordinates, axis=0)     
+
+        # Pre compute submolecule coordinates relative to center
+        submol_coords_centered = submolecule.coordinates - original_submol_center 
         
-    
+        for i, dist in enumerate(distances):
+            new_mol = Molecule(name=f"{name_prefix}_d{dist:.3f}_sample_{i}")
+            new_mol.atom_labels = template.atom_labels.copy()
+            new_mol.masses = template.masses.copy()
+
+            # Calculate new position along bond vector 
+            displacement = dist * bond_vector
+            new_submol_center = original_submol_center + displacement
+
+            # Build new coordinates
+            new_coords = parent.coordinates.copy()
+            new_coords[submol_indices] = submol_coords_centered + new_submol_center
+            new_mol.coordinates = new_coords
+            sampled_mols[i] = new_mol
+        end_time = time.time()
+        self.sampling_statistics["sampling_time"] = end_time - start_time
+
+        return sampled_mols    
     
     def sample_submol_rectangle(
         self,

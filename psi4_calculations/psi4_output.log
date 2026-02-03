@@ -1,17 +1,13 @@
-
-    -----------------------------------------------------------------------
-          Psi4: An Open-Source Ab Initio Electronic Structure Package
-                               Psi4 1.9.1 release
-
-                         Git: Rev {} zzzzzzz 
-
-
-    D. G. A. Smith, L. A. Burns, A. C. Simmonett, R. M. Parrish,
-    M. C. Schieber, R. Galvelis, P. Kraus, H. Kruse, R. Di Remigio,
-    A. Alenaizan, A. M. James, S. Lehtola, J. P. Misiewicz, M. Scheurer,
-    R. A. Shaw, J. B. Schriber, Y. Xie, Z. L. Glick, D. A. Sirianni,
-    J. S. O'Brien, J. M. Waldrop, A. Kumar, E. G. Hohenstein,
-    B. P. Pritchard, B. R. Brooks, H. F. Schaefer III, A. Yu. Sokolov,
+2026-02-03:19:06:15,506 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'function_kwargs': {}}
+2026-02-03:19:06:15,508 INFO     [psi4.driver.driver:636] Compute gradient(): method=hf, basis=cc-pvdz, molecule=default, nre=36.55723494966064
+2026-02-03:19:06:16,45 INFO     [psi4.driver.driver:639] Return gradient(): -152.06305737362084
+2026-02-03:19:06:16,46 INFO     [psi4.driver.driver:640] [[ 0.00285194  0.00183048  0.00749396]
+ [-0.00423907 -0.00122648 -0.00188327]
+ [ 0.00151242 -0.00064311 -0.00539554]
+ [ 0.00616036  0.00095007 -0.00679484]
+ [-0.00215939 -0.0039987   0.00386845]
+ [-0.00412626  0.00308774  0.00271123]]
+kolov,
     K. Patkowski, A. E. DePrince III, U. Bozkaya, R. A. King,
     F. A. Evangelista, J. M. Turney, T. D. Crawford, C. D. Sherrill,
     J. Chem. Phys. 152(18) 184108 (2020). https://doi.org/10.1063/5.0006002
@@ -31,9 +27,9 @@
     -----------------------------------------------------------------------
 
 
-    Psi4 started on: Wednesday, 17 December 2025 04:10PM
+    Psi4 started on: Tuesday, 03 February 2026 07:06PM
 
-    Process ID: 271782
+    Process ID: 708293
     Host:       sv1-c724
     PSIDATADIR: /home/lme/.conda/envs/p4env/share/psi4
     Memory:     1.9 GiB

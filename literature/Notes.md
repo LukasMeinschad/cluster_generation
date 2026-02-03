@@ -74,4 +74,12 @@ $$(0 + u_x i + u_y j + u_z k) (0 - u_x i - u_y j - u_z k) = 1$$
 
 we can derive using the Taylor series of the exponential function that:
 
-$$q = cos(\frac{\theta}{2}) + usin(\frac{\theta}{2})
+$$q = cos(\frac{\theta}{2}) + u sin(\frac{\theta}{2})$$
+
+It can be shown that the desired rotation can be applied to an ordinary vector $p = (p_x,p_y,p_z$ by representing the vector part of the pure quaternion $p'$ by evaluating conjugation by $p'$ and $q$:
+
+$$L(p') = q p' q^{-1} = (0,r)$$
+
+where $r = (\cos \frac{\theta}{2} - \sin^2 \frac{\theta}{2} ||u||^2) p + 2 \sin^2 \frac{\theta}{2} (u \cdot p) u + 2 \cos \frac{\theta}{2} \sin \frac{\theta}{2} (u \times p)$
+
+Here $L$ is a linear transformation of the quaternion space to itself and since $q$ is unitary the transformation is an isometry. Also $L(q) = q$ and so $L$ leaves vectors parallel to $q$ invariant.

@@ -1,26 +1,22 @@
 import numpy as np 
-from typing import List, Optional, Tuple, Union, Protocol 
+from typing import List, Optional, Tuple, Union, Protocol, Dict 
 import matplotlib.pyplot as plt 
 from dataclasses import dataclass
 import time
+import random
 
 from plotting import Plotting
 from molecule_class import Molecule 
-from transformations import Transformation, ReferenceFrame
+from symmetry import SymmetryAnalyzer   
+from transformations import Transformation, ReferenceFrame, Quaternion, GeometryOps
 from scipy.spatial.distance import cdist
 
-@dataclass
-class SamplingRegion:
-    """   
-    Dataclass to further describe the sampling region
-    """
-    shape: str # e.g., "sphere", "cone", "rectangle"
-    center: np.ndarray
-    parameters: dict
 
-    def __str__(self) -> str: 
-        return f"{self.shape.capitalize()} region centered at {self.center} with parameters {self.parameters}"
+
+
     
+
+
 class GeometricSampler: 
     """  
     Class that is used for geometric Sampling operations

@@ -438,6 +438,29 @@ class Logger:
             "\n".join(lines)
         )
 
+    # ==================== BHMC Logging ==========================
+
+    def write_trajectory(self, bhmc_trajectory, filename: str = "bhmc_trajectory.xyz") -> None:
+        """   
+        Function to return a xyz file containing the trajectory of the BHMC sampling process. 
+        """
+        filepath = Path(filename)
+        
+        try:
+            with open(filepath, "w", encoding='utf-8') as trj_file:
+                for i, mol in enumerate(bhmc_trajectory, 1):
+                    trj_file.write(f"{len(mol.atom_labels)}\n")
+                    trj_file.write(f"BHMC Sample {i}\n")
+                    
+                    for label, coord in zip(mol.atom_labels, mol.coordinates):
+                        element = Formatter.remove_digits(label)
+                        trj_file.write(
+                            f"{element:2s} {coord[0]:12.6f} {coord[1]:12.6f} {coord[2]:12.6f}\n"
+                        )
+        except IOError as e:
+            raise IOError(f"Failed to write trajectory to {filepath}: {e}") from e
+
+
     # ==================== Clustering Results ====================
     def write_cluster_statistics(
             self,

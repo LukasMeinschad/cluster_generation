@@ -831,167 +831,26 @@ class SymmetryAnalyzer:
 
     # ==================== Point Group Determination ====================
 
-    def determine_point_group(self, tolerance: float = 1e-5) -> str:
+    def get_symmetry_elements(self, tolerance: float = 1e-5, max_order: int = 8) -> Dict[str, Any]:
+        """   
+        Function that determines all the possible symmetry elements of the molecule.
         """
-        Determines the molecular point group based on symmetry elements.
-        
-        Classification scheme:
-        1. Linear: C∞v or D∞h
-        2. Special high symmetry: Td, Oh, Ih
-        3. Dihedral groups: Dnh, Dnd, Dn
-        4. Cyclic groups: Cnh, Cnv, Cn
-        5. Low symmetry: Cs, Ci, C1
-        
-        Args:
-            tolerance: Numerical tolerance
-            
-        Returns:
-            Point group symbol (str)
-        """
-
-        # Linear molecules
-        if self.linear:
-            if self.has_inversion:
-                self.point_group = "D∞h"
-            else:
-                self.point_group = "C∞v"
-            return self.point_group
-
-        # Gather symmetry elements
-        symmetry_planes = self.find_symmetry_planes(tolerance)
-        rotation_axes = self.find_all_rotation_axes(tolerance=tolerance)
-        improper_axes = self.find_improper_rotation_axes(tolerance=tolerance)
-
-        n_sigma = len(symmetry_planes)
-        n_c2 = len(rotation_axes.get('C2', []))
-        cn_axes = rotation_axes.get('Cn', [])
-
-        
-        # Find principal axis (highest order Cn)
-        principal_order = 0
-        if n_c2 > principal_order:
-            principal_order = 2
-        else:
-            for axis in cn_axes:
-                if axis['order'] > principal_order:
-                    principal_order = axis['order']
-
-        # Classification logic
-        if principal_order == 0 and n_c2 == 0:
-            # No rotation axes
-            if n_sigma == 0:
-                if self.has_inversion:
-                    self.point_group = "Ci"
-                else:
-                    self.point_group = "C1"
-            else:
-                self.point_group = "Cs"
-                
-        elif principal_order >= 5:
-            # High-order axes suggest special groups
-            self.point_group = "Ih"
-            
-        elif principal_order == 4:
-            if n_c2 >= 4:
-                self.point_group = "Oh"
-            else:
-                if n_c2 >= principal_order:
-                    self.point_group = f"D{principal_order}h"
-                else:
-                    self.point_group = f"C{principal_order}v"
-                    
-        elif principal_order == 3:
-            if n_c2 >= 3:
-                self.point_group = "Td"
-            else:
-                if n_c2 >= principal_order:
-                    self.point_group = f"D{principal_order}"
-                else:
-                    if n_sigma > 0:
-                        self.point_group = f"C{principal_order}v"
-                    else:
-                        self.point_group = f"C{principal_order}"
-                        
-        elif principal_order == 2:
-            if n_c2 >= 2:
-                if n_sigma > 0:
-                    self.point_group = "D2h"
-                else:
-                    self.point_group = "D2"
-            else:
-                if n_sigma > 0:
-                    self.point_group = "C2v"
-                else:
-                    self.point_group = "C2"
-        else:
-            # Fallback for other cases
-            if n_sigma > 0:
-                self.point_group = f"C{principal_order}v"
-            else:
-                self.point_group = f"C{principal_order}"
-
-        return self.point_group
-
-    # ==================== Complete Analysis ====================
-
-    def analyze_full_symmetry(
-        self,
-        tolerance: float = 1e-5,
-        max_order: int = 8
-    ) -> Dict[str, Any]:
-        """
-        Performs complete symmetry analysis of the molecule.
-        
-        Args:
-            tolerance: Numerical tolerance for symmetry detection
-            max_order: Maximum order for rotation axes
-            
-        Returns:
-            Dictionary containing all symmetry information
-        """
-        start_time = time.time()  
-
-        # Basic checks
+        self._initialize_coordinates()
         self.check_linearity(tolerance)
         self.check_planarity(tolerance)
         self.check_inversion_center(tolerance)
 
-        # Find symmetry elements
-        symmetry_planes = self.find_symmetry_planes(tolerance)
-        rotation_axes = self.find_all_rotation_axes(max_order, tolerance)
-        improper_axes = self.find_improper_rotation_axes(max_order, tolerance)
-
-        total_symmetry_elements = (
-            len(symmetry_planes) +
-            len(rotation_axes.get('C2', [])) +
-            len(rotation_axes.get('Cn', [])) +
-            len(improper_axes)
-        )
-
-        # Determine point group
-        point_group = self.determine_point_group(tolerance)
-
-        # Compile results
-        symmetry_info = {
-            'point_group': point_group,
-            'total_symmetry_elements': total_symmetry_elements,
-            'is_linear': self.linear,
-            'is_planar': self.planar,
-            'has_inversion': self.has_inversion,
-            'symmetry_planes': symmetry_planes,
-            'rotation_axes': rotation_axes,
-            'improper_rotation_axes': improper_axes,
-            'n_sigma': len(symmetry_planes),
-            'n_C2': len(rotation_axes.get('C2', [])),
-            'n_Cn': len(rotation_axes.get('Cn', [])),
-            'n_Sn': len(improper_axes)
+        symmetry_elements = {
+            'linear': self.linear,
+            'planar': self.planar,
+            'inversion_center': self.has_inversion,
+            'symmetry_planes': self.find_symmetry_planes(tolerance),
+            'rotation_axes': self.find_all_rotation_axes(max_order, tolerance),
+            'improper_rotation_axes': self.find_improper_rotation_axes(max_order, tolerance)
         }
-        end_time = time.time()
-        
-        self.symmetry_info = symmetry_info
-        return symmetry_info
-    
-    # ======================= Testing Methods ==========================
+
+        return symmetry_elements
+
 
     def test_analysis_speed(self, tolerance: float = 1e-5, max_order: int = 8) -> None:
         """

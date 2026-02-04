@@ -354,13 +354,10 @@ class Psi4Worker:
                 method_str = f"{config.method}/{config.basis_set}"
                 energy = psi4.optimize(method_str, molecule=mol)
 
-                # Update molecule coordinates 
-                optimized_coords = mol.save_string_xyz()
-                optimized_mol = Molecule.from_xyz(
-                    optimized_coords, 
-                    name = f"{molecule.name}_optimized"
-                )
-                molecule.coordinates = optimized_mol.coordinates
+                opt_geom = np.array(mol.geometry())
+                bohr_to_angstrom = 0.529177
+                molecule.coordinates = opt_geom * bohr_to_angstrom
+
                 wall_time = time.time() - start_time
 
                 return CalculationResult(
@@ -418,12 +415,10 @@ class Psi4Worker:
                 energy = psi4.optimize(method_str, molecule=mol)
 
                 # Update molecule coordinates
-                optimizes_coords = mol.save_string_xyz()
-                optimized_mol = Molecule.from_xyz(
-                    optimizes_coords,
-                    name = f"{molecule.name}_opt_freq"
-                )
-                molecule.coordinates = optimized_mol.coordinates
+                opt_geom = np.array(mol.geometry())
+                bohr_to_angstrom = 0.529177
+                molecule.coordinates = opt_geom * bohr_to_angstrom
+
 
                 # Frequency calculation
                 scf_e, scf_wfn = psi4.frequency(method_str, molecule=mol, return_wfn=True)

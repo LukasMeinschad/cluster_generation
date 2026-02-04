@@ -604,6 +604,27 @@ class Molecule:
     def get_number_of_atoms(self) -> int:
         return len(self.coordinates)
 
+    def copy(self) -> 'Molecule':
+        """Create a deep copy of the molecule"""
+        mol_copy = Molecule(self.name)
+        mol_copy.atom_labels = self.atom_labels.copy()
+        mol_copy.coordinates = self.coordinates.copy()
+        mol_copy.masses = self.masses.copy()
+        mol_copy.vdw_radii = self.vdw_radii.copy()
+        mol_copy.covalent_radii = self.covalent_radii.copy()
+        mol_copy.charge = self.charge
+        mol_copy.spin_mult = self.spin_mult
+        mol_copy._covalent_bonds = self._covalent_bonds.copy()
+        mol_copy._hydrogen_bonds = self._hydrogen_bonds.copy()
+        mol_copy._bonds_computed = self._bonds_computed
+        return mol_copy
+    
+    def to_xyz_string(self) -> str:
+        """Convert molecule to XYZ format string"""
+        lines = [str(len(self.atom_labels)), self.name]
+        for label, coord in zip(self.atom_labels, self.coordinates):
+            lines.append(f"{self._remove_digits_from_label(label)} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}")
+        return "\n".join(lines)
 
 
 class SubMolecule(Molecule):

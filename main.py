@@ -20,7 +20,8 @@ from cluster import MolecularCluster
 from symmetry import SymmetryAnalyzer
 from graph import MolecularGraph
 from coord_projector import CoordinateProjector
-
+from bhmc import LocalOptimizer, LocalOperators, BHMCConfig, MultiPhaseBHMC, BHMCAnalyzer, NonLocalOperators
+import bhmc as bhmc_module
 
 
 from modules.args import get_args
@@ -75,20 +76,27 @@ if __name__ == "__main__":
     molecule.compute_bonds()
     Transformation = Transformation()
 
-    gradient_cart = calc.compute_gradient(molecule=molecule)
-    hessian_cart = calc.compute_hessian(molecule=molecule)
+    submolecules = molecule.fragment_by_connectivity()
+    # Get submolecule indices
+    submol_indices = [submol.get_index_in_parent() for submol in submolecules]
+    
+    bhmc_module.test_twist_operator()
+    bhmc_module.test_random_displacement_submolecule()
+
+    # Set up BHCM Config
+    bhmc_config = BHMCConfig(temperature=300.0, max_steps=10, step_size=0.2,
+                             method="hf", basis="cc-pvdz")
+    # Initialize BHMC Sampler
+    bhmc_sampler = MultiPhaseBHMC(config=bhmc_config) 
+    phase_a_candidates = bhmc_sampler.run_phase_a(initial_molecule=molecule, submolecule_indices=submol_indices)
+    BHMCAnalyzer = BHMCAnalyzer()
+    BHMCAnalyzer.plot_energy_distribution_phase_a(phase_a_candidates)
     
 
-    projector = CoordinateProjector(tolerance=1e-10)
-    coord_space = projector.setup_coordinate_space(coords=molecule.coordinates,
-                                                   masses=molecule.masses,
-                                                   linear=False)
-    hessian_int = projector.project_hessian(hessian=hessian_cart,
-                                            coord_space=coord_space,
-                                            full_space=False)
-    print("Hessian in internal coordinates:")
-    print(hessian_int)
-    print("Shape:", hessian_int.shape)
+
+
+    
+  
    
 
 

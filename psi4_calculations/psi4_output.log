@@ -1,57 +1,603 @@
-2026-02-03:22:03:20,991 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'function_kwargs': {}}
-2026-02-03:22:03:20,994 INFO     [psi4.driver.driver:636] Compute gradient(): method=hf, basis=cc-pvdz, molecule=default, nre=36.55723494966064
-2026-02-03:22:03:21,529 INFO     [psi4.driver.driver:639] Return gradient(): -152.06305737362078
-2026-02-03:22:03:21,529 INFO     [psi4.driver.driver:640] [[ 0.00285194  0.00183048  0.00749396]
- [-0.00423907 -0.00122648 -0.00188327]
- [ 0.00151242 -0.00064311 -0.00539554]
- [ 0.00616036  0.00095007 -0.00679484]
- [-0.00215939 -0.0039987   0.00386845]
- [-0.00412626  0.00308774  0.00271123]]
-2026-02-03:22:03:21,554 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
-2026-02-03:22:03:21,578 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__D_CONVERGENCE': 1e-08, 'SCF__E_CONVERGENCE': 1e-08, 'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
-2026-02-03:22:03:21,581 INFO     [psi4.driver.driver:636] Compute gradient(): method=hf, basis=cc-pvdz, molecule=default, nre=36.55723494966064
-2026-02-03:22:03:22,151 INFO     [psi4.driver.driver:639] Return gradient(): -152.06305737362084
-2026-02-03:22:03:22,152 INFO     [psi4.driver.driver:640] [[ 0.00285194  0.00183048  0.00749396]
- [-0.00423907 -0.00122648 -0.00188327]
- [ 0.00151242 -0.00064311 -0.00539554]
- [ 0.00616036  0.00095007 -0.00679484]
- [-0.00215939 -0.0039987   0.00386845]
- [-0.00412626  0.00308774  0.00271123]]
-2026-02-03:22:03:22,153 INFO     [psi4.driver.driver:1470] Compute hessian(): method=hf, basis=cc-pvdz, molecule=default, nre=36.55723494966064
-2026-02-03:22:03:26,212 INFO     [psi4.driver.driver:1474] Return hessian(): -152.06305737361276
-2026-02-03:22:03:26,214 INFO     [psi4.driver.driver:1475] [[ 0.74796831  0.08927421 -0.11691966 -0.5561145  -0.10504249 -0.15902456 -0.1857331   0.01764726  0.27704295
-  -0.006621   -0.00220008 -0.00116365 -0.00010794  0.00118578 -0.00008207  0.00060824 -0.00086467  0.00014698]
- [ 0.08927421  0.02199999  0.07683645 -0.09472032 -0.02257371 -0.03661619  0.00727626 -0.00208841 -0.03992978
-  -0.00231162  0.0041589  -0.00024186  0.00170523 -0.00019388 -0.00001858 -0.00122376 -0.00130289 -0.00003004]
- [-0.11691966  0.07683645  0.57602164 -0.09554725 -0.02770707 -0.08861439  0.21254245 -0.049147   -0.4901789
-   0.00157182  0.00048397  0.00394176 -0.00106398 -0.00019678 -0.00065911 -0.00058339 -0.00026959 -0.000511  ]
- [-0.5561145  -0.09472032 -0.09554725  0.58229631  0.09937634  0.10677652 -0.02306508 -0.00518911 -0.01211826
-  -0.00171989  0.00136955  0.00134669  0.00037295 -0.00226092  0.00009844 -0.00176979  0.00142446 -0.00055615]
- [-0.10504249 -0.02257371 -0.02770707  0.09937634  0.02736176  0.02749214  0.00530927  0.00055707 -0.00026024
-   0.00097729 -0.00690435  0.00050906 -0.00329398 -0.00051709 -0.00019549  0.00267358  0.00207632  0.00016159]
- [-0.15902456 -0.03661619 -0.08861439  0.10677652  0.02749214  0.08370665  0.05263487  0.00893962  0.00864073
-  -0.00366662 -0.00073997 -0.00517496  0.00214691  0.00050322  0.00085876  0.00113288  0.00042118  0.00058321]
- [-0.1857331   0.00727626  0.21254245 -0.02306508  0.00530927  0.05263487  0.2094539  -0.01229333 -0.26433727
-  -0.00074351 -0.00032282 -0.00101189  0.00005384 -0.00004203  0.00009832  0.00003394  0.00007265  0.00007351]
- [ 0.01764726 -0.00208841 -0.049147   -0.00518911  0.00055707  0.00893962 -0.01229333  0.0018574   0.04035849
-  -0.00010138 -0.00071624 -0.00018073 -0.00015431  0.0002022   0.00014767  0.00009087  0.00018797 -0.00011805]
- [ 0.27704295 -0.03992978 -0.4901789  -0.01211826 -0.00026024  0.00864073 -0.26433727  0.04035849  0.48197463
-  -0.00080213 -0.00017595 -0.00050909  0.00013068  0.00004354  0.0000151   0.00008402 -0.00003607  0.00005753]
- [-0.006621   -0.00231162  0.00157182 -0.00171989  0.00097729 -0.00366662 -0.00074351 -0.00010138 -0.00080213
-   0.33881053 -0.17709357 -0.23554322 -0.05825049 -0.06661008  0.08422205 -0.27147565  0.24513936  0.1542181 ]
- [-0.00220008  0.0041589   0.00048397  0.00136955 -0.00690435 -0.00073997 -0.00032282 -0.00071624 -0.00017595
-  -0.17709357  0.75295598 -0.15143109 -0.1121977  -0.42387265  0.28881129  0.29044462 -0.32562164 -0.13694825]
- [-0.00116365 -0.00024186  0.00394176  0.00134669  0.00050906 -0.00517496 -0.00101189 -0.00018073 -0.00050909
-  -0.23554322 -0.15143109  0.28291123  0.10284844  0.24436377 -0.19814875  0.13352362 -0.09301914 -0.08302019]
- [-0.00010794  0.00170523 -0.00106398  0.00037295 -0.00329398  0.00214691  0.00005384 -0.00015431  0.00013068
-  -0.05825049 -0.1121977   0.10284844  0.05161216  0.08134811 -0.08341562  0.00631948  0.03259265 -0.02064643]
- [ 0.00118578 -0.00019388 -0.00019678 -0.00226092 -0.00051709  0.00050322 -0.00004203  0.0002022   0.00004354
-  -0.06661008 -0.42387265  0.24436377  0.08134811  0.45367145 -0.26981821 -0.01362087 -0.02929003  0.02510446]
- [-0.00008207 -0.00001858 -0.00065911  0.00009844 -0.00019549  0.00085876  0.00009832  0.00014767  0.0000151
-   0.08422205  0.28881129 -0.19814875 -0.08341562 -0.26981821  0.18998666 -0.00092112 -0.01892668  0.00794734]
- [ 0.00060824 -0.00122376 -0.00058339 -0.00176979  0.00267358  0.00113288  0.00003394  0.00009087  0.00008402
-  -0.27147565  0.29044462  0.13352362  0.00631948 -0.01362087 -0.00092112  0.26628378 -0.27836444 -0.13323601]
- [-0.00086467 -0.00130289 -0.00026959  0.00142446  0.00207632  0.00042118  0.00007265  0.00018797 -0.00003607
-   0.24513936 -0.32562164 -0.09301914  0.03259265 -0.02929003 -0.01892668 -0.27836444  0.35395027  0.11183029]
- [ 0.00014698 -0.00003004 -0.000511   -0.00055615  0.00016159  0.00058321  0.00007351 -0.00011805  0.00005753
-   0.1542181  -0.13694825 -0.08302019 -0.02064643  0.02510446  0.00794734 -0.13323601  0.11183029  0.07494311]]
+2026-02-04:18:33:58,160 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'function_kwargs': {}}
+2026-02-04:18:33:58,163 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.755175173769917
+2026-02-04:18:33:58,554 INFO     [psi4.driver.driver:526] Return energy(): -152.05558724567692
+2026-02-04:18:33:58,579 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:33:58,583 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.76431505541802
+2026-02-04:18:33:59,8 INFO     [psi4.driver.driver:526] Return energy(): -152.05622124369987
+2026-02-04:18:33:59,34 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:33:59,37 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.71881719498391
+2026-02-04:18:33:59,416 INFO     [psi4.driver.driver:526] Return energy(): -152.05554281353199
+2026-02-04:18:33:59,446 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:33:59,449 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=28.10906839650524
+2026-02-04:18:33:59,884 INFO     [psi4.driver.driver:526] Return energy(): -152.05356581564055
+2026-02-04:18:33:59,913 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:33:59,917 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.75468575331227
+2026-02-04:18:34:00,336 INFO     [psi4.driver.driver:526] Return energy(): -152.055872043629
+2026-02-04:18:34:00,362 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:00,365 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=28.564076129195573
+2026-02-04:18:34:00,725 INFO     [psi4.driver.driver:526] Return energy(): -152.05368434439643
+2026-02-04:18:34:00,751 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:00,755 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.666082012897732
+2026-02-04:18:34:01,120 INFO     [psi4.driver.driver:526] Return energy(): -152.05343696052478
+2026-02-04:18:34:01,145 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:01,149 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.76558792601423
+2026-02-04:18:34:01,502 INFO     [psi4.driver.driver:526] Return energy(): -152.05569429017126
+2026-02-04:18:34:01,527 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:01,531 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.56355237281947
+2026-02-04:18:34:01,901 INFO     [psi4.driver.driver:526] Return energy(): -152.05373412037034
+2026-02-04:18:34:01,927 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:01,930 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.889745173465624
+2026-02-04:18:34:02,294 INFO     [psi4.driver.driver:526] Return energy(): -152.0538674057219
+2026-02-04:18:34:02,321 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:02,324 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.538914064169848
+2026-02-04:18:34:02,675 INFO     [psi4.driver.driver:526] Return energy(): -152.05120590431366
+2026-02-04:18:34:02,700 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:02,703 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.767537153821188
+2026-02-04:18:34:03,74 INFO     [psi4.driver.driver:526] Return energy(): -152.0556025627945
+2026-02-04:18:34:03,99 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:03,103 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.76047077038191
+2026-02-04:18:34:03,456 INFO     [psi4.driver.driver:526] Return energy(): -152.05552101492236
+2026-02-04:18:34:03,483 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:03,486 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.67821046569845
+2026-02-04:18:34:03,840 INFO     [psi4.driver.driver:526] Return energy(): -152.05502055320304
+2026-02-04:18:34:03,866 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:03,869 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=29.614719436917582
+2026-02-04:18:34:04,214 INFO     [psi4.driver.driver:526] Return energy(): -152.05335961538862
+2026-02-04:18:34:04,240 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:04,243 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.715383753261854
+2026-02-04:18:34:04,599 INFO     [psi4.driver.driver:526] Return energy(): -152.05462067228186
+2026-02-04:18:34:04,625 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:04,628 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.96710843460056
+2026-02-04:18:34:04,992 INFO     [psi4.driver.driver:526] Return energy(): -152.05348319559386
+2026-02-04:18:34:05,18 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:05,22 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=41.56827105450526
+2026-02-04:18:34:05,372 INFO     [psi4.driver.driver:526] Return energy(): -152.0372794635163
+2026-02-04:18:34:05,398 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:05,401 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.755706810056935
+2026-02-04:18:34:05,768 INFO     [psi4.driver.driver:526] Return energy(): -152.05478508412077
+2026-02-04:18:34:05,793 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:05,797 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.71025550083079
+2026-02-04:18:34:06,153 INFO     [psi4.driver.driver:526] Return energy(): -152.05250313590395
+2026-02-04:18:34:06,179 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:06,182 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.73910413581702
+2026-02-04:18:34:06,537 INFO     [psi4.driver.driver:526] Return energy(): -152.0552907370033
+2026-02-04:18:34:06,563 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:06,566 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.9814490760229
+2026-02-04:18:34:06,929 INFO     [psi4.driver.driver:526] Return energy(): -152.05140274867549
+2026-02-04:18:34:06,955 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:06,959 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.6308196955733
+2026-02-04:18:34:07,327 INFO     [psi4.driver.driver:526] Return energy(): -152.05118524031843
+2026-02-04:18:34:07,352 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:07,356 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.602982638280466
+2026-02-04:18:34:07,711 INFO     [psi4.driver.driver:526] Return energy(): -152.05129433611566
+2026-02-04:18:34:07,736 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:07,740 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=47.28443967589672
+2026-02-04:18:34:08,116 INFO     [psi4.driver.driver:526] Return energy(): -151.8912986504934
+2026-02-04:18:34:08,142 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:08,145 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=44.747210276695256
+2026-02-04:18:34:08,501 INFO     [psi4.driver.driver:526] Return energy(): -152.00341260574177
+2026-02-04:18:34:08,527 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:08,530 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.3419936139384
+2026-02-04:18:34:08,894 INFO     [psi4.driver.driver:526] Return energy(): -152.05685489430385
+2026-02-04:18:34:08,921 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:08,925 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.249771521807915
+2026-02-04:18:34:09,286 INFO     [psi4.driver.driver:526] Return energy(): -152.05731312179236
+2026-02-04:18:34:09,311 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:09,315 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.166998722616746
+2026-02-04:18:34:09,671 INFO     [psi4.driver.driver:526] Return energy(): -152.05272434217122
+2026-02-04:18:34:09,697 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:09,701 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.33122966578843
+2026-02-04:18:34:10,56 INFO     [psi4.driver.driver:526] Return energy(): -152.05734641446003
+2026-02-04:18:34:10,82 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:10,85 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.876148716726735
+2026-02-04:18:34:10,436 INFO     [psi4.driver.driver:526] Return energy(): -152.0526962607422
+2026-02-04:18:34:10,461 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:10,465 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.995857700834726
+2026-02-04:18:34:10,832 INFO     [psi4.driver.driver:526] Return energy(): -152.05088855546418
+2026-02-04:18:34:10,858 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:10,861 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.31646011962099
+2026-02-04:18:34:11,223 INFO     [psi4.driver.driver:526] Return energy(): -152.054592598994
+2026-02-04:18:34:11,249 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:11,252 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.42227390479538
+2026-02-04:18:34:11,611 INFO     [psi4.driver.driver:526] Return energy(): -152.05601843275895
+2026-02-04:18:34:11,636 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:11,639 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.50399959631217
+2026-02-04:18:34:12,8 INFO     [psi4.driver.driver:526] Return energy(): -152.05456407605806
+2026-02-04:18:34:12,34 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:12,37 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.10117652725878
+2026-02-04:18:34:12,395 INFO     [psi4.driver.driver:526] Return energy(): -152.05505019759713
+2026-02-04:18:34:12,420 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:12,424 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.09840481008488
+2026-02-04:18:34:12,792 INFO     [psi4.driver.driver:526] Return energy(): -152.05465374812925
+2026-02-04:18:34:12,819 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:12,822 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=32.902783560051226
+2026-02-04:18:34:13,185 INFO     [psi4.driver.driver:526] Return energy(): -152.05116184298944
+2026-02-04:18:34:13,211 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:13,214 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=32.96598564517589
+2026-02-04:18:34:13,578 INFO     [psi4.driver.driver:526] Return energy(): -152.05135886014793
+2026-02-04:18:34:13,604 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:13,607 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=28.21074446878413
+2026-02-04:18:34:13,951 INFO     [psi4.driver.driver:526] Return energy(): -152.0527453160302
+2026-02-04:18:34:13,976 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:13,979 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=29.793117132422598
+2026-02-04:18:34:14,335 INFO     [psi4.driver.driver:526] Return energy(): -152.05262926892243
+2026-02-04:18:34:14,360 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:14,364 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=28.201328419977955
+2026-02-04:18:34:14,711 INFO     [psi4.driver.driver:526] Return energy(): -152.05341085089617
+2026-02-04:18:34:14,737 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:14,741 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=28.198454335308377
+2026-02-04:18:34:15,81 INFO     [psi4.driver.driver:526] Return energy(): -152.0534248311759
+2026-02-04:18:34:15,107 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:15,110 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=28.26652974317814
+2026-02-04:18:34:15,452 INFO     [psi4.driver.driver:526] Return energy(): -152.05287070988942
+2026-02-04:18:34:15,477 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:15,481 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=28.17375452128466
+2026-02-04:18:34:15,827 INFO     [psi4.driver.driver:526] Return energy(): -152.05329176087673
+2026-02-04:18:34:15,852 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:15,856 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.104205597128445
+2026-02-04:18:34:16,205 INFO     [psi4.driver.driver:526] Return energy(): -152.0537660448162
+2026-02-04:18:34:16,231 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:16,234 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.123622235751732
+2026-02-04:18:34:16,583 INFO     [psi4.driver.driver:526] Return energy(): -152.05370576642986
+2026-02-04:18:34:16,608 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:16,611 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.211950535370754
+2026-02-04:18:34:16,959 INFO     [psi4.driver.driver:526] Return energy(): -152.0531572508335
+2026-02-04:18:34:16,984 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:16,988 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.247575357306744
+2026-02-04:18:34:17,341 INFO     [psi4.driver.driver:526] Return energy(): -152.05210620456594
+2026-02-04:18:34:17,368 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:17,371 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=29.24077866937945
+2026-02-04:18:34:17,715 INFO     [psi4.driver.driver:526] Return energy(): -152.05251051728106
+2026-02-04:18:34:17,740 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:17,744 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=32.17079767795147
+2026-02-04:18:34:18,93 INFO     [psi4.driver.driver:526] Return energy(): -152.05220930358388
+2026-02-04:18:34:18,119 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:18,122 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.96669232112778
+2026-02-04:18:34:18,476 INFO     [psi4.driver.driver:526] Return energy(): -152.05428729366562
+2026-02-04:18:34:18,503 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:18,506 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.948491590173845
+2026-02-04:18:34:18,855 INFO     [psi4.driver.driver:526] Return energy(): -152.05445121128065
+2026-02-04:18:34:18,880 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:18,883 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.932457870078295
+2026-02-04:18:34:19,242 INFO     [psi4.driver.driver:526] Return energy(): -152.05019871262232
+2026-02-04:18:34:19,268 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:19,271 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.788843239671365
+2026-02-04:18:34:19,624 INFO     [psi4.driver.driver:526] Return energy(): -152.05892646855915
+2026-02-04:18:34:19,649 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:19,652 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.97938592589061
+2026-02-04:18:34:19,996 INFO     [psi4.driver.driver:526] Return energy(): -152.0544371663417
+2026-02-04:18:34:20,21 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:20,24 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.401265824255475
+2026-02-04:18:34:20,368 INFO     [psi4.driver.driver:526] Return energy(): -152.05433950334853
+2026-02-04:18:34:20,394 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:20,397 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.72071739192645
+2026-02-04:18:34:20,764 INFO     [psi4.driver.driver:526] Return energy(): -152.05905224785784
+2026-02-04:18:34:20,790 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:20,793 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.74303564349582
+2026-02-04:18:34:21,150 INFO     [psi4.driver.driver:526] Return energy(): -152.0577803597884
+2026-02-04:18:34:21,176 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:21,179 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.9251551494672
+2026-02-04:18:34:21,536 INFO     [psi4.driver.driver:526] Return energy(): -152.05412836223837
+2026-02-04:18:34:21,562 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:21,565 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.86235444934682
+2026-02-04:18:34:21,930 INFO     [psi4.driver.driver:526] Return energy(): -152.05504750665133
+2026-02-04:18:34:21,956 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:21,959 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.85283583734791
+2026-02-04:18:34:22,310 INFO     [psi4.driver.driver:526] Return energy(): -152.05786990357342
+2026-02-04:18:34:22,335 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:22,338 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.60978405323076
+2026-02-04:18:34:22,698 INFO     [psi4.driver.driver:526] Return energy(): -152.05636636947298
+2026-02-04:18:34:22,723 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:22,727 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.54208649208984
+2026-02-04:18:34:23,80 INFO     [psi4.driver.driver:526] Return energy(): -152.05708099480248
+2026-02-04:18:34:23,105 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:23,108 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.914285890433824
+2026-02-04:18:34:23,461 INFO     [psi4.driver.driver:526] Return energy(): -152.0578331814184
+2026-02-04:18:34:23,487 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:23,491 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=51.56856646869365
+2026-02-04:18:34:23,847 INFO     [psi4.driver.driver:526] Return energy(): -151.70870588685182
+2026-02-04:18:34:23,873 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:23,876 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.887341379628005
+2026-02-04:18:34:24,234 INFO     [psi4.driver.driver:526] Return energy(): -152.05624505528812
+2026-02-04:18:34:24,259 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:24,263 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.95314671996172
+2026-02-04:18:34:24,617 INFO     [psi4.driver.driver:526] Return energy(): -152.05629286439148
+2026-02-04:18:34:24,643 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:24,646 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.69745690531412
+2026-02-04:18:34:25,13 INFO     [psi4.driver.driver:526] Return energy(): -152.05622370017443
+2026-02-04:18:34:25,39 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:25,43 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.402805465154636
+2026-02-04:18:34:25,405 INFO     [psi4.driver.driver:526] Return energy(): -152.0564865216257
+2026-02-04:18:34:25,430 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:25,434 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.52261773499798
+2026-02-04:18:34:25,802 INFO     [psi4.driver.driver:526] Return energy(): -152.04711876208466
+2026-02-04:18:34:25,828 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:25,832 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.57099544420154
+2026-02-04:18:34:26,188 INFO     [psi4.driver.driver:526] Return energy(): -152.0590263374808
+2026-02-04:18:34:26,214 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:26,217 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.49333187814259
+2026-02-04:18:34:26,574 INFO     [psi4.driver.driver:526] Return energy(): -152.04794132529386
+2026-02-04:18:34:26,611 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:26,616 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.515136452707424
+2026-02-04:18:34:26,977 INFO     [psi4.driver.driver:526] Return energy(): -152.05429060625477
+2026-02-04:18:34:27,3 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:27,6 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.552957078687086
+2026-02-04:18:34:27,375 INFO     [psi4.driver.driver:526] Return energy(): -152.05882370140975
+2026-02-04:18:34:27,401 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:27,404 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=47.068103066344946
+2026-02-04:18:34:27,755 INFO     [psi4.driver.driver:526] Return energy(): -151.91651713556288
+2026-02-04:18:34:27,779 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:27,783 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.82604861591111
+2026-02-04:18:34:28,148 INFO     [psi4.driver.driver:526] Return energy(): -152.05957416912685
+2026-02-04:18:34:28,173 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:28,176 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.262244950072894
+2026-02-04:18:34:28,524 INFO     [psi4.driver.driver:526] Return energy(): -152.05453805752268
+2026-02-04:18:34:28,549 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:28,553 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.63196562226867
+2026-02-04:18:34:28,912 INFO     [psi4.driver.driver:526] Return energy(): -152.05718647343872
+2026-02-04:18:34:28,939 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:28,942 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.847698133176735
+2026-02-04:18:34:29,299 INFO     [psi4.driver.driver:526] Return energy(): -152.05904268900892
+2026-02-04:18:34:29,325 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:29,329 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.968811472327914
+2026-02-04:18:34:29,683 INFO     [psi4.driver.driver:526] Return energy(): -152.05209382423436
+2026-02-04:18:34:29,708 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:29,712 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.534072637747972
+2026-02-04:18:34:30,59 INFO     [psi4.driver.driver:526] Return energy(): -152.0534730004357
+2026-02-04:18:34:30,85 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:30,88 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.378284093431546
+2026-02-04:18:34:30,429 INFO     [psi4.driver.driver:526] Return energy(): -152.04546839827205
+2026-02-04:18:34:30,455 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:30,459 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=38.70214729357194
+2026-02-04:18:34:30,823 INFO     [psi4.driver.driver:526] Return energy(): -152.054658924039
+2026-02-04:18:34:30,849 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:30,852 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=32.354921676280796
+2026-02-04:18:34:31,205 INFO     [psi4.driver.driver:526] Return energy(): -152.0521413159961
+2026-02-04:18:34:31,231 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:31,234 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.821528525976014
+2026-02-04:18:34:31,595 INFO     [psi4.driver.driver:526] Return energy(): -152.04787030022777
+2026-02-04:18:34:31,621 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:31,624 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.94238561476797
+2026-02-04:18:34:31,972 INFO     [psi4.driver.driver:526] Return energy(): -152.05844126556022
+2026-02-04:18:34:31,998 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:32,1 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=38.23688814508581
+2026-02-04:18:34:32,354 INFO     [psi4.driver.driver:526] Return energy(): -152.0476896630037
+2026-02-04:18:34:32,379 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:32,383 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.1270160555408
+2026-02-04:18:34:32,732 INFO     [psi4.driver.driver:526] Return energy(): -152.05269084732168
+2026-02-04:18:34:32,758 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:32,761 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=40.43408991287842
+2026-02-04:18:34:33,116 INFO     [psi4.driver.driver:526] Return energy(): -151.99162335067334
+2026-02-04:18:34:33,142 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:33,146 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=53.20406320159314
+2026-02-04:18:34:33,523 INFO     [psi4.driver.driver:526] Return energy(): -151.58418663197457
+2026-02-04:18:34:33,549 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:33,552 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=38.247324528331355
+2026-02-04:18:34:33,908 INFO     [psi4.driver.driver:526] Return energy(): -152.0518132062732
+2026-02-04:18:34:33,935 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:33,938 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.29668415926504
+2026-02-04:18:34:34,306 INFO     [psi4.driver.driver:526] Return energy(): -152.05754415814508
+2026-02-04:18:34:34,333 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:34,336 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.94587401201361
+2026-02-04:18:34:34,691 INFO     [psi4.driver.driver:526] Return energy(): -152.05478986408139
+2026-02-04:18:34:34,717 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:34,720 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.99115887786332
+2026-02-04:18:34:35,88 INFO     [psi4.driver.driver:526] Return energy(): -152.05712002236896
+2026-02-04:18:34:35,113 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:35,117 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.67834391368667
+2026-02-04:18:34:35,477 INFO     [psi4.driver.driver:526] Return energy(): -152.0597866538963
+2026-02-04:18:34:35,503 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:35,507 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=32.53381875828933
+2026-02-04:18:34:35,879 INFO     [psi4.driver.driver:526] Return energy(): -152.05664593438755
+2026-02-04:18:34:35,906 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:35,911 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.65050066556272
+2026-02-04:18:34:36,286 INFO     [psi4.driver.driver:526] Return energy(): -152.0519080838383
+2026-02-04:18:34:36,313 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:36,316 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=80.28844068428961
+2026-02-04:18:34:36,699 INFO     [psi4.driver.driver:526] Return energy(): -148.71320051294154
+2026-02-04:18:34:36,725 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:36,729 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.66645376185485
+2026-02-04:18:34:37,79 INFO     [psi4.driver.driver:526] Return energy(): -152.05936405292863
+2026-02-04:18:34:37,105 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:37,109 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=43.70770358203072
+2026-02-04:18:34:37,485 INFO     [psi4.driver.driver:526] Return energy(): -151.99813257993478
+2026-02-04:18:34:37,511 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:37,515 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.647896502974326
+2026-02-04:18:34:37,871 INFO     [psi4.driver.driver:526] Return energy(): -152.05783825435338
+2026-02-04:18:34:37,898 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:37,901 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.19765606573895
+2026-02-04:18:34:38,268 INFO     [psi4.driver.driver:526] Return energy(): -152.05364081782125
+2026-02-04:18:34:38,295 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:38,298 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.20206709733023
+2026-02-04:18:34:38,649 INFO     [psi4.driver.driver:526] Return energy(): -152.05084010804416
+2026-02-04:18:34:38,676 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:38,679 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.826251037433124
+2026-02-04:18:34:39,56 INFO     [psi4.driver.driver:526] Return energy(): -152.0522866031933
+2026-02-04:18:34:39,81 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:39,85 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.6420916232736
+2026-02-04:18:34:39,447 INFO     [psi4.driver.driver:526] Return energy(): -152.0550578870217
+2026-02-04:18:34:39,474 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:39,477 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=39.43336165752084
+2026-02-04:18:34:39,852 INFO     [psi4.driver.driver:526] Return energy(): -152.04843022907755
+2026-02-04:18:34:39,878 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:39,882 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=36.363843083937645
+2026-02-04:18:34:40,240 INFO     [psi4.driver.driver:526] Return energy(): -152.04623617693198
+2026-02-04:18:34:40,267 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:40,270 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.63518551609082
+2026-02-04:18:34:40,646 INFO     [psi4.driver.driver:526] Return energy(): -152.0552169086992
+2026-02-04:18:34:40,673 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:40,676 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=41.5217389758602
+2026-02-04:18:34:41,35 INFO     [psi4.driver.driver:526] Return energy(): -152.02357861016785
+2026-02-04:18:34:41,61 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:41,65 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.18816861941055
+2026-02-04:18:34:41,435 INFO     [psi4.driver.driver:526] Return energy(): -152.04752315058812
+2026-02-04:18:34:41,461 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:41,465 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.72461797396159
+2026-02-04:18:34:41,825 INFO     [psi4.driver.driver:526] Return energy(): -152.05663589047387
+2026-02-04:18:34:41,851 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:41,855 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=31.914801946330737
+2026-02-04:18:34:42,220 INFO     [psi4.driver.driver:526] Return energy(): -152.05589987512758
+2026-02-04:18:34:42,248 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:42,251 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.62970859778918
+2026-02-04:18:34:42,606 INFO     [psi4.driver.driver:526] Return energy(): -152.0534489668402
+2026-02-04:18:34:42,631 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:42,635 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.597230712485256
+2026-02-04:18:34:42,990 INFO     [psi4.driver.driver:526] Return energy(): -152.05858404528257
+2026-02-04:18:34:43,17 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:43,20 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.72456590002902
+2026-02-04:18:34:43,376 INFO     [psi4.driver.driver:526] Return energy(): -152.05852397277508
+2026-02-04:18:34:43,403 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:43,406 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.18531742122224
+2026-02-04:18:34:43,768 INFO     [psi4.driver.driver:526] Return energy(): -152.04644560040006
+2026-02-04:18:34:43,794 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:43,798 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.65730545168157
+2026-02-04:18:34:44,152 INFO     [psi4.driver.driver:526] Return energy(): -152.0589812664889
+2026-02-04:18:34:44,178 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:44,182 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.73167390438636
+2026-02-04:18:34:44,537 INFO     [psi4.driver.driver:526] Return energy(): -152.05134802077635
+2026-02-04:18:34:44,563 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:44,567 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.124667797114306
+2026-02-04:18:34:44,921 INFO     [psi4.driver.driver:526] Return energy(): -152.0475874947507
+2026-02-04:18:34:44,947 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:44,951 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=33.56298106820278
+2026-02-04:18:34:45,305 INFO     [psi4.driver.driver:526] Return energy(): -152.0552851868903
+2026-02-04:18:34:45,332 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:45,335 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=37.55865059867207
+2026-02-04:18:34:45,705 INFO     [psi4.driver.driver:526] Return energy(): -152.0584335067788
+2026-02-04:18:34:45,732 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:45,735 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=29.89960883720345
+2026-02-04:18:34:46,87 INFO     [psi4.driver.driver:526] Return energy(): -152.05317143538196
+2026-02-04:18:34:46,114 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:46,117 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=34.35134663752827
+2026-02-04:18:34:46,470 INFO     [psi4.driver.driver:526] Return energy(): -152.05784555828234
+2026-02-04:18:34:46,497 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:46,500 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.97756433276563
+2026-02-04:18:34:46,855 INFO     [psi4.driver.driver:526] Return energy(): -152.054097852767
+2026-02-04:18:34:46,882 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:46,885 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.11055392834883
+2026-02-04:18:34:47,232 INFO     [psi4.driver.driver:526] Return energy(): -152.05297484340977
+2026-02-04:18:34:47,259 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:47,262 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=30.432839833013603
+2026-02-04:18:34:47,618 INFO     [psi4.driver.driver:526] Return energy(): -152.05398635698316
+2026-02-04:18:34:47,645 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:47,649 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=26.028174162499482
+2026-02-04:18:34:47,987 INFO     [psi4.driver.driver:526] Return energy(): -152.05272133468384
+2026-02-04:18:34:48,14 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:48,17 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=24.552156840548882
+2026-02-04:18:34:48,352 INFO     [psi4.driver.driver:526] Return energy(): -152.05267339742915
+2026-02-04:18:34:48,379 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:48,382 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=24.488868139840292
+2026-02-04:18:34:48,716 INFO     [psi4.driver.driver:526] Return energy(): -152.05263798033252
+2026-02-04:18:34:48,743 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:48,746 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=24.515725623609583
+2026-02-04:18:34:49,82 INFO     [psi4.driver.driver:526] Return energy(): -152.0525941667109
+2026-02-04:18:34:49,107 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:49,111 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=24.46370063953753
+2026-02-04:18:34:49,445 INFO     [psi4.driver.driver:526] Return energy(): -152.05287486146256
+2026-02-04:18:34:49,471 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:49,475 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.67174774238216
+2026-02-04:18:34:49,814 INFO     [psi4.driver.driver:526] Return energy(): -152.05280855230933
+2026-02-04:18:34:49,841 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:49,844 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.668304214933446
+2026-02-04:18:34:50,175 INFO     [psi4.driver.driver:526] Return energy(): -152.05278490467825
+2026-02-04:18:34:50,202 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:50,205 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.69273709712044
+2026-02-04:18:34:50,543 INFO     [psi4.driver.driver:526] Return energy(): -152.05272149723055
+2026-02-04:18:34:50,570 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:50,574 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.70735068274842
+2026-02-04:18:34:50,910 INFO     [psi4.driver.driver:526] Return energy(): -152.05257750961897
+2026-02-04:18:34:50,936 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:50,940 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.676011894517508
+2026-02-04:18:34:51,276 INFO     [psi4.driver.driver:526] Return energy(): -152.05271953974406
+2026-02-04:18:34:51,302 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:51,306 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.680164443003665
+2026-02-04:18:34:51,645 INFO     [psi4.driver.driver:526] Return energy(): -152.05271734561572
+2026-02-04:18:34:51,671 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:51,675 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.176760175708566
+2026-02-04:18:34:52,10 INFO     [psi4.driver.driver:526] Return energy(): -152.05268408560875
+2026-02-04:18:34:52,37 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:52,40 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.16003650471078
+2026-02-04:18:34:52,372 INFO     [psi4.driver.driver:526] Return energy(): -152.0526372350718
+2026-02-04:18:34:52,398 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:52,402 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.289974737130546
+2026-02-04:18:34:52,737 INFO     [psi4.driver.driver:526] Return energy(): -152.05266113148457
+2026-02-04:18:34:52,763 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:52,766 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.288956574606576
+2026-02-04:18:34:53,101 INFO     [psi4.driver.driver:526] Return energy(): -152.05267436859657
+2026-02-04:18:34:53,126 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:53,130 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.703169156791255
+2026-02-04:18:34:53,461 INFO     [psi4.driver.driver:526] Return energy(): -152.0526817862976
+2026-02-04:18:34:53,487 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:53,491 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.704044510690785
+2026-02-04:18:34:53,831 INFO     [psi4.driver.driver:526] Return energy(): -152.05268430142968
+2026-02-04:18:34:53,857 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:53,860 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.704365192295004
+2026-02-04:18:34:54,197 INFO     [psi4.driver.driver:526] Return energy(): -152.05268223742323
+2026-02-04:18:34:54,223 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:54,226 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.6919726259965
+2026-02-04:18:34:54,560 INFO     [psi4.driver.driver:526] Return energy(): -152.05261989302574
+2026-02-04:18:34:54,586 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:54,589 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.078801102866134
+2026-02-04:18:34:54,923 INFO     [psi4.driver.driver:526] Return energy(): -152.05261817799325
+2026-02-04:18:34:54,949 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:54,953 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.8037593935541
+2026-02-04:18:34:55,283 INFO     [psi4.driver.driver:526] Return energy(): -152.05261705996134
+2026-02-04:18:34:55,308 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:55,312 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.48789150763456
+2026-02-04:18:34:55,658 INFO     [psi4.driver.driver:526] Return energy(): -152.05263919093176
+2026-02-04:18:34:55,684 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:55,688 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.485154005748733
+2026-02-04:18:34:56,23 INFO     [psi4.driver.driver:526] Return energy(): -152.05262096574796
+2026-02-04:18:34:56,49 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:56,52 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.492666417576412
+2026-02-04:18:34:56,385 INFO     [psi4.driver.driver:526] Return energy(): -152.0526372979637
+2026-02-04:18:34:56,410 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:56,414 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.490726113188533
+2026-02-04:18:34:56,750 INFO     [psi4.driver.driver:526] Return energy(): -152.0526308351939
+2026-02-04:18:34:56,776 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:56,780 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.50280128665477
+2026-02-04:18:34:57,115 INFO     [psi4.driver.driver:526] Return energy(): -152.0526680424515
+2026-02-04:18:34:57,140 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:57,144 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.50322589166314
+2026-02-04:18:34:57,479 INFO     [psi4.driver.driver:526] Return energy(): -152.05271793418828
+2026-02-04:18:34:57,505 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:57,509 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.529454744491268
+2026-02-04:18:34:57,850 INFO     [psi4.driver.driver:526] Return energy(): -152.05275839559246
+2026-02-04:18:34:57,876 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:57,880 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.797095456557813
+2026-02-04:18:34:58,219 INFO     [psi4.driver.driver:526] Return energy(): -152.05276964756558
+2026-02-04:18:34:58,245 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:58,249 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.46979242004193
+2026-02-04:18:34:58,582 INFO     [psi4.driver.driver:526] Return energy(): -152.052737739644
+2026-02-04:18:34:58,607 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:58,611 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.475780236530188
+2026-02-04:18:34:58,954 INFO     [psi4.driver.driver:526] Return energy(): -152.05271717737673
+2026-02-04:18:34:58,979 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:58,983 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.487432266096196
+2026-02-04:18:34:59,391 INFO     [psi4.driver.driver:526] Return energy(): -152.05265548072137
+2026-02-04:18:34:59,420 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:59,424 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.15451302275777
+2026-02-04:18:34:59,848 INFO     [psi4.driver.driver:526] Return energy(): -152.05266798530613
+2026-02-04:18:34:59,875 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:34:59,879 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=23.14760150481807
+2026-02-04:18:35:00,228 INFO     [psi4.driver.driver:526] Return energy(): -152.05270101136094
+2026-02-04:18:35:00,254 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:00,258 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.68806785682758
+2026-02-04:18:35:00,599 INFO     [psi4.driver.driver:526] Return energy(): -152.05270324093607
+2026-02-04:18:35:00,624 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:00,628 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.689393929240282
+2026-02-04:18:35:00,977 INFO     [psi4.driver.driver:526] Return energy(): -152.05268723521354
+2026-02-04:18:35:01,3 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:01,7 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.67913456051622
+2026-02-04:18:35:01,344 INFO     [psi4.driver.driver:526] Return energy(): -152.05273861288782
+2026-02-04:18:35:01,369 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:01,373 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.687472775264133
+2026-02-04:18:35:01,720 INFO     [psi4.driver.driver:526] Return energy(): -152.05270182132577
+2026-02-04:18:35:01,749 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:01,753 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.316043810939377
+2026-02-04:18:35:02,105 INFO     [psi4.driver.driver:526] Return energy(): -152.05269233422123
+2026-02-04:18:35:02,130 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:02,134 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.185032459400965
+2026-02-04:18:35:02,473 INFO     [psi4.driver.driver:526] Return energy(): -152.05268803671203
+2026-02-04:18:35:02,498 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:02,501 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.163467863128407
+2026-02-04:18:35:02,852 INFO     [psi4.driver.driver:526] Return energy(): -152.05268515606448
+2026-02-04:18:35:02,877 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:02,881 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.159298868800906
+2026-02-04:18:35:03,213 INFO     [psi4.driver.driver:526] Return energy(): -152.0526716860246
+2026-02-04:18:35:03,238 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:03,241 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.174533510551033
+2026-02-04:18:35:03,581 INFO     [psi4.driver.driver:526] Return energy(): -152.05272457240943
+2026-02-04:18:35:03,606 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:03,610 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.481394778414376
+2026-02-04:18:35:03,954 INFO     [psi4.driver.driver:526] Return energy(): -152.05274273574082
+2026-02-04:18:35:03,978 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:03,982 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.485349391656175
+2026-02-04:18:35:04,314 INFO     [psi4.driver.driver:526] Return energy(): -152.0527251690774
+2026-02-04:18:35:04,340 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:04,343 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.499100514721736
+2026-02-04:18:35:04,672 INFO     [psi4.driver.driver:526] Return energy(): -152.05267003196084
+2026-02-04:18:35:04,698 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:04,701 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.133499332555633
+2026-02-04:18:35:05,32 INFO     [psi4.driver.driver:526] Return energy(): -152.05266977731853
+2026-02-04:18:35:05,57 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:05,60 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.13136029941761
+2026-02-04:18:35:05,392 INFO     [psi4.driver.driver:526] Return energy(): -152.05264640234952
+2026-02-04:18:35:05,418 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:05,421 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.136830009712753
+2026-02-04:18:35:05,763 INFO     [psi4.driver.driver:526] Return energy(): -152.052652632743
+2026-02-04:18:35:05,790 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:05,794 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.277186345579135
+2026-02-04:18:35:06,127 INFO     [psi4.driver.driver:526] Return energy(): -152.05263706722664
+2026-02-04:18:35:06,152 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:06,156 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.179348696758534
+2026-02-04:18:35:06,488 INFO     [psi4.driver.driver:526] Return energy(): -152.05263583323915
+2026-02-04:18:35:06,514 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:06,517 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.17993870152732
+2026-02-04:18:35:06,855 INFO     [psi4.driver.driver:526] Return energy(): -152.05263280485806
+2026-02-04:18:35:06,881 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:06,884 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.16201405082712
+2026-02-04:18:35:07,208 INFO     [psi4.driver.driver:526] Return energy(): -152.05271448790847
+2026-02-04:18:35:07,234 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:07,237 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.718549208947497
+2026-02-04:18:35:07,569 INFO     [psi4.driver.driver:526] Return energy(): -152.05272143197783
+2026-02-04:18:35:07,644 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:07,647 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.717188304492826
+2026-02-04:18:35:07,984 INFO     [psi4.driver.driver:526] Return energy(): -152.05272805187334
+2026-02-04:18:35:08,9 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:08,13 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.191866217568933
+2026-02-04:18:35:08,343 INFO     [psi4.driver.driver:526] Return energy(): -152.05271115043163
+2026-02-04:18:35:08,369 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:08,372 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.183174938743523
+2026-02-04:18:35:08,707 INFO     [psi4.driver.driver:526] Return energy(): -152.0527053348758
+2026-02-04:18:35:08,733 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:08,736 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=22.181183936088175
+2026-02-04:18:35:09,61 INFO     [psi4.driver.driver:526] Return energy(): -152.05267207968245
+2026-02-04:18:35:09,86 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:09,90 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.97417877194435
+2026-02-04:18:35:09,414 INFO     [psi4.driver.driver:526] Return energy(): -152.05267248634863
+2026-02-04:18:35:09,440 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:09,443 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.969003987937576
+2026-02-04:18:35:09,773 INFO     [psi4.driver.driver:526] Return energy(): -152.0526769568488
+2026-02-04:18:35:09,799 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:09,802 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.98234492251634
+2026-02-04:18:35:10,141 INFO     [psi4.driver.driver:526] Return energy(): -152.0526612856268
+2026-02-04:18:35:10,168 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:10,171 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.80210265171758
+2026-02-04:18:35:10,500 INFO     [psi4.driver.driver:526] Return energy(): -152.05266298191964
+2026-02-04:18:35:10,527 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:10,531 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.81110484399313
+2026-02-04:18:35:10,868 INFO     [psi4.driver.driver:526] Return energy(): -152.05266246797765
+2026-02-04:18:35:10,893 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:10,897 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.81271078972512
+2026-02-04:18:35:11,232 INFO     [psi4.driver.driver:526] Return energy(): -152.0526562736857
+2026-02-04:18:35:11,258 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:11,262 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.80342968086311
+2026-02-04:18:35:11,595 INFO     [psi4.driver.driver:526] Return energy(): -152.0526919011074
+2026-02-04:18:35:11,621 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:11,624 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.81784297443356
+2026-02-04:18:35:11,961 INFO     [psi4.driver.driver:526] Return energy(): -152.05264154618493
+2026-02-04:18:35:11,987 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:11,990 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.833747776218097
+2026-02-04:18:35:12,321 INFO     [psi4.driver.driver:526] Return energy(): -152.0526407731062
+2026-02-04:18:35:12,347 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:12,350 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.98867628504184
+2026-02-04:18:35:12,683 INFO     [psi4.driver.driver:526] Return energy(): -152.0526363968673
+2026-02-04:18:35:12,708 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:12,712 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.989891901552088
+2026-02-04:18:35:13,41 INFO     [psi4.driver.driver:526] Return energy(): -152.05263717099086
+2026-02-04:18:35:13,66 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:13,70 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.980035099924965
+2026-02-04:18:35:13,402 INFO     [psi4.driver.driver:526] Return energy(): -152.05267773769503
+2026-02-04:18:35:13,428 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:13,431 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.928284896685174
+2026-02-04:18:35:13,765 INFO     [psi4.driver.driver:526] Return energy(): -152.05266725457005
+2026-02-04:18:35:13,791 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:13,794 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.581692645277695
+2026-02-04:18:35:14,131 INFO     [psi4.driver.driver:526] Return energy(): -152.05266813410697
+2026-02-04:18:35:14,156 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:14,160 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.577887755478486
+2026-02-04:18:35:14,494 INFO     [psi4.driver.driver:526] Return energy(): -152.05269266153633
+2026-02-04:18:35:14,520 INFO     [psi4.driver.task_planner:285] PLANNING Atomic:  keywords={'SCF__INTS_TOLERANCE': 1e-12, 'function_kwargs': {}}
+2026-02-04:18:35:14,523 INFO     [psi4.driver.driver:523] Compute energy(): method=hf, basis=cc-pvdz, molecule=default, nre=21.575938510140872
+2026-02-04:18:35:14,855 INFO     [psi4.driver.driver:526] Return energy(): -152.05268203784854

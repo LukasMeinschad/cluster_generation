@@ -1,4 +1,3 @@
- 
 import numpy as np 
 from multiprocessing import Pool, cpu_count
 from typing import List, Optional, Tuple, Dict, Any, Callable
@@ -339,7 +338,14 @@ class Psi4Worker:
         """
         molecule, config_dict = args
         config = Psi4Config(**config_dict)
-        with ScratchManager.temporary_scratch():
+        # create scratch for worker
+        scratch_dir = tempfile.mkdtemp(prefix=f"psi4_scratch_{os.getpid()}_")
+
+        try:
+            # set enviroment in this scratch
+            os.environ["PSI4_SCRATCH"] = scratch_dir
+            os.environ["PSI_SCRATCH"] = scratch_dir
+
             import psi4 
             psi4.core.set_output_file(os.devnull) # Supress output file 
 
@@ -380,8 +386,15 @@ class Psi4Worker:
                     basis_set = config.basis_set,
                     wall_time = wall_time
                 )
-            finally:
+
+        finally:
+            if os.path.exists(scratch_dir):
+                shutil.rmtree(scratch_dir, ignore_errors=True) # Clean up scratch directory after worker
+            try:
+                import psi4 
                 psi4.core.clean() # Clean up psi4 core after worker
+            except:
+                pass
 
 
     def optimization_and_frequency_worker(args: Tuple) -> CalculationResult:
@@ -791,7 +804,8 @@ class Psi4Calculator:
     def _execute_parallel(self,
                           args: List[Tuple],
                           worker_func: Callable,
-                            n_processes: Optional[int] = None) -> List[CalculationResult]:
+                            n_processes: Optional[int] = None,
+                            timeout: int = 300) -> List[CalculationResult]:  # 5 min timeout
         """
         Execute calculations in parallel using multiprocessing
         """
@@ -800,23 +814,39 @@ class Psi4Calculator:
 
         results = []
 
-        with Pool(processes = n_processes) as pool:
-            # Use progress bar with the most important info
+        with Pool(processes=n_processes) as pool:
             with tqdm(total = len(args),
                       desc="Processing molecules",
                       unit="mol",
                       bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]") as pbar:
 
-                for result in pool.imap_unordered(worker_func, args):
-                    results.append(result)
-                    pbar.update(1)
+                # Use imap with timeout instead of imap_unordered
+                async_results = [pool.apply_async(worker_func, (arg,)) for arg in args]
+            
+                for async_result in async_results:
+                    try:
+                        result = async_result.get(timeout=timeout)
+                        results.append(result)
+                        pbar.update(1)
 
-                    if self.verbose:
-                        if result.sucess:
-                            pbar.write(f"  ✓ {result.molecule.name}: {result.energy:.6f} Ha")
-                        else:
-                            pbar.write(f"  ✗ {result.molecule.name}: {result.error[:30]}")
-                
+                        if self.verbose:
+                            if result.sucess:
+                                pbar.write(f"  ✓ {result.molecule.name}: {result.energy:.6f} Ha")
+                            else:
+                                pbar.write(f"  ✗ {result.molecule.name}: {result.error[:30]}")
+                    except TimeoutError:
+                        pbar.write(f"  ✗ TIMEOUT after {timeout}s")
+                        results.append(CalculationResult(
+                            molecule=args[len(results)][0],
+                            calculation_type=CalculationType.GEOMETRY_OPTIMIZATION,
+                            sucess=False,
+                            error=f"Timeout after {timeout} seconds"
+                        ))
+                        pbar.update(1)
+                    except Exception as e:
+                        pbar.write(f"  ✗ ERROR: {str(e)[:50]}")
+                        pbar.update(1)
+            
         return results
 
     def _print_result(self, result: CalculationResult) -> None:

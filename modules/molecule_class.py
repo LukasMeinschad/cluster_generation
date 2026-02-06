@@ -627,6 +627,27 @@ class Molecule:
         return "\n".join(lines)
 
 
+    def get_average_covalent_radii(self) -> List[float]:
+        """   
+        Calculate an Average Covalent Radius for each atom based on its covalent radius
+        """
+        # Count the different elemnt types
+        element_counts = {}
+        for label in self.atom_labels:
+            element = self._remove_digits_from_label(label)
+            element_counts[element] = element_counts.get(element, 0) + 1
+        # Calculate average covalent radius for each element
+        average_radii = {}
+        for element, count in element_counts.items():
+            radius = self.get_covalent_radius(element)
+            average_radii[element] = radius / count
+        # Map back to atom labels        average_radii_list = []
+        for label in self.atom_labels:
+            element = self._remove_digits_from_label(label)
+            average_radii_list.append(average_radii[element])
+        return average_radii_list        
+
+
 class SubMolecule(Molecule):
     """Represents a fragment of a larger molecule"""
     

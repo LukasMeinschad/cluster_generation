@@ -576,6 +576,39 @@ class Transformation:
             print(f"Z: {ref_frame.z_axis}")
         return ref_frame
     
+    def set_reference_frame_from_indices(
+            self,
+            molecule: Union["Molecule", "Submolecule"],
+            atom_indices: List[int],
+            method: str = "centroid",
+            print_info: bool = False,
+        ) -> ReferenceFrame:
+        """   
+        Computes the Reference Frame based on a set of atom indices
+        """
+        if len(atom_indices) < 3:
+            raise ValueError("At least 3 atom indices must be provided to define a reference frame")
+        # Extract coordinates and masses of specified atoms
+        selected_coords = molecule.coordinates[atom_indices]
+        selected_masses = molecule.masses[atom_indices]
+        center = self.get_center_coords(selected_coords, masses=selected_masses, method=method)
+        # Center the total Molecule
+        molecule.coordinates -= center
+        selected_coords -= center
+        ref_frame = self.compute_reference_frame(
+            selected_coords,
+            selected_masses,
+            center=np.zeros(3) # Already centered
+        )
+        if print_info:
+            print(f"Molecule center (based on indices {atom_indices}): {center}")
+            print(f"Inertia tensor eigenvalues: {ref_frame.eigenvalues}")
+            print(f"Reference frame axes:")
+            print(f"X: {ref_frame.x_axis}")
+            print(f"Y: {ref_frame.y_axis}")
+            print(f"Z: {ref_frame.z_axis}")
+        return ref_frame
+    
     def set_reference_frame_from_atoms(
             self,
             molecule: Union["Molecule", "Submolecule"],

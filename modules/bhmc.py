@@ -5,13 +5,15 @@ from molecule_class import Molecule
 from transformations import Transformation, GeometryOps, Quaternion
 from psi4_interface import Psi4Calculator, Psi4Config
 import random
-
+from multiprocessing import Pool, cpu_count
+from functools import partial
+import matplotlib.pyplot as plt
 @dataclass
 class BHMCConfig:
     """   
     Configuration for the Basin Hopping Monte Carlo
     """
-    temperature: float = 300.0 # Temperature in Kelvin
+    temperature: float = 400.0 # Temperature in Kelvin
     max_steps: int = 10
     step_size: float = 0.2 # Step size for random perturbations
 
@@ -21,7 +23,91 @@ class BHMCConfig:
 
 
     # Steps for different Phases
-    phase_a_steps: int = 200 # Exploration Phase with Nonlocal Operators
+    phase_a_steps: int = 50 # Exploration Phase with Nonlocal Operators
+
+
+class SimulationBox:
+    """   
+    Defines a Simulation box to constrain the molecular structures during the BHMC algorithm.
+    Prevents unrealistic structures and ensure the algorithm explores a reasonable region of the PES.
+    """
+    def __init__(self,
+                 box_type: str = "sphere",
+                 radius: Optional[float] = None,
+                 box_dimensions: Optional[np.ndarray] = None,
+                 center: Optional[np.ndarray] = None):
+        """    
+        Initializes the Simulation Box
+
+        Args:
+            box_type: Type of box ("sphere" or "cube")
+            radius: Radius for spherical box (required if box_type is "sphere")
+            box_dimensions: Dimensions for cubic box (required if box_type is "cube")
+            center: Center of the box (default: origin)
+        """
+        self.box_type = box_type
+        self.radius = radius
+        self.box_dimensions = box_dimensions
+        self.center = center if center is not None else np.zeros(3)
+
+        if box_type == "sphere" and radius is None:
+            raise ValueError("Radius must be provided for spherical box.")
+        if box_type == "cube" and box_dimensions is None:
+            raise ValueError("Box dimensions must be provided for cubic box.")
+        
+    @staticmethod
+    def from_cov_radii_molecule(molecule: Molecule, padding: float = 2.0) -> 'SimulationBox':
+        """   
+        Generates a spherical simulation box based on the covalent radii of the atoms
+
+        R = 2 R_C * [1/2 + (3N/4π)^(1/3)] + padding
+
+        here R_C is the average covalent radius of the M chemical species R_c = (1/M) sum_alpha R_c^alpha
+        """
+        average_radii_list = molecule.get_average_covalent_radii()
+        average_radius = np.mean(average_radii_list)
+        n_atoms = len(molecule.coordinates)
+        radius = 2 * average_radius * (0.5 + ((3* n_atoms) / (4 * np.pi)) ** (1/3)) + padding
+        return SimulationBox(box_type="sphere", radius=radius, center=np.zeros(3))
+
+    def is_inside(self, coordinates: np.ndarray) -> bool:
+        """   
+        Checks if a given set of coordinates is inside the simulation box.
+        """
+        if self.box_type == "sphere":
+            distances = np.linalg.norm(coordinates - self.center, axis=1)
+            return np.all(distances <= self.radius)
+        elif self.box_type == "cube":
+            lower_bound = self.center - self.box_dimensions / 2
+            upper_bound = self.center + self.box_dimensions / 2
+            return np.all((coordinates >= lower_bound) & (coordinates <= upper_bound))
+        else:
+            raise ValueError(f"Invalid box type: {self.box_type}")
+
+
+    # Testing function
+    def plot_simulation_box(self):
+        """   
+        Plots the Simulation box and prints its parameters for verification.
+        """
+        if self.box_type == "sphere":
+            print(f"Simulation Box: Sphere with radius {self.radius:.2f} Å centered at {self.center}")
+            # Plotting the sphere
+            u = np.linspace(0, 2 * np.pi, 100)
+            v = np.linspace(0, np.pi, 100)
+            x = self.radius * np.outer(np.cos(u), np.sin(v)) + self.center[0]
+            y = self.radius * np.outer(np.sin(u), np.sin(v)) + self.center[1]
+            z = self.radius * np.outer(np.ones(np.size(u)), np.cos(v)) + self.center[2]
+
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            ax.plot_surface(x, y, z, color='b', alpha=0.3)
+            ax.set_title("Spherical Simulation Box")
+            plt.show()
+            plt.close()
+
+    
+
 
 
 class LocalOptimizer:
@@ -221,6 +307,90 @@ class NonLocalOperators:
 
         return np.array([x, y, z])
     
+    def mirror_operator(self, molecule: Molecule, submolecule_indices: List[List[int]]) -> Molecule:
+        """   
+        Mirror Operator that mirrors a submolecule across a random plane.
+
+        Algorithm:
+
+        1. Select fixed submolecule
+        2. Construct reference frame for fixed submolecule
+        3. Select one of the coordinate planes (XY, YZ, XZ)
+        4. Build Reflection Matrix H =  I - 2*n*n^T
+        5. Apply reflection to the other submolecule
+        """
+        mol_copy = molecule.copy()
+        if len(submolecule_indices) < 2:
+            raise ValueError("At least two submolecules are required for the mirror operator.")
+        # Select two different submolecules
+        ref_idx, mir_idx = random.sample(range(len(submolecule_indices)), 2)
+        ref_submol = submolecule_indices[ref_idx]
+        mir_submol = submolecule_indices[mir_idx]
+        # Construct reference frame for fixed submolecule
+        ref_frame = self.transformer.set_reference_frame_from_indices(mol_copy, atom_indices=ref_submol)
+
+        # Select random plane
+        plane = random.choice(["xy", "yz", "xz"])
+        if plane == "xy":
+            # Select xy plane from reference frame
+            n = ref_frame.z_axis
+        elif plane == "yz":
+            # Select yz plane from reference frame
+            n = ref_frame.x_axis
+        elif plane == "xz":
+            # Select xz plane from reference frame
+            n = ref_frame.y_axis
+        else:
+            raise ValueError(f"Invalid plane selection: {plane}")
+        n = n / np.linalg.norm(n)  # Ensure normal vector is unit length
+        # Build Reflection Matrix H = I - 2*n*n^T
+        H = np.eye(3) - 2 * np.outer(n, n)
+        # Apply reflection to the other submolecule
+        for atom_idx in mir_submol:
+            coord = mol_copy.coordinates[atom_idx] - ref_frame.origin
+            coord_reflected = coord @ H.T
+            mol_copy.coordinates[atom_idx] = coord_reflected + ref_frame.origin
+        return mol_copy
+    
+    def roto_reflection_operator(self, molecule: Molecule, submolecule_indices: List[List[int]]) -> Molecule:
+        """   
+        Roto-Reflection Operator that combines rotation and reflection for more complex nonlocal transformations.
+        """
+        mol_copy = molecule.copy()
+        if len(submolecule_indices) < 2:
+            raise ValueError("At least two submolecules are required for the roto-reflection operator.")
+        # Select two different submolecules
+        ref_idx, rot_ref_idx = random.sample(range(len(submolecule_indices)), 2)
+        ref_submol = submolecule_indices[ref_idx]
+        rot_ref_submol = submolecule_indices[rot_ref_idx]
+        # Construct reference frame for fixed submolecule
+        ref_frame = self.transformer.set_reference_frame_from_indices(mol_copy, atom_indices=ref_submol)
+        # Select random plane for reflection
+        plane = random.choice(["xy", "yz", "xz"])
+        if plane == "xy":
+            n = ref_frame.z_axis
+        elif plane == "yz":
+            n = ref_frame.x_axis
+        elif plane == "xz":
+            n = ref_frame.y_axis
+        else:
+            raise ValueError(f"Invalid plane selection: {plane}")
+        n = n / np.linalg.norm(n)
+        # Build Reflection Matrix H = I - 2*n*n^T
+        H = np.eye(3) - 2 * np.outer(n, n)
+        # Generate random rotation angle
+        angle_deg = np.random.uniform(0, 360)
+        angle_rad = np.radians(angle_deg)
+        # Get rotation matrix
+        R = GeometryOps.rotation_matrix_rodrigues(n, angle_rad)
+        # Combined Roto-Reflection Matrix
+        M = R @ H
+        # Apply combined transformation to the other submolecule
+        for atom_idx in rot_ref_submol:
+            coord = mol_copy.coordinates[atom_idx] - ref_frame.origin
+            coord_transformed = coord @ M.T
+            mol_copy.coordinates[atom_idx] = coord_transformed + ref_frame.origin
+        return mol_copy
 
 @dataclass
 class OperatorConfig:
@@ -242,6 +412,103 @@ class OperatorConfig:
         """
         return self.n_accepted / self.n_applied if self.n_applied > 0 else 0.0
     
+# ================================ Multiprocessing Worker for Independent BHMC Chains
+def phase_a_worker(args: Tuple) -> List[Tuple]:
+    """   
+    Worker function that runs an independent BHMC chain for Phase A.
+    Each worker generates n_structures by applying operators and evaluating energies.
+    
+    Args:
+        args: Tuple containing (initial_molecule, submolecule_indices, n_structures, 
+                                operator_configs, config_dict, worker_id)
+    
+    Returns:
+        List of (Molecule, energy) tuples for accepted structures
+    """
+    initial_molecule, submolecule_indices, n_structures, operator_configs, config_dict, worker_id = args
+    
+    # Initialize operators for this worker
+    nonlocal_ops = NonLocalOperators()
+    k_B = 8.617333262145e-5  # Boltzmann constant in eV/K
+    
+    # Recreate operator functions
+    operators = []
+    weights = []
+    for op_config in operator_configs:
+        if op_config['name'] == 'twist':
+            func = lambda m, s: nonlocal_ops.twist_operator(m, s)
+        elif op_config['name'] == 'large_displacement':
+            func = lambda m, s: nonlocal_ops.large_displacement(m, s)
+        elif op_config['name'] == 'mirror':
+            func = lambda m, s: nonlocal_ops.mirror_operator(m, s)
+        elif op_config['name'] == 'roto_reflection':
+            func = lambda m, s: nonlocal_ops.roto_reflection_operator(m, s)
+        else:
+            continue
+        operators.append({'name': op_config['name'], 'func': func})
+        weights.append(op_config['weight'])
+    
+    weights = np.array(weights)
+    weights /= weights.sum()
+    
+    # Initialize energy evaluator
+    evaluator = EnergyEvaluator(method=config_dict['method'], basis=config_dict['basis'])
+    
+    # Start BHMC chain
+    current_structure = initial_molecule.copy()
+    current_energy = evaluator.evaluate(current_structure)
+    
+    accepted_structures = []
+    n_accepted = 0
+    n_rejected = 0
+    
+    print(f"Worker {worker_id}: Starting with energy {current_energy:.6f} Hartree")
+    
+    for step in range(n_structures):
+        # Select operator
+        op_idx = np.random.choice(len(operators), p=weights)
+        operator = operators[op_idx]
+        
+        try:
+            # Apply operator
+            new_structure = operator['func'](current_structure, submolecule_indices)
+            
+            # Evaluate energy
+            new_energy = evaluator.evaluate(new_structure)
+            
+            # Metropolis acceptance
+            if new_energy < current_energy:
+                accept = True
+            else:
+                hartree_to_ev = 27.2114
+                delta_e_ev = (new_energy - current_energy) * hartree_to_ev
+                beta = 1.0 / (k_B * config_dict['temperature'])
+                prob = np.exp(-beta * delta_e_ev)
+                accept = random.random() < prob
+            
+            if accept:
+                current_structure = new_structure
+                current_energy = new_energy
+                accepted_structures.append((current_structure.copy(), current_energy))
+                n_accepted += 1
+            else:
+                n_rejected += 1
+                
+        except Exception as e:
+            print(f"Worker {worker_id} step {step}: Error with operator {operator['name']}: {e}")
+            n_rejected += 1
+            continue
+        
+        # Progress update every 50 steps
+        if (step + 1) % 50 == 0:
+            print(f"Worker {worker_id}: {step + 1}/{n_structures} steps, "
+                  f"Accepted: {n_accepted}, Rejected: {n_rejected}, "
+                  f"Current E: {current_energy:.6f} Ha")
+    
+    print(f"Worker {worker_id}: Completed. Total accepted: {n_accepted}/{n_structures}")
+    
+    return accepted_structures
+
 
 class MultiPhaseBHMC:
     """    
@@ -291,7 +558,19 @@ class MultiPhaseBHMC:
                 operator_func=lambda m,s: self.nonlocal_ops.large_displacement(m, s),
                 operator_type="nonlocal",
                 weight=1.0 
-            ),  
+            ), 
+            OperatorConfig(
+                name="mirror",
+                operator_func=lambda m,s: self.nonlocal_ops.mirror_operator(m, s),
+                operator_type="nonlocal",
+                weight=1.0
+            ),
+            OperatorConfig(
+                name="roto_reflection",
+                operator_func=lambda m,s: self.nonlocal_ops.roto_reflection_operator(m, s),
+                operator_type="nonlocal",
+                weight=0.5
+            )
         ]
 
 
@@ -310,247 +589,92 @@ class MultiPhaseBHMC:
         return accept
     
 
-    def run_phase_a(self, initial_molecule: Molecule, submolecule_indices: List[List[int]]):
+    def run_phase_a(self, 
+                    initial_molecule: Molecule,
+                    submolecule_indices: List[List[int]],
+                    n_structures_per_worker: int = 300,
+                    n_processes: int = 10):
         """   
-        Runs Phase A the Global Exploration Phase using Nonlocal Operators without Local Optimization 
-        """
-        nonlocal_ops = [op for op in self._initialize_operators() if op.operator_type == "nonlocal"]
-        weights = np.array([op.weight for op in nonlocal_ops])
-        weights /= weights.sum()  # Normalize to probabilities
-        current_sturcture = initial_molecule.copy()
-        current_energy = self.energy_evaluator.evaluate(current_sturcture)
+        Runs Phase A with parallel independent BHMC chains.
+        Each worker runs n_structures_per_worker steps independently.
         
-        for step in range(self.config.phase_a_steps):
-            print(f"Phase A - Step {step + 1}/{self.config.phase_a_steps}")
-
-            # Select operator based on weights
-            operator = np.random.choice(nonlocal_ops, p=weights)
-            print(f"  Applying Operator: {operator.name}")
-            try:
-                new_structure = operator.operator_func(current_sturcture, submolecule_indices)
-            except Exception as e:
-                print(f"  Operator {operator.name} failed with error: {e}")
-                self.n_rejected += 1
-                continue
-            new_energy = self.energy_evaluator.evaluate(new_structure)
-            print(f"  New Energy: {new_energy:.6f} Hartree, Current Energy: {current_energy:.6f} Hartree")
-            
-            operator.n_applied += 1
-
-            accept = self.metropolis_accept(new_energy, current_energy)
-            if accept:
-                print("  Move accepted.")
-                current_sturcture = new_structure
-                current_energy = new_energy
-                operator.n_accepted += 1
-                self.phase_a_structures.append((current_sturcture.copy(), current_energy))
-            else:
-                print("  Move rejected.")
-                self.n_rejected += 1
-            
-        return self.phase_a_structures
-
-
-
-
-class BHMC:
-    """"   
-    Basin Hopping Monte Carlo for Global Optimization of Molecular Geometries
-    """
-    def __init__(self, config: BHMCConfig):
-        """   
-        Initializes the BHMC with the given configuration.
-        """
-        self.config = config
-        self.optimizer = LocalOptimizer(method=config.method, basis=config.basis, verbose=False)
-        self.local_ops = LocalOperators()
-        self.nonlocal_ops = NonLocalOperators()
-
-        self.k_B = 8.617333262145e-5  # Boltzmann constant in eV/K
-
-        # Statistics
-        self.n_accepted = 0
-        self.n_rejected = 0
-        self.energy_history = []
-        self.best_energy = np.inf 
-        self.best_structure = None
-        self.current_structure = None
-        self.current_energy = None
-        self.trajectory = []
-
-        # Initialize Psi4 Calculator for energy evaluations
-        psi4_config = Psi4Config(method=config.method, basis_set=config.basis)
-        self.calculator = Psi4Calculator(psi4_config, verbose=False)
-
-    def metropolis_accept(self, energy_new: float, energy_old: float) -> bool:
-        """   
-        Metropolis acceptance criterion
-
         Args:
-            energy_new: Energy of the new structure (Hartree)
-            energy_old: Energy of the old structure (Hartree)
-
+            initial_molecule: Starting molecular structure
+            submolecule_indices: List of submolecule atom indices
+            n_structures_per_worker: Number of BHMC steps per worker (default: 300)
+            n_processes: Number of parallel workers (default: 10)
+            
         Returns:
-            True if accepted, False otherwise
+            List of all accepted (Molecule, energy) tuples from all workers
         """
-        if energy_new < energy_old:
-            return True
+        print(f"\n{'='*60}")
+        print(f"Phase A: Global Exploration with Parallel BHMC Chains")
+        print(f"{'='*60}")
+        print(f"Number of workers: {n_processes}")
+        print(f"Steps per worker: {n_structures_per_worker}")
+        print(f"Total structures to generate: {n_processes * n_structures_per_worker}")
+        print(f"Method: {self.config.method}/{self.config.basis}")
+        print(f"Temperature: {self.config.temperature} K")
+        print(f"{'='*60}\n")
         
-        hartree_to_ev = 27.2114
-        delta_e_ev = (energy_new - energy_old) * hartree_to_ev
-
-        beta = 1.0 / (self.k_B * self.config.temperature)
-        prob = np.exp(-beta * delta_e_ev)
+        # Get operator configurations
+        nonlocal_ops = [op for op in self._initialize_operators() if op.operator_type == "nonlocal"]
+        operator_configs = [
+            {'name': op.name, 'weight': op.weight}
+            for op in nonlocal_ops
+        ]
         
-        accept = random.random() < prob
+        # Configuration dictionary
+        config_dict = {
+            'method': self.config.method,
+            'basis': self.config.basis,
+            'temperature': self.config.temperature
+        }
         
-        print(f"  Metropolis: ΔE = {delta_e_ev:.4f} eV, prob = {prob:.4f}, accept = {accept}")
+        # Prepare arguments for each worker
+        args_list = [
+            (
+                initial_molecule,
+                submolecule_indices,
+                n_structures_per_worker,
+                operator_configs,
+                config_dict,
+                worker_id
+            )
+            for worker_id in range(n_processes)
+        ]
         
-        return accept
-    
-    def run(self, initial_molecule: Molecule, submolecule_indices: List[List[int]], 
-            operator_type: str = "local") -> Dict:
-        """   
-        Runs the BHMC algorithm starting from the initial molecule.
-
-        Following Algorithm:
-
-        1. Local Optimization of the Initial Structure
-        2. Iterative BHMC Steps
-            a. Apply Random Perturbation
-            b. Local Optimization
-            c. Metropolis Acceptance Criterion
-        """
-        self.current_structure, self.current_energy = self.optimizer.optimize(initial_molecule)
-        print(self.current_structure.atom_labels)
-        if self.current_structure is None or self.current_energy is None:
-            raise RuntimeError("Initial local optimization failed.")
-        self.best_energy = self.current_energy
-        self.best_structure = self.current_structure.copy()
-        self.energy_history.append(self.current_energy)
-        self.trajectory.append(self.current_structure.copy())
-        print(f"Initial Energy: {self.current_energy:.6f} Hartree")
-
-        for step in range(self.config.max_steps):
-            print(f"\nBHMC Step {step + 1}/{self.config.max_steps}")
-
-            # TODO implement different operators
-            if operator_type == "local":
-                new_structure = self.local_ops.random_displacement_submolecule(
-                    self.current_structure, submolecule_indices, delta_range=(0.1, 0.3))
-            elif operator_type == "nonlocal":
-                new_structure = self.nonlocal_ops.twist_operator(
-                    self.current_structure, submolecule_indices, rotation_angle_range=(0, 360))
-            else:
-                raise ValueError(f"Unknown operator type: {operator_type}")
-            # Local Optimization
-            optimized_structure, optimized_energy = self.optimizer.optimize(new_structure)
-            if optimized_structure is None or optimized_energy is None:
-                print("  Local optimization failed, rejecting move.")
-                self.n_rejected += 1
-                self.energy_history.append(self.current_energy)
-                self.trajectory.append(self.current_structure.copy())
-                continue
-            print(f"  Optimized Energy: {optimized_energy:.6f} Hartree")
-            # Metropolis Acceptance Criterion
-            if self.metropolis_accept(optimized_energy, self.current_energy):
-                self.current_structure = optimized_structure
-                self.current_energy = optimized_energy
-                self.n_accepted += 1
-                print("  Move accepted.")
-                # Update best structure
-                if optimized_energy < self.best_energy:
-                    self.best_energy = optimized_energy
-                    self.best_structure = optimized_structure.copy()
-            else:
-                self.n_rejected += 1
-                print("  Move rejected.")
-            self.energy_history.append(self.current_energy)
-            self.trajectory.append(self.current_structure.copy())
-        print(f"\nBHMC Completed: Accepted {self.n_accepted}, Rejected {self.n_rejected}")
-        return self.trajectory, self.energy_history, self.trajectory
-    
-
-class BHMCAnalyzer:
-    """  
-    Helper Class for Analyzing the BHMC Results
-    """
-    def __init__(self):
-        pass 
-
-    def plot_energy_distribution_phase_a(self, phase_a_structures: List[Tuple[Molecule, float]], filename: str = "figures/phase_a_energy_distribution.png"):
-        """
-        Plots the energy distribution of structures collected in Phase A.
-        """
-        import matplotlib.pyplot as plt
-
-        energies = [energy for _, energy in phase_a_structures]
+        # Run parallel workers
+        print("Starting parallel BHMC chains...\n")
+        all_accepted_structures = []
         
-        plt.figure(figsize=(10, 6))
-        plt.hist(energies, bins=20, color='skyblue', edgecolor='black')
-        plt.xlabel("Energy (Hartree)", fontsize=12)
-        plt.ylabel("Frequency", fontsize=12)
-        plt.title("Energy Distribution of Phase A Structures", fontsize=14)
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-        plt.show()
-
-
-# =============================== TEST Functions ==================================
-
-def test_twist_operator():
-    """   
-    Test function for the twist operator makes a simple molecule and applies is 50 times and 
-    writes a trajectory file.
-    """
-    h2o_molecule=""" 
-    6
-    H2O Nonopt
-    O     -4.651077    1.267697   -0.000000
-    H     -5.057317    1.928988   -0.547872
-    H     -4.969101    1.355490    0.890872
-    O     -6.998837    4.503183    0.000001
-    H     -7.632732    4.320290   -0.683540
-    H     -7.009572    5.431464    0.201689
-    """
-    molecule = Molecule.from_xyz(h2o_molecule, name="h2o_dimer")
-    molecule.compute_bonds()
-    submolecules = molecule.fragment_by_connectivity()
-    submol_indices = [submol.get_index_in_parent() for submol in submolecules]
-    NonlocalOperators = NonLocalOperators()
-    traj = []
-    for i in range(50):
-        twisted_mol = NonlocalOperators.twist_operator(molecule=molecule, submolecule_indices=submol_indices)
-        traj.append(twisted_mol)
-    with open("twist_operator_test.xyz", "w") as file:
-        for mol in traj:
-            file.write(mol.to_xyz_string())
-            file.write("\n")
-
-def test_random_displacement_submolecule():
-    """   
-    Test function for random displacement of submolecule.
-    """
-    h2o_molecule=""" 
-    6
-    H2O Nonopt
-    O     -4.651077    1.267697   -0.000000
-    H     -5.057317    1.928988   -0.547872
-    H     -4.969101    1.355490    0.890872
-    O     -6.998837    4.503183    0.000001
-    H     -7.632732    4.320290   -0.683540
-    H     -7.009572    5.431464    0.201689
-    """
-    molecule = Molecule.from_xyz(h2o_molecule, name="h2o_dimer")
-    molecule.compute_bonds()
-    submolecules = molecule.fragment_by_connectivity()
-    submol_indices = [submol.get_index_in_parent() for submol in submolecules]
-    local_ops = LocalOperators()
-    traj = []
-    for i in range(50):
-        displaced_mol = local_ops.random_displacement_submolecule(molecule=molecule, submolecule_indices=submol_indices)
-        traj.append(displaced_mol)
-    with open("random_displacement_submolecule_test.xyz", "w") as file:
-        for mol in traj:
-            file.write(mol.to_xyz_string())
-            file.write("\n")
+        with Pool(processes=n_processes) as pool:
+            results = pool.map(phase_a_worker, args_list)
+        
+        # Collect all results
+        for worker_id, worker_results in enumerate(results):
+            print(f"Worker {worker_id}: Collected {len(worker_results)} accepted structures")
+            all_accepted_structures.extend(worker_results)
+        
+        self.phase_a_structures = all_accepted_structures
+        
+        # Statistics
+        total_generated = n_processes * n_structures_per_worker
+        total_accepted = len(all_accepted_structures)
+        
+        print(f"\n{'='*60}")
+        print(f"Phase A Complete")
+        print(f"{'='*60}")
+        print(f"Total structures generated: {total_generated}")
+        print(f"Total structures accepted: {total_accepted}")
+        print(f"Overall acceptance rate: {total_accepted/total_generated*100:.2f}%")
+        
+        if all_accepted_structures:
+            energies = [e for _, e in all_accepted_structures]
+            print(f"Energy range: [{min(energies):.6f}, {max(energies):.6f}] Hartree")
+            print(f"Mean energy: {np.mean(energies):.6f} Hartree")
+            print(f"Std energy: {np.std(energies):.6f} Hartree")
+        
+        print(f"{'='*60}\n")
+        
+        return self.phase_a_structures

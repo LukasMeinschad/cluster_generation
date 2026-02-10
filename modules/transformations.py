@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 import time
 import matplotlib.pyplot as plt
+import random
+
 
 @dataclass 
 class ReferenceFrame:
@@ -1051,3 +1053,299 @@ class Transformation:
         # Save in the figues path
         plt.savefig("figures/rotation_method_speed_comparison.png")
         plt.close()
+
+class MolecularOperators:
+    """   
+    Base class for molecular geometry operators.
+    Uses Transformation and GeometryOps for efficient operations
+    """
+    def __init__(self, simulation_box: Optional["SimulationBox"] = None):
+        """
+        Initialize Molecular Operators
+
+        Args:
+            simulation_box: Optional SimulationBox object to constrain operations
+        """
+        self.simulation_box = simulation_box
+        self.transformer = Transformation()
+
+    def _apply_box_constraints(self, molecule: "Molecule", original: "Molecule") -> "Molecule":
+        """
+        Apply simulation box constraints to the molecule after transformation
+
+        Args:
+            molecule: Transformed Molecule object
+            original: Original Molecule object before transformation (returned if constraints violated)
+        """ 
+        if self.simulation_box is not None:
+            new_coords, is_valid = self.simulation_box.apply_boundary_conditions(
+                molecule.coordinates, method="reflect"
+            )
+            if not is_valid:
+                return original
+            molecule.coordinates = new_coords
+        return molecule
+
+    @staticmethod
+    def _random_unit_vetor() -> np.ndarray:
+        """   
+        Generates a random unit vector on the unit sphere
+        Uses spherical coordinates for uniform distribution
+
+        Returns:
+            Random unit vector (3,)
+        """
+        phi = np.random.uniform(0, 2 * np.pi)
+        costheta = np.random.uniform(-1, 1)
+        theta = np.arccos(costheta)
+
+        x = np.sin(theta) * np.cos(phi)
+        y = np.sin(theta) * np.sin(phi)
+        z = np.cos(theta)
+
+        return np.array([x, y, z])
+
+    @staticmethod
+    def _select_random_submolecule(submolecule_indices: List[List[int]]) -> List[int]:
+        """   
+        selects a random submolecule from the list
+        """
+        return random.choice(submolecule_indices)
+    
+    @staticmethod 
+    def _select_two_submolecules(submolecule_indices: List[List[int]]) -> Tuple[List[int], List[int]]:
+        """   
+        Selects two random submolecules from the list
+        """
+        if len(submolecule_indices) < 2:
+            raise ValueError("At least two submolecules must be provided to select two")
+        return random.sample(submolecule_indices, 2)
+
+class LocalOperators(MolecularOperators):
+    """   
+    Local Operators for small perturbations of the molecule
+    """ 
+    def random_displacement_submolecule(self,
+                                        molecule: "Molecule",
+                                        submolecule_indices: List[List[int]],
+                                        delta_range: Tuple[float, float] = (-0.3, 0.3)) -> "Molecule":
+        """  
+        Randomly displaces a submolecule by a random vector
+
+        Args:
+            molecule: Molecule object to modify
+            submolecule_indices: List of lists of atom indices defining submolecules
+            delta_range: Range for random displacement in Angstrom (default is (-0.3, 0.3))
+        """
+        mol_copy = molecule.copy()
+        n_atoms = len(mol_copy.coordinates)
+
+        # select random submolecule
+        submol_idx = self._select_random_submolecule(submolecule_indices)
+        
+        # Validate
+        if any(idx >= n_atoms for idx in submol_idx):
+            raise ValueError("Submolecule indices must be within the range of molecule atoms")
+        
+        # Generate random displacement vector
+        delta_value = random.uniform(*delta_range)
+        direction = self._random_unit_vetor()
+        displacement = direction * delta_value
+        # Apply displacement to selected submolecule atoms
+        mol_copy.coordinates[submol_idx] += displacement
+        return self._apply_box_constraints(mol_copy, molecule)
+    
+    def random_rotation_submolecule(self,
+                                    molecule: "Molecule",
+                                    submolecule_indices: List[List[int]],
+                                    angle_range: Tuple[float, float] = (-30, 30)) -> "Molecule":
+        """ 
+        Randomly rotate a submolecule around its center of mass
+        Uses fast rotation matrix from GeometryOps
+
+        Args:
+            molecule: Input molecule
+            submolecule_indices: List of submolecule index lists
+            angle_range: Range for rotation angle in degrees
+
+        Returns:
+            Modified Molecule
+        """
+        mol_copy = molecule.copy()
+
+        # Select random submolecule
+        submol_idx = self._select_random_submolecule(submolecule_indices)
+
+        # Calculate COM
+        submol_coords = mol_copy.coordinates[submol_idx]
+        submol_masses = mol_copy.masses[submol_idx]
+        center = GeometryOps.center_of_mass(submol_coords, submol_masses)
+
+        angle = np.radians(random.uniform(*angle_range))
+        axis = self._random_unit_vetor()
+
+        R = GeometryOps.rotation_matrix_rodrigues(axis, angle)
+        # Rotate Submolecule around its center
+        coords_centered = mol_copy.coordinates[submol_idx] - center
+        coords_rotated = coords_centered @ R.T
+        mol_copy.coordinates[submol_idx] = coords_rotated + center
+        return self._apply_box_constraints(mol_copy, molecule)
+    
+class NonLocalOperators(MolecularOperators):
+    """   
+    Non-local operators for large structural perturbations of the molecule
+    These operators make significant changes to explore different basins of the PES
+    """
+
+    def twist_operator(self,
+                       molecule: "Molecule",
+                       submolecule_indices: List[List[int]],
+                       rotation_angle_range: Tuple[float, float] = (0, 360)) -> "Molecule":
+        """
+        Twist operator: Rotate one submolecule relative to others
+        Args:
+            molecule: Input Molecule object
+            submolecule_indices: List of lists of atom indices defining submolecules
+            rotation_angle_range: Range for random rotation angle in degrees
+        """ 
+        mol_copy = molecule.copy()
+
+        ref_submol, rot_submol = self._select_two_submolecules(submolecule_indices)
+
+        # Calculate reference_frame
+        ref_coords = mol_copy.coordinates[ref_submol]
+        ref_masses = mol_copy.masses[ref_submol]
+        ref_center = GeometryOps.center_of_mass(ref_coords, ref_masses)
+
+        angle = np.radians(random.uniform(*rotation_angle_range))
+        axis = self._random_unit_vetor()
+        R = GeometryOps.rotation_matrix_rodrigues(axis, angle)
+
+        coords_centered = mol_copy.coordinates[rot_submol] - ref_center
+        coords_rotated = coords_centered @ R.T
+        mol_copy.coordinates[rot_submol] = coords_rotated + ref_center
+        return self._apply_box_constraints(mol_copy, molecule)
+    
+    def large_displacement(self,
+                           molecule: "Molecule",
+                           submolecule_indices: List[List[int]],
+                           displacement_range: Tuple[float, float] = (1.0, 3.0)) -> "Molecule":
+        """   
+        Large displacement operation
+
+        Args:
+            molecule: Input Molecule object
+            submolecule_indices: List of lists of atom indices defining submolecules
+            displacement_range: Range for random displacement in Angstrom (default is (1.0, 3.0))
+        """
+        mol_copy = molecule.copy()
+
+        # Select random submolecule
+        submol_idx = self._select_random_submolecule(submolecule_indices)
+
+        magnitude = random.uniform(*displacement_range)
+        direction = self._random_unit_vetor()
+        displacement = direction * magnitude
+
+        mol_copy.coordinates[submol_idx] += displacement
+        return self._apply_box_constraints(mol_copy, molecule)
+    
+    def mirror_operator(self,
+                        molecule: "Molecule",
+                        submolecule_indices: List[List[int]]) -> "Molecule":
+        """  
+        Mirror operator: Relfect submolecule through a plane
+        Uses reference frame constrution and reflection matrix
+
+        Algorithm:
+        1. Construct reference frame from the submolecule to mirror
+        2. Select coordinate plane (XY, YZ or XZ) 
+        3. Build Reflection matrix H = I - 2 * n * n^T 
+        4. Apply reflection to the submolecule coordinates
+
+        Args:
+            molecule: Input Molecule object
+            submolecule_indices: List of lists of atom indices defining submolecules
+        """
+        mol_copy = molecule.copy()
+
+        ref_submol, mir_submol = self._select_two_submolecules(submolecule_indices)
+
+        # Construct reference frame from the submolecule to mirror
+        ref_frame = self.transformer.set_reference_frame_from_indices(
+            mol_copy,
+            atom_indices=ref_submol,
+        )
+        plane = np.random.choice(['XY', 'YZ', 'XZ'])
+        if plane == 'XY':
+            normal_vector = ref_frame.z_axis
+        elif plane == 'YZ':
+            normal_vector = ref_frame.x_axis
+        else: # XZ
+            normal_vector = ref_frame.y_axis
+        n = normal_vector / np.linalg.norm(normal_vector)
+        H = np.eye(3) - 2 * np.outer(n, n)
+        coords_centered = mol_copy.coordinates[mir_submol] - ref_frame.origin
+        coords_reflected = coords_centered @ H.T
+        mol_copy.coordinates[mir_submol] = coords_reflected + ref_frame.origin
+        return self._apply_box_constraints(mol_copy, molecule)
+    
+    def roto_reflection_operator(self,
+                                 molecule: "Molecule",
+                                 submolecule_indices: List[List[int]],
+                                 angle_range: Tuple[float, float] = (0, 360)) -> "Molecule":
+        """  
+        Roto-reflection operator: Combined rotation and reflection
+        
+        Args:
+            molecule: Input Molecule object
+            submolecule_indices: List of lists of atom indices defining submolecules
+            angle_range: Range for random rotation angle in degrees
+        """
+        mol_copy = molecule.copy()
+        ref_submol, rot_ref_submol = self._select_two_submolecules(submolecule_indices)
+        ref_frame = self.transformer.set_reference_frame_from_indices(
+            mol_copy,
+            atom_indices=ref_submol,
+        )
+        plane = np.random.choice(['XY', 'YZ', 'XZ'])
+        if plane == 'XY':
+            normal_vector = ref_frame.z_axis
+        elif plane == 'YZ':
+            normal_vector = ref_frame.x_axis 
+        else: # XZ
+            normal_vector = ref_frame.y_axis
+        n = normal_vector / np.linalg.norm(normal_vector)
+        H = np.eye(3) - 2 * np.outer(n, n)
+
+        angle = np.radians(random.uniform(*angle_range))
+        R = GeometryOps.rotation_matrix_rodrigues(n, angle)
+        M = R @ H
+        coords_centered = mol_copy.coordinates[rot_ref_submol] - ref_frame.origin
+        coords_transformed = coords_centered @ M.T
+        mol_copy.coordinates[rot_ref_submol] = coords_transformed + ref_frame.origin
+        return self._apply_box_constraints(mol_copy, molecule)
+    
+    def exchange_operator(self,
+                          molecule: "Molecule",
+                          submolecule_indices: List[List[int]]) -> "Molecule":
+        """  
+        Exchange Operator: Swaps the positions of two submolecules
+        Uses vectorized center of mass calculation
+        """
+        mol_copy = molecule.copy()
+        submol_1, submol_2 = self._select_two_submolecules(submolecule_indices)
+        coords_1 = mol_copy.coordinates[submol_1]
+        masses_1 = mol_copy.masses[submol_1]
+        center_1 = GeometryOps.center_of_mass(coords_1, masses_1)
+        coords_2 = mol_copy.coordinates[submol_2]
+        masses_2 = mol_copy.masses[submol_2]
+        center_2 = GeometryOps.center_of_mass(coords_2, masses_2)
+        translation_1 = center_2 - center_1
+        translation_2 = center_1 - center_2
+        mol_copy.coordinates[submol_1] += translation_1
+        mol_copy.coordinates[submol_2] += translation_2
+        return self._apply_box_constraints(mol_copy, molecule)
+    
+
+        

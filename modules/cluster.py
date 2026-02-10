@@ -1,158 +1,454 @@
+"""  
+Module for various clustering methods and analysis of the sampled molecular configurations
+"""
 import numpy as np
-from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering
-from scipy.cluster.hierarchy import dendrogram, linkage
-from sklearn.preprocessing import StandardScaler   
-from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
-from typing import List, Tuple, Optional, Dict, Any
-from multiprocessing import Pool, cpu_count
-from functools import partial
-import time
+from typing import List, Tuple, Optional, Dict, Any, Union
+from dataclasses import dataclass, field
+from collections import defaultdict
+import seaborn as sns
+from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
+from scipy.cluster.hierarchy import dendrogram, linkage
+from scipy.spatial.distance import cdist
+from sklearn.decomposition import PCA
 
-from symmetry import SymmetryAnalyzer
 
-class USRDescriptor:
+from molecule_class import Molecule
+from transformations import GeometryOps
+
+
+@dataclass
+class StructureData:
     """  
-    Class to compute the Ultra-fast Shape Recognition (USR) descriptor for a molecule
-
-    Paper : https://doi.org/10.1098/rspa.2007.1823
+    Container for Molecular structure and associated properties
     """
-    def __init__(self):
-        pass 
+    molecule: Molecule
+    energy: float
+    phase: str = "unknown"
+    step: int = -1
+    worker_id: int = -1
+    accepted: bool = True
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def calculate_centroid(self,molecule) -> np.ndarray:
-        """  
-        Calculates the geometric center of the molecule
+class BHMCAnalyzer:
+    """   
+    Analyzer for the Basin Hopping Monte Carlo results
+    """
+    def __init__(self, name: str = "BHMC_Analysis"):
+        self.name = name 
+        self.structures: List[StructureData] = []
+        self.phases: Dict[str, List[StructureData]] = defaultdict(list)
 
-        Args:
-            molecule: Molecule object with coordinates attribute
-
-        Returns:
-            np.ndarray: Centroid coordinates
-        """
-        return np.mean(molecule.coordinates, axis=0)
-    
-    def euclidean_distance(self, coord1: np.ndarray, coord2: np.ndarray) -> float:
+    def add_structure(self,
+                      molecule: Molecule,
+                      energy: float, 
+                      phase: str = "unknown",
+                      **kwargs):
         """   
-        Computes the Euclidean Distance between two 3D coords
+        Add a structure to the analysis
 
         Args:
-            coord1 (np.ndarray): First coordinate
-            coord2 (np.ndarray): Second coordinate
+            molecule: Molecule object representing the structure
+            energy: Energy of the structure
+            phase: Phase of the BHMC process (e.g., "phase_a", "phase_b", "phase_c")
+            **kwargs: Additional properties (e.g., step, worker_id, accepted)
+        """
+        structure_data = StructureData(
+            molecule=molecule,
+            energy=energy,
+            phase=phase,
+            metadata=kwargs
+        )
+        self.structures.append(structure_data)
+        self.phases[phase].append(structure_data)
+
+    def add_structures_batch(self,
+                             structures: List[Tuple[Molecule, float]],
+                             phase: str = "unknown"):
+        """   
+        Add multiple structures at once
+
+        Args:
+            structures: List of tuples containing (Molecule, energy)
+            phase: Phase of the BHMC process for all structures
+        """
+        for mol, energy in structures:
+            self.add_structure(mol, energy, phase=phase)
+
+    # ==================== Energy Statistics =====================
+    def get_energy_statistics(self, phase: Optional[str] = None) -> Dict[str, float]:
+        """   
+        Compute energy statistics.
+        
+        Args:
+            phase: Specified phase to compute statistics for. If None, computes for all structures.
 
         Returns:
-            float: Euclidean distance
+            Dictionary with Statistics
         """
-        return np.sqrt(np.sum((coord1 - coord2) ** 2))
+        if phase:
+            energies = [s.energy for s in self.phases[phase]]
+        else:
+            energies = [s.energy for s in self.structures]
+
+        if not energies:
+            return {}
+        
+        energies = np.array(energies)
+        return {
+            "n_structures": len(energies),
+            "min": np.min(energies),
+            "max": np.max(energies),
+            "mean": np.mean(energies),
+            "median": np.median(energies),
+            "std": np.std(energies),
+            "q25": np.percentile(energies, 25),
+            "q75": np.percentile(energies, 75),
+            "iqr": np.percentile(energies, 75) - np.percentile(energies, 25)
+        }
     
-    def find_closest_and_furthest_to_centroid(self, molecule) -> Tuple[int, int]:
-        """  
-        Finds the atoms closest and furthest from the centroid.
-
-        Args:
-            molecule: Molecule object with coordinates attribute
-        Returns:
-            Tuple[int, int]: Indices of closest and furthest atoms
-        """
-        centroid = self.calculate_centroid(molecule)
-        distances = []
-        for i, coord in enumerate(molecule.coordinates):
-            dist = self.euclidean_distance(coord, centroid)
-            distances.append((i, dist))
-        distances.sort(key=lambda x: x[1])
-
-        # Find closest and furthest
-        closest_index = distances[0][0]
-        furthest_index = distances[-1][0]
-        return closest_index, furthest_index
-    
-    def find_furthest_from_atom(self, molecule, atom_idx: int) -> int:
-        """
-        Find the atom furthest from a specified atom
-
-        Args:
-            molecule: Molecule object with coordinates attribute
-            atom_idx (int): Index of the reference atom
+    def compute_rmsd_matrix(self, phase: Optional[str] = None) -> np.ndarray:
+        """   
+        Compute pairwise RMSD Matrix for the structures in the specified phase
         
         Returns:
-            int: Index of the furthest atom
+            RMSD Matrix (n_structures x n_structures)
         """
-        ref_coords = molecule.coordinates[atom_idx]
-        max_distance = 0
-        furthest_index = -1
-        for i, coord in enumerate(molecule.coordinates):
-            dist = self.euclidean_distance(coord, ref_coords)
-            if dist > max_distance:
-                max_distance = dist
-                furthest_index = i
-        return furthest_index
-    
-    def calculate_moments_to_point(self, molecule, reference_point: np.ndarray) -> Tuple[float, float, float]:
+        if phase:
+            structures = self.phase[phase]
+        else:
+            structures = self.structures
+        n = len(structures)
+        rmsd_matrix = np.zeros((n, n))
+        for i in range(n):
+            for j in range(i+1, n):
+                rmsd = self._calculate_rmsd(structures[i].molecule.coordinates, structures[j].molecule.coordinates)
+                rmsd_matrix[i, j] = rmsd
+                rmsd_matrix[j, i] = rmsd  # Symmetric matrix
+        return rmsd_matrix
+
+
+    @staticmethod 
+    def _calculate_rmsd(coords1: np.ndarray, coords2: np.ndarray) -> float:
         """   
-        Calculates the first three moments (mean, variance and skewness) of distances to a reference point
+        Calculate RMSD between two sets of coordinates
+        """
+        # Center the coordinates
+        coords1_centered = coords1 - np.mean(coords1, axis=0)
+        coords2_centered = coords2 - np.mean(coords2, axis=0)
+        diff = coords1_centered - coords2_centered
+        rsmd = np.sqrt(np.mean(np.sum(diff**2, axis=1)))
+        return rsmd
+
+    def plot_rmsd_matrix(self, phase: Optional[str] = None):
+        """   
+        Plot the RMSD matrix as a heatmap
+        """
+        rmsd_matrix = self.compute_rmsd_matrix(phase=phase)
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(rmsd_matrix, cmap='viridis')
+        plt.title(f'RMSD Matrix Heatmap - Phase: {phase if phase else "All"}')
+        plt.xlabel('Structure Index')
+        plt.ylabel('Structure Index')
+        plt.savefig(f"figures/rmsd_matrix_{phase if phase else 'all'}.png")
+        plt.close()
+
+    def plot_energy_vs_rmsd(self, reference_structure: Optional[StructureData] = None, phase: Optional[str] = None):
+        """   
+        Plots Energy vs RMSD to a reference structure for the specified phase
 
         Args:
-            molecule: Molecule object with coordinates attribute
-            reference_point (np.ndarray): Reference point coordinates
-
-        Returns:
-            Tuple[float, float, float]: First three moments 
+            reference_structure: Optional reference structure to compute RMSD against. If None, it uses to lowest energy structure as reference.
+            phase: Specified phase to plot for. If None, plots for all structures.
         """
-        distances = []
-        for coord in molecule.coordinates:
-            dist = self.euclidean_distance(coord, reference_point)
-            distances.append(dist) 
-
-        distances = np.array(distances) # Convert to np array 
-        n_atoms = len(distances)
-
-        # First Moment (Mean)
-        mean = np.mean(distances)
-
-
-        # Second Moment (Variance)
-        variance = np.sum((distances - mean) ** 2) / n_atoms 
-
-        # Third Moment (Skewness)
-        if variance > 0:
-            numerator = np.sum((distances - mean) ** 3)
-            denominator = n_atoms * (variance ** 1.5) # Take 1.5 power because variance is squared
-            skewness = numerator / denominator
+        if phase:
+            structures = self.phases[phase]
         else:
-            skewness = 0.0
+            structures = self.structures
+        
+        if not structures:
+            print(f"No structures found for phase: {phase}")
+            return
+        
+        if reference_structure is None:
+            reference_structure = self.get_lowest_energy_structure(phase=phase)
 
-        return mean, variance, skewness
+        energies = [s.energy for s in structures]
+        rmsd_values = [self._calculate_rmsd(s.molecule.coordinates, reference_structure.molecule.coordinates) for s in structures]
 
-    def compute_usr_descriptor(self, molecule) -> np.ndarray:
+        plt.figure(figsize=(10, 6))
+        plt.scatter(rmsd_values, energies, color='blue', alpha=0.7)
+        plt.title(f'Energy vs RMSD to Reference - Phase: {phase if phase else "All"}')
+        plt.xlabel('RMSD to Reference Structure')
+        plt.ylabel('Energy')
+        plt.grid(True)
+        plt.savefig(f"figures/energy_vs_rmsd_{phase if phase else 'all'}.png")
+        plt.close()
+
+    def plot_energy_distribution(self, phase: Optional[str] = None, bins: int = 50):
+        """
+        Plots the energy distribution for the specified phase
+        Args:
+            phase: Specified phase to plot for. If None, plots for all structures.
+            bins: Number of bins for the histogram
+        """
+        if phase:
+            energies = [s.energy for s in self.phases[phase]]
+        else:
+            energies = [s.energy for s in self.structures]
+
+        plt.figure(figsize=(10, 6))
+        plt.hist(energies, bins=bins, color='green', alpha=0.7)
+        plt.title(f'Energy Distribution - Phase: {phase if phase else "All"}')
+        plt.xlabel('Energy')
+        plt.ylabel('Frequency')
+        plt.grid(True)
+        plt.savefig(f"figures/energy_distribution_{phase if phase else 'all'}.png")
+        plt.close()
+
+    def plot_rg_vs_energy(self, phase: Optional[str] = None):
         """   
-        Computes the 12-dimensional USR descriptor for the molecule
+        Plots the Radius of Gyration vs Energy for the specified phase 
 
-        This descriptor contains:
-        - 3 Moments from centroid 
-        - 3 Moments from closest atom to centroid
-        - 3 Moments from furthest atom to centroid
-        - 3 Moments from furthest atom from the furthest atom to centroid
+        Args:
+            phase: Specified phase to plot for. If None, plots for all structures.
         """ 
-        # Calculate the reference points 
-        centroid = self.calculate_centroid(molecule)
-        closest_idx, furthest_idx = self.find_closest_and_furthest_to_centroid(molecule)
-        furthest_from_furthest_idx = self.find_furthest_from_atom(molecule, furthest_idx)
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        if not structures:
+            print(f"No structures found for phase: {phase}")
+            return
+        energies = [s.energy for s in structures]
+        rg_values = [self.radius_of_gyration(s.molecule.coordinates, s.molecule.masses) for s in structures]
+        plt.figure(figsize=(10, 6))
+        plt.scatter(rg_values, energies, color='red', alpha=0.7)
+        plt.title(f'Radius of Gyration vs Energy - Phase: {phase if phase else "All"}')
+        plt.xlabel('Radius of Gyration')
+        plt.ylabel('Energy')
+        plt.grid(True)
+        plt.savefig(f"figures/rg_vs_energy_{phase if phase else 'all'}.png")
+        plt.close()
 
-        # Calculate the moments from each reference point 
-        moments_centroid = self.calculate_moments_to_point(molecule, centroid)
-        moments_closest = self.calculate_moments_to_point(molecule, molecule.coordinates[closest_idx])
-        moments_furthest = self.calculate_moments_to_point(molecule, molecule.coordinates[furthest_idx])
-        moments_furthest_from_furthest = self.calculate_moments_to_point(molecule, molecule.coordinates[furthest_from_furthest_idx])
+    
 
-        # Combine all moments into a single descriptor
-        usr_descriptor = np.array([
-            *moments_centroid,
-            *moments_closest,
-            *moments_furthest,
-            *moments_furthest_from_furthest
-        ])  
+    def get_lowest_energy_structure(self,phase: Optional[str] = None) -> Optional[StructureData]:
+        """   
+        Returns the structure with the lowest energy in the specified phase
+        
+        Args:
+            phase: Specified phase to search in. If None, searches in all structures.
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        
+        if not structures:
+            return None
+        
+        lowest_energy_structure = min(structures, key=lambda s: s.energy)
+        return lowest_energy_structure
 
-        return usr_descriptor
+
+    @staticmethod 
+    def determine_rotational_constants(coords: np.ndarray, masses: np.ndarray) -> Tuple[float, float, float]:
+        """   
+        Determines the rotational constants (A,B,C) for a given set of coordinates and masses
+
+        Algorithm:
+        1. Center coordinates at the center of mass
+        2. Compute the inertia tensor
+        3. Diagonalize the inertia tensor to get the principal moments of inertia (I_A, I_B, I_C)
+        4. Convert to Rotational Constants using the formula:
+           A = h / (8 * π^2 * I_A)
+           B = h / (8 * π^2 * I_B)
+           C = h / (8 * π^2 * I_C)
+        """
+        h = 6.62607015e-34  # Planck's constant in J*s
+        com = GeometryOps.center_of_mass(coords, masses)
+        coords_centered = coords - com
+        I = GeometryOps.inertia_tenstor(coords_centered, masses)
+        I_A, I_B, I_C = np.linalg.eigvalsh(I)  # Get principal moments of inertia
+        A = h / (8 * np.pi**2 * I_A) if I_A > 0 else 0.0
+        B = h / (8 * np.pi**2 * I_B) if I_B > 0 else 0.0
+        C = h / (8 * np.pi**2 * I_C) if I_C > 0 else 0.0
+        return A, B, C
+    
+
+
+    @staticmethod
+    def radius_of_gyration(coords: np.ndarray, masses: np.ndarray) -> float:
+        """   
+        Computes the radius of gyration (R_g) for a given set of coordinates and masses
+
+        R_g = sqrt( (1/N) * sum((r_i - r_cm)^2) )
+
+        where r_i is the position vector of atom i, r_cm is the center of mass position vector, and N is the number of atoms.
+        """
+        com = GeometryOps.center_of_mass(coords, masses)
+        N = coords.shape[0]
+        diff = coords - com
+        rg = np.sqrt(np.sum(masses * np.sum(diff**2, axis=1)) / np.sum(masses))
+        return rg
+
+    # ====================== Data Cleanup ========================
+
+    """ 
+    We should first of perform a rmsd filtering to remove duplicate structures and then perform a energy-based filtering to remove
+    both high energy outliers and low energy duplicates that are very similar to the lowest energy structure.
+    This will ensure we have a diverse set of representative structures
+    """
+    def rmsd_filtering(self, threshold: float = 0.5, phase: Optional[str] = None):
+        """  
+        Filters out structures that are within a certain RMSD threshold to each other
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        if not structures:
+            print(f"No structures found for phase: {phase}")
+            return
+        filtered_structures = []
+        for s in structures:
+            if all(self._calculate_rmsd(s.molecule.coordinates, fs.molecule.coordinates) > threshold for fs in filtered_structures):
+                filtered_structures.append(s)
+        if phase:
+            self.phases[phase] = filtered_structures
+        else:
+            self.structures = filtered_structures
+        print(f"RMSD Filtering completed for phase: {phase if phase else 'All'}. Remaining structures: {len(filtered_structures)}")
+
+    
+
+
+    # ====================== Clustering Methods =======================
+
+    def feature_matrix(self, normalize = True) -> np.ndarray:
+        """   
+        Current Feature Matrix wifth Columns
+
+        1. Delta E to lowest energy structure
+        2. RMSD to lowest energy structure
+        3. Radius of Gyration
+        4. Rotational Constants (A,B,C)
+        """
+        delta_e = np.array([s.energy - self.get_lowest_energy_structure().energy for s in self.structures])
+        rmsd_values = np.array([self._calculate_rmsd(s.molecule.coordinates, self.get_lowest_energy_structure().molecule.coordinates) for s in self.structures])
+        rg_values = np.array([self.radius_of_gyration(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
+        rotational_constants = np.array([self.determine_rotational_constants(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
+        feature_matrix = np.column_stack((delta_e, rmsd_values, rg_values, rotational_constants))
+
+        # Normalize using StandardScaler
+        scaler = StandardScaler()
+        if normalize:
+            feature_matrix = scaler.fit_transform(feature_matrix)
+
+
+        return feature_matrix
+    
+    def AgglomerativeClustering(self, n_clusters: int = 5, phase: Optional[str] = None, linkage: str = "ward") -> np.ndarray:
+        """   
+        Perform Agglomerative Clustering on the structures in the specified phase
+
+        Args:
+            n_clusters: Number of clusters to form
+            phase: Specified phase to cluster. If None, clusters all structures.
+            linkage: Linkage criterion for agglomerative clustering ("ward", "complete", "average", "single")
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        if not structures:
+            print(f"No structures found for phase: {phase}")
+            return np.array([])
+        feature_matrix = self.feature_matrix()
+        clustering_model = AgglomerativeClustering(n_clusters=n_clusters, linkage=linkage)
+        labels = clustering_model.fit_predict(feature_matrix)
+        self.labels = labels
+        return labels
+    
+    def pca(self, n_components: int = 2, phase: Optional[str] = None) -> np.ndarray:
+        """   
+        Performs PCA Analysis on the structures in the specified phase
+
+        Args:
+            n_components: Number of principal components to compute
+            phase: Specified phase to analyze. If None, analyzes all structures.
+        """ 
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        if not structures:
+            print(f"No structures found for phase: {phase}")
+            return np.array([])
+        feature_matrix = self.feature_matrix()
+        pca_model = PCA(n_components=n_components)
+        pca_result = pca_model.fit_transform(feature_matrix)
+        return pca_result
+    
+    def plot_pca_agglomerative(self, n_clusters: int = 5, phase: Optional[str] = None, linkage: str = "ward"):
+        """   
+        Plots the PCA projection of the structures colored by Agglomerative Clustering labels
+
+        Args:
+            n_clusters: Number of clusters to form
+            phase: Specified phase to analyze. If None, analyzes all structures.
+            linkage: Linkage criterion for agglomerative clustering ("ward", "complete", "average", "single")
+        """
+        pca_result = self.pca(phase=phase)
+        labels = self.AgglomerativeClustering(n_clusters=n_clusters, phase=phase, linkage=linkage)
+        plt.figure(figsize=(10, 6))
+        sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=labels, palette='Set2', alpha=0.7)
+        plt.title(f'PCA Projection with Agglomerative Clustering - Phase: {phase if phase else "All"}')
+        plt.xlabel('Principal Component 1')
+        plt.ylabel('Principal Component 2')
+        plt.legend(title='Cluster')
+        plt.grid(True)
+        plt.savefig(f"figures/pca_agglomerative_{phase if phase else 'all'}.png")
+        plt.close()
+
+    def get_cluster_representatives(self, phase: Optional[str] = None, method = "lowest_energy") -> Dict[int, StructureData]:
+        """   
+        Gets the representative structure for each cluster in the specified phase
+
+        Methods:
+            "closest_to_centroid": Returns the structure closest to the cluster centroid
+            "lowest_energy": Returns the structure with the lowest energy in each cluster
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        if not structures:
+            print(f"No structures found for phase: {phase}")
+            return {}
+        if self.labels is None:
+            print("Clustering has not been performed yet. Please run Clustering method first.")
+            return {}
+        cluster_representatives = {}
+        for cluster_id in np.unique(self.labels):
+            cluster_structures = [s for s, label in zip(structures, self.labels) if label == cluster_id]
+            if method == "lowest_energy":
+                representative = min(cluster_structures, key=lambda s: s.energy)
+                cluster_representatives[cluster_id] = representative
+        
+        # Return a list of molecules 
+        cluster_representatives_mol = [rep.molecule for rep in cluster_representatives.values()]
+        return cluster_representatives_mol
+            
+     
+    
+
+
+
+
 
 
 class MolecularCluster:

@@ -1,1019 +1,1014 @@
-import numpy as np 
-from multiprocessing import Pool, cpu_count
-from typing import List, Optional, Tuple, Dict, Any, Callable
+"""
+PSI4 Interface Module
+"""
+
+import os
+import sys
+import time
+import tempfile
+import shutil
+import numpy as np
+from typing import List, Optional, Tuple, Dict, Any
 from dataclasses import dataclass, field
-from enum import Enum 
-import tempfile 
-import json 
-import pickle
-import os 
-import time 
-import shutil 
-from tqdm import tqdm
-from pathlib import Path 
-from contextlib import contextmanager
-import matplotlib.pyplot as plt
+from enum import Enum
+from multiprocessing import Process, Queue
+from queue import Empty
+
 from molecule_class import Molecule
 
 
-# =========================== DATA CLASSES ========================== 
+# ==============================================================================
+# DATA CLASSES - Simple containers for configuration and results
+# ==============================================================================
 
-# Enums here are used to define constant named values for calculation types 
-class CalculationType(Enum):
-    """  
-    Different Types of Quantum Chemistry Calculations
+class Status(Enum):
+    """Calculation status codes"""
+    SUCCESS = "success"
+    FAILED = "failed"
+    TIMEOUT = "timeout"
+    NOT_CONVERGED = "not_converged"
+
+
+@dataclass
+class Config:
     """
-    SINGLE_POINT = "single_point"
-    GEOMETRY_OPTIMIZATION = "geometry_optimization"
-    FREQUENCY = "frequency"
-    OPT_FREQ = "opt_freq"
-    PROPERTY = "property"
-
-@dataclass 
-class CalculationResult:
-    """  
-    Writes the Result from A Quantum Chemistry Calculation
-    """
-    molecule: Molecule
-    calculation_type: CalculationType
-    sucess: bool 
-    energy: Optional[float] = None 
-    frequencies: Optional[List[float]] = None
-    hessian: Optional[np.ndarray] = None 
-    error: Optional[str] = None
-    timestamp: str = field(default_factory = lambda: time.strftime("%Y%m%d_%H%M%S")) # Auto-generate the time-stamp
-    method: Optional[str] = None 
-    basis_set: Optional[str] = None 
-    wall_time: float = 0.0 
-
-    def to_dict(self) -> Dict[str, Any]:
-        """   
-        Convert to a dictionary for easy serialization
-        """
-        return {
-            "molecule_name": self.molecule.name,
-            "calculation_type": self.calculation_type.value,
-            "sucess": self.sucess,
-            "energy": self.energy,
-            "frequencies": self.frequencies,
-            "error": self.error,
-            "timestamp": self.timestamp,
-            "method": self.method,
-            "basis_set": self.basis_set,
-            "wall_time": self.wall_time
-        }
-
-@dataclass 
-class Psi4Config:
-    """
-    Configuration settings for Psi4 calculations
+    Configuration for Psi4 calculations.
+    
+    Attributes:
+        method: QM method (e.g., 'hf', 'b3lyp', 'mp2')
+        basis: Basis set (e.g., 'sto-3g', '6-31g*', 'cc-pvdz')
+        charge: Molecular charge
+        multiplicity: Spin multiplicity (1=singlet, 2=doublet, etc.)
+        memory: Memory allocation (e.g., '2GB')
+        max_iter: Maximum iterations for geometry optimization
+        reference: Reference wavefunction ('rhf', 'uhf', 'rohf')
     """
     method: str = "hf"
-    basis_set: str = "sto-3g"
-    memory: str = "500 MB"
-    num_threads: int = 1
-    max_iterations: int = 100 
-    convergence: float = 1e-6
-
-    def validate(self) -> None:
-        """  
-        Validate the configuration settings
-        """
-        if self.num_threads < 1:
-            raise ValueError("Number of threads must be at least 1")
-        if not self.memory.endswith(("MB", "GB")):
-            raise ValueError("Memory must be specified in MB or GB")
-
-# ============================ Helper Classes ===========================
-
-class GeometryBuilder:
-    """   
-    Builds the geometry string for Psi4 from a Molecule object
-    """
-
-    @staticmethod
-    def build_psi4_geometry(molecule: Molecule) -> str:
-        """  
-        Constructs the geometry string for Psi4 input
-        """
-        geom = f"{molecule.charge} {molecule.spin_mult}\n"
-        for atom, (x,y,z) in zip(molecule.atom_labels, molecule.coordinates):
-            geom += f" {GeometryBuilder.remove_digits(atom)} {x:.8f} {y:.8f} {z:.8f}\n"
-        return geom
+    basis: str = "sto-3g"
+    charge: int = 0
+    multiplicity: int = 1
+    memory: str = "2GB"
+    max_iter: int = 50
+    reference: str = "rhf"
     
-    @staticmethod
-    def remove_digits(text: str) -> str:
-        """Remove all digits from a string"""
-        return ''.join(char for char in text if not char.isdigit())
-    
-class ScratchManager:
-    """   
-    Classs that manages the temporary scratch directories for Psi4 calculations
-    """
-
-    @staticmethod
-    @contextmanager
-    def temporary_scratch(prefix: str ="psi4_scratch_"):
-        """   
-        Context manager for temporary scratch directory 
-        """
-        scratch_dir = None
-        try:
-            scratch_dir = tempfile.mkdtemp(prefix=prefix)
-            os.environ["PSI4_SCRATCH"] = scratch_dir
-            os.environ["PSI_SCRATCH"] = scratch_dir
-            yield scratch_dir
-        finally:
-            if scratch_dir and os.path.exists(scratch_dir):
-                shutil.rmtree(scratch_dir, ignore_errors=True)
-
-class ResultsManager:
-    """   
-    Manages the Calculation Results storage and Retrival
-    """
-    def __init__(self, output_dir: Path):
-        self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.results: List[CalculationResult] = []
-
-    def add_result(self, result: CalculationResult) -> None:
-        """   
-        Adds a CalculationResult to the results list
-        """
-        self.results.append(result)
-
-    def get_sucessful_results(self) -> List[CalculationResult]:
-        """   
-        Returns a list of sucessful CalculationResults
-        """
-        return [res for res in self.results if res.sucess]
-    
-    def get_failed_results(self) -> List[CalculationResult]:
-        """   
-        Returns a list of failed CalculationResults
-        """
-        return [res for res in self.results if not res.sucess]
-    
-    def get_energies(self) -> List[Tuple[Molecule, float]]:
-        """
-        Get (molecule, energy) tuples for scuessful calculations
-        """
-        return [(res.molecule, res.energy) for res in self.results if res.sucess and res.energy is not None]
-
-    def summary(self) -> Dict[str, Any]:
-        """  
-        Get Summary Statistics
-        """
-        total = len(self.results)
-        sucessful = len(self.get_sucessful_results())
-        failed = len(self.get_failed_results())
-
-        energies = [res.energy for res in self.get_sucessful_results() if res.energy is not None]
-
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for passing to worker processes"""
         return {
-            "total": total, 
-            "sucessful": sucessful,
-            "failed": failed,
-            "sucess_rate": sucessful / total if total > 0 else 0.0,
-            "min_energy": min(energies) if energies else None,
-            "max_energy": max(energies) if energies else None,
-            "mean_energy": np.mean(energies) if energies else None,
-            "std_energy": np.std(energies) if energies else None
+            'method': self.method,
+            'basis': self.basis,
+            'charge': self.charge,
+            'multiplicity': self.multiplicity,
+            'memory': self.memory,
+            'max_iter': self.max_iter,
+            'reference': self.reference
         }
+
+
+@dataclass
+class Result:
+    """
+    Container for calculation results.
     
-# ============================ Worker Functions ===========================
-
-class Psi4Worker:
-    """  
-    Static Psi4 Worker functions for parallel execution 
+    Attributes:
+        molecule: The molecule (with updated coordinates if optimization)
+        energy: Final energy in Hartree (None if failed)
+        status: Calculation status
+        error_message: Error description if failed
+        wall_time: Total calculation time in seconds
+        iterations: Number of optimization iterations (if applicable)
     """
-    @staticmethod 
-    def single_point_worker(args: Tuple) -> CalculationResult:
-        """   
-        Worker function for single point calculations
-
-        Args:
-            args: Tuple containing (Molecule, config_dict)
-
-        Returns:
-            CalculationResult object
-        """
-        molecule, config_dict = args
-        config = Psi4Config(**config_dict)
-
-        scratch_dir = tempfile.mkdtemp(prefix="psi4_scratch_")
-
-
-        with ScratchManager.temporary_scratch():
-            
-            # Set the scratch directory for psi4
-            os.environ["PSI4_SCRATCH"] = scratch_dir
-            os.environ["PSI_SCRATCH"] = scratch_dir
-            
-
-            import psi4 
-            psi4.core.set_output_file(os.devnull) # Supress output file 
-
-            start_time = time.time()
-
-            try:
-                # Build geometry
-                geom_str = GeometryBuilder.build_psi4_geometry(molecule)
-                mol = psi4.geometry(geom_str)
-
-                # Calculate energy
-                method_str = f"{config.method}/{config.basis_set}"
-                energy= psi4.energy(method_str, molecule=mol)
-
-                wall_time = time.time() - start_time
-
-                return CalculationResult(
-                    molecule=molecule,
-                    calculation_type = CalculationType.SINGLE_POINT,
-                    sucess = True,
-                    energy = energy,
-                    method = config.method,
-                    basis_set = config.basis_set,
-                    wall_time = wall_time
-                    )
-            except Exception as e:
-                wall_time = time.time() - start_time 
-                return CalculationResult(
-                    molecule=molecule,
-                    calculation_type = CalculationType.SINGLE_POINT,
-                    sucess = False,
-                    error = str(e),
-                    method = config.method,
-                    basis_set = config.basis_set,
-                    wall_time = wall_time
-                )
-            finally:
-                psi4.core.clean() # Clean up psi4 core after worker
-
-    @staticmethod 
-    def gradient_worker(args: Tuple):
-        """   
-        Worker function for gradient calculations
-
-        Args:
-            args: Tuple containing (Molecule, config_dict)
-        """
-        molecule, config_dict = args
-        config = Psi4Config(**config_dict)
-        with ScratchManager.temporary_scratch():
-            import psi4 
-            psi4.core.set_output_file(os.devnull) 
-
-            start_time = time.time()
-            try:
-                # Build geometry
-                geom_str = GeometryBuilder.build_psi4_geometry(molecule)
-                mol = psi4.geometry(geom_str)
-
-                # Calculate gradient
-                method_str = f"{config.method}/{config.basis_set}"
-                gradient = psi4.gradient(method_str, molecule=mol)
-
-                wall_time = time.time() - start_time
-
-                #TODO clean this up
-                return (molecule, np.array(gradient), True, None)
-            except Exception as e:
-                wall_time = time.time() - start_time 
-                # TODO clean this up
-                return (molecule, None, False, str(e))
-            
-            finally:
-                psi4.core.clean() # Clean up psi4 core after worker
+    molecule: Molecule
+    energy: Optional[float] = None
+    status: Status = Status.FAILED
+    error_message: str = ""
+    wall_time: float = 0.0
+    iterations: int = 0
+    
+    @property
+    def success(self) -> bool:
+        """Check if calculation was successful"""
+        return self.status == Status.SUCCESS
+    
+    def __repr__(self) -> str:
+        if self.success:
+            return f"Result(success=True, E={self.energy:.6f} Ha, time={self.wall_time:.1f}s)"
+        return f"Result(success=False, status={self.status.value}, error='{self.error_message[:50]}')"
 
 
-    @staticmethod
-    def hessian_worker(args: Tuple):
-        """ 
-        Worker functio nfor the Hessian calculation
+# ==============================================================================
+# WORKER FUNCTIONS - Run in isolated subprocesses
+# ==============================================================================
+# These functions are intentionally simple and self-contained.
+# They import psi4 inside the function to ensure clean process isolation.
+# All state is passed via arguments and returned via the result.
 
-        Args:
-            args: Tuple containing (Molecule, config_dict)
-        """
-        molecule, config_dict = args 
-        config = Psi4Config(**config_dict)
+def _remove_digits(str):
+    """Utility function to remove digits from a string"""
+    return ''.join([i for i in str if not i.isdigit()])
 
-        with ScratchManager.temporary_scratch():
-            import psi4 
-            psi4.core.set_output_file(os.devnull)
-
-            start_time = time.time()
-
-            try:
-                geom_str = GeometryBuilder.build_psi4_geometry(molecule)
-                mol = psi4.geometry(geom_str)
-
-                # Calculate Hessian
-                method_str = f"{config.method}/{config.basis_set}"
-                hessian = psi4.hessian(method_str, molecule=mol)
-
-                # convert to numpy array
-                hessian_array = np.array(hessian)
-
-                wall_time = time.time() - start_time
-                return (molecule, hessian_array, True, None)
-            except Exception as e:
-                wall_time = time.time() - start_time
-                return (molecule, None, False, str(e))
-            finally:
-                psi4.core.clean() # Clean up psi4 core after worker 
-
-            
-
-
-    @staticmethod
-    def geometry_optimization_worker(args: Tuple) -> CalculationResult:
-        """   
-        Worker function for geometry optimization calculations
-
-        Args:
-            args: Tuple containing (Molecule, config_dict)
-        Returns:
-            CalculationResult object
-        """
-        molecule, config_dict = args
-        config = Psi4Config(**config_dict)
-        # create scratch for worker
-        scratch_dir = tempfile.mkdtemp(prefix=f"psi4_scratch_{os.getpid()}_")
-
-        try:
-            # set enviroment in this scratch
-            os.environ["PSI4_SCRATCH"] = scratch_dir
-            os.environ["PSI_SCRATCH"] = scratch_dir
-
-            import psi4 
-            psi4.core.set_output_file(os.devnull) # Supress output file 
-
-            start_time = time.time() 
-            
-            try:
-                # Build geometry 
-                geom_str = GeometryBuilder.build_psi4_geometry(molecule)
-                mol = psi4.geometry(geom_str)
-
-                # Optimize
-                method_str = f"{config.method}/{config.basis_set}"
-                energy = psi4.optimize(method_str, molecule=mol)
-
-                opt_geom = np.array(mol.geometry())
-                bohr_to_angstrom = 0.529177
-                molecule.coordinates = opt_geom * bohr_to_angstrom
-
-                wall_time = time.time() - start_time
-
-                return CalculationResult(
-                    molecule =molecule,
-                    calculation_type = CalculationType.GEOMETRY_OPTIMIZATION,
-                    sucess = True,
-                    energy = energy,
-                    method = config.method,
-                    basis_set = config.basis_set,
-                    wall_time = wall_time
-                )
-            except Exception as e:
-                wall_time = time.time() - start_time
-                return CalculationResult(
-                    molecule =molecule,
-                    calculation_type = CalculationType.GEOMETRY_OPTIMIZATION,
-                    sucess = False,
-                    error = str(e),
-                    method = config.method,
-                    basis_set = config.basis_set,
-                    wall_time = wall_time
-                )
-
-        finally:
-            if os.path.exists(scratch_dir):
-                shutil.rmtree(scratch_dir, ignore_errors=True) # Clean up scratch directory after worker
-            try:
-                import psi4 
-                psi4.core.clean() # Clean up psi4 core after worker
-            except:
-                pass
-
-
-    def optimization_and_frequency_worker(args: Tuple) -> CalculationResult:
-        """  
-        Worker Function for combined optimization and frequency calculation
-        Includes a verification if a true minimum is found by checking for imaginary frequencies
-        
-        1. Perform geometry optimization using psi4.optimize()
-        2. Perform frequency calculation using psi4.frequency()
-        3. Check if the structure is a true minimum (no imaginary frequencies)
-        """ 
-        molecule, config_dict = args
-        config = Psi4Config(**config_dict)
-
-        with ScratchManager.temporary_scratch():
-            import psi4 
-            psi4.core.set_output_file(os.devnull) # Supress output file 
-
-            start_time = time.time() 
-
-            try:
-                # Build the geometry
-                geom_str = GeometryBuilder.build_psi4_geometry(molecule)
-                mol = psi4.geometry(geom_str)
-
-                # Store original coordinates for RMSD calculation
-                original_coords = molecule.coordinates.copy()  
-
-                # Optimize 
-                method_str = f"{config.method}/{config.basis_set}"
-                energy = psi4.optimize(method_str, molecule=mol)
-
-                # Update molecule coordinates
-                opt_geom = np.array(mol.geometry())
-                bohr_to_angstrom = 0.529177
-                molecule.coordinates = opt_geom * bohr_to_angstrom
-
-
-                # Frequency calculation
-                scf_e, scf_wfn = psi4.frequency(method_str, molecule=mol, return_wfn=True)
-
-                # Extract frequencies
-                frequencies = scf_wfn.frequencies().to_array()
-
-                # Check for imaginary frequencies 
-                imaginary_freqs = [freq for freq in frequencies if freq < 0.0]
-                is_minimum = len(imaginary_freqs) == 0
-                num_imaginary = len(imaginary_freqs)
-                lowest_freq = min(imaginary_freqs) if imaginary_freqs else None
-
-                wall_time = time.time() - start_time
-
-                result = CalculationResult(
-                    molecule = molecule,
-                    calculation_type = CalculationType.OPT_FREQ,
-                    sucess = is_minimum,
-                    energy = energy,
-                    frequencies = scf_wfn.frequencies().to_array(),
-                    hessian = scf_wfn.hessian().to_array(),
-                    method = config.method,
-                    basis_set = config.basis_set,
-                    wall_time = wall_time
-                )
-
-                # TODO add minimum verification details to result
-                return result
-            except Exception as e:
-                wall_time = time.time() - start_time
-                return CalculationResult(
-                    molecule = molecule,
-                    calculation_type = CalculationType.OPT_FREQ,
-                    sucess = False,
-                    error = str(e),
-                    method = config.method,
-                    basis_set = config.basis_set,
-                    wall_time = wall_time
-                )
-            finally:
-                psi4.core.clean() # Clean up psi4 core after worker
-
-
-
-        
-# ============================ Main Calculator Class ===========================
-class Psi4Calculator:
-    """  
-    Unified interface for Psi4 quantum chemistry calculations
+def _build_geometry_string(molecule: Molecule, charge: int, multiplicity: int) -> str:
     """
-    def __init__(self,
-                 config: Optional[Psi4Config] = None,
-                 output_dir: str = "psi4_calculations",
-                 save_results: bool = True,
-                 verbose: bool = True):
-        """   
-        Initializes the Psi4Calculator object
+    Build Psi4 geometry string from Molecule object.
+    
+    Format:
+        charge multiplicity
+        symbol x y z
+        ...
+        units angstrom
+        no_reorient
+        no_com
+    """
+    lines = [f"{charge} {multiplicity}"]
+    
+    for symbol, coord in zip(molecule.atom_labels, molecule.coordinates):
+        symbol_clean = _remove_digits(symbol)
+        lines.append(f"{symbol_clean} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}")
+    
+    lines.extend(["units angstrom", "no_reorient", "no_com"])
+    
+    return "\n".join(lines)
 
-        Args:
-            config: Psi4Config object with calculation settings
-            output_dir: Directory to save calculation outputs
-            save_results: Whether to save results to files
-            verbose: Whether to print progress messages
-        """
-        self.config = config or Psi4Config()
-        # Validate config
-        self.config.validate()
 
-        # Output directory
-        self.output_dir = Path(output_dir)
-        self.save_results = save_results
-        self.verbose = verbose
-
-        # Results manager
-        self.results_manager = ResultsManager(self.output_dir)
-
-        # Configure Psi4
-        self._configure_psi4()
-
-    def _configure_psi4(self) -> None: 
-        """  
-        Configure global Psi4 settings
-        """
+def _single_point_worker(molecule: Molecule, config_dict: Dict) -> Dict:
+    """
+    Worker function for single point energy calculation.
+    
+    This runs in a separate process. It:
+    1. Sets up Psi4 environment
+    2. Builds the molecule
+    3. Calculates the energy
+    4. Returns results as a dictionary
+    
+    Args:
+        molecule: Molecule object
+        config_dict: Configuration dictionary
+        
+    Returns:
+        Dictionary with keys: success, energy, error, wall_time
+    """
+    start_time = time.time()
+    scratch_dir = tempfile.mkdtemp(prefix="psi4_sp_")
+    
+    result = {
+        'success': False,
+        'energy': None,
+        'error': '',
+        'wall_time': 0.0,
+        'coordinates': None
+    }
+    
+    try:
+        # Setup environment
+        os.environ["PSI4_SCRATCH"] = scratch_dir
+        os.environ["OMP_NUM_THREADS"] = "1"
+        
+        # Import psi4 here to ensure clean import in subprocess
         import psi4
-        psi4.set_memory(self.config.memory)
-        psi4.set_num_threads(self.config.num_threads)
-        log_file = self.output_dir / "psi4_output.log"
-        psi4.set_output_file(str(log_file), False)
-
-    # ============================ Calculation Methods ===========================
-
-    def single_point_energy(self, molecule: Molecule) -> Optional[float]:
-        """  
-        Calculate a single point enegry 
-
-        Args:
-            molecule: Molecule object for which to calculate the energy
+        psi4.core.set_output_file(os.devnull, False)
+        psi4.set_memory(config_dict['memory'])
+        psi4.set_num_threads(1)
         
-        Returns:
-            Energy in Hartree or None if failed
-        """
-        result = self._run_calculation(
-            molecule = molecule,
-            worker_func = Psi4Worker.single_point_worker
+        psi4.set_options({
+            'reference': config_dict['reference'],
+            'scf_type': 'df'
+        })
+        
+        # Build geometry
+        geom_str = _build_geometry_string(
+            molecule, 
+            config_dict['charge'], 
+            config_dict['multiplicity']
         )
-        if self.save_results:
-            self.results_manager.add_result(result)
-
-        if self.verbose:
-            self._print_result(result)
-
-        return result.energy if result.sucess else None 
+        psi4_mol = psi4.geometry(geom_str)
+        
+        # Calculate energy
+        method_basis = f"{config_dict['method']}/{config_dict['basis']}"
+        energy = psi4.energy(method_basis, molecule=psi4_mol)
+        
+        result['success'] = True
+        result['energy'] = float(energy)
+        result['wall_time'] = time.time() - start_time
+        
+    except Exception as e:
+        result['error'] = str(e)
+        result['wall_time'] = time.time() - start_time
+        
+    finally:
+        # Cleanup
+        try:
+            import psi4
+            psi4.core.clean()
+        except:
+            pass
+        
+        if os.path.exists(scratch_dir):
+            shutil.rmtree(scratch_dir, ignore_errors=True)
     
-    def compute_gradient(self,molecule: Molecule) -> Optional[np.ndarray]:
-        """   
-        Computes the energy gradient for a molecule
-        """
-        config_dict = { 
-            "method": self.config.method,
-            "basis_set": self.config.basis_set,
-            "memory": self.config.memory,
-            "num_threads": self.config.num_threads,
-        }
-        molecule_copy, gradient, sucess, error = Psi4Worker.gradient_worker((molecule, config_dict))
-        if self.verbose:
-            if sucess:
-                print(f"Gradient calculation for {molecule.name} succeeded.")
-            else:
-                print(f"Gradient calculation for {molecule.name} failed: {error}")
-        if sucess:
-            return gradient
-        else:
+    return result
+
+
+def _geometry_opt_worker(molecule: Molecule, config_dict: Dict) -> Dict:
+    """
+    Worker function for geometry optimization.
+    
+    This runs in a separate process. It:
+    1. Sets up Psi4 environment
+    2. Builds the molecule
+    3. Runs geometry optimization
+    4. Extracts optimized coordinates
+    5. Returns results as a dictionary
+    
+    Args:
+        molecule: Molecule object
+        config_dict: Configuration dictionary
+        
+    Returns:
+        Dictionary with keys: success, energy, error, wall_time, coordinates, iterations
+    """
+    start_time = time.time()
+    scratch_dir = tempfile.mkdtemp(prefix="psi4_opt_")
+    
+    result = {
+        'success': False,
+        'energy': None,
+        'error': '',
+        'wall_time': 0.0,
+        'coordinates': None,
+        'iterations': 0,
+        'converged': False
+    }
+    
+    try:
+        # Setup environment
+        os.environ["PSI4_SCRATCH"] = scratch_dir
+        os.environ["OMP_NUM_THREADS"] = "1"
+        
+        # Import psi4 here to ensure clean import in subprocess
+        import psi4
+        psi4.core.set_output_file(os.devnull, False)
+        psi4.set_memory(config_dict['memory'])
+        psi4.set_num_threads(1)
+        
+        # Set options for optimization
+        psi4.set_options({
+            'reference': config_dict['reference'],
+            'scf_type': 'df',
+            'geom_maxiter': config_dict['max_iter'],
+            'g_convergence': 'gau_loose',  # Looser convergence for speed
+            'opt_coordinates': 'cartesian'
+        })
+        
+        # Build geometry
+        geom_str = _build_geometry_string(
+            molecule, 
+            config_dict['charge'], 
+            config_dict['multiplicity']
+        )
+        psi4_mol = psi4.geometry(geom_str)
+        
+        # Run optimization
+        method_basis = f"{config_dict['method']}/{config_dict['basis']}"
+        
+        try:
+            energy = psi4.optimize(method_basis, molecule=psi4_mol)
+            result['converged'] = True
+        except psi4.OptimizationConvergenceError:
+            # Get last energy even if not converged
+            try:
+                energy = psi4.core.variable('CURRENT ENERGY')
+            except:
+                energy = None
+            result['converged'] = False
+            result['error'] = f"Did not converge in {config_dict['max_iter']} iterations"
+        
+        # Extract optimized coordinates
+        opt_geom = np.array(psi4_mol.geometry())
+        bohr_to_angstrom = 0.529177210903
+        coordinates = opt_geom * bohr_to_angstrom
+        
+        # Get iteration count
+        try:
+            iterations = int(psi4.core.variable('OPTIMIZATION ITERATIONS'))
+        except:
+            iterations = 0
+        
+        result['success'] = result['converged']
+        result['energy'] = float(energy) if energy is not None else None
+        result['coordinates'] = coordinates.tolist()
+        result['iterations'] = iterations
+        result['wall_time'] = time.time() - start_time
+        
+    except Exception as e:
+        result['error'] = str(e)
+        result['wall_time'] = time.time() - start_time
+        
+    finally:
+        # Cleanup
+        try:
+            import psi4
+            psi4.core.clean()
+            psi4.core.clean_options()
+        except:
+            pass
+        
+        if os.path.exists(scratch_dir):
+            shutil.rmtree(scratch_dir, ignore_errors=True)
+    
+    return result
+
+
+# ==============================================================================
+# DIRECT FUNCTIONS - For use inside multiprocessing workers
+# ==============================================================================
+
+def direct_energy(molecule: Molecule, 
+                  method: str = "hf", 
+                  basis: str = "sto-3g",
+                  charge: int = 0,
+                  multiplicity: int = 1) -> Optional[float]:
+    """
+    Calculate energy directly WITHOUT spawning a subprocess.
+    
+    Use this when you are already inside a multiprocessing worker.
+    
+    Args:
+        molecule: Molecule to calculate
+        method: QM method
+        basis: Basis set
+        charge: Molecular charge
+        multiplicity: Spin multiplicity
+        
+    Returns:
+        Energy in Hartree or None if failed
+    """
+    config_dict = {
+        'method': method,
+        'basis': basis,
+        'charge': charge,
+        'multiplicity': multiplicity,
+        'memory': '2GB',
+        'reference': 'rhf'
+    }
+    
+    try:
+        result = _single_point_worker(molecule, config_dict)
+        
+        if result is None:
+            print(f"direct_energy: _single_point_worker returned None")
             return None
-
-    def compute_force(self,molecule) -> Optional[np.ndarray]:
-        """   
-        Computes the force of a molecule
-        Force = - Gradient
-        """
-        gradient = self.compute_gradient(molecule)
-        if gradient is not None:
-            return -gradient
-        else:
-            return None
-
-    def compute_hessian(self, molecule: Molecule) -> Optional[np.ndarray]:
-        """  
-        Computes the Hessian matrix of second derivatives for a molecule
-
-
-        Returns the total non-mass-weighted electronic Hessian Matrix in Hartrees/Bohr^2
-        """
-        config_dict = {
-            "method": self.config.method,
-            "basis_set": self.config.basis_set,
-            "memory": self.config.memory,
-            "num_threads": self.config.num_threads,
-        }
-        molecule_copy, hessian, sucess, error = Psi4Worker.hessian_worker((molecule, config_dict))
-        if self.verbose:
-            if sucess:
-                print(f"Hessian calculation for {molecule.name} succeeded.")
-            else:
-                print(f"Hessian calculation for {molecule.name} failed: {error}")
-        if sucess:
-            return hessian
-        else:
-            return None
-    
-    def geometry_optimization(self, molecule: Molecule) -> Optional[float]:
-        """   
-        Optimize molecular geometry
-
-        Args:
-            molecule: Molecule object to optimize
-        Returns:
-            Optimized energy in Hartree or None if failed
-        """
-        result = self._run_calculation(
-            molecule = molecule,
-            worker_func = Psi4Worker.geometry_optimization_worker 
-        )
-
-        if self.save_results:
-            self.results_manager.add_result(result)
-        if self.verbose:
-            self._print_result(result)
-
-        return result.energy if result.sucess else None
-    
-    def optimization_and_frequency_calculation(self,
-                                    molecule: Molecule,
-                                    freq_threshold: float = -5):
-        """   
-        Performs geometry optimization followed by a frequency calculation with verification of a true minimum 
-
-        Args:
-            molecule: Molecule object to optimize and analyze
-            freq_threshold: Frequency threshold to consider imaginary frequencies
-        Returns:
-            Dictionary with Results 
-        """
-        config_dict = {
-            "method": self.config.method,
-            "basis_set": self.config.basis_set,
-            "memory": self.config.memory,
-            "num_threads": self.config.num_threads,
-        }
-        result = Psi4Worker.optimization_and_frequency_worker((molecule, config_dict))
-        if self.save_results:
-            self.results_manager.add_result(result)
-        if self.verbose:
-            self._print_result(result)
-        return {
-            "sucess": result.sucess,
-            "energy": result.energy,
-            "frequencies": result.frequencies,
-            "hessian": result.hessian}
-    
-
-    
-    # =========================== Batch Calculation Methods ==========================
-
-    def batch_single_point_energy(self,
-                                  molecules: List[Molecule],
-                                  parallel: bool = False,
-                                  n_processes: Optional[int] = None
-                                  ) -> List[Tuple[Molecule, float]]:
-        """
-        Batch single point energy calculations
-
-        Args:
-            molecules: List of Molecule objects
-            parallel: Whether to run calculations in parallel
-            n_processes: Number of processes for parallel execution
-        
-        Returns:
-            List of (Molecule, energy) tuples for successful calculations
-        """
-        return self._batch_calculation(
-            molecules = molecules,
-            worker_func=Psi4Worker.single_point_worker,
-            parallel = parallel,
-            n_processes = n_processes,
-            calc_type="Single Point"
-        )
-
-    def batch_geometry_optimization(self,
-                                    molecules: List[Molecule],
-                                    parallel: bool = False,
-                                    n_processes: Optional[int] = None
-                                    ) -> List[Tuple[Molecule, float]]:
-        """
-        Batch geometry optimizations
-        Args:
-            molecules: List of Molecule objects
-            parallel: Whether to run calculations in parallel
-            n_processes: Number of processes for parallel execution
-        Returns:
-            List of (Molecule, energy) tuples for successful calculations
-        """
-        return self._batch_calculation(
-            molecules = molecules,
-            worker_func=Psi4Worker.geometry_optimization_worker,
-            parallel = parallel,
-            n_processes = n_processes,
-            calc_type="Geometry Optimization"
-        )
-    
-    # ============================ Internal Helper Methods ===========================
-    def _run_calculation(self,
-                         molecule: Molecule,
-                         worker_func: Callable) -> CalculationResult:
-        """  
-        Run a single calculation using the specified worker function
-        """
-        config_dict = {
-            "method": self.config.method,
-            "basis_set": self.config.basis_set,
-            "memory": self.config.memory,
-            "num_threads": self.config.num_threads,
-        }
-        return worker_func((molecule, config_dict))
-    
-    def _batch_calculation(self,
-                           molecules: List[Molecule],
-                           worker_func: Callable,
-                            parallel: bool,
-                            n_processes: Optional[int],
-                            calc_type: str) -> List[Tuple[Molecule, float]]:
-        """  
-        Generic batch calculation method
-
-        Args:
-            molecules: List of Molecule objects
-            worker_func: Worker function to use for calculations
-            parallel: Whether to run in parallel
-            n_processes: Number of processes for parallel execution
-            calc_type: String description of calculation type for logging
-
-        Returns:
-            List of (Molecule, energy) tuples for successful calculations    
-        """
-        if not molecules:
-            raise ValueError("No molecules provided for batch calculation")
-        
-        start_time = time.time()
-
-        if self.verbose:
-            print(f"Starting batch {calc_type} for {len(molecules)} molecules...")
-            print(f"Method: {self.config.method}, Basis Set: {self.config.basis_set}")
-            print(f"Parallel: {parallel}, Processes: {n_processes if n_processes else 'Auto'}")
-
-        config_dict = {
-            "method": self.config.method,
-            "basis_set": self.config.basis_set,
-            "memory": self.config.memory,
-            "num_threads": self.config.num_threads,
-        }
-        args = [(mol, config_dict) for mol in molecules]
-
-        if parallel:
-            results = self._execute_parallel(args, worker_func, n_processes)
-        else:
-            result = self._execute_serial(args, worker_func)
-
-        # Store results
-        if self.save_results:
-            for res in results:
-                self.results_manager.add_result(res)
-        
-        # Extract successful energies
-        sucessful = [(r.molecule, r.energy) for r in results if r.sucess]
-
-        elapsed_time = time.time() - start_time
-        if self.verbose:
-            print(f"Batch {calc_type} completed in {elapsed_time:.2f} seconds")
-            summary = self.results_manager.summary()
-            print(f"Total: {summary['total']}, Sucessful: {summary['sucessful']}, Failed: {summary['failed']}, Sucess Rate: {summary['sucess_rate']*100:.2f}%")
-
-        return sucessful
-    
-    def _execute_serial(self,
-                        args: List[Tuple],
-                        worker_func: Callable) -> List[CalculationResult]:
-        """  
-        Execute calculations serially
-        """
-
-        results = []
-
-        with tqdm(total=len(args),
-                  desc="Processing molecules",
-                  unit="mol",
-                  bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]") as pbar:
             
-            for arg in args:
-                result = worker_func(arg)
-                results.append(result)
-                pbar.update(1)
+        if result.get('success'):
+            return result.get('energy')
+        else:
+            # Zeige Fehler an für Debugging
+            error = result.get('error', 'Unknown error')
+            print(f"direct_energy failed: {error[:100]}")
+            return None
+            
+    except Exception as e:
+        print(f"direct_energy exception: {type(e).__name__}: {e}")
+        return None
 
-                if self.verbose:
-                    if result.sucess:
-                        pbar.write(f"  ✓ {result.molecule.name}: {result.energy:.6f} Ha")
-                    else:
-                        pbar.write(f"  ✗ {result.molecule.name}: {result.error[:30]}")
+
+def direct_optimize(molecule: Molecule,
+                   method: str = "hf",
+                   basis: str = "sto-3g", 
+                   charge: int = 0,
+                   multiplicity: int = 1,
+                   max_iter: int = 50) -> Tuple[Optional[Molecule], Optional[float]]:
+    """
+    Optimize geometry directly WITHOUT spawning a subprocess.
+    
+    Use this when you are already inside a multiprocessing worker.
+    
+    Args:
+        molecule: Molecule to optimize
+        method: QM method
+        basis: Basis set
+        charge: Molecular charge
+        multiplicity: Spin multiplicity
+        max_iter: Maximum optimization iterations
+        
+    Returns:
+        Tuple of (optimized_molecule, energy) or (None, None) if failed
+    """
+    config_dict = {
+        'method': method,
+        'basis': basis,
+        'charge': charge,
+        'multiplicity': multiplicity,
+        'memory': '2GB',
+        'reference': 'rhf',
+        'max_iter': max_iter
+    }
+    
+    result = _geometry_opt_worker(molecule, config_dict)
+    
+    if result.get('success') and result.get('coordinates') is not None:
+        opt_mol = molecule.copy()
+        opt_mol.coordinates = np.array(result['coordinates'])
+        return opt_mol, result.get('energy')
+    
+    return None, None
+
+
+# ==============================================================================
+# PROCESS RUNNER - Handles process isolation and timeout
+# ==============================================================================
+
+def _worker_wrapper(func, args, queue):
+    """
+    Wrapper function for subprocess execution.
+    """
+    try:
+        result = func(*args)
+        queue.put(('success', result))
+    except Exception as e:
+        queue.put(('error', str(e)))
+
+
+class ProcessRunner:
+    """
+    Runs a function in an isolated subprocess with timeout.
+    """
+    
+    @staticmethod
+    def run(worker_func, args: Tuple, timeout: int) -> Tuple[bool, Any]:
+        """
+        Run a worker function in a subprocess with timeout.
+        
+        Args:
+            worker_func: The function to run (must be picklable)
+            args: Arguments to pass to the function
+            timeout: Maximum time in seconds
+            
+        Returns:
+            Tuple of (completed, result)
+            - completed: True if finished within timeout
+            - result: Function result or None if timeout/error
+        """
+        queue = Queue()
+        
+        # Use module-level function instead of local lambda
+        process = Process(
+            target=_worker_wrapper,
+            args=(worker_func, args, queue)
+        )
+        process.start()
+        process.join(timeout=timeout)
+        
+        if process.is_alive():
+            # Timeout - kill the process
+            process.terminate()
+            process.join(timeout=5)
+            
+            if process.is_alive():
+                # Force kill if still alive
+                process.kill()
+                process.join()
+            
+            return False, None
+        
+        # Get result from queue
+        try:
+            status, result = queue.get_nowait()
+            return status == 'success', result
+        except Empty:
+            return False, None
+
+
+# ==============================================================================
+# PARALLEL BATCH WORKER - For multiprocessing pool
+# ==============================================================================
+
+def _batch_optimize_worker(args: Tuple) -> Dict:
+    """
+    Worker for parallel batch optimization.
+    Runs in a Pool process - does NOT spawn subprocesses.
+    
+    Args:
+        args: Tuple of (molecule, config_dict, timeout)
+        
+    Returns:
+        Dictionary with result data
+    """
+    molecule, config_dict = args
+    
+    # Run optimization directly (no subprocess)
+    result = _geometry_opt_worker(molecule, config_dict)
+    
+    # Add molecule info to result for identification
+    result['molecule_name'] = molecule.name
+    result['original_molecule'] = molecule
+    
+    return result
+
+
+def _batch_single_point_worker(args: Tuple) -> Dict:
+    """
+    Worker for parallel batch single point calculations.
+    Runs in a Pool process - does NOT spawn subprocesses.
+    """
+    molecule, config_dict = args
+    
+    result = _single_point_worker(molecule, config_dict)
+    result['molecule_name'] = molecule.name
+    result['original_molecule'] = molecule
+    
+    return result
+
+
+# ==============================================================================
+# MAIN CALCULATOR CLASS - User-facing API
+# ==============================================================================
+
+class Psi4Calculator:
+    """
+    Main interface for Psi4 calculations.
+    
+    Supports both sequential and parallel batch processing.
+    
+    Example:
+        config = Config(method='hf', basis='sto-3g')
+        calc = Psi4Calculator(config)
+        
+        # Sequential (with timeout per molecule)
+        results = calc.batch_optimize(molecules, timeout=300)
+        
+        # Parallel (faster, but no per-molecule timeout)
+        results = calc.batch_optimize_parallel(molecules, n_processes=4)
+    """
+    
+    def __init__(self, config: Optional[Config] = None, verbose: bool = True):
+        """
+        Initialize calculator.
+        
+        Args:
+            config: Calculation configuration (default settings if None)
+            verbose: Print progress and status messages
+        """
+        self.config = config or Config()
+        self.verbose = verbose
+        
+        # Statistics tracking
+        self._stats = {
+            'total': 0,
+            'success': 0,
+            'failed': 0,
+            'timeout': 0
+        }
+    
+    # ==========================================================================
+    # Single Calculations (with subprocess + timeout)
+    # ==========================================================================
+    
+    def single_point(self, molecule: Molecule, timeout: int = 60) -> Result:
+        """
+        Calculate single point energy with timeout protection.
+        Runs in isolated subprocess.
+        """
+        if self.verbose:
+            print(f"Calculating energy for {molecule.name}...", end=" ", flush=True)
+        
+        completed, worker_result = ProcessRunner.run(
+            _single_point_worker,
+            args=(molecule, self.config.to_dict()),
+            timeout=timeout
+        )
+        
+        self._stats['total'] += 1
+        
+        if not completed:
+            self._stats['timeout'] += 1
+            if self.verbose:
+                print(f"TIMEOUT ({timeout}s)")
+            return Result(
+                molecule=molecule,
+                status=Status.TIMEOUT,
+                error_message=f"Timeout after {timeout}s",
+                wall_time=timeout
+            )
+        
+        if worker_result is None or not worker_result.get('success', False):
+            self._stats['failed'] += 1
+            error_msg = worker_result.get('error', 'Unknown error') if worker_result else 'No result'
+            if self.verbose:
+                print(f"FAILED: {error_msg[:50]}")
+            return Result(
+                molecule=molecule,
+                status=Status.FAILED,
+                error_message=error_msg,
+                wall_time=worker_result.get('wall_time', 0) if worker_result else 0
+            )
+        
+        self._stats['success'] += 1
+        if self.verbose:
+            print(f"E = {worker_result['energy']:.6f} Ha ({worker_result['wall_time']:.1f}s)")
+        
+        return Result(
+            molecule=molecule,
+            energy=worker_result['energy'],
+            status=Status.SUCCESS,
+            wall_time=worker_result['wall_time']
+        )
+    
+    def optimize(self, molecule: Molecule, timeout: int = 300) -> Result:
+        """
+        Optimize geometry with timeout protection.
+        Runs in isolated subprocess.
+        """
+        if self.verbose:
+            print(f"Optimizing {molecule.name}...", end=" ", flush=True)
+        
+        completed, worker_result = ProcessRunner.run(
+            _geometry_opt_worker,
+            args=(molecule, self.config.to_dict()),
+            timeout=timeout
+        )
+        
+        self._stats['total'] += 1
+        
+        if not completed:
+            self._stats['timeout'] += 1
+            if self.verbose:
+                print(f"TIMEOUT ({timeout}s)")
+            return Result(
+                molecule=molecule,
+                status=Status.TIMEOUT,
+                error_message=f"Timeout after {timeout}s",
+                wall_time=timeout
+            )
+        
+        if worker_result is None:
+            self._stats['failed'] += 1
+            if self.verbose:
+                print("FAILED: No result")
+            return Result(
+                molecule=molecule,
+                status=Status.FAILED,
+                error_message="No result returned"
+            )
+        
+        if not worker_result.get('success', False):
+            self._stats['failed'] += 1
+            status = Status.NOT_CONVERGED if 'converge' in worker_result.get('error', '').lower() else Status.FAILED
+            if self.verbose:
+                print(f"FAILED: {worker_result.get('error', 'Unknown')[:50]}")
+            return Result(
+                molecule=molecule,
+                energy=worker_result.get('energy'),
+                status=status,
+                error_message=worker_result.get('error', 'Unknown'),
+                wall_time=worker_result.get('wall_time', 0),
+                iterations=worker_result.get('iterations', 0)
+            )
+        
+        self._stats['success'] += 1
+        
+        opt_molecule = molecule.copy()
+        if worker_result.get('coordinates') is not None:
+            opt_molecule.coordinates = np.array(worker_result['coordinates'])
+        
+        if self.verbose:
+            print(f"E = {worker_result['energy']:.6f} Ha "
+                  f"({worker_result['iterations']} iter, {worker_result['wall_time']:.1f}s)")
+        
+        return Result(
+            molecule=opt_molecule,
+            energy=worker_result['energy'],
+            status=Status.SUCCESS,
+            wall_time=worker_result['wall_time'],
+            iterations=worker_result['iterations']
+        )
+    
+    # ==========================================================================
+    # Sequential Batch (with timeout per molecule)
+    # ==========================================================================
+    
+    def batch_single_point(self, 
+                          molecules: List[Molecule], 
+                          timeout: int = 60) -> List[Result]:
+        """
+        Calculate energies sequentially with timeout per molecule.
+        """
+        if self.verbose:
+            self._print_batch_header("Single Point", len(molecules), timeout)
+        
+        results = []
+        for i, mol in enumerate(molecules):
+            if self.verbose:
+                print(f"[{i+1}/{len(molecules)}] ", end="")
+            result = self.single_point(mol, timeout=timeout)
+            results.append(result)
+        
+        if self.verbose:
+            self._print_batch_summary(results)
         return results
     
-    def _execute_parallel(self,
-                          args: List[Tuple],
-                          worker_func: Callable,
-                            n_processes: Optional[int] = None,
-                            timeout: int = 300) -> List[CalculationResult]:  # 5 min timeout
+    def batch_optimize(self, 
+                      molecules: List[Molecule], 
+                      timeout: int = 300) -> List[Result]:
         """
-        Execute calculations in parallel using multiprocessing
+        Optimize geometries sequentially with timeout per molecule.
         """
+        if self.verbose:
+            self._print_batch_header("Geometry Optimization", len(molecules), timeout)
+        
+        results = []
+        for i, mol in enumerate(molecules):
+            if self.verbose:
+                print(f"[{i+1}/{len(molecules)}] ", end="")
+            result = self.optimize(mol, timeout=timeout)
+            results.append(result)
+        
+        if self.verbose:
+            self._print_batch_summary(results)
+        return results
+    
+    # ==========================================================================
+    # Parallel Batch (faster, no per-molecule timeout)
+    # ==========================================================================
+    
+    def batch_single_point_parallel(self,
+                                   molecules: List[Molecule],
+                                   n_processes: Optional[int] = None,
+                                   maxtasksperchild: int = 1) -> List[Result]:
+        """
+        Calculate energies in parallel using multiprocessing Pool.
+        
+        Note: No per-molecule timeout. Use maxtasksperchild=1 to prevent
+        memory leaks and stuck workers.
+        
+        Args:
+            molecules: List of molecules
+            n_processes: Number of parallel processes (default: CPU count - 2)
+            maxtasksperchild: Restart worker after N tasks (default: 1)
+            
+        Returns:
+            List of Result objects
+        """
+        import multiprocessing as mp
+        
         if n_processes is None:
-            n_processes = max(1, cpu_count() - 2) # Leave some CPUs free
-
-        results = []
-
-        with Pool(processes=n_processes) as pool:
-            with tqdm(total = len(args),
-                      desc="Processing molecules",
-                      unit="mol",
-                      bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]") as pbar:
-
-                # Use imap with timeout instead of imap_unordered
-                async_results = [pool.apply_async(worker_func, (arg,)) for arg in args]
-            
-                for async_result in async_results:
-                    try:
-                        result = async_result.get(timeout=timeout)
-                        results.append(result)
-                        pbar.update(1)
-
-                        if self.verbose:
-                            if result.sucess:
-                                pbar.write(f"  ✓ {result.molecule.name}: {result.energy:.6f} Ha")
-                            else:
-                                pbar.write(f"  ✗ {result.molecule.name}: {result.error[:30]}")
-                    except TimeoutError:
-                        pbar.write(f"  ✗ TIMEOUT after {timeout}s")
-                        results.append(CalculationResult(
-                            molecule=args[len(results)][0],
-                            calculation_type=CalculationType.GEOMETRY_OPTIMIZATION,
-                            sucess=False,
-                            error=f"Timeout after {timeout} seconds"
-                        ))
-                        pbar.update(1)
-                    except Exception as e:
-                        pbar.write(f"  ✗ ERROR: {str(e)[:50]}")
-                        pbar.update(1)
-            
-        return results
-
-    def _print_result(self, result: CalculationResult) -> None:
-        """   
-        Print calculation result
-        """
-        calc_type = result.calculation_type.value.replace("_", " ").title()
-
-        if result.sucess:
-            print(f"{calc_type} for {result.molecule.name} succeeded: Energy = {result.energy} Hartree")
-        else:
-            print(f"{calc_type} for {result.molecule.name} failed: Error = {result.error}")
-
-    # ============================= Results Managment Methods ============================
-
-    def get_results_summary(self) -> Dict[str, Any]:
-        """  
-        Get summary statistics of all calculations
-        """
-        return self.results_manager.summary()
-    
-    def get_sucessful_results(self) -> List[CalculationResult]:
-        """  
-        Get list of sucessful CalculationResults
-        """
-        return self.results_manager.get_sucessful_results()
-    
-    def get_failed_results(self) -> List[CalculationResult]:
-        """  
-        Get list of failed CalculationResults
-        """
-        return self.results_manager.get_failed_results()
-    
-    # ============================== Test Methods =============================================
-
-    def determine_method_and_basis_set_combinations(self,
-                                                    molecule: Molecule,
-                                                    methods: List[str] = ["hf", "b3lyp", "pbe0", "mp2", "ccsd", "ccsd(t)"],
-                                                    basis_sets: List[str] = ["sto-3g", "3-21g", "6-31g", "6-311g(d,p)", "cc-pvdz", "cc-pvtz", "def2-svp", "def2-tzvp"]
-                                                    ) -> List[Tuple[str, str, float]]:
-        """"   
-        Tests different method and basis set combinations for a given molecule
-        """
-        results = {}
-        for method in methods:
-            for basis in basis_sets:
-                start_time = time.time()
-                self.config.method = method 
-                self.config.basis_set = basis
-                energy = self.single_point_energy(molecule)
-                end_time = time.time()
-                elapsed = end_time - start_time
-
-                if energy is not None:
-                    results[(method, basis)] = (energy, elapsed)
-                    if self.verbose:
-                        print(f"Method: {method}, Basis Set: {basis}, Energy: {energy} Hartree, Time: {elapsed:.2f} seconds")
-                else:
-                    if self.verbose:
-                        print(f"Method: {method}, Basis Set: {basis} failed.")
+            n_processes = max(1, mp.cpu_count() - 2)
         
-        # Make for each method a subplot showing basis set vs energy
-        # We have 6 methods -> 2 rows, 3 columns
-        fig, axs = plt.subplots(2, 3, figsize=(18, 10))
-        axs = axs.flatten()
-        for i, method in enumerate(methods):
-            method_results = [(basis, results[(method, basis)][0]) for basis in basis_sets if (method, basis) in results]
-            if not method_results:
-                continue
-            basis_labels = [b[0] for b in method_results]
-            energies = [b[1] for b in method_results]
-            axs[i].plot(basis_labels, energies, marker='o')
-            axs[i].set_title(f'Method: {method.upper()}')
-            axs[i].set_xlabel('Basis Set')
-            axs[i].set_ylabel('Energy (Hartree)')
-            axs[i].grid(True)
-            axs[i].tick_params(axis='x', rotation=45)
-        plt.tight_layout()
-        plt.savefig("figures/method_basis_set_combinations.png")
-
-
-        return results 
-
-    def test_basis_set_convergence(self,
-            molecule: Molecule,
-            method="hf"):
-            """
-            Test the Basis set convergence for a given molecule and a given method:
-
-            For this we use the following basis sets:
-
-            + STO-3G
-            + 3-21G
-            + 6-311G(D,P)
-            + cc-PVDZ
-            + cc-PVTZ
-            + cc-PVQZ                      
-            """
-
-            basis_sets = [
-                "sto-3g",
-                "3-21g",
-                "6-311g(d,p)",
-                "cc-pvdz",
-                "cc-pvtz",
-                "cc-pvqz"
-            ]
-            results = []
-            times = []
-            for basis in basis_sets:
-                start_time = time.time()
-                self.config.method = method
-                self.config.basis_set = basis
-                energy = self.single_point_energy(molecule)
-                results.append((basis, energy))
+        if self.verbose:
+            print(f"\n{'='*60}")
+            print(f"Parallel Single Point Calculations")
+            print(f"Molecules: {len(molecules)}, Processes: {n_processes}")
+            print(f"Method: {self.config.method}/{self.config.basis}")
+            print(f"{'='*60}\n")
+        
+        # Prepare arguments
+        config_dict = self.config.to_dict()
+        args_list = [(mol, config_dict) for mol in molecules]
+        
+        # Run in parallel
+        results = []
+        with mp.Pool(processes=n_processes, maxtasksperchild=maxtasksperchild) as pool:
+            for i, worker_result in enumerate(pool.imap(_batch_single_point_worker, args_list)):
+                result = self._process_worker_result(worker_result, is_optimization=False)
+                results.append(result)
+                
                 if self.verbose:
-                    print(f"Basis Set: {basis}, Energy: {energy} Hartree")
-                elapsed = time.time() - start_time
-                times.append(elapsed)
-
-            # Two subplots the call energy vs basis set and time vs basis set
-            fig, (ax1, ax2) = plt.subplots(2,1, figsize=(8,10))
-            basis_labels = [b[0] for b in results]
-            energies = [b[1] for b in results]
-            ax1.plot(basis_labels, energies, marker='o')
-            ax1.set_title(f'Basis Set Convergence using {method.upper()}')
-            ax1.set_xlabel('Basis Set')
-            ax1.set_ylabel('Energy (Hartree)')
-            ax1.grid(True)
-            times_minutes = [t/60.0 for t in times]
-            ax2.plot(basis_labels, times_minutes, marker='o', color='orange')
-            ax2.set_title(f'Calculation Time vs Basis Set using {method.upper()}')
-            ax2.set_xlabel('Basis Set')
-            ax2.set_ylabel('Time (Minutes)')
-            ax2.grid(True)
-            plt.tight_layout()
-            plt.savefig("figures/basis_set_convergence.png")
-            plt.close() 
-
-
-
-    def test_threading_performance(self, 
-            molecule: Molecule,
-            method="hf",
-            basis_set="cc-pvtz",
-            max_threads: int = 10):
-            """
-            Small helper function to test speedup from threading
-            """ 
-            thread_counts = list(range(1, max_threads + 1))
-            times = []
-            for n_threads in thread_counts:
-                self.config.method = method
-                self.config.basis_set = basis_set 
-                self.config.num_threads = n_threads
-                start_time = time.time()
-                energy = self.single_point_energy(molecule)
-                elapsed = time.time() - start_time
-                times.append(elapsed)
+                    self._print_progress(i + 1, len(molecules), result)
+        
+        if self.verbose:
+            self._print_batch_summary(results)
+        
+        return results
+    
+    def batch_optimize_parallel(self,
+                               molecules: List[Molecule],
+                               n_processes: Optional[int] = None,
+                               maxtasksperchild: int = 1) -> List[Result]:
+        """
+        Optimize geometries in parallel using multiprocessing Pool.
+        
+        Note: No per-molecule timeout. Use maxtasksperchild=1 to prevent
+        memory leaks and stuck workers.
+        
+        Args:
+            molecules: List of molecules
+            n_processes: Number of parallel processes (default: CPU count - 2)
+            maxtasksperchild: Restart worker after N tasks (default: 1)
+            
+        Returns:
+            List of Result objects
+        """
+        import multiprocessing as mp
+        
+        if n_processes is None:
+            n_processes = max(1, mp.cpu_count() - 2)
+        
+        if self.verbose:
+            print(f"\n{'='*60}")
+            print(f"Parallel Geometry Optimization")
+            print(f"Molecules: {len(molecules)}, Processes: {n_processes}")
+            print(f"Method: {self.config.method}/{self.config.basis}")
+            print(f"Max iterations: {self.config.max_iter}")
+            print(f"{'='*60}\n")
+        
+        # Prepare arguments
+        config_dict = self.config.to_dict()
+        args_list = [(mol, config_dict) for mol in molecules]
+        
+        # Run in parallel with progress
+        results = []
+        with mp.Pool(processes=n_processes, maxtasksperchild=maxtasksperchild) as pool:
+            for i, worker_result in enumerate(pool.imap(_batch_optimize_worker, args_list)):
+                result = self._process_worker_result(worker_result, is_optimization=True)
+                results.append(result)
+                
                 if self.verbose:
-                    print(f"Threads: {n_threads}, Energy: {energy} Hartree, Time: {elapsed:.2f} seconds")
-            # Plotting the results
-            plt.figure(figsize=(8,6))
-            plt.plot(thread_counts, times, marker='o')
-            plt.title(f'Threading Performance using {method.upper()} / {basis_set.upper()}')
-            plt.xlabel('Number of Threads')
-            plt.ylabel('Time (Seconds)')
-            plt.grid(True)
-            plt.savefig("figures/threading_performance.png")
-            plt.close()
+                    self._print_progress(i + 1, len(molecules), result)
+        
+        if self.verbose:
+            self._print_batch_summary(results)
+        
+        return results
+    
+    def batch_optimize_parallel_unordered(self,
+                                          molecules: List[Molecule],
+                                          n_processes: Optional[int] = None,
+                                          maxtasksperchild: int = 1) -> List[Result]:
+        """
+        Optimize geometries in parallel, returning results as they complete.
+        
+        Faster than batch_optimize_parallel because it doesn't wait for
+        molecules to complete in order.
+        
+        Args:
+            molecules: List of molecules
+            n_processes: Number of parallel processes
+            maxtasksperchild: Restart worker after N tasks
+            
+        Returns:
+            List of Result objects (may be in different order than input)
+        """
+        import multiprocessing as mp
+        
+        if n_processes is None:
+            n_processes = max(1, mp.cpu_count() - 2)
+        
+        if self.verbose:
+            print(f"\n{'='*60}")
+            print(f"Parallel Geometry Optimization (Unordered)")
+            print(f"Molecules: {len(molecules)}, Processes: {n_processes}")
+            print(f"Method: {self.config.method}/{self.config.basis}")
+            print(f"{'='*60}\n")
+        
+        config_dict = self.config.to_dict()
+        args_list = [(mol, config_dict) for mol in molecules]
+        
+        results = []
+        completed = 0
+        
+        with mp.Pool(processes=n_processes, maxtasksperchild=maxtasksperchild) as pool:
+            # imap_unordered returns results as soon as they're ready
+            for worker_result in pool.imap_unordered(_batch_optimize_worker, args_list):
+                result = self._process_worker_result(worker_result, is_optimization=True)
+                results.append(result)
+                completed += 1
+                
+                if self.verbose:
+                    self._print_progress(completed, len(molecules), result)
+        
+        if self.verbose:
+            self._print_batch_summary(results)
+        
+        return results
+    
+    # ==========================================================================
+    # Helper Methods
+    # ==========================================================================
+    
+    def _process_worker_result(self, worker_result: Dict, is_optimization: bool) -> Result:
+        """Convert worker result dict to Result object"""
+        original_mol = worker_result.get('original_molecule')
+        
+        self._stats['total'] += 1
+        
+        if not worker_result.get('success', False):
+            self._stats['failed'] += 1
+            error = worker_result.get('error', 'Unknown error')
+            status = Status.NOT_CONVERGED if 'converge' in error.lower() else Status.FAILED
+            
+            return Result(
+                molecule=original_mol,
+                energy=worker_result.get('energy'),
+                status=status,
+                error_message=error,
+                wall_time=worker_result.get('wall_time', 0),
+                iterations=worker_result.get('iterations', 0)
+            )
+        
+        self._stats['success'] += 1
+        
+        # For optimization, update coordinates
+        if is_optimization and worker_result.get('coordinates') is not None:
+            opt_mol = original_mol.copy()
+            opt_mol.coordinates = np.array(worker_result['coordinates'])
+        else:
+            opt_mol = original_mol
+        
+        return Result(
+            molecule=opt_mol,
+            energy=worker_result['energy'],
+            status=Status.SUCCESS,
+            wall_time=worker_result.get('wall_time', 0),
+            iterations=worker_result.get('iterations', 0)
+        )
+    
+    def _print_batch_header(self, calc_type: str, n_molecules: int, timeout: int):
+        """Print batch calculation header"""
+        print(f"\n{'='*60}")
+        print(f"Batch {calc_type}")
+        print(f"Molecules: {n_molecules}, Timeout: {timeout}s each")
+        print(f"Method: {self.config.method}/{self.config.basis}")
+        print(f"{'='*60}\n")
+    
+    def _print_progress(self, current: int, total: int, result: Result):
+        """Print progress for a single molecule"""
+        if result.success:
+            print(f"[{current}/{total}] ✓ {result.molecule.name}: "
+                  f"E = {result.energy:.6f} Ha ({result.wall_time:.1f}s)")
+        else:
+            print(f"[{current}/{total}] ✗ {result.molecule.name}: "
+                  f"{result.status.value} - {result.error_message[:40]}")
+    
+    def _print_batch_summary(self, results: List[Result]):
+        """Print summary of batch results"""
+        success = sum(1 for r in results if r.success)
+        failed = sum(1 for r in results if r.status == Status.FAILED)
+        timeout = sum(1 for r in results if r.status == Status.TIMEOUT)
+        not_converged = sum(1 for r in results if r.status == Status.NOT_CONVERGED)
+        
+        total_time = sum(r.wall_time for r in results)
+        
+        print(f"\n{'='*60}")
+        print(f"Batch Complete")
+        print(f"  Success:       {success}/{len(results)}")
+        print(f"  Failed:        {failed}")
+        print(f"  Timeout:       {timeout}")
+        print(f"  Not converged: {not_converged}")
+        print(f"  Total time:    {total_time:.1f}s")
+        
+        # Energy statistics for successful calculations
+        successful_energies = [r.energy for r in results if r.success and r.energy is not None]
+        if successful_energies:
+            print(f"\n  Energy range:  [{min(successful_energies):.6f}, {max(successful_energies):.6f}] Ha")
+            print(f"  Mean energy:   {np.mean(successful_energies):.6f} Ha")
+        
+        print(f"{'='*60}\n")
+    
+    def get_stats(self) -> Dict[str, int]:
+        """Get calculation statistics"""
+        return self._stats.copy()
+    
+    def reset_stats(self):
+        """Reset statistics counters"""
+        for key in self._stats:
+            self._stats[key] = 0
+
+
+# ==============================================================================
+# CONVENIENCE FUNCTIONS - For quick calculations
+# ==============================================================================
+
+def quick_energy(molecule: Molecule, method: str = "hf", basis: str = "sto-3g") -> Optional[float]:
+    """
+    Quick single point energy calculation.
+    
+    Args:
+        molecule: Molecule to calculate
+        method: QM method
+        basis: Basis set
+        
+    Returns:
+        Energy in Hartree or None if failed
+    """
+    config = Config(method=method, basis=basis)
+    calc = Psi4Calculator(config, verbose=False)
+    result = calc.single_point(molecule, timeout=120)
+    return result.energy if result.success else None
+
+
+def quick_optimize(molecule: Molecule, method: str = "hf", basis: str = "sto-3g") -> Optional[Molecule]:
+    """
+    Quick geometry optimization.
+    
+    Args:
+        molecule: Molecule to optimize
+        method: QM method
+        basis: Basis set
+        
+    Returns:
+        Optimized molecule or None if failed
+    """
+    config = Config(method=method, basis=basis)
+    calc = Psi4Calculator(config, verbose=False)
+    result = calc.optimize(molecule, timeout=300)
+    return result.molecule if result.success else None
+
+

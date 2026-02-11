@@ -11,7 +11,7 @@ from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score
 from scipy.cluster.hierarchy import dendrogram, linkage
-from scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist, pdist
 from sklearn.decomposition import PCA
 
 
@@ -36,10 +36,13 @@ class BHMCAnalyzer:
     """   
     Analyzer for the Basin Hopping Monte Carlo results
     """
-    def __init__(self, name: str = "BHMC_Analysis"):
+    def __init__(self, name: str = "BHMC_Analysis", submolecule_indices: Optional[List[int]] = None):
         self.name = name 
         self.structures: List[StructureData] = []
         self.phases: Dict[str, List[StructureData]] = defaultdict(list)
+        self.submolecule_indices = submolecule_indices
+
+
 
     def add_structure(self,
                       molecule: Molecule,
@@ -130,17 +133,82 @@ class BHMCAnalyzer:
         return rmsd_matrix
 
 
+
+    # TODO: Restructure this function  
+    def intermolecular_distance(self, phase: Optional[str] = None) -> np.ndarray:
+        """   
+        Computes the intermolecular distance for each structure in the specified phase
+        For this we use the submolecule indices and compute the distance between the respective
+        geometric means
+        TODO: Maybe add com distance as well
+        """
+        if phase:
+            structures = self.phase[phase]
+        else:
+            structures = self.structures
+
+        distances = []
+
+        for structure in structures:
+            coords = structure.molecule.coordinates
+            submolecule_coords = [coords[indices] for indices in self.submolecule_indices]
+            submolecule_means = [np.mean(sub_coords, axis=0) for sub_coords in submolecule_coords]
+            if len(submolecule_means) == 2:
+                distance = np.linalg.norm(submolecule_means[0] - submolecule_means[1])
+                distances.append(distance)
+            else:
+                distances.append(0.0)  # TODO this has to be a matrix with 3 submolecules?
+        
+        return np.array(distances)
+        
+    def plot_int_d_vs_e(self, phase: Optional[str] = None):
+        """   
+        Plots the intermolecular distance vs energy for the specified phase
+        """
+        if phase:
+            structures = self.phase[phase]
+        else:
+            structures = self.structures
+
+        energies = [s.energy for s in structures]
+        distances = self.intermolecular_distance(phase=phase)
+
+        plt.figure(figsize=(10, 6))
+        plt.scatter(distances, energies, color='purple', alpha=0.7)
+        plt.title(f'Intermolecular Distance vs Energy - Phase: {phase if phase else "All"}')
+        plt.xlabel('Intermolecular Distance')
+        plt.ylabel('Energy')
+        plt.grid(True)
+        plt.savefig(f"figures/int_d_vs_energy_{phase if phase else 'all'}.png")
+        plt.close()
+
     @staticmethod 
     def _calculate_rmsd(coords1: np.ndarray, coords2: np.ndarray) -> float:
         """   
         Calculate RMSD between two sets of coordinates
+
+        Employs the Kabsch Algorithm to find the Optimal Rotation and then Computes the RMSD
+
+        Steps:
+        1. Center the Coordinates at the Centroid
+        2. Compute the Matrix H = P^T * Q where P and Q are the centered coordinates
+        3. Compute the SVD of H = U * S * V^T 
+        4. See if Orthogonal Matrix have Reflections d = det(U * V^T) = det(U) * det(V^T)
+        5. Calculate the Rotationam Matrix
+
+        R = U (1 1 d) V^T
         """
         # Center the coordinates
         coords1_centered = coords1 - np.mean(coords1, axis=0)
         coords2_centered = coords2 - np.mean(coords2, axis=0)
-        diff = coords1_centered - coords2_centered
-        rsmd = np.sqrt(np.mean(np.sum(diff**2, axis=1)))
-        return rsmd
+        # Covariance Matrix
+        H = coords1_centered.T @ coords2_centered
+        U, S, Vt = np.linalg.svd(H)
+        d = np.linalg.det(U) * np.linalg.det(Vt)
+        R = U @ np.diag([1, 1, d]) @ Vt
+        coords1_rotated = coords1_centered @ R
+        rmsd = np.sqrt(np.mean(np.sum((coords1_rotated - coords2_centered)**2, axis=1)))
+        return rmsd
 
     def plot_rmsd_matrix(self, phase: Optional[str] = None):
         """   
@@ -253,6 +321,41 @@ class BHMCAnalyzer:
         lowest_energy_structure = min(structures, key=lambda s: s.energy)
         return lowest_energy_structure
 
+    
+    
+    
+
+    @staticmethod
+    def compute_interatomic_distance(coords: np.ndarray) -> np.ndarray:
+        """   
+        Computes the interatomic distance matrix for a given set of coordinates
+
+        Returns:
+            Interatomic distance matrix (n_atoms x n_atoms)
+        """
+        distance_matrix = cdist(coords, coords)
+        # Flatten the upper triangle of the distance matrix to get a descriptor vector
+        return distance_matrix[np.triu_indices_from(distance_matrix, k=1)]
+    
+    def compute_interatomic_distance_matrix(self, phase: Optional[str] = None) -> List[np.ndarray]:
+        """    
+        Compute the interatomic distance matrix for all the structures
+        
+        Each row is one structure's descriptor vecotr
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+
+        descriptors = []
+        for s in structures:
+            distance_matrix = self.compute_interatomic_distance(s.molecule.coordinates)
+            descriptors.append(distance_matrix)
+
+        return descriptors
+
+
 
     @staticmethod 
     def determine_rotational_constants(coords: np.ndarray, masses: np.ndarray) -> Tuple[float, float, float]:
@@ -358,12 +461,15 @@ class BHMCAnalyzer:
         2. RMSD to lowest energy structure
         3. Radius of Gyration
         4. Rotational Constants (A,B,C)
+        5. Intermolecular Distance Matrix (flattened upper triangle)
         """
         delta_e = np.array([s.energy - self.get_lowest_energy_structure().energy for s in self.structures])
         rmsd_values = np.array([self._calculate_rmsd(s.molecule.coordinates, self.get_lowest_energy_structure().molecule.coordinates) for s in self.structures])
         rg_values = np.array([self.radius_of_gyration(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
         rotational_constants = np.array([self.determine_rotational_constants(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
-        feature_matrix = np.column_stack((delta_e, rmsd_values, rg_values, rotational_constants))
+        intermolecular_distances = np.array(self.compute_interatomic_distance_matrix())
+
+        feature_matrix = np.hstack((delta_e.reshape(-1, 1), rmsd_values.reshape(-1, 1), rg_values.reshape(-1, 1), rotational_constants, intermolecular_distances)) 
 
         # Normalize using StandardScaler
         scaler = StandardScaler()

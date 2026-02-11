@@ -87,15 +87,19 @@ if __name__ == "__main__":
                              method="hf", basis="cc-pvdz")
     # Initialize BHMC Sampler
     bhmc_sampler = MultiPhaseBHMC(config=bhmc_config) 
-    phase_a_candidates = bhmc_sampler.run_phase_a(initial_molecule=molecule, submolecule_indices=submol_indices, n_structures_per_worker=10, n_processes=5)
+    phase_a_candidates = bhmc_sampler.run_phase_a(initial_molecule=molecule, submolecule_indices=submol_indices, n_structures_per_worker=100, n_processes=20)
     # phase a = (structure, energy)
     # obtain all structures
     phase_a_structures = [structure for structure, energy in phase_a_candidates]
     logger.write_trajectory(phase_a_structures) 
 
-    representatives = bhmc_sampler.analyse_phase_a_results(phase_a_candidates) 
-     
-  
+    representatives = bhmc_sampler.analyse_phase_a_results(phase_a_candidates, submolecule_indices=submol_indices) 
+
+    # write representatives 
+    logger.write_trajectory(representatives, filename="representatives.xyz") 
+
+
+
 #    # Test computation of frequency 
     config = Config(method = "hf", basis="cc-pvdz")  # Changed basis_set to basis
     calc = Psi4Calculator(config=config, verbose=True)

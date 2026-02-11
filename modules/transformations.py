@@ -58,6 +58,30 @@ class Quaternion:
         )
     
     @staticmethod 
+    def random_uniform() -> "Quaternion":
+        """   
+        Generates a uniformly distributed random unit quaternion on S^3
+        using the method provided here
+        https://lavalle.pl/planning/node198.html
+        
+        Returns:
+            Unit quaternion representing a random rotation from SO(3)
+        """
+        u1,u2,u3 = np.random.uniform(0,1,3)
+        mu1 = np.sqrt(1.0 - u1)
+        sqrt_u1 = np.sqrt(u1)
+        two_pi_u2 = 2.0 * np.pi * u2
+        two_pi_u3 = 2.0 * np.pi * u3
+
+        return Quaternion(
+            w = sqrt_u1 * np.cos(two_pi_u3),
+            x = mu1 * np.sin(two_pi_u2),
+            y = mu1 * np.cos(two_pi_u2),
+            z = sqrt_u1 * np.sin(two_pi_u3)
+        )
+
+    
+    @staticmethod 
     def from_two_vectors(v1: np.ndarray, v2: np.ndarray) -> "Quaternion":
         """
         Creates a quaternion that rotates vector v1 to vector v2 

@@ -419,16 +419,21 @@ class MultiPhaseBHMC:
         return self.phase_a_structures
     
     @staticmethod
-    def analyse_phase_a_results(phase_a_structures: List[Tuple[Molecule, float]]):
+    def analyse_phase_a_results(phase_a_structures: List[Tuple[Molecule, float]], submolecule_indices: List[List[int]] = None) -> List[Molecule]:
         """   
         Analyses the results from the exploration phase
+        Args:
+            phase_a_structures: List of (Molecule, energy) tuples from Phase A
+            submolecule_indices: Optional list of submolecule indices for clustering analysis
+        
         """
-        analyzer = BHMCAnalyzer()
+        analyzer = BHMCAnalyzer(submolecule_indices=submolecule_indices)
         analyzer.add_structures_batch(phase_a_structures)
-        analyzer.rmsd_filtering() # Filter out duplicates based on RMSD
+        analyzer.rmsd_filtering() # Filter out duplicates based on RMSD 
         analyzer.plot_energy_distribution()
         analyzer.plot_energy_vs_rmsd()
         analyzer.plot_rg_vs_energy()
+        analyzer.plot_int_d_vs_e()
         analyzer.plot_pca_agglomerative(n_clusters=10)
 
         # Run Clustering 

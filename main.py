@@ -87,7 +87,7 @@ if __name__ == "__main__":
                              method="hf", basis="cc-pvdz")
     # Initialize BHMC Sampler
     bhmc_sampler = MultiPhaseBHMC(config=bhmc_config) 
-    phase_a_candidates = bhmc_sampler.run_phase_a(initial_molecule=molecule, submolecule_indices=submol_indices, n_structures_per_worker=500, n_processes=20)
+    phase_a_candidates = bhmc_sampler.run_phase_a(initial_molecule=molecule, submolecule_indices=submol_indices, n_structures_per_worker=10, n_processes=5)
     # phase a = (structure, energy)
     # obtain all structures
     phase_a_structures = [structure for structure, energy in phase_a_candidates]

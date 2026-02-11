@@ -303,8 +303,12 @@ class BHMCAnalyzer:
     This will ensure we have a diverse set of representative structures
     """
     def rmsd_filtering(self, threshold: float = 0.5, phase: Optional[str] = None):
-        """  
-        Filters out structures that are within a certain RMSD threshold to each other
+        """   
+        Filters out structures that are within a certain RMSD threshold of each other
+
+        Args:
+            threshold: RMSD threshold for filtering
+            phase: Specified phase to filter. If None, filters all structures.
         """
         if phase:
             structures = self.phases[phase]
@@ -313,16 +317,34 @@ class BHMCAnalyzer:
         if not structures:
             print(f"No structures found for phase: {phase}")
             return
-        filtered_structures = []
-        for s in structures:
-            if all(self._calculate_rmsd(s.molecule.coordinates, fs.molecule.coordinates) > threshold for fs in filtered_structures):
-                filtered_structures.append(s)
+        # Extract all coordinates
+        all_coords = np.array([s.molecule.coordinates for s in structures]) 
+        n_atoms = all_coords[0].shape[0]
+        selected_indices = []
+        selected_flat = np.empty((len(structures), n_atoms * 3), dtype=all_coords[0].dtype)
+        n_selected = 0
+        for i, coords in enumerate(all_coords):
+            candidate_flat = coords.ravel()
+            if n_selected == 0:
+                selected_indices.append(i)
+                selected_flat[n_selected] = candidate_flat
+                n_selected += 1
+                continue 
+            diff = selected_flat[:n_selected] - candidate_flat
+            rmsd_values = np.sqrt(np.mean(diff.reshape(n_selected, n_atoms, 3)**2, axis=(1,2)))
+
+            if np.all(rmsd_values >= threshold):
+                selected_indices.append(i)
+                selected_flat[n_selected] = candidate_flat
+                n_selected += 1
+
+        filtered_structures = [structures[i] for i in selected_indices]
         if phase:
             self.phases[phase] = filtered_structures
         else:
             self.structures = filtered_structures
-        print(f"RMSD Filtering completed for phase: {phase if phase else 'All'}. Remaining structures: {len(filtered_structures)}")
 
+        
     
 
 

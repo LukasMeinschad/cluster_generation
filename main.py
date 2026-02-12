@@ -82,20 +82,29 @@ if __name__ == "__main__":
     # Get submolecule indices
     submol_indices = [submol.get_index_in_parent() for submol in submolecules]
 
-    # Set up BHCM Config
-    bhmc_config = BHMCConfig(temperature=300.0, max_steps=10, step_size=0.2,
-                             method="hf", basis="cc-pvdz")
+    # Set up BHMC Config
+    bhmc_config = BHMCConfig(temperature=300.0, method="hf", basis="cc-pvdz")
+    
     # Initialize BHMC Sampler
     bhmc_sampler = MultiPhaseBHMC(config=bhmc_config) 
-    phase_a_candidates = bhmc_sampler.run_phase_a(initial_molecule=molecule, submolecule_indices=submol_indices, n_structures_per_worker=100, n_processes=20)
-    # phase a = (structure, energy)
-    # obtain all structures
+    phase_a_candidates = bhmc_sampler.run_phase_a(
+        initial_molecule=molecule, 
+        submolecule_indices=submol_indices, 
+        n_structures_per_worker=500, 
+        n_processes=20
+    )
+    
+    # Obtain all structures
     phase_a_structures = [structure for structure, energy in phase_a_candidates]
     logger.write_trajectory(phase_a_structures) 
 
-    representatives = bhmc_sampler.analyse_phase_a_results(phase_a_candidates, submolecule_indices=submol_indices) 
+    # Analyze results and get cluster representatives
+    representatives = bhmc_sampler.analyse_phase_a_results(
+        phase_a_candidates, 
+        submolecule_indices=submol_indices
+    ) 
 
-    # write representatives 
+    # Write representatives 
     logger.write_trajectory(representatives, filename="representatives.xyz") 
 
 

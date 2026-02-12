@@ -626,6 +626,11 @@ class Molecule:
             lines.append(f"{self._remove_digits_from_label(label)} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}")
         return "\n".join(lines)
 
+    def to_xyz(self) -> str:
+        """
+        F... me this is really ugly
+        """
+        return self.to_xyz_string()
 
     def get_average_covalent_radii(self) -> List[float]:
         """   

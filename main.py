@@ -22,8 +22,8 @@ from cluster import MolecularCluster, BHMCAnalyzer
 from symmetry import SymmetryAnalyzer
 from graph import MolecularGraph
 from coord_projector import CoordinateProjector
-from bhmc import MultiPhaseBHMC, BHMCConfig
-import bhmc as bhmc_module
+from bhmc import MultiPhaseBHMC, BHMCConfig, benchmark_temperature_acceptance
+from init import ClusterInitializer, InitializationConfig
 
 
 from modules.args import get_args
@@ -34,13 +34,11 @@ import timeit
 
 
 
+
+
+
 if __name__ == "__main__":
     time_start = time.time()
-
-    # Set multiprocessing start method
-    # Start method is the way to start the child process in python
-    # 'spawn' creates a new process
-    # 'fork' would copy the parent process
     mp.set_start_method('spawn', force=True)
 
     # Parse the Arguments
@@ -49,10 +47,8 @@ if __name__ == "__main__":
     with open(args.i[0], "r") as file:
         xyz_content = file.read()
     
-    # Initialize Logger
     logger = Logger(out_file="cluster_gen.out", mode= "w")
     logger.write_header()
-    # Swith to append mode for further logging
     logger = Logger(out_file="cluster_gen.out", mode="a")
 
     molecule = Molecule.from_xyz(xyz_content)
@@ -70,30 +66,50 @@ if __name__ == "__main__":
 
     #calc.test_basis_set_convergence(molecule=molecule, method="CCSD(T)")
 
-    # Test computation of frequency 
-    config = Config(method = "hf", basis="cc-pvdz")
-    calc = Psi4Calculator(config=config, verbose=True)
+    init_config = InitializationConfig(
+        method="mp2",
+        basis="cc-pvdz",
+        box_type="sphere",
+        box_scale_factor = 2.0,
+        min_distance=1.8,
+        optimize_submolecules=True,
+        verbose=True
+    )
+    initializer = ClusterInitializer(config=init_config)
+    initial_molecule, submol_indices, simulation_box = initializer.initialize_from_xyz(args.i[0])
 
 
-    molecule.compute_bonds()
-    Transformation = Transformation()
-
-    submolecules = molecule.fragment_by_connectivity()
-    # Get submolecule indices
-    submol_indices = [submol.get_index_in_parent() for submol in submolecules]
+    # Run benchmark
+    results = benchmark_temperature_acceptance(
+        initial_molecule=initial_molecule,
+        submolecule_indices=submol_indices,
+        simulation_box=simulation_box,
+        method="mp2",
+        basis="cc-pvdz",
+        n_steps=100,
+        n_trials=5,
+        save_plot=True,
+        plot_filename="figures/temperature_acceptance.png"
+    )
 
     # Set up BHMC Config
-    bhmc_config = BHMCConfig(temperature=300.0, method="hf", basis="cc-pvdz")
-    
-    # Initialize BHMC Sampler
-    bhmc_sampler = MultiPhaseBHMC(config=bhmc_config) 
-    phase_a_candidates = bhmc_sampler.run_phase_a(
-        initial_molecule=molecule, 
-        submolecule_indices=submol_indices, 
-        n_structures_per_worker=500, 
-        n_processes=20
+    bhmc_config = BHMCConfig(
+        temperature=180,
+        method="mp2",
+        basis="cc-pvdz"
     )
     
+    # Initialize BHMC Sampler
+    bhmc_sampler = MultiPhaseBHMC(config=bhmc_config, simulation_box=simulation_box)
+
+    phase_a_candidates = bhmc_sampler.run_phase_a(
+        initial_molecule=initial_molecule, 
+        submolecule_indices=submol_indices,
+        n_structures_per_worker=200,
+        n_processes=20
+    )
+
+
     # Obtain all structures
     phase_a_structures = [structure for structure, energy in phase_a_candidates]
     logger.write_trajectory(phase_a_structures) 
@@ -101,17 +117,15 @@ if __name__ == "__main__":
     # Analyze results and get cluster representatives
     representatives = bhmc_sampler.analyse_phase_a_results(
         phase_a_candidates, 
-        submolecule_indices=submol_indices
+        submolecule_indices=submol_indices,
+        n_clusters=10
     ) 
 
-    # Write representatives 
     logger.write_trajectory(representatives, filename="representatives.xyz") 
 
 
-
-#    # Test computation of frequency 
-    config = Config(method = "hf", basis="cc-pvdz")  # Changed basis_set to basis
-    calc = Psi4Calculator(config=config, verbose=True)
+    config = Config(method = "mp2", basis="cc-pvdz")  # Changed basis_set to basis
+    calc = Psi4Calculator(config=config, verbose=False)
     optimization_results = calc.batch_optimize_parallel_unordered(representatives, n_processes=20)
     optimized_mols = [result.molecule for result in optimization_results if result.success]
     logger.write_trajectory(optimized_mols, filename="optimized_representatives.xyz")

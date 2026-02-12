@@ -218,4 +218,26 @@ class SimulationBox:
             return 2.0 * np.sum(self.box_dimensions[[0,0,1]] * self.box_dimensions[[1,2,2]])
         return 0.0
     
+
+    def to_dict(self) -> dict:
+        """  
+        Serialize the SimulationBox to a dictionary
+        """
+        return {
+            "box_type": self.box_type,
+            "radius": self.radius,
+            "box_dimensions": self.box_dimensions.tolist() if self.box_dimensions is not None else None,
+            "center": self.center.tolist() if self.center is not None else None
+        }
+    @staticmethod
+    def from_dict(data: dict) -> 'SimulationBox':
+        """  
+        Deserialize a SimulationBox from a dictionary
+        """
+        return SimulationBox(
+            box_type=data.get("box_type", "sphere"),
+            radius=data.get("radius"),
+            box_dimensions=np.array(data["box_dimensions"]) if data.get("box_dimensions") is not None else None,
+            center=np.array(data["center"]) if data.get("center") is not None else None
+        )
     

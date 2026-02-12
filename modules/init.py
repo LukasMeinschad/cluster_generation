@@ -218,7 +218,6 @@ class ClusterInitializer:
             for attempt in range(self.config.max_placement_attempts):
                 # Random position
                 position = simulation_box.get_random_position(n_points=1)
-                
                 # Random rotation
                 rotation_matrix = self._random_rotation_matrix()
                 rotated_coords = (rotation_matrix @ centered_coords.T).T
@@ -412,7 +411,10 @@ if __name__ == "__main__":
     """  
     Run test when module is executed directly
     """
-    xyz_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_2.xyz"
+    xyz_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/nh3_2.xyz"
+    #xyz_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_n2.xyz"
+    #xyz_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_2.xyz"
+    
     method = "hf"
     basis = "cc-pvdz"
     optimize = True

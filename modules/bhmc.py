@@ -349,3 +349,242 @@ class MultiPhaseBHMC:
         return representatives
 
 
+# =================================== Benchmarking and Analysis =========================================
+
+
+def benchmark_temperature_acceptance(
+    initial_molecule: Molecule,
+    submolecule_indices: List[List[int]],
+    simulation_box: Optional[SimulationBox] = None,
+    temperatures: Optional[List[float]] = None,
+    method: str = "hf",
+    basis: str = "sto-3g",
+    n_steps: int = 100,
+    n_trials: int = 5,
+    operators: Optional[List[Tuple[str, float]]] = None,
+    save_plot: bool = True,
+    plot_filename: str = "acceptance_vs_temperature.png"
+) -> Dict[float, Dict[str, float]]:
+    """Benchmark acceptance rates across different temperatures.
+    
+    Runs short BHMC chains at various temperatures to determine optimal
+    temperature for exploration.
+    
+    Args:
+        initial_molecule: Starting molecular structure
+        submolecule_indices: List of submolecule atom indices
+        simulation_box: Optional simulation box
+        temperatures: List of temperatures to test (K). Default: [50, 100, 200, 300, 400, 500, 750, 1000]
+        method: QM method for energy evaluation
+        basis: Basis set
+        n_steps: Number of BHMC steps per trial
+        n_trials: Number of independent trials per temperature
+        operators: Optional operator list. Uses DEFAULT_OPERATORS if None
+        save_plot: Whether to save the plot
+        plot_filename: Output filename for plot
+        
+    Returns:
+        Dictionary mapping temperature to {'mean_acceptance': float, 'std_acceptance': float,
+                                           'mean_energy_change': float, 'std_energy_change': float}
+    """
+    import matplotlib.pyplot as plt
+    
+    if temperatures is None:
+        temperatures = [50, 100, 200, 300, 400, 500, 750, 1000, 1500]
+    
+    if operators is None:
+        operators = MultiPhaseBHMC.DEFAULT_OPERATORS
+    
+    print(f"\n{'='*70}")
+    print(f"Temperature Benchmark")
+    print(f"{'='*70}")
+    print(f"Testing {len(temperatures)} temperatures with {n_trials} trials each")
+    print(f"Steps per trial: {n_steps}")
+    print(f"Method/Basis: {method}/{basis}")
+    print(f"{'='*70}\n")
+    
+    # Constants
+    k_B = 8.617333262145e-5  # Boltzmann constant in eV/K
+    HARTREE_TO_EV = 27.2114
+    
+    # Setup operators
+    sim_box = simulation_box
+    nonlocal_ops = NonLocalOperators(simulation_box=sim_box)
+    
+    op_map = {
+        'twist': nonlocal_ops.twist_operator,
+        'large_displacement': nonlocal_ops.large_displacement,
+        'mirror': nonlocal_ops.mirror_operator,
+        'roto_reflection': nonlocal_ops.roto_reflection_operator,
+        'exchange': nonlocal_ops.exchange_operator,
+        'random_so3': nonlocal_ops.random_so3_operator,
+    }
+    
+    operator_funcs = []
+    weights = []
+    for op_name, weight in operators:
+        if op_name in op_map:
+            operator_funcs.append({'name': op_name, 'func': op_map[op_name]})
+            weights.append(weight)
+    
+    weights = np.array(weights)
+    weights /= weights.sum()
+    
+    # Energy evaluator
+    evaluator = EnergyEvaluator(method=method, basis=basis)
+    
+    # Results storage
+    results = {}
+    
+    # Test each temperature
+    for temp in temperatures:
+        print(f"\nTesting T = {temp} K:")
+        beta = 1.0 / (k_B * temp)
+        
+        trial_acceptance_rates = []
+        trial_energy_changes = []
+        
+        for trial in range(n_trials):
+            current_structure = initial_molecule.copy()
+            current_energy = evaluator.evaluate(current_structure)
+            
+            if current_energy is None:
+                print(f"  Trial {trial+1}: Failed to evaluate initial energy")
+                continue
+            
+            n_accepted = 0
+            energy_changes = []
+            
+            for step in range(n_steps):
+                # Select and apply operator
+                op_idx = np.random.choice(len(operator_funcs), p=weights)
+                operator = operator_funcs[op_idx]
+                
+                try:
+                    new_structure = operator['func'](current_structure, submolecule_indices)
+                    new_energy = evaluator.evaluate(new_structure)
+                    
+                    if new_energy is None:
+                        continue
+                    
+                    # Metropolis criterion
+                    delta_e = new_energy - current_energy
+                    delta_e_ev = delta_e * HARTREE_TO_EV
+                    
+                    if delta_e < 0:
+                        accept = True
+                    else:
+                        prob = np.exp(-beta * delta_e_ev)
+                        accept = random.random() < prob
+                    
+                    if accept:
+                        energy_changes.append(abs(delta_e))
+                        current_structure = new_structure
+                        current_energy = new_energy
+                        n_accepted += 1
+                        
+                except Exception:
+                    continue
+            
+            acceptance_rate = n_accepted / n_steps
+            avg_energy_change = np.mean(energy_changes) if energy_changes else 0.0
+            
+            trial_acceptance_rates.append(acceptance_rate)
+            trial_energy_changes.append(avg_energy_change)
+            
+            print(f"  Trial {trial+1}/{n_trials}: Acceptance = {acceptance_rate*100:.1f}%")
+        
+        if trial_acceptance_rates:
+            results[temp] = {
+                'mean_acceptance': np.mean(trial_acceptance_rates),
+                'std_acceptance': np.std(trial_acceptance_rates),
+                'mean_energy_change': np.mean(trial_energy_changes),
+                'std_energy_change': np.std(trial_energy_changes)
+            }
+            
+            print(f"  Average acceptance: {results[temp]['mean_acceptance']*100:.1f}% "
+                  f"± {results[temp]['std_acceptance']*100:.1f}%")
+        else:
+            print(f"  All trials failed for T = {temp} K")
+    
+    # Create plot
+    if save_plot and results:
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+        
+        temps = sorted(results.keys())
+        mean_acc = [results[t]['mean_acceptance'] * 100 for t in temps]
+        std_acc = [results[t]['std_acceptance'] * 100 for t in temps]
+        mean_energy = [results[t]['mean_energy_change'] * HARTREE_TO_EV * 1000 for t in temps]  # meV
+        std_energy = [results[t]['std_energy_change'] * HARTREE_TO_EV * 1000 for t in temps]
+        
+        # Acceptance rate plot
+        ax1.errorbar(temps, mean_acc, yerr=std_acc, marker='o', capsize=5, 
+                    linewidth=2, markersize=8, color='steelblue')
+        ax1.axhline(y=50, color='red', linestyle='--', alpha=0.5, label='50% target')
+        ax1.axhline(y=30, color='orange', linestyle='--', alpha=0.5, label='30% minimum')
+        ax1.set_xlabel('Temperature (K)', fontsize=12)
+        ax1.set_ylabel('Acceptance Rate (%)', fontsize=12)
+        ax1.set_title('BHMC Acceptance Rate vs Temperature', fontsize=14, fontweight='bold')
+        ax1.grid(True, alpha=0.3)
+        ax1.legend()
+        ax1.set_ylim(0, 100)
+        
+        # Energy change plot
+        ax2.errorbar(temps, mean_energy, yerr=std_energy, marker='s', capsize=5,
+                    linewidth=2, markersize=8, color='darkorange')
+        ax2.set_xlabel('Temperature (K)', fontsize=12)
+        ax2.set_ylabel('Average Energy Change (meV)', fontsize=12)
+        ax2.set_title('Average Accepted Energy Change', fontsize=14, fontweight='bold')
+        ax2.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        plt.savefig(plot_filename, dpi=300, bbox_inches='tight')
+        print(f"\n✓ Plot saved to {plot_filename}")
+        plt.close()
+    
+    # Print summary
+    print(f"\n{'='*70}")
+    print(f"Benchmark Summary")
+    print(f"{'='*70}")
+    print(f"{'Temperature (K)':<15} {'Acceptance Rate (%)':<25} {'Avg ΔE (meV)':<20}")
+    print(f"{'-'*70}")
+    for temp in sorted(results.keys()):
+        mean_acc = results[temp]['mean_acceptance'] * 100
+        std_acc = results[temp]['std_acceptance'] * 100
+        mean_e = results[temp]['mean_energy_change'] * HARTREE_TO_EV * 1000
+        std_e = results[temp]['std_energy_change'] * HARTREE_TO_EV * 1000
+        print(f"{temp:<15.0f} {mean_acc:>6.1f} ± {std_acc:<5.1f} {'':<10} {mean_e:>6.2f} ± {std_e:<6.2f}")
+    print(f"{'='*70}\n")
+    
+    # Suggest optimal temperature
+    if results:
+        # Find temperature closest to 40-50% acceptance
+        temps_sorted = sorted(results.keys())
+        target = 0.45
+        best_temp = min(temps_sorted, 
+                       key=lambda t: abs(results[t]['mean_acceptance'] - target))
+        best_acc = results[best_temp]['mean_acceptance'] * 100
+        
+        print(f"Recommended temperature: {best_temp} K (acceptance: {best_acc:.1f}%)")
+        print(f"{'='*70}\n")
+    
+    return results
+
+
+def plot_operator_statistics(
+    phase_a_structures: List[Tuple[Molecule, float]],
+    save_plot: bool = True,
+    plot_filename: str = "operator_statistics.png"
+) -> None:
+    """Plot statistics about operator usage and acceptance.
+    
+    Note: This requires tracking which operator was used for each structure,
+    which is not currently implemented. Placeholder for future enhancement.
+    
+    Args:
+        phase_a_structures: Results from Phase A
+        save_plot: Whether to save plot
+        plot_filename: Output filename
+    """
+    print("Note: Operator statistics tracking not yet implemented.")
+    print("To enable this, modify _phase_a_worker to track operator usage.")

@@ -55,7 +55,7 @@ if __name__ == "__main__":
         method="mp2",
         basis="cc-pvdz",
         box_type="sphere",
-        box_scale_factor = 5,
+        box_scale_factor = 5.0,
         min_distance=1.8,
         optimize_submolecules=True,
         verbose=True
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     # Set up BHMC Config
     bhmc_config = BHMCConfig(
-        temperature=500,
+        temperature=800,
         method="mp2",
         basis="cc-pvdz"
     )
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecule=initial_molecule, 
         submolecule_indices=submol_indices,
-        n_structures_per_worker=500,
+        n_structures_per_worker=100,
         n_processes=20
     )
 

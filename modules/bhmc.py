@@ -27,6 +27,7 @@ class BHMCConfig:
     method: str = "hf"          # Quantum chemistry method
     basis: str = "sto-3g"       # Basis set
     verbose: bool = False       # Enable debug output in workers
+    adaptive_operators: bool = True  # Use adaptive scaling for operators
 
 
 class EnergyEvaluator:
@@ -79,7 +80,15 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
     sim_box = SimulationBox.from_dict(sim_box_dict) if sim_box_dict else None
     nonlocal_ops = NonLocalOperators(simulation_box=sim_box)
     
-    # Map operator names to functions
+    # Get adaptive setting from config
+    adaptive = config_dict.get('adaptive_operators', True)
+    
+    # Map operator names to functions with their adaptive parameter support
+    # Operators that support adaptive scaling
+    adaptive_operators = {'twist', 'large_displacement', 'roto_reflection'}
+    # Operators that don't use adaptive (discrete transformations)
+    non_adaptive_operators = {'mirror', 'exchange', 'random_so3'}
+    
     op_map = {
         'twist': nonlocal_ops.twist_operator,
         'large_displacement': nonlocal_ops.large_displacement,
@@ -89,12 +98,16 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
         'random_so3': nonlocal_ops.random_so3_operator,
     }
     
-    # Build operator list with weights
+    # Build operator list with weights and adaptive flag
     operators = []
     weights = []
     for op_name, weight in operator_list:
         if op_name in op_map:
-            operators.append({'name': op_name, 'func': op_map[op_name]})
+            operators.append({
+                'name': op_name, 
+                'func': op_map[op_name],
+                'supports_adaptive': op_name in adaptive_operators
+            })
             weights.append(weight)
     
     if not operators:
@@ -113,6 +126,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
     # Initialize BHMC chain
     current_structure = copy.deepcopy(initial_molecule)
     current_energy = evaluator.evaluate(current_structure)
+    adaptive = config_dict.get('adaptive_operators', True)
     
     if current_energy is None:
         print(f"Worker {worker_id}: ERROR - Initial energy calculation failed!")
@@ -133,7 +147,18 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
         operator = operators[op_idx]
         
         try:
-            new_structure = operator['func'](current_structure, submolecule_indices)
+            # Apply operator with adaptive parameter if supported
+            if operator['supports_adaptive']:
+                new_structure = operator['func'](
+                    current_structure, 
+                    submolecule_indices,
+                    adaptive=adaptive
+                )
+            else:
+                new_structure = operator['func'](
+                    current_structure, 
+                    submolecule_indices
+                )
             
             # DEBUG: Check if operator actually changed coordinates
             if np.allclose(new_structure.coordinates, current_structure.coordinates):
@@ -256,7 +281,9 @@ class MultiPhaseBHMC:
         config_dict = {
             'method': self.config.method,
             'basis': self.config.basis,
-            'temperature': self.config.temperature
+            'temperature': self.config.temperature,
+            'verbose': self.config.verbose,
+            'adaptive_operators': self.config.adaptive_operators  # Add this line
         }
         
         # Serialize simulation box if present
@@ -344,9 +371,10 @@ class MultiPhaseBHMC:
         analyzer.add_structures_batch(phase_a_structures)
         
         # Plot com Trajectories
-        analyzer.plot_com_trajectory_2d_projections(
+        analyzer.plot_com_trajectory_2d_projection(
             simulation_box=simulation_box,
-            save_path="figures/phase_a_com_trajectory.png"
+            save_path="figures/phase_a_com_trajectory.png",
+            separate_submolecules=True
         )
 
 

@@ -81,16 +81,15 @@ class SimulationBox:
         Args:
             coordinates: Array of shape (N, 3) representing atomic coordinates
         """
-        coords = np.atleast_3d(coordinates)
+        coords = np.atleast_2d(coordinates)
         if self.box_type == "sphere":
-            dist = np.linalg.norm(coords - self.center, axis=-1)
+            dist = np.linalg.norm(coords - self.center, axis=1)
             return np.all(dist <= self.radius)
         
         elif self.box_type == "cube":
             half_dims = self.box_dimensions / 2.0
             rel_coords = coords - self.center
-            inside = np.all(np.abs(rel_coords) <= half_dims, axis=-1)
-            return np.all(inside)
+            return np.all(np.abs(rel_coords) <= half_dims, axis=1)
         
         return False
     
@@ -118,73 +117,71 @@ class SimulationBox:
                                   coordinates: np.ndarray,
                                   method: str = "reject") -> Tuple[np.ndarray, bool]:
         """   
-        Applys the boundary condition to coordinates
+        Applys the boundary condition to coordinates.
 
-        Args:
-            coordinates: Atomic coordinates (N,3)
-            method: Method to apply ("reject", "reflect", "wrap")
-                - "reject": Rejects coordinates outside the box
-                - "reflect": Reflects coordinates back into the box
-                - "wrap": Wraps coordinates around the box (periodic)
+        Further uses the center of mass for the reflection method
         """
-        if self.is_inside(coordinates):
-            return coordinates.copy(), True
+        coords = np.atleast_2d(coordinates.copy())
+        if self.is_inside(coords):
+            return coords, True
+        
         if method == "reject":
             return coordinates.copy(), False
         elif method == "reflect":
-            return self._reflect_coordinates(coordinates)
+            return self._reflect_coordinates(coords)
         elif method == "wrap":
             #TODO Implement this someday
             raise NotImplementedError("Wrap method is not implemented yet")
-
+        
     def _reflect_coordinates(self, coordinates: np.ndarray) -> Tuple[np.ndarray, bool]:
         """   
-        Reflects the coordinates back into the box.
-        Uses iterative reflection to handle overshoots.
+        Reflects the molecule into the box as a rigid body
+
+        Algorithm:
+        1. Compute the geometric center of the molecule
+        2. If centroid is outside relfect back
+        3. Translate entire molecule by the same displacement
+        4. Repeat until inside or max iterations reached
         """
         coords = coordinates.copy()
-        max_iterations = 10  # Prevent infinite loops
-        
-        if self.box_type == "sphere":
-            for iteration in range(max_iterations):
-                all_inside = True
-                for i, coord in enumerate(coords):
-                    rel_pos = coord - self.center
-                    dist = np.linalg.norm(rel_pos)
-                    if dist > self.radius:
-                        all_inside = False
-                        # Reflect: fold the excess distance back inside
-                        direction = rel_pos / dist
-                        # Use modular reflection to handle any overshoot
-                        excess = dist - self.radius
-                        # Fold excess back: if excess > 2*radius, mod it
-                        excess = excess % (2 * self.radius)
-                        if excess <= self.radius:
-                            coords[i] = self.center + (self.radius - excess) * direction
-                        else:
-                            coords[i] = self.center + (excess - self.radius) * direction
-                if all_inside:
-                    break
+        centroid = np.mean(coords, axis=0)
 
-        elif self.box_type == "cube":
-            half_dims = self.box_dimensions / 2.0 
-            rel_coords = coords - self.center
-
-            # Use modular reflection (like a zigzag function) for each dimension
-            for dim in range(3):
-                L = 2.0 * half_dims[dim]  # Full box length
-                # Shift so that box goes from 0 to L
-                shifted = rel_coords[:, dim] + half_dims[dim]
-                # Apply zigzag (triangle wave) reflection
-                # Period is 2L, fold into [0, 2L], then reflect
-                shifted = shifted % (2 * L)
-                mask = shifted > L
-                shifted[mask] = 2 * L - shifted[mask]
-                rel_coords[:, dim] = shifted - half_dims[dim]
-
-            coords = rel_coords + self.center
+        max_iterations = 10
+        for _ in range(max_iterations):
+            if self.is_inside(coords):
+                return coords, True 
+            
+            # recompute centroid and displacement
+            centroid = np.mean(coords, axis=0)
+            new_centroid = self._reflect_point(centroid)
+            translation = new_centroid - centroid
+            coords += translation
 
         return coords, self.is_inside(coords)
+        
+        
+    def _reflect_point(self, point: np.ndarray) -> np.ndarray:
+        """  
+        Reflects a single point back into the box
+        """
+        if self.box_type == "sphere":
+            rel_pos = point - self.center
+            dist = np.linalg.norm(rel_pos)
+            if dist <= self.radius:
+                return point.copy()
+            
+            # Relfect: new_dist = radius - (dist - radius) = 2*radius - dist
+            direction = rel_pos / dist
+            excess = dist - self.radius
+            excess_mod = excess % (2 * self.radius)
+            if excess_mod <= self.radius:
+                new_dist = self.radius - excess_mod
+            else:
+                new_dist = excess_mod - self.radius
+            return self.center + direction * new_dist
+
+        elif self.box_type == "cube":
+            raise NotImplementedError("Reflection for cube is not implemented yet")
     
     def get_random_position(self, n_points: int=1) -> np.ndarray:
         """    

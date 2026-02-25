@@ -447,174 +447,254 @@ class BHMCAnalyzer:
             self.structures = filtered_structures
 
 
-    def plot_com_trajectory_2d_projections(
-            self,
-            simulation_box: Optional[SimulationBox] = None,
-            save_path: str = "figures/centroid_trajectory_2d_projections.png",
-            phase: Optional[str] = None
-        ):
+    def plot_com_trajectory_2d_projection(self,
+                                          phase: Optional[str] = None,
+                                          save_path: Optional[str] = None,
+                                          simulation_box: Optional[SimulationBox] = None,
+                                          show_box: bool = True,
+                                          plot_type: str = "density",
+                                          cmap: str = "viridis",
+                                          gridsize: int = 10,
+                                          show_trajectory: bool = False,
+                                          alpha_trajectory: float = 0.1,
+                                          separate_submolecules: bool = True) -> None:
+        """   
+        Plots 2D projections of submolecule center trajectories
+
+        Args:
+            phase: Which phase to plot ("A", "B", "all")
+            save_path: Path to save the figure
+            show_box: Whether to show the simulation box boundaries
+            plot_type: "density" for hexbin density plot, "scatter" for scatter plot
+                        "contour" for contour plot "kde" for kernel density estimate
+            cmap: Colormap for density plot
+            gridsize: Grid size for hexbin plot
+            show_trajectory: Whether to show the trajectory lines between points
+            alpha_trajectory: Alpha value for trajectory lines
+            separate_submolecules: If True, plot each submolecule in separate row
         """
-        Plot 2D projections of geometric center (centroid) trajectories onto XY, XZ, and YZ planes.
-        """
-        # Get structures
         if phase:
-            structures = self.phases.get(phase, [])
+            structures = self.phases[phase]
         else:
             structures = self.structures
-        
         if not structures:
-            print(f"No structures available for phase: {phase}")
+            print(f"No structures found for phase: {phase}")
             return
         
-        if not self.submolecule_indices:
-            print("No submolecule indices available.")
-            return
-        
-        n_frames = len(structures)
         n_submols = len(self.submolecule_indices)
         
-        print(f"\nPlotting 2D projections for {n_frames} structures, {n_submols} submolecules...")
+        # Collect all COM positions per submolecules
+        com_trajectories = [[] for _ in range(n_submols)]
+        for mol in structures:
+            for i, indices in enumerate(self.submolecule_indices):
+                coords = mol.molecule.coordinates[indices]
+                com = np.mean(coords, axis=0)
+                com_trajectories[i].append(com)
+
+        for i in range(n_submols):
+            com_trajectories[i] = np.array(com_trajectories[i])
         
-        # Compute centroid trajectories (geometric center)
-        centroid_trajectories = self._compute_com_trajectories(structures)
-        
-        # Debug output - check if coordinates are actually changing
-        for i, traj in enumerate(centroid_trajectories):
-            print(f"\n  Submol {i+1} trajectory:")
-            print(f"    Shape: {traj.shape}")
-            print(f"    X range: [{traj[:, 0].min():.4f}, {traj[:, 0].max():.4f}] (spread: {traj[:, 0].max() - traj[:, 0].min():.4f})")
-            print(f"    Y range: [{traj[:, 1].min():.4f}, {traj[:, 1].max():.4f}] (spread: {traj[:, 1].max() - traj[:, 1].min():.4f})")
-            print(f"    Z range: [{traj[:, 2].min():.4f}, {traj[:, 2].max():.4f}] (spread: {traj[:, 2].max() - traj[:, 2].min():.4f})")
-            
-            # Check if trajectory is actually moving
-            movement = np.sqrt(np.sum((traj[-1] - traj[0])**2))
-            print(f"    Total displacement (start to end): {movement:.4f} Å")
-            
-            # Check variance in each dimension
-            print(f"    X variance: {np.var(traj[:, 0]):.6f}")
-            print(f"    Y variance: {np.var(traj[:, 1]):.6f}")
-            print(f"    Z variance: {np.var(traj[:, 2]):.6f}")
-        
-        # Create figure with 3 subplots
-        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-        
-        # Define projections
         projections = [
-            ('X', 'Y', 0, 1),
-            ('X', 'Z', 0, 2),
-            ('Y', 'Z', 1, 2)
+            ("X", "Y", 0, 1),
+            ("X", "Z", 0, 2),
+            ("Y", "Z", 1, 2)
         ]
         
-        colors = plt.cm.tab10.colors
-        
-        # Plot each projection
-        for ax, (label1, label2, idx1, idx2) in zip(axes, projections):
-            print(f"\nPlotting {label1}-{label2} projection...")
+        # Get box limits for consistent scaling
+        if simulation_box is not None:
+            if simulation_box.box_type == "sphere":
+                lim = simulation_box.radius * 1.1
+            else:
+                lim = np.max(simulation_box.box_dimensions) / 2 * 1.1
+        else:
+            all_coords = np.vstack(com_trajectories)
+            lim = np.max(np.abs(all_coords)) * 1.1
+
+        # Different colormaps for each submolecule
+        submol_cmaps = ['Blues', 'Oranges', 'Greens', 'Reds', 'Purples'][:n_submols]
+        submol_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'][:n_submols]
+        start_markers = ['o', 's', '^', 'D', 'v'][:n_submols]
+        end_markers = ['*', 'P', 'X', 'h', '8'][:n_submols]
+
+        if separate_submolecules and n_submols > 1:
+            # Create grid: n_submols rows x 3 columns
+            fig, axes = plt.subplots(n_submols, 3, figsize=(16, 5 * n_submols))
+            if n_submols == 1:
+                axes = axes.reshape(1, -1)
             
-            # Plot trajectory for each submolecule
-            for i, centroid_traj in enumerate(centroid_trajectories):
-                color = colors[i % len(colors)]
-                
-                # Extract coordinates for this projection
-                x_coords = centroid_traj[:, idx1]
-                y_coords = centroid_traj[:, idx2]
-                
-                print(f"  Submol {i+1}: plotting {len(x_coords)} points")
-                print(f"    {label1} coords: min={x_coords.min():.4f}, max={x_coords.max():.4f}")
-                print(f"    {label2} coords: min={y_coords.min():.4f}, max={y_coords.max():.4f}")
-                
-                # Plot trajectory line with increased visibility
-                line = ax.plot(x_coords, y_coords,
-                              color=color, alpha=0.8, linewidth=3,
-                              label=f'Submol {i+1}', 
-                              marker='o', markersize=2, markevery=10)[0]
-                
-                print(f"    Line plotted: {line}")
-                
-                # Mark start point (large circle)
-                start = ax.scatter(x_coords[0], y_coords[0],
-                                  color=color, marker='o', s=150,
-                                  edgecolors='black', linewidths=2,
-                                  zorder=10, label=f'Start {i+1}')
-                
-                # Mark end point (star)
-                end = ax.scatter(x_coords[-1], y_coords[-1],
-                                color=color, marker='*', s=200,
-                                edgecolors='black', linewidths=2,
-                                zorder=10, label=f'End {i+1}')
-                
-                print(f"    Start marker at: ({x_coords[0]:.4f}, {y_coords[0]:.4f})")
-                print(f"    End marker at: ({x_coords[-1]:.4f}, {y_coords[-1]:.4f})")
+            hb_list = []  # Store hexbin objects for colorbars
             
-            # Draw simulation box projection
-            if simulation_box is not None:
-                self._draw_box_projection_2d(ax, simulation_box)
+            for submol_i in range(n_submols):
+                traj = com_trajectories[submol_i]
+                
+                for col, (xlabel, ylabel, xi, yi) in enumerate(projections):
+                    ax = axes[submol_i, col]
+                    
+                    ax.set_xlabel(f'{xlabel} (Å)', fontsize=11)
+                    ax.set_ylabel(f'{ylabel} (Å)', fontsize=11)
+                    ax.set_title(f"Submolecule {submol_i + 1} | {xlabel}-{ylabel}", 
+                                fontsize=12, fontweight='bold')
+                    ax.set_xlim(-lim, lim)
+                    ax.set_ylim(-lim, lim)
+                    ax.set_aspect('equal')
+                    ax.grid(True, alpha=0.3, linestyle='--')
+
+                    # Draw simulation box
+                    if show_box and simulation_box is not None:
+                        if simulation_box.box_type == "sphere":
+                            circle = plt.Circle(
+                                (simulation_box.center[xi], simulation_box.center[yi]),
+                                simulation_box.radius,
+                                fill=False, color="gray", linestyle='--', linewidth=1.5, alpha=0.7
+                            )
+                            ax.add_patch(circle)
+                        elif simulation_box.box_type == "cube":
+                            half = simulation_box.box_dimensions / 2
+                            rec = plt.Rectangle(
+                                (simulation_box.center[xi] - half[xi],
+                                 simulation_box.center[yi] - half[yi]),
+                                2 * half[xi], 2 * half[yi],
+                                fill=False, color="gray", linestyle='--', linewidth=1.5, alpha=0.7
+                            )
+                            ax.add_patch(rec)
+                    
+                    x = traj[:, xi]
+                    y = traj[:, yi]
+                    
+                    if plot_type == "density":
+                        hb = ax.hexbin(x, y, gridsize=gridsize, cmap=submol_cmaps[submol_i], 
+                                      mincnt=1, alpha=0.9, edgecolors='none')
+                        if col == 2:  # Store last column hexbin for colorbar
+                            hb_list.append(hb)
+                    
+                    elif plot_type == "scatter":
+                        ax.scatter(x, y, color=submol_colors[submol_i], alpha=0.5, 
+                                  s=20, edgecolors='none')
+                    
+                    elif plot_type == "contour":
+                        H, xedges, yedges = np.histogram2d(x, y, bins=gridsize,
+                                                          range=[[-lim, lim], [-lim, lim]])
+                        X, Y = np.meshgrid((xedges[:-1] + xedges[1:]) / 2,
+                                          (yedges[:-1] + yedges[1:]) / 2)
+                        ax.contourf(X, Y, H.T, levels=10, cmap=submol_cmaps[submol_i], alpha=0.7)
+                        ax.contour(X, Y, H.T, levels=5, colors='black', alpha=0.3, linewidths=0.5)
+                    
+                    if show_trajectory:
+                        ax.plot(x, y, color=submol_colors[submol_i], alpha=alpha_trajectory, linewidth=0.5)
+                    
+                    # Mark start and end points
+                    ax.scatter(x[0], y[0], color=submol_colors[submol_i], marker=start_markers[submol_i], 
+                              s=150, edgecolors='black', linewidths=2, zorder=10, label='Start')
+                    ax.scatter(x[-1], y[-1], color=submol_colors[submol_i], marker=end_markers[submol_i], 
+                              s=200, edgecolors='black', linewidths=2, zorder=10, label='End')
+                    
+                    # Add legend only to last column
+                    if col == 2:
+                        ax.legend(loc='upper left', fontsize=9)
             
-            # Formatting
-            ax.set_xlabel(f'{label1} (Å)', fontsize=12)
-            ax.set_ylabel(f'{label2} (Å)', fontsize=12)
-            ax.set_title(f'{label1}-{label2} Projection', fontsize=13, fontweight='bold')
-            ax.grid(True, alpha=0.3, linestyle='--')
-            ax.set_aspect('equal', adjustable='box')
+            # Add colorbars for each submolecule row
+            plt.tight_layout()
+            fig.subplots_adjust(right=0.92)
             
-            # Show legend
-            ax.legend(fontsize=9, loc='best', framealpha=0.9)
+            if plot_type == "density" and hb_list:
+                for i, hb in enumerate(hb_list):
+                    # Position colorbar on the right side of each row
+                    cbar_ax = fig.add_axes([0.94, 0.1 + (n_submols - 1 - i) * (0.8 / n_submols), 
+                                           0.02, 0.7 / n_submols])
+                    cbar = fig.colorbar(hb, cax=cbar_ax)
+                    cbar.set_label(f'Submol {i+1} Visits', fontsize=10)
+        
+        else:
+            # Original combined plot with overlay
+            fig, axes = plt.subplots(1, 3, figsize=(16, 6))
             
-            print(f"  Axis limits: x=[{ax.get_xlim()}], y=[{ax.get_ylim()}]")
-        
-        # Main title
-        plt.suptitle(
-            f'Geometric Center Trajectory 2D Projections\n'
-            f'Phase: {phase if phase else "All"} | {n_frames} structures | {n_submols} submolecules',
-            fontsize=14, fontweight='bold', y=1.02
-        )
-        
-        plt.tight_layout()
-        
-        # Save figure
-        from pathlib import Path
-        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"\n✓ Saved 2D projections to: {save_path}")
-        
-        # Also show the plot to verify
-        # plt.show()
-        
-        plt.close()
+            hb = None
+            
+            for ax, (xlabel, ylabel, xi, yi) in zip(axes, projections):
+                ax.set_xlabel(f'{xlabel} (Å)', fontsize=11)
+                ax.set_ylabel(f'{ylabel} (Å)', fontsize=11)
+                ax.set_title(f"{xlabel}-{ylabel} Projection", fontsize=12, fontweight='bold')
+                ax.set_xlim(-lim, lim)
+                ax.set_ylim(-lim, lim)
+                ax.set_aspect('equal')
+                ax.grid(True, alpha=0.3, linestyle='--')
+
+                # Draw simulation box
+                if show_box and simulation_box is not None:
+                    if simulation_box.box_type == "sphere":
+                        circle = plt.Circle(
+                            (simulation_box.center[xi], simulation_box.center[yi]),
+                            simulation_box.radius,
+                            fill=False, color="gray", linestyle='--', linewidth=1.5, alpha=0.7
+                        )
+                        ax.add_patch(circle)
+                    elif simulation_box.box_type == "cube":
+                        half = simulation_box.box_dimensions / 2
+                        rec = plt.Rectangle(
+                            (simulation_box.center[xi] - half[xi],
+                             simulation_box.center[yi] - half[yi]),
+                            2 * half[xi], 2 * half[yi],
+                            fill=False, color="gray", linestyle='--', linewidth=1.5, alpha=0.7
+                        )
+                        ax.add_patch(rec)
+                
+                # Plot each submolecule with different appearance
+                for i, traj in enumerate(com_trajectories):
+                    x = traj[:, xi]
+                    y = traj[:, yi]
+                    
+                    if plot_type == "density":
+                        hb = ax.hexbin(x, y, gridsize=gridsize, cmap=submol_cmaps[i], 
+                                      mincnt=1, alpha=0.6, edgecolors='none')
+                    
+                    elif plot_type == "scatter":
+                        ax.scatter(x, y, color=submol_colors[i], alpha=0.5, 
+                                  s=20, edgecolors='none', label=f'Submol {i+1}')
+                    
+                    if show_trajectory:
+                        ax.plot(x, y, color=submol_colors[i], alpha=alpha_trajectory, linewidth=0.5)
+                    
+                    # Mark start and end points with different markers per submolecule
+                    ax.scatter(x[0], y[0], color=submol_colors[i], marker=start_markers[i], 
+                              s=150, edgecolors='black', linewidths=2, zorder=10)
+                    ax.scatter(x[-1], y[-1], color=submol_colors[i], marker=end_markers[i], 
+                              s=200, edgecolors='black', linewidths=2, zorder=10)
+
+            # Create legend
+            legend_elements = []
+            for i in range(n_submols):
+                legend_elements.append(plt.scatter([], [], c=submol_colors[i], s=100, 
+                                                  marker=start_markers[i], edgecolors='black',
+                                                  label=f'Start {i+1}'))
+                legend_elements.append(plt.scatter([], [], c=submol_colors[i], s=120, 
+                                                  marker=end_markers[i], edgecolors='black',
+                                                  label=f'End {i+1}'))
+            
+            axes[2].legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.05, 1), 
+                          borderaxespad=0., title="Submolecules", fontsize=9)
+
+            plt.tight_layout()
+            
+            # Add combined colorbar at bottom (note: only shows last submolecule's scale)
+            if plot_type == "density" and hb is not None:
+                fig.subplots_adjust(bottom=0.18)
+                cbar_ax = fig.add_axes([0.25, 0.05, 0.5, 0.025])
+                cbar = fig.colorbar(hb, cax=cbar_ax, orientation='horizontal')
+                cbar.set_label('Visit Count', fontsize=11)
+
+        # Title
+        fig.suptitle(f'Submolecule Center of Mass Distribution\n'
+                     f'Phase: {phase.upper() if phase else "All"} | {len(structures)} structures | '
+                     f'{n_submols} submolecules',
+                     fontsize=13, fontweight='bold', y=1.02)
     
-    @staticmethod
-    def _draw_box_projection_2d(ax, simulation_box: SimulationBox):
-        """Draw 2D projection of simulation box."""
-        if simulation_box.box_type == "sphere":
-            # Draw circle
-            circle = plt.Circle(
-                (0, 0),
-                simulation_box.radius,
-                fill=False,
-                edgecolor='gray',
-                linewidth=2,
-                linestyle='--',
-                alpha=0.5,
-                zorder=1
-            )
-            ax.add_patch(circle)
-        
-        elif simulation_box.box_type == "cube":
-            # Draw square
-            L = simulation_box.box_length
-            rect = plt.Rectangle(
-                (-L/2, -L/2),
-                L,
-                L,
-                fill=False,
-                edgecolor='gray',
-                linewidth=2,
-                linestyle='--',
-                alpha=0.5,
-                zorder=1
-            )
-            ax.add_patch(rect)
+        if save_path:
+            plt.savefig(save_path, dpi=150, bbox_inches='tight', facecolor='white')
+            print(f"Saved trajectory density plot to {save_path}")
     
+        plt.show()
+                   
+
     def _compute_com_trajectories(self, structures: List[StructureData]) -> List[np.ndarray]:
         """
         Compute geometric center (centroid) trajectories for each submolecule.
@@ -782,9 +862,9 @@ class BHMCAnalyzer:
         # Return a list of molecules 
         cluster_representatives_mol = [rep.molecule for rep in cluster_representatives.values()]
         return cluster_representatives_mol
-            
-     
-    
+
+
+
 
 
 

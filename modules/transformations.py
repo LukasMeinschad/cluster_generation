@@ -826,7 +826,56 @@ class MolecularOperators:
             molecule.coordinates = new_coords
         return molecule
 
+    def _compute_scaling_factor(
+            self,
+            molecule: "Molecule",
+            operator_type: str = "local"
+    ) -> float:
+        """  
+        Computes a normalized scaling factor
+        """ 
 
+
+        if self.simulation_box is None:
+            return 1.0
+        coords = molecule.coordinates
+        from scipy.spatial.distance import pdist
+
+        if len(coords) > 1:
+            pairwise_distances = pdist(coords)
+            mol_diameter = np.max(pairwise_distances)
+        else:
+            mol_diameter = 2.0 * molecule.covalent_radii.max()
+        # Add average covalent radius to account for size of atoms
+        avg_radius = np.mean(molecule.covalent_radii)
+        effective_mol_size = mol_diameter + 2 * avg_radius
+
+
+        # Get characteristic length
+        if self.simulation_box.box_type == "cubic":
+            box_length = self.simulation_box.box_dimensions
+        elif self.simulation_box.box_type == "sphere":
+            box_length = self.simulation_box.radius * 2
+        else:
+            raise ValueError(f"Unknown box type '{self.simulation_box.box_type}'")
+        
+        free_space = max(box_length - effective_mol_size, 0.1)
+        size_ratio = effective_mol_size / free_space
+
+
+
+        if operator_type == "local":
+            # Here one can simply change scalings around
+            base_scale = 0.05
+            max_scale = 0.4
+            scale = base_scale + (max_scale - base_scale) * (1 - np.exp(-size_ratio))
+        if operator_type == "nonlocal":
+            base_scale = 0.2
+            max_scale = 0.8
+            scale = base_scale + (max_scale - base_scale) * (1 - np.exp(-size_ratio * 0.5))
+        return np.clip(scale, base_scale, max_scale)
+
+                                         
     @staticmethod
     def _random_unit_vetor() -> np.ndarray:
         """   
@@ -869,7 +918,8 @@ class LocalOperators(MolecularOperators):
     def random_displacement_submolecule(self,
                                         molecule: "Molecule",
                                         submolecule_indices: List[List[int]],
-                                        delta_range: Tuple[float, float] = (-0.3, 0.3)) -> "Molecule":
+                                        delta_range: Tuple[float, float] = (-0.3, 0.3),
+                                        adaptive: bool = True) -> "Molecule":
         """  
         Randomly displaces a submolecule by a random vector
 
@@ -877,6 +927,7 @@ class LocalOperators(MolecularOperators):
             molecule: Molecule object to modify
             submolecule_indices: List of lists of atom indices defining submolecules
             delta_range: Range for random displacement in Angstrom (default is (-0.3, 0.3))
+            adaptive: If True, scale range by box/molecule size ratio
         """
         mol_copy = molecule.copy()
         n_atoms = len(mol_copy.coordinates)
@@ -888,8 +939,15 @@ class LocalOperators(MolecularOperators):
         if any(idx >= n_atoms for idx in submol_idx):
             raise ValueError("Submolecule indices must be within the range of molecule atoms")
         
+        # Apply adaptive scaling
+        if adaptive:
+            scale = self._compute_scaling_factor(molecule, operator_type="local")
+            effective_range = (delta_range[0] * scale, delta_range[1] * scale)
+        else:
+            effective_range = delta_range
+        
         # Generate random displacement vector
-        delta_value = random.uniform(*delta_range)
+        delta_value = random.uniform(*effective_range)
         direction = self._random_unit_vetor()
         displacement = direction * delta_value
         # Apply displacement to selected submolecule atoms
@@ -899,7 +957,8 @@ class LocalOperators(MolecularOperators):
     def random_rotation_submolecule(self,
                                     molecule: "Molecule",
                                     submolecule_indices: List[List[int]],
-                                    angle_range: Tuple[float, float] = (-30, 30)) -> "Molecule":
+                                    angle_range: Tuple[float, float] = (-30, 30),
+                                    adaptive: bool = True) -> "Molecule":
         """ 
         Randomly rotate a submolecule around its center of mass
         Uses fast rotation matrix from GeometryOps
@@ -908,6 +967,7 @@ class LocalOperators(MolecularOperators):
             molecule: Input molecule
             submolecule_indices: List of submolecule index lists
             angle_range: Range for rotation angle in degrees
+            adaptive: If True, scale angle range by box/molecule size ratio
 
         Returns:
             Modified Molecule
@@ -922,7 +982,14 @@ class LocalOperators(MolecularOperators):
         submol_masses = mol_copy.masses[submol_idx]
         center = GeometryOps.center_of_mass(submol_coords, submol_masses)
 
-        angle = np.radians(random.uniform(*angle_range))
+        # Apply adaptive scaling to angle range
+        if adaptive:
+            scale = self._compute_scaling_factor(molecule, operator_type="local")
+            effective_range = (angle_range[0] * scale, angle_range[1] * scale)
+        else:
+            effective_range = angle_range
+
+        angle = np.radians(random.uniform(*effective_range))
         axis = self._random_unit_vetor()
 
         R = GeometryOps.rotation_matrix_rodrigues(axis, angle)
@@ -941,13 +1008,16 @@ class NonLocalOperators(MolecularOperators):
     def twist_operator(self,
                        molecule: "Molecule",
                        submolecule_indices: List[List[int]],
-                       rotation_angle_range: Tuple[float, float] = (0, 360)) -> "Molecule":
+                       rotation_angle_range: Tuple[float, float] = (0, 360),
+                       adaptive: bool = True) -> "Molecule":
         """
         Twist operator: Rotate one submolecule relative to others
+        
         Args:
             molecule: Input Molecule object
             submolecule_indices: List of lists of atom indices defining submolecules
             rotation_angle_range: Range for random rotation angle in degrees
+            adaptive: If True, scale angle range by box/molecule size ratio
         """ 
         mol_copy = molecule.copy()
 
@@ -958,7 +1028,14 @@ class NonLocalOperators(MolecularOperators):
         ref_masses = mol_copy.masses[ref_submol]
         ref_center = GeometryOps.center_of_mass(ref_coords, ref_masses)
 
-        angle = np.radians(random.uniform(*rotation_angle_range))
+        # Apply adaptive scaling
+        if adaptive:
+            scale = self._compute_scaling_factor(molecule, operator_type="nonlocal")
+            effective_range = (rotation_angle_range[0] * scale, rotation_angle_range[1] * scale)
+        else:
+            effective_range = rotation_angle_range
+
+        angle = np.radians(random.uniform(*effective_range))
         axis = self._random_unit_vetor()
         R = GeometryOps.rotation_matrix_rodrigues(axis, angle)
 
@@ -970,7 +1047,8 @@ class NonLocalOperators(MolecularOperators):
     def large_displacement(self,
                            molecule: "Molecule",
                            submolecule_indices: List[List[int]],
-                           displacement_range: Tuple[float, float] = (1.0, 3.0)) -> "Molecule":
+                           displacement_range: Tuple[float, float] = (1.0, 3.0),
+                           adaptive: bool = True) -> "Molecule":
         """   
         Large displacement operation
 
@@ -978,13 +1056,21 @@ class NonLocalOperators(MolecularOperators):
             molecule: Input Molecule object
             submolecule_indices: List of lists of atom indices defining submolecules
             displacement_range: Range for random displacement in Angstrom (default is (1.0, 3.0))
+            adaptive: If True, scale range by box/molecule size ratio
         """
         mol_copy = molecule.copy()
 
         # Select random submolecule
         submol_idx = self._select_random_submolecule(submolecule_indices)
 
-        magnitude = random.uniform(*displacement_range)
+        # Apply adaptive scaling
+        if adaptive:
+            scale = self._compute_scaling_factor(molecule, operator_type="nonlocal")
+            effective_range = (displacement_range[0] * scale, displacement_range[1] * scale)
+        else:
+            effective_range = displacement_range
+
+        magnitude = random.uniform(*effective_range)
         direction = self._random_unit_vetor()
         displacement = direction * magnitude
 
@@ -995,8 +1081,10 @@ class NonLocalOperators(MolecularOperators):
                         molecule: "Molecule",
                         submolecule_indices: List[List[int]]) -> "Molecule":
         """  
-        Mirror operator: Relfect submolecule through a plane
-        Uses reference frame constrution and reflection matrix
+        Mirror operator: Reflect submolecule through a plane
+        Uses reference frame construction and reflection matrix
+
+        Note: This operator is not scaled as reflection is a discrete transformation
 
         Algorithm:
         1. Construct reference frame from the submolecule to mirror
@@ -1032,10 +1120,12 @@ class NonLocalOperators(MolecularOperators):
         return self._apply_box_constraints(mol_copy, molecule)
 
     def random_so3_operator(self,
-                            molecule:"Molecule",
+                            molecule: "Molecule",
                             submolecule_indices: List[List[int]]) -> "Molecule":
         """ 
         Applies a uniform Random SO(3) rotation to a submolecule around its own center of mass
+        
+        Note: This operator is not scaled as it samples uniformly over all rotations
         """
         mol_copy = molecule.copy()
 
@@ -1044,7 +1134,7 @@ class NonLocalOperators(MolecularOperators):
         coords = mol_copy.coordinates[submol_idx]
         masses = mol_copy.masses[submol_idx]
         # Calc com
-        com = GeometryOps.center_of_mass(coords,masses)
+        com = GeometryOps.center_of_mass(coords, masses)
         # Sample Rotation Quaternion
         R = Quaternion.random_so3()
         coords_centered = coords - com
@@ -1056,7 +1146,8 @@ class NonLocalOperators(MolecularOperators):
     def roto_reflection_operator(self,
                                  molecule: "Molecule",
                                  submolecule_indices: List[List[int]],
-                                 angle_range: Tuple[float, float] = (0, 360)) -> "Molecule":
+                                 angle_range: Tuple[float, float] = (0, 360),
+                                 adaptive: bool = True) -> "Molecule":
         """  
         Roto-reflection operator: Combined rotation and reflection
         
@@ -1064,6 +1155,7 @@ class NonLocalOperators(MolecularOperators):
             molecule: Input Molecule object
             submolecule_indices: List of lists of atom indices defining submolecules
             angle_range: Range for random rotation angle in degrees
+            adaptive: If True, scale angle range by box/molecule size ratio
         """
         mol_copy = molecule.copy()
         ref_submol, rot_ref_submol = self._select_two_submolecules(submolecule_indices)
@@ -1081,7 +1173,14 @@ class NonLocalOperators(MolecularOperators):
         n = normal_vector / np.linalg.norm(normal_vector)
         H = np.eye(3) - 2 * np.outer(n, n)
 
-        angle = np.radians(random.uniform(*angle_range))
+        # Apply adaptive scaling
+        if adaptive:
+            scale = self._compute_scaling_factor(molecule, operator_type="nonlocal")
+            effective_range = (angle_range[0] * scale, angle_range[1] * scale)
+        else:
+            effective_range = angle_range
+
+        angle = np.radians(random.uniform(*effective_range))
         R = GeometryOps.rotation_matrix_rodrigues(n, angle)
         M = R @ H
         coords_centered = mol_copy.coordinates[rot_ref_submol] - ref_frame.origin
@@ -1095,6 +1194,8 @@ class NonLocalOperators(MolecularOperators):
         """  
         Exchange Operator: Swaps the positions of two submolecules
         Uses vectorized center of mass calculation
+        
+        Note: This operator is not scaled as it's a discrete exchange operation
         """
         mol_copy = molecule.copy()
         submol_1, submol_2 = self._select_two_submolecules(submolecule_indices)
@@ -1109,3 +1210,29 @@ class NonLocalOperators(MolecularOperators):
         mol_copy.coordinates[submol_1] += translation_1
         mol_copy.coordinates[submol_2] += translation_2
         return self._apply_box_constraints(mol_copy, molecule)
+
+
+# ========================= Testing Utilities for Operators =========================
+
+if __name__ == "__main__":
+
+    # Initialize H2O-Dimer
+    from molecule_class import Molecule  
+    from box import SimulationBox
+    xyz = """  
+    6
+    Coordinates from ORCA-job h2o_2 E -152.102897751726
+    O           0.20131422818946     -0.13419863189991     -0.38118207664628
+    H           1.10826926774619      0.03054527004232     -0.16898516572928
+    H          -0.26386315635905     -0.06924940339370      0.43390806815981
+    O           3.06513444516272      0.52224610599392      0.05902763481169
+    H           3.25817767296947      1.29105665797100     -0.44996761253291
+    H           3.66908154229119     -0.14039999871364     -0.23001884806303
+    """
+    molecule = Molecule.from_xyz(xyz)
+    print("Original Coordinates:")
+    atoms = ["O", "H", "H", "O", "H", "H"]
+    covalent_radii = [0.66, 0.31, 0.31, 0.66, 0.31, 0.31]
+    box = SimulationBox.from_covalent_radii(covalent_radii, 6, scale_factor=2)
+    ops_class = MolecularOperators(simulation_box=box)
+    print(ops_class._compute_scaling_factor(molecule,operator_type="nonlocal"))

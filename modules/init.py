@@ -16,7 +16,8 @@ from dataclasses import dataclass
 from molecule_class import Molecule
 from box import SimulationBox
 from psi4_interface import Psi4Calculator, Config
-
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import multiprocessing
 
 @dataclass
 class InitializationConfig:
@@ -129,27 +130,93 @@ class ClusterInitializer:
         return submolecules
     
     def _optimize_submolecules(self, submolecules: List[Molecule]) -> List[Molecule]:
-        """Optimize each submolecule individually."""
+        """Optimize each submolecule individually (parallelized)."""
         if self.config.verbose:
-            print(f"\n[3/5] Optimizing individual submolecules")
-        
-        optimized = []
-        for i, submol in enumerate(submolecules):
-            if self.config.verbose:
-                print(f"  Optimizing submolecule {i+1}...", end=" ", flush=True)
+            print(f"\n[3/5] Optimizing individual submolecules (parallel)")
+    
+        n_workers = min(len(submolecules), multiprocessing.cpu_count())
+    
+        optimized = [None] * len(submolecules)
+    
+        # Extract serializable data from submolecules
+        submol_data = [
+            {
+                'atom_labels': submol.atom_labels,
+                'coordinates': submol.coordinates,
+                'index': i
+            }
+            for i, submol in enumerate(submolecules)
+        ]
+    
+        with ProcessPoolExecutor(max_workers=n_workers) as executor:
+            # Submit jobs with serializable data
+            future_to_idx = {
+                executor.submit(
+                    self._optimize_single_static,
+                    data['atom_labels'],
+                    data['coordinates'],
+                    self.config.method,
+                    self.config.basis
+                ): data['index']
+                for data in submol_data
+            }
             
-            result = self.calculator.optimize(submol)
-            
-            if result.success:
-                optimized.append(result.molecule)
-                if self.config.verbose:
-                    print(f"✓ E = {result.energy:.6f} Hartree")
-            else:
-                if self.config.verbose:
-                    print(f"✗ Failed, using original geometry")
-                optimized.append(submol)
-        
+            # Collect results
+            for future in as_completed(future_to_idx):
+                idx = future_to_idx[future]
+                try:
+                    result_mol = future.result()
+                    optimized[idx] = result_mol
+                    
+                    if self.config.verbose:
+                        print(f"  Submolecule {idx+1} complete ✓")
+                except Exception as e:
+                    if self.config.verbose:
+                        print(f"  Submolecule {idx+1} failed: {e}")
+                    # Fall back to original submolecule
+                    optimized[idx] = submolecules[idx]
+    
         return optimized
+
+    @staticmethod
+    def _optimize_single_static(
+        atom_labels: List[str],
+        coordinates: np.ndarray,
+        method: str,
+        basis: str
+    ) -> Molecule:
+        """
+        Optimize a single submolecule (static method for parallel execution).
+        
+        Args:
+            atom_labels: List of atom symbols
+            coordinates: Atomic coordinates
+            method: QM method
+            basis: Basis set
+        
+        Returns:
+            Optimized molecule or original if optimization fails
+        """
+        from psi4_interface import Psi4Calculator, Config
+        from molecule_class import Molecule
+        
+        # Create molecule from data
+        submol = Molecule.from_labels_and_coords(
+            atom_labels=atom_labels,
+            coordinates=coordinates
+        )
+        
+        # Create calculator inside worker process
+        qm_config = Config(method=method, basis=basis)
+        calc = Psi4Calculator(config=qm_config, verbose=False)
+        
+        try:
+            result = calc.optimize(submol)
+            return result.molecule if result.success else submol
+        except Exception:
+            return submol
+        
+    
     
     def _create_simulation_box(self, submolecules: List[Molecule]) -> SimulationBox:
         """Create simulation box based on submolecules."""
@@ -188,22 +255,16 @@ class ClusterInitializer:
         submolecules: List[Molecule], 
         simulation_box: SimulationBox
     ) -> Molecule:
-        """Generate random initial configuration inside simulation box.
-        
-        Places submolecules at random positions and orientations, ensuring
-        minimum distance constraints are satisfied.
-        """
+        """Generate random initial configuration inside simulation box."""
         if self.config.verbose:
             print(f"\n[5/5] Generating random initial configuration")
         
         if len(submolecules) == 0:
             raise ValueError("No submolecules to place")
         
-        # Initialize with first submolecule at origin
-        placed_coords = []
+        # Use numpy arrays from the start instead of lists
+        placed_coords = np.empty((0, 3))  # <-- CHANGED: Start with empty 2D array
         placed_atoms = []
-        placed_masses = []
-        placed_cov_radii = []
         
         for i, submol in enumerate(submolecules):
             if self.config.verbose:
@@ -225,10 +286,8 @@ class ClusterInitializer:
                 
                 # Check distance constraints
                 if i == 0 or self._check_min_distance(new_coords, placed_coords):
-                    placed_coords.extend(new_coords)
+                    placed_coords = np.vstack([placed_coords, new_coords])  # <-- CHANGED: vstack instead of extend
                     placed_atoms.extend(submol.atom_labels.tolist())
-                    placed_masses.extend(submol.masses.tolist())
-                    placed_cov_radii.extend(submol.covalent_radii.tolist())
                     placed = True
                     if self.config.verbose:
                         print(f"✓ (attempt {attempt+1})")
@@ -243,62 +302,47 @@ class ClusterInitializer:
                     "Try increasing box size or reducing min_distance."
                 )
         
-        # Create new molecule
+        # Create new molecule with explicit copy of coordinates
         initial_molecule = Molecule.from_labels_and_coords(
             atom_labels=placed_atoms,
-            coordinates = np.array(placed_coords),
+            coordinates=placed_coords.copy(),  # <-- CHANGED: Explicit copy
         )
-
         
         return initial_molecule
     
     def _check_min_distance(
         self, 
         new_coords: np.ndarray, 
-        existing_coords: List[np.ndarray]
+        existing_coords: np.ndarray  # <-- CHANGED: Type hint to numpy array
     ) -> bool:
         """Check if new coordinates satisfy minimum distance constraint."""
         if len(existing_coords) == 0:
             return True
         
-        existing_array = np.array(existing_coords)
-        
-        # Calculate all pairwise distances
-        for new_atom in new_coords:
-            distances = np.linalg.norm(existing_array - new_atom, axis=1)
-            if np.any(distances < self.config.min_distance):
-                return False
-        
-        return True
-    
+        # existing_coords is already a numpy array, no conversion needed
+        diff = new_coords[:, np.newaxis, :] - existing_coords[np.newaxis, :, :]
+        distances = np.linalg.norm(diff, axis=2)
+        return np.all(distances >= self.config.min_distance)
+
+
+
     @staticmethod
     def _random_rotation_matrix() -> np.ndarray:
-        """Generate a random rotation matrix using Euler angles."""
-        # Random Euler angles
-        alpha = np.random.uniform(0, 2*np.pi)
-        beta = np.random.uniform(0, 2*np.pi)
-        gamma = np.random.uniform(0, 2*np.pi)
-        
-        # Rotation matrices
-        Rx = np.array([
-            [1, 0, 0],
-            [0, np.cos(alpha), -np.sin(alpha)],
-            [0, np.sin(alpha), np.cos(alpha)]
+        """Generate a random rotation matrix using quaternions (vecotized)"""
+        u = np.random.rand(3)
+        q = np.array([
+            np.sqrt(1 - u[0]) * np.sin(2 * np.pi * u[1]),
+            np.sqrt(1 - u[0]) * np.cos(2 * np.pi * u[1]),
+            np.sqrt(u[0]) * np.sin(2 * np.pi * u[2]),
+            np.sqrt(u[0]) * np.cos(2 * np.pi * u[2])
         ])
-        
-        Ry = np.array([
-            [np.cos(beta), 0, np.sin(beta)],
-            [0, 1, 0],
-            [-np.sin(beta), 0, np.cos(beta)]
+        q0, q1, q2, q3 = q 
+        return np.array([
+            [1 - 2*(q2**2 + q3**2), 2*(q1*q2 - q0*q3), 2*(q1*q3 + q0*q2)],
+            [2*(q1*q2 + q0*q3), 1 - 2*(q1**2 + q3**2), 2*(q2*q3 - q0*q1)],
+            [2*(q1*q3 - q0*q2), 2*(q2*q3 + q0*q1), 1 - 2*(q1**2 + q2**2)]
         ])
-        
-        Rz = np.array([
-            [np.cos(gamma), -np.sin(gamma), 0],
-            [np.sin(gamma), np.cos(gamma), 0],
-            [0, 0, 1]
-        ])
-        
-        return Rz @ Ry @ Rx
+
     
 # =============================== Debugging and Testing ===============================
 

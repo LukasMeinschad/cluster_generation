@@ -102,9 +102,9 @@ class Result:
 # They import psi4 inside the function to ensure clean process isolation.
 # All state is passed via arguments and returned via the result.
 
-def _remove_digits(str):
+def _remove_digits(text):
     """Utility function to remove digits from a string"""
-    return ''.join([i for i in str if not i.isdigit()])
+    return ''.join([i for i in text if not i.isdigit()])
 
 def _build_geometry_string(molecule: Molecule, charge: int, multiplicity: int) -> str:
     """
@@ -198,7 +198,7 @@ def _single_point_worker(molecule: Molecule, config_dict: Dict) -> Dict:
         try:
             import psi4
             psi4.core.clean()
-        except:
+        except Exception:
             pass
         
         if os.path.exists(scratch_dir):
@@ -276,7 +276,7 @@ def _geometry_opt_worker(molecule: Molecule, config_dict: Dict) -> Dict:
             # Get last energy even if not converged
             try:
                 energy = psi4.core.variable('CURRENT ENERGY')
-            except:
+            except Exception:
                 energy = None
             result['converged'] = False
             result['error'] = f"Did not converge in {config_dict['max_iter']} iterations"
@@ -289,7 +289,7 @@ def _geometry_opt_worker(molecule: Molecule, config_dict: Dict) -> Dict:
         # Get iteration count
         try:
             iterations = int(psi4.core.variable('OPTIMIZATION ITERATIONS'))
-        except:
+        except Exception:
             iterations = 0
         
         result['success'] = result['converged']
@@ -308,7 +308,7 @@ def _geometry_opt_worker(molecule: Molecule, config_dict: Dict) -> Dict:
             import psi4
             psi4.core.clean()
             psi4.core.clean_options()
-        except:
+        except Exception:
             pass
         
         if os.path.exists(scratch_dir):

@@ -10,6 +10,7 @@ import random
 from typing import List, Optional, Tuple, Dict
 from dataclasses import dataclass
 from multiprocessing import Pool
+import copy  # Add this import at the top
 
 # Module imports
 from molecule_class import Molecule
@@ -25,6 +26,7 @@ class BHMCConfig:
     temperature: float = 400.0  # Temperature in Kelvin
     method: str = "hf"          # Quantum chemistry method
     basis: str = "sto-3g"       # Basis set
+    verbose: bool = False       # Enable debug output in workers
 
 
 class EnergyEvaluator:
@@ -109,7 +111,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
     )
     
     # Initialize BHMC chain
-    current_structure = initial_molecule.copy()
+    current_structure = copy.deepcopy(initial_molecule)
     current_energy = evaluator.evaluate(current_structure)
     
     if current_energy is None:
@@ -132,6 +134,15 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
         
         try:
             new_structure = operator['func'](current_structure, submolecule_indices)
+            
+            # DEBUG: Check if operator actually changed coordinates
+            if np.allclose(new_structure.coordinates, current_structure.coordinates):
+                if config_dict.get('verbose', False):
+                    print(f"Worker {worker_id} step {step}: WARNING - {operator['name']} "
+                          f"produced no coordinate change (box constraint rejection?)")
+                n_rejected += 1
+                continue
+            
             new_energy = evaluator.evaluate(new_structure)
             
             if new_energy is None:
@@ -147,9 +158,9 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
                 accept = random.random() < prob
             
             if accept:
-                current_structure = new_structure
+                current_structure = copy.deepcopy(new_structure)
                 current_energy = new_energy
-                accepted_structures.append((current_structure.copy(), current_energy))
+                accepted_structures.append((copy.deepcopy(current_structure), current_energy))
                 n_accepted += 1
             else:
                 n_rejected += 1
@@ -306,7 +317,9 @@ class MultiPhaseBHMC:
     def analyse_phase_a_results(
             phase_a_structures: List[Tuple[Molecule, float]], 
             submolecule_indices: Optional[List[List[int]]] = None,
-            n_clusters: int = 10) -> List[Molecule]:
+            n_clusters: int = 10,
+            simulation_box: Optional[SimulationBox] = None
+            ) -> List[Molecule]:
         """Analyze Phase A results and extract representative structures.
         
         Performs RMSD filtering, clustering, and various analyses on the
@@ -330,9 +343,17 @@ class MultiPhaseBHMC:
         analyzer = BHMCAnalyzer(submolecule_indices=submolecule_indices)
         analyzer.add_structures_batch(phase_a_structures)
         
+        # Plot com Trajectories
+        analyzer.plot_com_trajectory_2d_projections(
+            simulation_box=simulation_box,
+            save_path="figures/phase_a_com_trajectory.png"
+        )
+
+
         # Filter duplicates
         analyzer.rmsd_filtering()
-        
+
+
         # Generate analysis plots
         analyzer.plot_energy_distribution()
         analyzer.plot_energy_vs_rmsd()
@@ -571,20 +592,3 @@ def benchmark_temperature_acceptance(
     return results
 
 
-def plot_operator_statistics(
-    phase_a_structures: List[Tuple[Molecule, float]],
-    save_plot: bool = True,
-    plot_filename: str = "operator_statistics.png"
-) -> None:
-    """Plot statistics about operator usage and acceptance.
-    
-    Note: This requires tracking which operator was used for each structure,
-    which is not currently implemented. Placeholder for future enhancement.
-    
-    Args:
-        phase_a_structures: Results from Phase A
-        save_plot: Whether to save plot
-        plot_filename: Output filename
-    """
-    print("Note: Operator statistics tracking not yet implemented.")
-    print("To enable this, modify _phase_a_worker to track operator usage.")

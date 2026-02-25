@@ -1,36 +1,23 @@
-import matplotlib.pyplot as plt
-import numpy as np
-from mendeleev.fetch import fetch_table
-import itertools
-import networkx as nx
 import multiprocessing as mp
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)  # Supress library warnings for cleaner output
 
 import sys
 from pathlib import Path
+import time
 
 module_dir = Path(__file__).parent / "modules"
 sys.path.insert(0, str(module_dir))
 
-# Import modules
+# Module imports
 from molecule_class import Molecule
 from transformations import Transformation
-from plotting import Plotting
-from psi4_interface import Psi4Calculator, Config  # Changed from Psi4Config to Config
-from cluster import MolecularCluster, BHMCAnalyzer
-from symmetry import SymmetryAnalyzer
-from graph import MolecularGraph
-from coord_projector import CoordinateProjector
+from psi4_interface import Psi4Calculator, Config
+from cluster import BHMCAnalyzer
 from bhmc import MultiPhaseBHMC, BHMCConfig, benchmark_temperature_acceptance
 from init import ClusterInitializer, InitializationConfig
-
-
-from modules.args import get_args
-from modules.ConfigSampler import ConfigSampler
-from modules.logger import Logger 
-import time
-import timeit
+from args import get_args
+from logger import Logger
 
 
 
@@ -47,9 +34,8 @@ if __name__ == "__main__":
     with open(args.i[0], "r") as file:
         xyz_content = file.read()
     
-    logger = Logger(out_file="cluster_gen.out", mode= "w")
+    logger = Logger(out_file="cluster_gen.out", mode="w")
     logger.write_header()
-    logger = Logger(out_file="cluster_gen.out", mode="a")
 
     molecule = Molecule.from_xyz(xyz_content)
 
@@ -64,13 +50,12 @@ if __name__ == "__main__":
                 results = calc.determine_method_and_basis_set_combinations(molecule=molecule)
                 logger.write_method_basis_combinations(results)
 
-    #calc.test_basis_set_convergence(molecule=molecule, method="CCSD(T)")
 
     init_config = InitializationConfig(
         method="mp2",
         basis="cc-pvdz",
         box_type="sphere",
-        box_scale_factor = 2.0,
+        box_scale_factor = 5,
         min_distance=1.8,
         optimize_submolecules=True,
         verbose=True
@@ -79,22 +64,22 @@ if __name__ == "__main__":
     initial_molecule, submol_indices, simulation_box = initializer.initialize_from_xyz(args.i[0])
 
 
-    # Run benchmark
-    results = benchmark_temperature_acceptance(
-        initial_molecule=initial_molecule,
-        submolecule_indices=submol_indices,
-        simulation_box=simulation_box,
-        method="mp2",
-        basis="cc-pvdz",
-        n_steps=100,
-        n_trials=5,
-        save_plot=True,
-        plot_filename="figures/temperature_acceptance.png"
-    )
+ #   # Run benchmark
+ #   results = benchmark_temperature_acceptance(
+ #       initial_molecule=initial_molecule,
+ #       submolecule_indices=submol_indices,
+ #       simulation_box=simulation_box,
+ #       method="mp2",
+ #       basis="cc-pvdz",
+ #       n_steps=100,
+ #       n_trials=5,
+ #       save_plot=True,
+ #       plot_filename="figures/temperature_acceptance.png"
+ #   )
 
     # Set up BHMC Config
     bhmc_config = BHMCConfig(
-        temperature=180,
+        temperature=500,
         method="mp2",
         basis="cc-pvdz"
     )
@@ -105,7 +90,7 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecule=initial_molecule, 
         submolecule_indices=submol_indices,
-        n_structures_per_worker=200,
+        n_structures_per_worker=500,
         n_processes=20
     )
 
@@ -118,7 +103,8 @@ if __name__ == "__main__":
     representatives = bhmc_sampler.analyse_phase_a_results(
         phase_a_candidates, 
         submolecule_indices=submol_indices,
-        n_clusters=10
+        n_clusters=10,
+        simulation_box=simulation_box
     ) 
 
     logger.write_trajectory(representatives, filename="representatives.xyz") 

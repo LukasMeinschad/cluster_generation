@@ -1,5 +1,16 @@
+"""
+Plotting module for visualization
+"""
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D  # Import for 3D plotting  
+from typing import List, Optional
+from pathlib import Path 
+
+
+
+
+    
 
 
 class Plotting:

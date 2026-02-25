@@ -227,7 +227,25 @@ class HydrogenBondAnalyzer:
 class Molecule:
     """Base class for representing a molecule"""
     
-    ptable = fetch_table("elements")
+    _ptable = fetch_table("elements")
+    # Pre-build lookup caches from the periodic table
+    _mass_cache: Dict[str, float] = {}
+    _covalent_radius_cache: Dict[str, float] = {}
+    _vdw_radius_cache: Dict[str, float] = {}
+    
+    @classmethod
+    def _init_caches(cls):
+        """Build element lookup caches from periodic table (called once)."""
+        if cls._mass_cache:  # already initialized
+            return
+        for _, row in cls._ptable.iterrows():
+            sym = row["symbol"]
+            cls._mass_cache[sym] = row["atomic_weight"]
+            cov_r = row.get("covalent_radius_pyykko")
+            cls._covalent_radius_cache[sym] = (cov_r / 100.0) if cov_r and not np.isnan(cov_r) else 0.0
+            vdw_r = row.get("vdw_radius")
+            cls._vdw_radius_cache[sym] = (vdw_r / 100.0) if vdw_r and not np.isnan(vdw_r) else 0.0
+    
     hbond_donors = ["O", "N", "F"]
     hbond_acceptors = ["O", "N", "F"]
     
@@ -242,6 +260,9 @@ class Molecule:
         self.vdw_radii = np.array([], dtype=np.float64)
         self.covalent_radii = np.array([], dtype=np.float64)
 
+        # Initialize caches on first Molecule creation
+        self._init_caches()
+
 
         self.charge = 0
         self.spin_mult = 1
@@ -255,8 +276,8 @@ class Molecule:
     
     @staticmethod
     def from_labels_and_coords(
-        atom_labels = List[str],
-        coordinates = np.ndarray,
+        atom_labels: List[str],
+        coordinates: np.ndarray,
         name: Optional[str] = None
         ) -> 'Molecule':
         """Create Molecule from atom labels and coordinates"""
@@ -322,29 +343,19 @@ class Molecule:
     
     @classmethod
     def get_covalent_radius(cls, element_label: str) -> float:
-        """Get covalent radius for element in Angstroms"""
+        """Get covalent radius for element in Angstroms (cached)."""
         element_symbol = cls._remove_digits_from_label(element_label)
-        row = cls.ptable[cls.ptable["symbol"] == element_symbol]
-        
-        if row.empty:
-            raise ValueError(f"Element {element_symbol} not found in periodic table")
-        
-        radius_pm = row.iloc[0]["covalent_radius_pyykko"]
-        return radius_pm / 100  # Convert pm to Angstroms
+        if element_symbol in cls._covalent_radius_cache:
+            return cls._covalent_radius_cache[element_symbol]
+        raise ValueError(f"Element {element_symbol} not found in periodic table")
     
     @classmethod 
     def get_vdw_radius(cls, element_label: str) -> float:
-        """   
-        Helper Method to get the VDW radius of an element in Angstroms
-        """
+        """Get VDW radius for element in Angstroms (cached)."""
         element_symbol = cls._remove_digits_from_label(element_label)
-        row = cls.ptable[cls.ptable["symbol"] == element_symbol]
-
-        if row.empty:
-            raise ValueError(f"Element {element_symbol} not found in periodic table")
-        
-        radius_pm = row.iloc[0]["vdw_radius"]
-        return radius_pm / 100  # Convert pm to Angstroms
+        if element_symbol in cls._vdw_radius_cache:
+            return cls._vdw_radius_cache[element_symbol]
+        raise ValueError(f"Element {element_symbol} not found in periodic table")
     
     # Atom management
     def add_atom(self, atom_label: str, coordinates: List[float]) -> None:
@@ -392,13 +403,11 @@ class Molecule:
         return np.array([self._get_atomic_mass(elem) for elem in elements])
     
     def _get_atomic_mass(self, element_symbol: str) -> float:
-        """Get atomic mass for element symbol"""
-        try:
-            row = self.ptable.loc[self.ptable["symbol"] == element_symbol]
-            return row.iloc[0]["atomic_weight"]
-        except Exception:
-            print(f"Warning: Could not get mass for {element_symbol}, using default = 1")
-            return 1.0
+        """Get atomic mass for element symbol (cached)."""
+        if element_symbol in self._mass_cache:
+            return self._mass_cache[element_symbol]
+        print(f"Warning: Could not get mass for {element_symbol}, using default = 1")
+        return 1.0
     
     # Coordinate access
     def get_coords_by_label(self, atom_label: str) -> np.ndarray:
@@ -431,7 +440,7 @@ class Molecule:
         for i, j in itertools.combinations(range(n_atoms), 2):
             bond = classifier.classify_bond(i, j)
             if bond:
-                if classifier.classify_bond(i, j).strength >= BondClassifier.COVALENT_THRESHOLD:
+                if bond.strength >= BondClassifier.COVALENT_THRESHOLD:
                     covalent.append(bond)
                 else:
                     hydrogen.append(bond)
@@ -605,19 +614,31 @@ class Molecule:
         return len(self.coordinates)
 
     def copy(self) -> 'Molecule':
-        """Create a deep copy of the molecule"""
-        mol_copy = Molecule(self.name)
-        mol_copy.atom_labels = self.atom_labels.copy()
-        mol_copy.coordinates = self.coordinates.copy()
-        mol_copy.masses = self.masses.copy()
-        mol_copy.vdw_radii = self.vdw_radii.copy()
-        mol_copy.covalent_radii = self.covalent_radii.copy()
-        mol_copy.charge = self.charge
-        mol_copy.spin_mult = self.spin_mult
-        mol_copy._covalent_bonds = self._covalent_bonds.copy()
-        mol_copy._hydrogen_bonds = self._hydrogen_bonds.copy()
-        mol_copy._bonds_computed = self._bonds_computed
-        return mol_copy
+        """Create a lightweight copy of the molecule.
+        
+        Only copies mutable data (coordinates) as new arrays.
+        Immutable/shared data (atom_labels, masses, radii) are shared references
+        since they don't change during BHMC operations.
+        """
+        new_mol = Molecule.__new__(Molecule)
+        new_mol.name = self.name
+        new_mol.atom_labels = self.atom_labels  # shared (immutable during BHMC)
+        new_mol.coordinates = self.coordinates.copy()  # deep copy - this is what changes
+        new_mol.masses = self.masses  # shared
+        new_mol.vdw_radii = self.vdw_radii  # shared
+        new_mol.covalent_radii = self.covalent_radii  # shared
+        new_mol.charge = self.charge
+        new_mol.spin_mult = self.spin_mult
+        new_mol._covalent_bonds = self._covalent_bonds
+        new_mol._hydrogen_bonds = self._hydrogen_bonds
+        new_mol._bonds_computed = self._bonds_computed
+        new_mol.volume = self.volume
+        return new_mol
+
+    def deepcopy(self) -> 'Molecule':
+        """Create a full deep copy of the molecule"""
+        import copy
+        return copy.deepcopy(self)
     
     def to_xyz_string(self) -> str:
         """Convert molecule to XYZ format string"""
@@ -625,12 +646,6 @@ class Molecule:
         for label, coord in zip(self.atom_labels, self.coordinates):
             lines.append(f"{self._remove_digits_from_label(label)} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}")
         return "\n".join(lines)
-
-    def to_xyz(self) -> str:
-        """
-        F... me this is really ugly
-        """
-        return self.to_xyz_string()
 
     def get_average_covalent_radii(self) -> List[float]:
         """   
@@ -646,7 +661,8 @@ class Molecule:
         for element, count in element_counts.items():
             radius = self.get_covalent_radius(element)
             average_radii[element] = radius / count
-        # Map back to atom labels        average_radii_list = []
+        # Map back to atom labels
+        average_radii_list = []
         for label in self.atom_labels:
             element = self._remove_digits_from_label(label)
             average_radii_list.append(average_radii[element])
@@ -662,6 +678,12 @@ class SubMolecule(Molecule):
         self.fragment_index: Optional[int] = None
         self.volume: Optional[float] = None
     
+    def __len__(self):
+        """Return the Number of atoms"""
+        return len(self.coordinates)
+
+ 
+
     @classmethod
     def from_parent_fragment(
         cls,

@@ -3,8 +3,8 @@ from typing import List, Tuple, Optional, Union, Protocol
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
 import time
-import matplotlib.pyplot as plt
 import random
+import copy
 
 
 @dataclass 
@@ -220,7 +220,7 @@ class GeometryOps:
         return np.sum(masses * coords, axis=0) / np.sum(masses)
     
     @staticmethod 
-    def inertia_tenstor(coords: np.ndarray, masses: np.ndarray) -> np.ndarray:
+    def inertia_tensor(coords: np.ndarray, masses: np.ndarray) -> np.ndarray:
         """    
         Calculates the moment of inertia tensor for a set of coordinates with given masses
         
@@ -358,7 +358,7 @@ class Transformation:
         if method == "com":
             return GeometryOps.center_of_mass(molecule.coordinates, molecule.masses)
         else: 
-            raise ValueError("Unknown method '{method}'. Method must be 'centroid' or 'com'")
+            raise ValueError(f"Unknown method '{method}'. Method must be 'centroid' or 'com'")
         
     def get_center_coords( 
             self, 
@@ -376,7 +376,7 @@ class Transformation:
                 raise ValueError("Masses must be provided to calculate center of mass")
             return GeometryOps.center_of_mass(coords, masses)
         else:
-            raise ValueError("Unknown method '{method}'. Method must be 'centroid' or 'com'")
+            raise ValueError(f"Unknown method '{method}'. Method must be 'centroid' or 'com'")
         
     # ========================= Basic Transformations ==========================
 
@@ -437,7 +437,7 @@ class Transformation:
         
     def rotate_quaternion(
             self, 
-            molecue: Union["Molecule", "Submolecule"],
+            molecule: Union["Molecule", "Submolecule"],
             axis: Union[List[float], np.ndarray],
             angle_degree: float, 
             in_place: bool = True
@@ -446,7 +446,7 @@ class Transformation:
         Rotates the molecule using quaternion rotation
         
         Args:
-            molecue: Molecule or Submolecule object
+            molecule: Molecule or Submolecule object
             axis: Rotation axis
             angle_degree: Rotation angle in degrees
             in_place: Whether to modify the molecule in place or return new coordinates 
@@ -460,10 +460,10 @@ class Transformation:
         
         # Still use rotation matrix because of linear algebra speed
         R = q.to_rotation_matrix()
-        new_coords = molecue.coordinates @ R.T 
+        new_coords = molecule.coordinates @ R.T 
 
         if in_place:
-            molecue.coordinates = new_coords
+            molecule.coordinates = new_coords
             return None
         else:
             return new_coords
@@ -519,7 +519,7 @@ class Transformation:
         coords_new = coords.copy()
         coords_new -= center
         # Compute inertia tensor
-        I = GeometryOps.inertia_tenstor(coords_new, masses)
+        I = GeometryOps.inertia_tensor(coords_new, masses)
         eigenvalues, eigenvectors = np.linalg.eigh(I)
 
         # Eigenvectors are columns of the Reference Frame axes
@@ -684,183 +684,6 @@ class Transformation:
             print(f"Z: {ref_frame.z_axis}")
 
         return ref_frame
-
-
-
-    # ======================== Functions for Stochastic Surface Walking ========================
-
-    @staticmethod
-    def mb_vector(mass: float, temperature: float = 300):
-        """   
-        Generates a normalized random vector following the Maxwell-Boltzmann velocity distribution
-
-        Args:
-            mass: Atomic mass in atomic mass units (amu)
-            temperature: Temperature in Kelvin
-
-        Returns:
-            np.ndarray
-        """
-        # Boltzmann Konstant eV/K
-        k_B = 8.617333262e-5 
-        sigma = np.sqrt(k_B * temperature / mass)
-        vector = np.random.normal(0,sigma,size=3) # 3 normally distributed components
-
-        # Normalize
-        norm = np.linalg.norm(vector)
-        if norm < 1e-8:
-            # Random unit vector if near zero
-            vector = np.random.rand(3)
-            norm = np.linalg.norm(vector)
-
-        return vector / norm 
-    
-    def find_non_neighboring_atoms(
-            self,
-            molecule: Union["Molecule", "Submolecule"],
-            distance_threshold: float = 3.0
-    ) -> List[Tuple[int,int]]:
-        """    
-        Finds all pairs of atoms that are not in close contact (distance > threshold)
-
-        Args:
-            molecule: Molecule or Submolecule object
-            distance_threshold: Minimum distance in Angstrom for atoms to be non-neighbouring
-        """
-        n_atoms = molecule.get_number_of_atoms()
-        non_neighboring_pairs = []
-
-        for i in range(n_atoms):
-            for j in range(i+1, n_atoms):
-                distance = np.linalg.norm(
-                    molecule.coordinates[i] - molecule.coordinates[j]
-                )
-                if distance > distance_threshold:
-                    non_neighboring_pairs.append((i,j))
-        
-        return non_neighboring_pairs
-    
-    def select_random_non_neighboring_pair(
-            self,
-            molecule: Union["Molecule", "Submolecule"],
-            distance_threshold: float = 3.0
-    ):
-        """   
-        Randomnly selects a pair of non_neighboruing atoms
-
-        Returns:
-            Tuple of (atom_A_idx,atom_B_idx) or None if no pairs exists
-        """
-        non_neighboring_pairs = self.find_non_neighboring_atoms(
-            molecule,
-            distance_threshold
-        )
-        if not non_neighboring_pairs:
-            return None 
-        
-        r_int = np.random.randint(len(non_neighboring_pairs))
-        return non_neighboring_pairs[r_int]
-
-    def compute_bond_formation_vector(
-            self,
-            molecule: Union["Molecule", "Submolecule"],
-            atom_A_idx: int,
-            atom_B_idx: int,
-            normalize: bool = True
-    ) -> np.ndarray:
-        """   
-        Computes the bond formation mode N_i^l between two atoms
-
-        N_i^l = (q_B - q_A) / |q_b - q_A|
-        """
-        q_A = molecule.coordinates[atom_A_idx]
-        q_B = molecule.coordinates[atom_B_idx]
-
-        v = q_B - q_A 
-
-        if normalize:
-            norm = np.linalg.norm(v)
-            if norm < 1e-8:
-                raise ValueError(f"Atoms {atom_A_idx} and {atom_B_idx} are in the same position")
-            return v / norm 
-        
-        return v
-
-    def generate_ssw_direction(
-            self,
-            molecule: Union["Molecule", "Submolecule"],
-            lambda_mix: Optional[float] = None,
-            temperature: float = 300.0,
-            use_total_mass: bool = True,
-            distance_threshold: float = 3.0
-    ) -> np.ndarray:
-        """   
-        Generates the initial random direction N_i^0 for SSW Climing
-
-        N_i^0 = (N_i^g + λ*N_i^l) / |N_i^g + λ*N_i^l|
-
-        + N_i^g: Random vector from MW-Distribution at Temp T
-        - N_i^l: Soft Local mode, currently --> Bond formation of non-neighboring atoms
-        - lambda = Random Mixing Parameter
-        """
-        # Generate random lambda if not provides
-        if lambda_mix is None:
-            lambda_mix = np.random.uniform(0.1,1.5)
-
-        # Get total mass
-        if use_total_mass:
-            effective_mass = molecule.get_total_mass()
-        else:
-            effective_mass = np.mean(molecule.masses)
-
-        # Generate N_i^g 
-        N_g = self.mb_vector(effective_mass, temperature)
-
-        # Generate Random-Pair
-        atom_pair = self.select_random_non_neighboring_pair(molecule,distance_threshold)
-        atom_A_idx, atom_B_idx = atom_pair 
-        N_l = self.compute_bond_formation_vector(
-            molecule,
-            atom_A_idx,
-            atom_B_idx,
-            normalize=True
-        )
-        N_0 = N_g + lambda_mix * N_l 
-        norm_0 = np.linalg.norm(N_0)
-
-        return N_0 / norm_0
-    
-
-    # ================== Dimer Method ================
-
-    def setup_dimer_images(
-            self,
-            R0: np.ndarray,
-            N: np.ndarray,
-            delta_R: float = 0.005
-    ) -> Tuple [np.ndarray, np.ndarray]:
-        """   
-        Sets up the two dimer images R1 and R2 seperated by 2* delta R
-        uses the local mode N created beforehand
-
-        R1 = R0 + N * ∆R
-        R2 = R= - N * ∆R
-        """
-        N_norm = GeometryOps.normalize_vector(N) # Ensure normalization
-
-        R1 = R0 + N_norm * delta_R
-        R2 = R0 - N_norm * delta_R 
-
-        return R1,R2 
-
-
-    # ================
-
-    
-        
-
-
-
     
     # ======================= Alignment Functions =========================
 
@@ -940,7 +763,7 @@ class Transformation:
         submolecule.coordinates += translation
 
         # Update Parent Molecule if provided
-        if parent_molecule is not None and hasattr(submolecule, 'get_atom_lables'):
+        if parent_molecule is not None and hasattr(submolecule, 'get_atom_labels'):
             submol_labels = submolecule.get_atom_labels()
 
             # Mask
@@ -956,124 +779,20 @@ class Transformation:
             label2: str,
             normalize: bool = True
         ) -> np.ndarray:
-        """
-        Computes the bond vector from atom with label1 to atom with label2
-        """
-        coord1 = molecule.get_coords_by_label(label1)
-        coord2 = molecule.get_coords_by_label(label2)
+            """
+            Computes the bond vector from atom with label1 to atom with label2
+            """
+            coord1 = molecule.get_coords_by_label(label1)
+            coord2 = molecule.get_coords_by_label(label2)
 
-        if coord1.ndim > 1 or coord2.ndim > 1:
-            raise ValueError("Atom labels must correspond to single atoms")
-        vector = coord2 - coord1
+            if coord1.ndim > 1 or coord2.ndim > 1:
+                raise ValueError("Atom labels must correspond to single atoms")
+            vector = coord2 - coord1
 
-        if normalize:
-            vector = GeometryOps.normalize_vector(vector)
-        return vector
- 
-    # ======================== Speed Testing Functions ======================== --IGNORE---
-    
-    def test_translate_speed(
-            self,
-            molecule: Union["Molecule", "Submolecule"]
-        ) -> None:
-        """   
-        Tests the speed of the translate function for a random vector and N=[1000,5000,10000,50000,100000] iterations
+            if normalize:
+                vector = GeometryOps.normalize_vector(vector)
+            return vector
 
-        Returns a plot of time vs iterations
-        """
-        iterations = [1000, 5000, 10000, 50000, 100000]
-        times = []
-        random_vector = np.random.rand(3)
-        for N in iterations:
-            start_time = time.time()
-            for _ in range(N):
-                self.translate(molecule, random_vector, in_place=False)
-            end_time = time.time()
-            times.append(end_time - start_time)
-        # Plotting
-        plt.figure()
-        plt.plot(iterations, times, marker='o')
-        plt.xlabel("Number of Iterations")
-        plt.ylabel("Time (s)")
-        plt.title("Translation Speed Test")
-        plt.grid()
-        # Save in the figues path
-        plt.savefig("figures/translation_speed_test.png")
-        plt.close()
-
-    def test_rotate_speed(
-            self,
-            molecule: Union["Molecule", "Submolecule"]
-        ) -> None:
-        """
-        Test the speed of the rotate functions for a random axis and angle over N=[1000,5000,10000,50000,100000] iterations
-        """
-        iterations = [1000, 5000, 10000, 50000, 100000]
-        times = []
-        random_axis = np.random.rand(3)
-        random_angle = np.random.uniform(0, 360)
-        for N in iterations:
-            start_time = time.time()
-            for _ in range(N):
-                self.rotate(molecule, random_axis, random_angle, in_place=False)
-            end_time = time.time()
-            times.append(end_time - start_time)
-        # Plotting
-        plt.figure()
-        plt.plot(iterations, times, marker='o')
-        plt.xlabel("Number of Iterations")
-        plt.ylabel("Time (s)")
-        plt.title("Rotation Speed Test")
-        plt.grid()
-        # Save in the figues path
-        plt.savefig("figures/rotation_speed_test.png")
-        plt.close()
-
-    def compare_rotate_methods_speed(
-            self,
-            molecule: Union["Molecule", "Submolecule"]
-        ) -> None:
-        """
-        Compares the speed of the rotate and rotate_quaternion methods over N=[1000,5000,10000,50000,100000] iterations
- 
-        """
-        iterations = [1000, 5000, 10000, 50000, 100000]
-        times_rodrigues = []
-        times_quaternion = []
-        random_axis = np.random.rand(3)
-        random_angle = np.random.uniform(0, 360)
-
-        for N in iterations:
-            # Rodrigues method
-            start_time = time.time()
-            for _ in range(N):
-                self.rotate(molecule, random_axis, random_angle, in_place=False)
-            end_time = time.time()
-            times_rodrigues.append(end_time - start_time)
-
-            # Quaternion method
-            start_time = time.time()
-            for _ in range(N):
-                self.rotate_quaternion(molecule, random_axis, random_angle, in_place=False)
-            end_time = time.time()
-            times_quaternion.append(end_time - start_time)
-        
-
-
-        
-
-        # Plotting
-        plt.figure()
-        plt.plot(iterations, times_rodrigues, marker='o', label='Rodrigues')
-        plt.plot(iterations, times_quaternion, marker='o', label='Quaternion')
-        plt.xlabel("Number of Iterations")
-        plt.ylabel("Time (s)")
-        plt.title("Rotation Method Speed Comparison")
-        plt.legend()
-        plt.grid()
-        # Save in the figues path
-        plt.savefig("figures/rotation_method_speed_comparison.png")
-        plt.close()
 
 class MolecularOperators:
     """   
@@ -1103,9 +822,10 @@ class MolecularOperators:
                 molecule.coordinates, method="reflect"
             )
             if not is_valid:
-                return original
+                return original.copy()  
             molecule.coordinates = new_coords
         return molecule
+
 
     @staticmethod
     def _random_unit_vetor() -> np.ndarray:
@@ -1301,7 +1021,7 @@ class NonLocalOperators(MolecularOperators):
         if plane == 'XY':
             normal_vector = ref_frame.z_axis
         elif plane == 'YZ':
-            normal_vector = ref_frame.x_axis
+            normal_vector = ref_frame.x_axis 
         else: # XZ
             normal_vector = ref_frame.y_axis
         n = normal_vector / np.linalg.norm(normal_vector)
@@ -1332,8 +1052,6 @@ class NonLocalOperators(MolecularOperators):
 
         mol_copy.coordinates[submol_idx] = coords_rotated + com
         return self._apply_box_constraints(mol_copy, molecule)
-
-        return  
 
     def roto_reflection_operator(self,
                                  molecule: "Molecule",
@@ -1391,48 +1109,3 @@ class NonLocalOperators(MolecularOperators):
         mol_copy.coordinates[submol_1] += translation_1
         mol_copy.coordinates[submol_2] += translation_2
         return self._apply_box_constraints(mol_copy, molecule)
-    
-# ====================================== General Purpose Testing Functions =====================================
-
-def test_quaternion_sampling(n_samples = 5000):
-    """   
-    Test the uniform sampling of the SO3
-    """
-    points = []
-    # Reference Vector Z
-    v = np.array([0.0, 0.0, 1.0])
-    for _ in range(n_samples):
-        # 1. Generating random rotation matrix
-        R = Quaternion.random_so3()
-
-        # Rotate the reference vector 
-        v_rot = R @ v 
-        points.append(v_rot)
-    
-    points = np.array(points)
-
-    # Check magnitudes
-    magnitudes = np.linalg.norm(points, axis=1)
-    print(f"Average magnitude: {np.mean(magnitudes):.4f}")
-
-    fig = plt.figure(figsize=(10,8))
-    ax = fig.add_subplot(111, projection="3d")
-    # Plot a subset of points to see the distribution
-    ax.scatter(points[:1000, 0], points[:1000, 1], points[:1000, 2], 
-               alpha=0.6, s=1, c='blue')
-    
-    ax.set_title(f"Distribution of {n_samples} Rotated Vectors")
-    ax.set_xlabel("X")
-    ax.set_ylabel("Y")
-    ax.set_zlabel("Z")
-    
-    # Set equal aspect ratio
-    limit = 1.0
-    ax.set_xlim(-limit, limit)
-    ax.set_ylim(-limit, limit)
-    ax.set_zlim(-limit, limit)
-    
-    plt.show()
-        
-# TESTS
-#test_quaternion_sampling()

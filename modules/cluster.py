@@ -745,6 +745,24 @@ class BHMCAnalyzer:
         """
         return ''.join(filter(lambda x: not x.isdigit(), s))
 
+
+    # =========================== Hydrogen Bond Analysis ===========================
+
+    def compute_hbond_features(self,
+                               angle_treshold: float = 150.0,
+                               phase: Optional[str] = None) -> np.ndarray:
+        """ 
+        Computes hydrogen bond features for all structures
+
+        Computes:
+            + Number of valid Hydrogen bond configuration 
+            + Average Hydrogen bond angle (0.0 if no H-Bonds found)
+
+        Args:
+
+        """
+        #TODO Implement this
+
     # ====================== Clustering Methods =======================
 
     def feature_matrix(self, normalize = True) -> np.ndarray:

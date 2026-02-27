@@ -19,6 +19,10 @@ from psi4_interface import Psi4Calculator, Config
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 
+
+# Logger import
+from logger import Logger
+
 @dataclass
 class InitializationConfig:
     """Configuration for cluster initialization."""
@@ -35,18 +39,28 @@ class InitializationConfig:
 class ClusterInitializer:
     """Handles initialization of molecular clusters for BHMC sampling."""
     
-    def __init__(self, config: InitializationConfig):
+    def __init__(self, config: InitializationConfig, logger: Optional[Logger] = None):
         """Initialize the cluster initializer.
         
         Args:
             config: Initialization configuration
         """
         self.config = config
+        self.logger = logger 
         self.calculator = None
         if self.config.optimize_submolecules:
             qm_config = Config(method=config.method, basis=config.basis)
             self.calculator = Psi4Calculator(config=qm_config, verbose=config.verbose)
-    
+
+    def _log(self, msg: str, level: str = "info") -> None:
+        """   
+        Helper Method to log messages
+        """
+        if self.config.verbose:
+            print(msg)
+        if self.logger:
+           getattr(self.logger, level)(msg) 
+
     def initialize_from_xyz(self, xyz_file: str) -> Tuple[Molecule, List[List[int]], SimulationBox]:
         """Complete initialization workflow from XYZ file.
         
@@ -56,11 +70,18 @@ class ClusterInitializer:
         Returns:
             Tuple of (initial_molecule, submolecule_indices, simulation_box)
         """
-        if self.config.verbose:
-            print(f"\n{'='*70}")
-            print(f"Cluster Initialization")
-            print(f"{'='*70}")
-    
+        if self.logger:
+            self.logger.header("Cluster Initialization")
+            msg = f"Configuration:\n" \
+                  f"  Method: {self.config.method}\n" \
+                  f"  Basis set: {self.config.basis}\n" \
+                    f"  Box type: {self.config.box_type}\n" \
+                    f"  Box scale factor: {self.config.box_scale_factor}\n" \
+                    f"  Minimum distance: {self.config.min_distance} Angstrom\n" \
+                    f"  Optimize submolecules: {self.config.optimize_submolecules}\n"
+            self.logger.info(msg)
+        
+        
         # Step 1: Load molecule
         molecule = self._load_molecule(xyz_file)
     
@@ -82,60 +103,63 @@ class ClusterInitializer:
             submolecules, simulation_box
         )
     
-        # Note: submol_indices already captured at step 2b
-    
-        if self.config.verbose:
-            print(f"{'='*70}")
-            print(f"Initialization Complete!")
-            print(f"  Total atoms: {len(initial_molecule.coordinates)}")
-            print(f"  Submolecules: {len(submolecules)}")
-            print(f"  Simulation box: {simulation_box.box_type}")
-            if simulation_box.box_type == "sphere":
-                print(f"  Box radius: {simulation_box.radius:.2f} Angstrom")
-            else:
-                print(f"  Box dimensions: {simulation_box.box_dimensions}")
-            print(f"{'='*70}\n")
+        summary_lines = [
+            f"{'='*60}",
+            f"Initialization Complete!",
+            f"Total atoms: {len(initial_molecule.coordinates)}",
+            f"Submolecules: {len(submolecules)}",
+            f"Simulation box type: {simulation_box.box_type}",
+        ]
+        if simulation_box.box_type == "sphere":
+            summary_lines.append(f"Box radius: {simulation_box.radius:.2f} Angstrom")
+            summary_lines.append(f"Box volume: {simulation_box.get_volume():.2f} Angstrom^3")
+        else:
+            summary_lines.append(f"Box dimensions: {simulation_box.box_dimensions}")
+            summary_lines.append(f"Box volume: {simulation_box.get_volume():.2f} Angstrom^3")
+        
+        summary = "\n".join(summary_lines)
+        self._log(summary)
     
         return initial_molecule, submol_indices, simulation_box
     
     def _load_molecule(self, xyz_file: str) -> Molecule:
         """Load molecule from XYZ file."""
-        if self.config.verbose:
-            print(f"\n[1/5] Loading molecule from {xyz_file}")
+        self._log(f"\n[1/5] Loading molecule from {xyz_file}") 
+
         
         with open(xyz_file, 'r') as f:
             xyz_content = f.read()
         
         molecule = Molecule.from_xyz(xyz_content)
-        
-        if self.config.verbose:
-            print(f"  Loaded: {len(molecule.coordinates)} atoms")
+
+        self._log(f" Loaded: {len(molecule.coordinates)} atoms")
         
         return molecule
     
     def _fragment_molecule(self, molecule: Molecule) -> List[Molecule]:
         """Fragment molecule into connected components."""
-        if self.config.verbose:
-            print(f"\n[2/5] Fragmenting molecule by connectivity")
+        self._log(f"\n[2/5] Fragmenting molecule into submolecules")
         
+
         molecule.compute_bonds()
         submolecules = molecule.fragment_by_connectivity()
         
-        if self.config.verbose:
-            print(f"  Found {len(submolecules)} submolecules:")
-            for i, submol in enumerate(submolecules):
-                atoms = len(submol.coordinates)
-                print(f"    Submolecule {i+1}: {atoms} atoms") 
+        self._log(f" Found {len(submolecules)} submolecules:")
+        for i, submol in enumerate(submolecules):
+            self._log(f"  Submolecule {i+1}: {len(submol.coordinates)} atoms")
+        
+
         
         return submolecules
     
     def _optimize_submolecules(self, submolecules: List[Molecule]) -> List[Molecule]:
         """Optimize each submolecule individually (parallelized)."""
-        if self.config.verbose:
-            print(f"\n[3/5] Optimizing individual submolecules (parallel)")
+        self._log(f"\n[3/5] Optimizing Submolecules (parallelized)")
+
     
         n_workers = min(len(submolecules), multiprocessing.cpu_count())
-    
+        self._log(f"Workers: {n_workers}")
+
         optimized = [None] * len(submolecules)
     
         # Extract serializable data from submolecules
@@ -167,12 +191,9 @@ class ClusterInitializer:
                 try:
                     result_mol = future.result()
                     optimized[idx] = result_mol
-                    
-                    if self.config.verbose:
-                        print(f"  Submolecule {idx+1} complete ✓")
+                    self._log(f"  Submolecule {idx+1} optimized successfully")
                 except Exception as e:
-                    if self.config.verbose:
-                        print(f"  Submolecule {idx+1} failed: {e}")
+                    self._log(f"  Submolecule {idx+1} optimization failed: {e}", level="error")
                     # Fall back to original submolecule
                     optimized[idx] = submolecules[idx]
     
@@ -220,8 +241,7 @@ class ClusterInitializer:
     
     def _create_simulation_box(self, submolecules: List[Molecule]) -> SimulationBox:
         """Create simulation box based on submolecules."""
-        if self.config.verbose:
-            print(f"\n[4/5] Creating simulation box")
+        self._log(f"\n[4/5] Creating simulation box")
         
         # Collect all covalent radii
         all_cov_radii = []
@@ -238,15 +258,13 @@ class ClusterInitializer:
             box_type=self.config.box_type,
             scale_factor=self.config.box_scale_factor
         )
-        
-        if self.config.verbose:
-            print(f"  Box type: {self.config.box_type}")
-            if simulation_box.box_type == "sphere":
-                print(f"  Radius: {simulation_box.radius:.2f} Angstrom")
-                print(f"  Volume: {simulation_box.get_volume():.2f} Angstrom^3")
-            else:
-                print(f"  Dimensions: {simulation_box.box_dimensions}")
-                print(f"  Volume: {simulation_box.get_volume():.2f} Angstrom^3")
+        self._log(f" Box type:  {simulation_box.box_type}")
+        if simulation_box.box_type == "sphere":
+            self._log(f" Radius: {simulation_box.radius:.2f} Angstrom")
+            self._log(f" Volume: {simulation_box.get_volume():.2f} Angstrom^3")
+        else:
+            self._log(f" Dimensions: {simulation_box.box_dimensions}")
+            self._log(f" Volume: {simulation_box.get_volume():.2f} Angstrom^3")
         
         return simulation_box
     
@@ -256,8 +274,7 @@ class ClusterInitializer:
         simulation_box: SimulationBox
     ) -> Molecule:
         """Generate random initial configuration inside simulation box."""
-        if self.config.verbose:
-            print(f"\n[5/5] Generating random initial configuration")
+        self._log(f"\n[5/5] Generating random initial configuration")
         
         if len(submolecules) == 0:
             raise ValueError("No submolecules to place")
@@ -289,23 +306,22 @@ class ClusterInitializer:
                     placed_coords = np.vstack([placed_coords, new_coords])  # <-- CHANGED: vstack instead of extend
                     placed_atoms.extend(submol.atom_labels.tolist())
                     placed = True
-                    if self.config.verbose:
-                        print(f"✓ (attempt {attempt+1})")
+                    self._log(f"  Submolecule {i+1} placed successfully after {attempt+1} attempts")
                     break
             
             if not placed:
-                if self.config.verbose:
-                    print(f"✗ Failed after {self.config.max_placement_attempts} attempts")
+                msg = (f"Could not place submolecule {i+1} after "
+                       f"{self.config.max_placement_attempts} attempts. ")
+                self._log(msg, level="error")
                 raise RuntimeError(
                     f"Could not place submolecule {i+1} after "
                     f"{self.config.max_placement_attempts} attempts. "
                     "Try increasing box size or reducing min_distance."
                 )
         
-        # Create new molecule with explicit copy of coordinates
         initial_molecule = Molecule.from_labels_and_coords(
             atom_labels=placed_atoms,
-            coordinates=placed_coords.copy(),  # <-- CHANGED: Explicit copy
+            coordinates=placed_coords.copy(),  
         )
         
         return initial_molecule
@@ -313,7 +329,7 @@ class ClusterInitializer:
     def _check_min_distance(
         self, 
         new_coords: np.ndarray, 
-        existing_coords: np.ndarray  # <-- CHANGED: Type hint to numpy array
+        existing_coords: np.ndarray 
     ) -> bool:
         """Check if new coordinates satisfy minimum distance constraint."""
         if len(existing_coords) == 0:

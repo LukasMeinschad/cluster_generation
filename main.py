@@ -1,6 +1,6 @@
 import multiprocessing as mp
 import warnings
-warnings.filterwarnings("ignore", category=UserWarning)  # Supress library warnings for cleaner output
+warnings.filterwarnings("ignore", category=UserWarning)
 
 import sys
 from pathlib import Path
@@ -20,10 +20,6 @@ from args import get_args
 from logger import Logger
 
 
-
-
-
-
 if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
@@ -34,96 +30,86 @@ if __name__ == "__main__":
     with open(args.i[0], "r") as file:
         xyz_content = file.read()
     
-    logger = Logger(out_file="cluster_gen.out", mode="w")
-    logger.write_header()
+    # ── Main summary logger (cluster_gen.out) ───────────────────
+    logger = Logger(name="main", log_file="cluster_gen.out", file_mode="w")
+    logger.write_program_header()  # Don't reassign — returns None
 
     molecule = Molecule.from_xyz(xyz_content)
 
-    
     if args.test:
-        # Run through all tests and check which one was selected
         for test in args.test:
             if test == "method_basis_combinations":
-                # Initialize Psi4 Calculator 
-                config = Config(method = "hf", basis="cc-pvdz")
+                config = Config(method="hf", basis="cc-pvdz")
                 calc = Psi4Calculator(config=config, verbose=False)
                 results = calc.determine_method_and_basis_set_combinations(molecule=molecule)
-                logger.write_method_basis_combinations(results)
 
+    # ── Initialization ──────────────────────────────────────────
+    # Appends to same summary log
+    init_logger = Logger(name="init", log_file="cluster_gen.out", file_mode="a")
 
     init_config = InitializationConfig(
         method="mp2",
         basis="cc-pvdz",
         box_type="sphere",
-        box_scale_factor = 5.0,
+        box_scale_factor=2.0,
         min_distance=1.8,
         optimize_submolecules=True,
-        verbose=True
+        verbose=False
     )
-    initializer = ClusterInitializer(config=init_config)
+    initializer = ClusterInitializer(config=init_config, logger=init_logger)
     initial_molecule, submol_indices, simulation_box = initializer.initialize_from_xyz(args.i[0])
 
+    # ── BHMC Phase A ────────────────────────────────────────────
+    # Summary logger → cluster_gen.out
+    # Worker detail  → bhmc_workers.log (separate file)
+    bhmc_logger = Logger(name="bhmc", log_file="cluster_gen.out", file_mode="a")
 
- #   # Run benchmark
- #   results = benchmark_temperature_acceptance(
- #       initial_molecule=initial_molecule,
- #       submolecule_indices=submol_indices,
- #       simulation_box=simulation_box,
- #       method="mp2",
- #       basis="cc-pvdz",
- #       n_steps=100,
- #       n_trials=5,
- #       save_plot=True,
- #       plot_filename="figures/temperature_acceptance.png"
- #   )
-
-    # Set up BHMC Config
     bhmc_config = BHMCConfig(
         temperature=800,
         method="mp2",
-        basis="cc-pvdz"
+        basis="cc-pvdz",
+        verbose=False,
+        adaptive_operators=True
     )
-    
-    # Initialize BHMC Sampler
-    bhmc_sampler = MultiPhaseBHMC(config=bhmc_config, simulation_box=simulation_box)
+
+    bhmc_sampler = MultiPhaseBHMC(
+        config=bhmc_config,
+        simulation_box=simulation_box,
+        logger=bhmc_logger,
+        worker_log_file="bhmc_workers.log"  # Worker detail goes here
+    )
 
     phase_a_candidates = bhmc_sampler.run_phase_a(
-        initial_molecule=initial_molecule, 
+        initial_molecule=initial_molecule,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=100,
-        n_processes=20
+        n_structures_per_worker=1000,
+        n_processes=28
     )
-
 
     # Obtain all structures
     phase_a_structures = [structure for structure, energy in phase_a_candidates]
-    logger.write_trajectory(phase_a_structures) 
 
-    # Analyze results and get cluster representatives
+    # ── Analysis ────────────────────────────────────────────────
     representatives = bhmc_sampler.analyse_phase_a_results(
-        phase_a_candidates, 
+        phase_a_candidates,
         submolecule_indices=submol_indices,
         n_clusters=10,
         simulation_box=simulation_box
-    ) 
+    )
 
-    logger.write_trajectory(representatives, filename="representatives.xyz") 
+    # ── Local Optimization ──────────────────────────────────────
+    logger_opt = Logger(name="optimization", log_file="cluster_gen.out", file_mode="a")
+    logger_opt.header("Local Optimization")
 
-
-    config = Config(method = "mp2", basis="cc-pvdz")  # Changed basis_set to basis
+    config = Config(method="mp2", basis="cc-pvdz")
     calc = Psi4Calculator(config=config, verbose=False)
     optimization_results = calc.batch_optimize_parallel_unordered(representatives, n_processes=20)
     optimized_mols = [result.molecule for result in optimization_results if result.success]
-    logger.write_trajectory(optimized_mols, filename="optimized_representatives.xyz")
 
-#
-#    optimization_results = calc.batch_optimize_parallel_unordered(phase_a_structures,n_processes=10)
-#
-#    # Extract successful results
-#    optimized_structures = [
-#        (result.molecule, result.energy) 
-#        for result in optimization_results 
-#        if result.success
-#    ]
-#    optimized_mols = [mol for mol, energy in optimized_structures]
-#    logger.write_trajectory(optimized_mols, filename="optimized_structures.xyz")
+    logger_opt.info(f"Optimized {len(optimized_mols)}/{len(representatives)} structures successfully")
+
+    # ── Timing ──────────────────────────────────────────────────
+    elapsed = time.time() - time_start
+    logger_opt.separator(char="=")
+    logger_opt.info(f"Total runtime: {elapsed:.1f}s ({elapsed/60:.1f} min)")
+    logger_opt.separator(char="=")

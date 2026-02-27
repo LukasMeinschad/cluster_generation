@@ -445,6 +445,8 @@ class BHMCAnalyzer:
             self.phases[phase] = filtered_structures
         else:
             self.structures = filtered_structures
+    
+
 
 
     def plot_com_trajectory_2d_projection(self,
@@ -692,7 +694,7 @@ class BHMCAnalyzer:
             plt.savefig(save_path, dpi=150, bbox_inches='tight', facecolor='white')
             print(f"Saved trajectory density plot to {save_path}")
     
-        plt.show()
+        plt.close()
                    
 
     def _compute_com_trajectories(self, structures: List[StructureData]) -> List[np.ndarray]:

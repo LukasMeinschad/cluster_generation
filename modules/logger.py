@@ -1,698 +1,109 @@
-import os
+import os 
+import sys
+import logging
 from datetime import datetime
-from typing import List, Tuple, Optional, Any, TextIO, Dict
-from enum import Enum
-from contextlib import contextmanager
 from pathlib import Path
-import json
-
-
-class LogLevel(Enum):
-    """Log levels for message severity"""
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
-
-
-class Formatter:
-    """Handles formatting of log messages"""
-    
-    @staticmethod
-    def header_line(width: int = 50, char: str = "=") -> str:
-        """Create header line"""
-        return char * width
-    
-    @staticmethod
-    def separator_line(width: int = 50, char: str = "-") -> str:
-        """Create separator line"""
-        return char * width
-    
-    @staticmethod
-    def timestamp(fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
-        """Get formatted timestamp"""
-        return datetime.now().strftime(fmt)
-    
-    @staticmethod
-    def section_header(title: str, width: int = 50) -> str:
-        """Create formatted section header"""
-        lines = [
-            Formatter.separator_line(width),
-            f"{title} - {Formatter.timestamp()}",
-            Formatter.separator_line(width)
-        ]
-        return "\n".join(lines)
-    
-    @staticmethod
-    def molecule_coords(atom_labels: List[str], coordinates: List[Tuple[float, float, float]]) -> str:
-        """Format molecule coordinates"""
-        lines = []
-        for label, coord in zip(atom_labels, coordinates):
-            lines.append(f"{label:4s} {coord[0]:12.6f} {coord[1]:12.6f} {coord[2]:12.6f}")
-        return "\n".join(lines)
-    
-    @staticmethod
-    def bond_info(bonds: List[Tuple], bond_type: str) -> str:
-        """Format bond information"""
-        lines = [f"{bond_type} Bonds ({len(bonds)}):"]
-        for bond in bonds:
-            atom1 = bond.atom1
-            atom2 = bond.atom2
-            strength = bond.strength
-            lines.append(f"  {atom1:4s} - {atom2:4s} (Strength: {strength:.3f})") 
-        return "\n".join(lines)
-    
-    @staticmethod
-    def remove_digits(text: str) -> str:
-        """Remove all digits from a string"""
-        return ''.join(char for char in text if not char.isdigit())
-
-
-class FileWriter:
-    """Handles file writing operations"""
-    
-    def __init__(self, filepath: Path, mode: str = "a"):
-        """
-        Initialize FileWriter
-        
-        Args:
-            filepath: Path to output file
-            mode: File mode ('a' for append, 'w' for write)
-        """
-        self.filepath = Path(filepath)
-        self.mode = mode
-    
-    @contextmanager
-    def open_file(self):
-        """Context manager for safe file operations"""
-        f = None
-        try:
-            self.filepath.parent.mkdir(parents=True, exist_ok=True)
-            f = open(self.filepath, self.mode, encoding='utf-8')
-            yield f
-        except IOError as e:
-            raise IOError(f"Failed to open file {self.filepath}: {e}") from e
-        finally:
-            if f:
-                f.close()
-    
-    def write(self, content: str) -> None:
-        """Write content to file"""
-        with self.open_file() as f:
-            f.write(content)
-            if not content.endswith("\n"):
-                f.write("\n")
-    
-    def write_lines(self, lines: List[str]) -> None:
-        """Write multiple lines to file"""
-        with self.open_file() as f:
-            for line in lines:
-                f.write(line)
-                if not line.endswith("\n"):
-                    f.write("\n")
+from typing import Any, Dict, List, Optional, Union
+from contextlib import contextmanager
 
 
 class Logger:
+    """  
+    Logger class for output file logging.
     """
-    Enhanced Logger class for cluster generation with support for
-    different log levels, formatted output, and multiple output types.
-    """
-    
     def __init__(
-        self, 
-        out_file: str = "cluster_gen.out",
-        mode: str = "a",
-        min_level: LogLevel = LogLevel.INFO,
-        line_width: int = 80
-    ):
-        """
-        Initialize Logger
-        
-        Args:
-            out_file: Name of the output file
-            mode: File mode ('a' for append, 'w' for write)
-            min_level: Minimum log level to write
-            line_width: Width of separator lines
-        """
-        self.writer = FileWriter(out_file, mode)
-        self.formatter = Formatter()
-        self.min_level = min_level
-        self.line_width = line_width
-        self._log_count = 0
-    
-    # ==================== Core Logging Methods ====================
-    
-    def log(self, message: str, level: LogLevel = LogLevel.INFO) -> None:
-        """
-        Write a log message with specified level
-        
-        Args:
-            message: Message to log
-            level: Log level
-        """
-        if self._should_log(level):
-            formatted = self._format_log_message(message, level)
-            self.writer.write(formatted)
-            self._log_count += 1
-    
-    def debug(self, message: str) -> None:
-        """Write debug message"""
-        self.log(message, LogLevel.DEBUG)
-    
-    def info(self, message: str) -> None:
-        """Write info message"""
-        self.log(message, LogLevel.INFO)
-    
-    def warning(self, message: str) -> None:
-        """Write warning message"""
-        self.log(message, LogLevel.WARNING)
-    
-    def error(self, message: str) -> None:
-        """Write error message"""
-        self.log(message, LogLevel.ERROR)
-    
-    def critical(self, message: str) -> None:
-        """Write critical message"""
-        self.log(message, LogLevel.CRITICAL)
-    
-    # ==================== Header and Sections ====================
-    
-    def write_header(self, title: str = "Cluster Generation Log") -> None:
-        """Write general header to output file"""
-        header = [
-            self.formatter.header_line(self.line_width, "="),
-            f"{title} - {self.formatter.timestamp()}",
-            self.formatter.header_line(self.line_width, "="),
-            ""
-        ]
-        self.writer.write_lines(header)
-    
-    def write_section(self, title: str, content: str) -> None:
-        """
-        Write a formatted section with title and content
-        
-        Args:
-            title: Section title
-            content: Section content
-        """
-        section = [
-            self.formatter.separator_line(self.line_width),
-            f"{title} - {self.formatter.timestamp()}",
-            self.formatter.separator_line(self.line_width),
-            content,
-            ""
-        ]
-        self.writer.write_lines(section)
-    
-    # ==================== Molecule Logging ====================
-    
-    def write_molecule_info(self, molecule: Any) -> None:
-        """
-        Write comprehensive molecule information
-        
-        Args:
-            molecule: Molecule object with atom_labels, coordinates, etc.
-        """
-        lines = [
-            f"Molecule Name: {getattr(molecule, 'name', 'Unknown')}",
-            f"Number of Atoms: {len(molecule.atom_labels)}",
-            f"Charge: {getattr(molecule, 'charge', 0)}",
-            f"Spin Multiplicity: {getattr(molecule, 'spin_mult', 1)}",
-            "",
-            "Atom Labels and Coordinates:",
-            self.formatter.molecule_coords(molecule.atom_labels, molecule.coordinates),
-            ""
-        ]
-        
-        # Add bond information if available
-        try:
-            covalent_bonds, hydrogen_bonds = molecule.get_bonds()
-
-            lines.extend([
-                self.formatter.bond_info(covalent_bonds, "Covalent"),
-                "",
-                self.formatter.bond_info(hydrogen_bonds, "Hydrogen"),
-            ])
-        except Exception as e:
-            self.debug(f"Could not retrieve bond information: {e}")
-        
-        self.write_section("Molecule Information", "\n".join(lines))
-
-    def write_submolecule_info(self, submolecules: List[Any]) -> None: 
-        """   
-        Writes information about the submolecules, i.e the fragments obtained by connectivity analysis.
-
-        We log the Number of Submolecules and for each submolecule the index, number of atoms, atom labels and coordinates.
-        """
-        lines = [f"Number of Submolecules: {len(submolecules)}"]
-        for idx, submol in enumerate(submolecules, 1):
-            lines.extend([
-                f"Submolecule {idx}:",
-                f"  Number of Atoms: {len(submol.atom_labels)}",
-                "  Atom Labels and Coordinates:",
-                *[f"    {line}" for line in 
-                  self.formatter.molecule_coords(
-                      submol.atom_labels, 
-                      submol.coordinates
-                  ).split('\n')],
-                ""
-            ])
-
-        self.write_section(
-            "Submolecule Information",
-            "\n".join(lines)
-        )
-
-    def write_hbond_configurations(self, configurations: List[Any]) -> None:
-        """
-        Write hydrogen bond configurations
-        
-        Args:
-            configurations: List of HBondConfiguration or SubMolecule objects
-        """
-        lines = []
-        for idx, config in enumerate(configurations, 1):
-            lines.extend([
-                f"Configuration {idx}:",
-                f"  Type: {type(config).__name__}",
-            ])
-            
-            # Add specific information based on type
-            if hasattr(config, 'donor_idx'):
-                lines.append(f"  Donor Index: {config.donor_idx}")
-            if hasattr(config, 'hydrogen_idx'):
-                lines.append(f"  Hydrogen Index: {config.hydrogen_idx}")
-            if hasattr(config, 'acceptor_idx'):
-                lines.append(f"  Acceptor Index: {config.acceptor_idx}")
-            if hasattr(config, 'angle'):
-                lines.append(f"  Angle: {config.angle:.2f}°")
-            
-            # Add atom coordinates
-            if hasattr(config, 'atom_labels') and hasattr(config, 'coordinates'):
-                lines.extend([
-                    "  Atom Labels and Coordinates:",
-                    *[f"    {line}" for line in 
-                      self.formatter.molecule_coords(
-                          config.atom_labels, 
-                          config.coordinates
-                      ).split('\n')]
-                ])
-            
-            lines.append("")
-        
-        self.write_section(
-            f"Hydrogen Bond Configurations ({len(configurations)})",
-            "\n".join(lines)
-        )
-
-    # =================== Transformation Logging ====================
-
-    def write_reference_frame_info(self, ref_frame: Any) -> None:
-        """  
-        Writes information about the reference frame used for centering the molecule.
-        """
-        lines = [
-            "Reference Frame Information:",
-            f"Origin: {ref_frame.origin}",
-            f"Eigenvalues of Inertia Tensor: {ref_frame.eigenvalues}",
-            f"X-axis: {ref_frame.x_axis}",
-            f"Y-axis: {ref_frame.y_axis}",
-            f"Z-axis: {ref_frame.z_axis}",
-        ]
-        self.write_section(
-            "Reference Frame Details",
-            "\n".join(lines)
-        )
-
-    # =================== Sampling Logging ====================
-    def write_sampling_statistics(self, Sampler: Any) -> None:
-        """   
-        Writes sampling statistics collected during the sampling process.
-        For this we need the ConfigSampler object.
-        """
-        lines = [
-            "Sampling Statistics:",
-            f"Number of Samples: {Sampler.sampling_statistics.get('num_samples', 'N/A')}",
-            f"Total Sampling Volume: {Sampler.sampling_statistics.get('total_sampling_volume', 'N/A')}",
-            f"Average Distance to Center: {Sampler.sampling_statistics.get('avg_distance_to_center', 'N/A')}",
-            f"Minimum Nearest Neighbour Distance: {Sampler.sampling_statistics.get('min_nn_distance', 'N/A')}",
-            f"Average Nearest Neighbour Distance: {Sampler.sampling_statistics.get('avg_nearest_neighbour_distance', 'N/A')}",
-        ]
-        self.write_section(
-            "Sampling Statistics",
-            "\n".join(lines)
-        )
-
-    
-    # ==================== Calculation Results ====================
-
-    def write_method_basis_combinations(self, results: Dict[str, List[str]]) -> None:
-        """  
-        Writes the Results of the method and basis set combination determination.
-
-        Args:
-            results: Dictionary with methods as keys and list of viable basis sets as values
-
-        Result is build up like this 
-        results = {(method, basis): (energy, elapsed_time)}
-        """
-        lines = ["Analysis of Method and Basis Set Combinations:", 
-                 f"Total Combinations tested: {sum(len(bases) for bases in results.values())}",
-                    ""]
-        
-        for (method, basis_set), (energy, elapsed_time) in results.items():
-            lines.extend([
-                f"Method: {method}, Basis Set: {basis_set}",
-                f"  SCF Energy: {energy:.8f} Hartree",
-                f"  Calculation Time: {elapsed_time:.4f} seconds",
-                ""
-            ])
-        self.write_section(
-            "Method and Basis Set Combinations",
-            "\n".join(lines)
-        )
-        
-        
-    def write_scf_batch_result(
-        self, 
-        results: List[Tuple[Any, float]]
-    ) -> None:
-        """
-        Write SCF batch calculation results
-        
-        Args:
-            results: List of (molecule, energy) tuples
-        """
-        lines = []
-        for idx, (mol, energy) in enumerate(results, 1):
-            mol_name = getattr(mol, 'name', f'Molecule {idx}')
-            lines.extend([
-                f"Configuration {idx}: {mol_name}",
-                f"  SCF Energy: {energy:.8f} Hartree",
-                f"  SCF Energy: {energy * 27.211386245988:.6f} eV",
-                f"  Number of Atoms: {len(mol.atom_labels)}",
-                ""
-            ])
-        
-        self.write_section(
-            f"SCF Batch Results ({len(results)} configurations)",
-            "\n".join(lines)
-        )
-    
-    def write_optimization_results(
         self,
-        results: List[Tuple[Any, float]],
-        include_geometries: bool = True
-    ) -> None:
-        """
-        Write optimization results with optional geometry details
-        
-        Args:
-            results: List of (optimized_molecule, energy) tuples
-            include_geometries: Whether to include full geometries
-        """
-        lines = []
-        for idx, (mol, energy) in enumerate(results, 1):
-            mol_name = getattr(mol, 'name', f'Optimized {idx}')
-            lines.extend([
-                f"Optimization {idx}: {mol_name}",
-                f"  Final Energy: {energy:.8f} Hartree",
-                f"  Number of Atoms: {len(mol.atom_labels)}",
-            ])
-            
-            if include_geometries:
-                lines.extend([
-                    "  Optimized Geometry:",
-                    *[f"    {line}" for line in 
-                      self.formatter.molecule_coords(
-                          mol.atom_labels,
-                          mol.coordinates
-                      ).split('\n')]
-                ])
-            
-            lines.append("")
-        
-        self.write_section(
-            f"Optimization Results ({len(results)} structures)",
-            "\n".join(lines)
-        )
-
-    # ==================== BHMC Logging ==========================
-
-    def write_trajectory(self, bhmc_trajectory, filename: str = "bhmc_trajectory.xyz") -> None:
+        name: str = "cluster_gen",
+        log_file: Optional[str] = "cluster_gen.log",
+        level: int = logging.INFO,
+        file_mode: str = "a"
+        ):
         """   
-        Function to return a xyz file containing the trajectory of the BHMC sampling process. 
+        Args:
+            name (str): Name of the logger.
+            log_file (str, optional): Path to the log file. If None, logging to file is disabled. Defaults to "cluster_gen.log".
+            level (int): Logging level (e.g., logging.INFO, logging.DEBUG). Defaults to logging.INFO.
+            file_mode (str): Mode for opening the log file ('a' for append, 'w' for write). Defaults to 'a'.
         """
-        filepath = Path(filename)
-        
-        try:
-            with open(filepath, "w", encoding='utf-8') as trj_file:
-                for i, mol in enumerate(bhmc_trajectory, 1):
-                    trj_file.write(f"{len(mol.atom_labels)}\n")
-                    trj_file.write(f"BHMC Sample {i}\n")
-                    
-                    for label, coord in zip(mol.atom_labels, mol.coordinates):
-                        element = Formatter.remove_digits(label)
-                        trj_file.write(
-                            f"{element:2s} {coord[0]:12.6f} {coord[1]:12.6f} {coord[2]:12.6f}\n"
-                        )
-        except IOError as e:
-            raise IOError(f"Failed to write trajectory to {filepath}: {e}") from e
+        self._logger = logging.getLogger(name) 
+        self._logger.setLevel(level)
+        self._logger.handlers.clear() # Clear existing handlers
 
-
-    # ==================== Clustering Results ====================
-    def write_cluster_statistics(
-            self,
-            cluster_statistics: Dict[str, Any]) -> None:
-        """  
-        Writes the Basic Statistics of the Clustering Analysis
-        """
-        lines = [
-            "Basic Clustering Statistics:",
-            f"Max Energy: {cluster_statistics['max_energy']:.6f} Hartree",
-            f"Min Energy: {cluster_statistics['min_energy']:.6f} Hartree",
-            f"Mean Energy: {cluster_statistics['mean_energy']:.6f} Hartree",
-            f"Std Dev Energy: {cluster_statistics['std_energy']:.6f} Hartree",
-            f"Median Energy: {cluster_statistics['median_energy']:.6f} Hartree",
-            f"IQR Energy: {cluster_statistics['iqr_energy']:.6f} Hartree",
-            f"Mid IQR Energy: {cluster_statistics['mid_iqr_energy']:.6f} Hartree",
-        ] 
-        self.write_section(
-            "Clustering Statistics",
-            "\n".join(lines)
+        formatter = logging.Formatter(
+            fmt="[%(asctime)s] [%(levelname)-8s] %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
 
-    def write_hbond_analysis(
-            self,
-            hbond_statistics: Dict[str, Any]) -> None:
+        # File Handler 
+        if log_file:
+            path = Path(log_file)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            fh = logging.FileHandler(path, mode=file_mode, encoding="utf-8")
+            fh.setFormatter(formatter)
+            self._logger.addHandler(fh)
+
+        
+    # ========================= Core Logging Methods =============================
+    def debug(self, msg: str) -> None:
+        """   
+        Log a Debug Message
+        """
+        self._logger.debug(msg) 
+    def info(self, msg: str) -> None:
         """  
-        Writes the Hydrogen Bond Analysis Results
+        Log an info message
         """
-        lines = [
-            "Hydrogen Bond Analysis:",
-            f"Max H-Bonds in Sampled Molecules: {hbond_statistics['max_hbonds']}",
-            f"Min H-Bonds in Sampled Molecules: {hbond_statistics['min_hbonds']}",
-            f"Mean H-Bonds in Sampled Molecules: {hbond_statistics['mean_hbonds']:.2f}",
-            f"Std Dev of H-Bonds in Sampled Molecules: {hbond_statistics['std_hbonds']:.2f}",
-            f"Median H-Bonds in Sampled Molecules: {hbond_statistics['median_hbonds']}",
-        ] 
-        self.write_section(
-            "Hydrogen Bond Analysis Results",
-            "\n".join(lines)
-        )
-
-    # =================== Symmetry Analysis Logging ====================
-    def write_symmetry_analysis(
-            self,
-            symmetry_info: Dict[str, Any]) -> None:
+        self._logger.info(msg)
+    def warning(self, msg: str) -> None:
         """  
-        Writes the Symmetry Analysis Results
+        Log a warning message
         """
-        lines = [
-            "Symmetry Analysis Results:",
-            f"Point Group: {symmetry_info.get('point_group', 'Unknown')}",
-            f"Total Symmetry Elements: {symmetry_info.get('total_symmetry_elements', 0)}",
-            f"Is Linear: {symmetry_info.get('is_linear', False)}",
-            f"Is Planar: {symmetry_info.get('is_planar', False)}",
-            f"Has Inversion Center: {symmetry_info.get('has_inversion', False)}",
-            f"Symmetry Planes: {symmetry_info['symmetry_planes']}",
-            f"Rotation Axes: {symmetry_info['rotation_axes']}",
-            f"Improper Axes: {symmetry_info['improper_rotation_axes']}",
-            f"Number of Symmetry Planes: {symmetry_info.get('n_sigma', 0)}",
-            f"Number of C2 Axes: {symmetry_info.get('n_C2', 0)}",
-            f"Number of Cn Axes: {symmetry_info.get('n_Cn', 0)}",
-            f"Number of Sn Axes: {symmetry_info.get('n_Sn', 0)}",
-        ] 
-        self.write_section(
-            "Symmetry Analysis",
-            "\n".join(lines)
-    )
+        self._logger.warning(msg)
+    def error(self, msg: str) -> None:
+        """  
+        Log an error message
+        """
+        self._logger.error(msg)
+    def critical(self, msg: str) -> None:
+        """  
+        Log a critical message
+        """
+        self._logger.critical(msg)
 
+    # ======================== Sections & Separators ==============================
 
-    # ==================== File Export Methods ====================
-    
-    @staticmethod
-    def write_trajectory_sampling(
-        sampled_mols: List[Any],
-        filename: str = "sampled_configurations_trj.xyz"
-    ) -> None:
+    def separator(self, char: str = "-", width: int = 72) -> None:
+        """   
+        Write a visual separator line
         """
-        Write XYZ trajectory file of sampled molecules
-        
-        Args:
-            sampled_mols: List of molecule objects
-            filename: Output filename
+        self._logger.info(char * width)
+    def header(self, title: str, width: int = 72) -> None:
+        """   
+        Writes a prominent section header
         """
-        filepath = Path(filename)
-        
-        try:
-            with open(filepath, "w", encoding='utf-8') as trj_file:
-                for i, mol in enumerate(sampled_mols, 1):
-                    trj_file.write(f"{len(mol.atom_labels)}\n")
-                    trj_file.write(f"Sampled Configuration {i}\n")
-                    
-                    for label, coord in zip(mol.atom_labels, mol.coordinates):
-                        element = Formatter.remove_digits(label)
-                        trj_file.write(
-                            f"{element:2s} {coord[0]:12.6f} {coord[1]:12.6f} {coord[2]:12.6f}\n"
-                        )
-        except IOError as e:
-            raise IOError(f"Failed to write trajectory to {filepath}: {e}") from e
-    
-    @staticmethod
-    def write_optimization_xyz_batch(
-        opt_results: List[Tuple[Any, float]],
-        output_dir: str = "optimized_geometries"
-    ) -> None:
+        line = "=" * width
+        self._logger.info(line)
+        self._logger.info(f"{title.center(width)}")
+        self._logger.info(line)
+    def section(self, title: str) -> None:
+        """   
+        Writes a subsection header-
         """
-        Write optimized geometries to individual XYZ files
-        
-        Args:
-            opt_results: List of (optimized_molecule, energy) tuples
-            output_dir: Output directory name
+        self.separator()
+        self._logger.info(f"{title}")
+        self.separator()
+    def write_program_header(self) -> None:
+        """  
+        Writes the Standardized Big Header for the Program
         """
-        dirpath = Path(output_dir)
-        dirpath.mkdir(parents=True, exist_ok=True)
-        
-        for idx, (opt_mol, opt_energy) in enumerate(opt_results, 1):
-            file_path = dirpath / f"optimized_molecule_{idx:03d}.xyz"
-            
-            try:
-                with open(file_path, "w", encoding='utf-8') as xyz_file:
-                    xyz_file.write(f"{len(opt_mol.atom_labels)}\n")
-                    xyz_file.write(
-                        f"Optimized Molecule {idx} | "
-                        f"Energy: {opt_energy:.8f} Hartree\n"
-                    )
-                    
-                    for label, coord in zip(opt_mol.atom_labels, opt_mol.coordinates):
-                        element = Formatter.remove_digits(label)
-                        xyz_file.write(
-                            f"{element:2s} {coord[0]:12.6f} {coord[1]:12.6f} {coord[2]:12.6f}\n"
-                        )
-            except IOError as e:
-                raise IOError(f"Failed to write to {file_path}: {e}") from e
-    
-    @staticmethod
-    def write_json_summary(
-        results: List[Tuple[Any, float]],
-        filename: str = "calculation_summary.json"
-    ) -> None:
-        """
-        Write calculation summary as JSON
-        
-        Args:
-            results: List of (molecule, energy) tuples
-            filename: Output JSON filename
-        """
-        filepath = Path(filename)
-        
-        summary = {
-            "timestamp": datetime.now().isoformat(),
-            "num_structures": len(results),
-            "structures": []
-        }
-        
-        for idx, (mol, energy) in enumerate(results, 1):
-            struct_data = {
-                "id": idx,
-                "name": getattr(mol, 'name', f'Structure_{idx}'),
-                "energy_hartree": energy,
-                "energy_ev": energy * 27.211386245988,
-                "num_atoms": len(mol.atom_labels),
-                "charge": getattr(mol, 'charge', 0),
-                "spin_mult": getattr(mol, 'spin_mult', 1),
-            }
-            summary["structures"].append(struct_data)
-        
-        try:
-            with open(filepath, "w", encoding='utf-8') as json_file:
-                json.dump(summary, json_file, indent=2)
-        except IOError as e:
-            raise IOError(f"Failed to write JSON to {filepath}: {e}") from e
-    
-    # ==================== Private Helper Methods ====================
-    
-    def _should_log(self, level: LogLevel) -> bool:
-        """Check if message should be logged based on level"""
-        level_order = {
-            LogLevel.DEBUG: 0,
-            LogLevel.INFO: 1,
-            LogLevel.WARNING: 2,
-            LogLevel.ERROR: 3,
-            LogLevel.CRITICAL: 4
-        }
-        return level_order[level] >= level_order[self.min_level]
-    
-    def _format_log_message(self, message: str, level: LogLevel) -> str:
-        """Format log message with timestamp and level"""
-        timestamp = self.formatter.timestamp()
-        return f"[{timestamp}] [{level.value}] {message}\n"
-    
-    # ==================== Context Manager Support ====================
-    
-    def __enter__(self):
-        """Enter context manager"""
-        self.write_header()
-        return self
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Exit context manager"""
-        if exc_type:
-            self.error(f"Exception occurred: {exc_val}")
-        
-        footer = [
-            "",
-            self.formatter.header_line(self.line_width, "="),
-            f"Log completed - {self.formatter.timestamp()}",
-            f"Total log entries: {self._log_count}",
-            self.formatter.header_line(self.line_width, "=")
-        ]
-        self.writer.write_lines(footer)
-        
-        return False  # Don't suppress exceptions
+        self.header("CLUSTER GEN", width=80)
+        # Metadata
+        self._logger.info(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        self._logger.info(f"Python Version: {sys.version.split()[0]}")
+        self._logger.info(f"Working Directory: {os.getcwd()}")
+        self._logger.info(f"Log File: {self._logger.handlers[0].baseFilename if self._logger.handlers else 'None'}")
+        self._logger.info("Made by: Lukas Meinschad")
 
-
-# ==================== Convenience Functions ====================
-
-def create_logger(
-    out_file: str = "cluster_gen.out",
-    mode: str = "a",
-    level: LogLevel = LogLevel.INFO
-) -> Logger:
-    """
-    Factory function to create a Logger instance
-    
-    Args:
-        out_file: Output file path
-        mode: File mode
-        level: Minimum log level
-    
-    Returns:
-        Configured Logger instance
-    """
-    return Logger(out_file=out_file, mode=mode, min_level=level)
 
 
 

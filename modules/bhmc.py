@@ -7,10 +7,11 @@ energy surface of molecular clusters using various nonlocal transformation opera
 
 import numpy as np  
 import random
+import logging
 from typing import List, Optional, Tuple, Dict
 from dataclasses import dataclass
 from multiprocessing import Pool
-import copy  # Add this import at the top
+import copy
 
 # Module imports
 from molecule_class import Molecule
@@ -19,6 +20,8 @@ from cluster import BHMCAnalyzer
 from box import SimulationBox
 from psi4_interface import direct_energy
 
+# Logger import 
+from logger import Logger
 
 @dataclass
 class BHMCConfig:
@@ -34,25 +37,32 @@ class EnergyEvaluator:
     """Energy evaluator for molecular structures using Psi4."""
     
     def __init__(self, method: str = "hf", basis: str = "sto-3g"):
-        """Initialize the energy evaluator.
-        
-        Args:
-            method: Quantum chemistry method
-            basis: Basis set
-        """
         self.method = method
         self.basis_set = basis
 
     def evaluate(self, molecule: Molecule) -> Optional[float]:
-        """Evaluate the energy of a molecule.
-        
-        Args:
-            molecule: Molecule to evaluate
-            
-        Returns:
-            Energy in Hartree, or None if calculation failed
-        """
         return direct_energy(molecule, method=self.method, basis=self.basis_set)
+
+
+# =============================== Worker Logger ================================
+
+def _get_worker_logger(log_file: Optional[str] = None, worker_id: int = 0) -> Optional[Logger]:
+    """Create a logger instance inside a worker process.
+    
+    Args:
+        log_file: Path to the worker log file, or None to disable.
+        worker_id: Unique identifier for the worker.
+        
+    Returns:
+        Logger instance or None if logging is disabled.
+    """
+    if log_file is None:
+        return None
+    return Logger(
+        name=f"bhmc_worker_{worker_id}",
+        log_file=log_file,
+        file_mode="a"
+    )
 
 
 # ================================ Multiprocessing Worker ================================
@@ -60,18 +70,25 @@ class EnergyEvaluator:
 def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
     """Worker function for parallel BHMC Phase A exploration.
     
-    Each worker runs an independent BHMC chain using nonlocal operators.
-    
     Args:
         args: Tuple containing (initial_molecule, submolecule_indices, n_structures,
-              operator_list, config_dict, worker_id, sim_box_dict)
+              operator_list, config_dict, worker_id, sim_box_dict, worker_log_file)
               
     Returns:
         List of (Molecule, energy) tuples for accepted structures
     """
     (initial_molecule, submolecule_indices, n_structures,
-     operator_list, config_dict, worker_id, sim_box_dict) = args
+     operator_list, config_dict, worker_id, sim_box_dict, worker_log_file) = args
     
+    # Create worker-local logger — writes to bhmc_workers.log, NOT cluster_gen.out
+    logger = _get_worker_logger(worker_log_file, worker_id)
+
+    def _log(msg: str, level: str = "info") -> None:
+        if config_dict.get('verbose', False):
+            print(msg)
+        if logger:
+            getattr(logger, level)(msg)
+
     # Constants
     k_B = 8.617333262145e-5  # Boltzmann constant in eV/K
     HARTREE_TO_EV = 27.2114
@@ -80,14 +97,9 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
     sim_box = SimulationBox.from_dict(sim_box_dict) if sim_box_dict else None
     nonlocal_ops = NonLocalOperators(simulation_box=sim_box)
     
-    # Get adaptive setting from config
     adaptive = config_dict.get('adaptive_operators', True)
     
-    # Map operator names to functions with their adaptive parameter support
-    # Operators that support adaptive scaling
     adaptive_operators = {'twist', 'large_displacement', 'roto_reflection'}
-    # Operators that don't use adaptive (discrete transformations)
-    non_adaptive_operators = {'mirror', 'exchange', 'random_so3'}
     
     op_map = {
         'twist': nonlocal_ops.twist_operator,
@@ -98,7 +110,6 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
         'random_so3': nonlocal_ops.random_so3_operator,
     }
     
-    # Build operator list with weights and adaptive flag
     operators = []
     weights = []
     for op_name, weight in operator_list:
@@ -111,30 +122,26 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
             weights.append(weight)
     
     if not operators:
-        print(f"Worker {worker_id}: ERROR - No valid operators configured!")
+        _log(f"Worker {worker_id}: No valid operators found!", level="error")
         return []
     
     weights = np.array(weights)
     weights /= weights.sum()
     
-    # Setup energy evaluator
     evaluator = EnergyEvaluator(
         method=config_dict['method'],
         basis=config_dict['basis']
     )
     
-    # Initialize BHMC chain
     current_structure = copy.deepcopy(initial_molecule)
     current_energy = evaluator.evaluate(current_structure)
-    adaptive = config_dict.get('adaptive_operators', True)
     
     if current_energy is None:
-        print(f"Worker {worker_id}: ERROR - Initial energy calculation failed!")
+        _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
         return []
     
-    print(f"Worker {worker_id}: Starting with energy {current_energy:.6f} Hartree")
-    
-    # BHMC loop
+    _log(f"Worker {worker_id}: Starting energy = {current_energy:.6f} Hartree")
+
     accepted_structures = []
     n_accepted = 0
     n_rejected = 0
@@ -142,39 +149,31 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
     beta = 1.0 / (k_B * temperature)
     
     for step in range(n_structures):
-        # Select and apply operator
         op_idx = np.random.choice(len(operators), p=weights)
         operator = operators[op_idx]
         
         try:
-            # Apply operator with adaptive parameter if supported
             if operator['supports_adaptive']:
                 new_structure = operator['func'](
-                    current_structure, 
-                    submolecule_indices,
-                    adaptive=adaptive
+                    current_structure, submolecule_indices, adaptive=adaptive
                 )
             else:
                 new_structure = operator['func'](
-                    current_structure, 
-                    submolecule_indices
+                    current_structure, submolecule_indices
                 )
             
-            # DEBUG: Check if operator actually changed coordinates
             if np.allclose(new_structure.coordinates, current_structure.coordinates):
-                if config_dict.get('verbose', False):
-                    print(f"Worker {worker_id} step {step}: WARNING - {operator['name']} "
-                          f"produced no coordinate change (box constraint rejection?)")
+                _log(f"Worker {worker_id} step {step}: {operator['name']} — no coordinate change (box rejection?)", level="warning")
                 n_rejected += 1
                 continue
             
             new_energy = evaluator.evaluate(new_structure)
             
             if new_energy is None:
+                _log(f"Worker {worker_id} step {step}: Energy eval failed after {operator['name']}", level="warning")
                 n_rejected += 1
                 continue
             
-            # Metropolis acceptance criterion
             if new_energy < current_energy:
                 accept = True
             else:
@@ -187,21 +186,22 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
                 current_energy = new_energy
                 accepted_structures.append((copy.deepcopy(current_structure), current_energy))
                 n_accepted += 1
+                _log(f"Worker {worker_id} step {step}: ACCEPTED {operator['name']} E={current_energy:.6f} Ha")
             else:
                 n_rejected += 1
                 
         except Exception as e:
-            print(f"Worker {worker_id} step {step}: Error applying {operator['name']}: {e}")
+            _log(f"Worker {worker_id} step {step}: Exception in {operator['name']}: {e}", level="error")
             n_rejected += 1
             continue
         
-        # Progress update
         if (step + 1) % 10 == 0:
-            print(f"Worker {worker_id}: {step + 1}/{n_structures}, Accepted: {n_accepted}, "
-                  f"Rate: {n_accepted/(n_accepted+n_rejected)*100:.1f}%")
+            rate = n_accepted / (n_accepted + n_rejected) * 100 if (n_accepted + n_rejected) > 0 else 0.0
+            _log(f"Worker {worker_id}: {step+1}/{n_structures} — accepted={n_accepted}, rate={rate:.1f}%")
     
-    print(f"Worker {worker_id}: Completed. Accepted: {n_accepted}/{n_structures} "
-          f"({n_accepted/n_structures*100:.1f}%)")
+    total = n_accepted + n_rejected
+    rate = n_accepted / total * 100 if total > 0 else 0.0
+    _log(f"Worker {worker_id}: DONE — {n_accepted}/{total} accepted ({rate:.1f}%)")
     
     return accepted_structures
 
@@ -209,13 +209,8 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
 # ================================ Main BHMC Class ================================
 
 class MultiPhaseBHMC:
-    """Multi-Phase Basin Hopping Monte Carlo for molecular cluster exploration.
+    """Multi-Phase Basin Hopping Monte Carlo for molecular cluster exploration."""
     
-    This implementation uses parallel BHMC chains in Phase A to explore the potential
-    energy surface using various nonlocal transformation operators.
-    """
-    
-    # Default operator configuration (name, weight)
     DEFAULT_OPERATORS = [
         ('twist', 1.5),
         ('large_displacement', 1.2),
@@ -228,31 +223,41 @@ class MultiPhaseBHMC:
     def __init__(self, 
                  config: BHMCConfig,
                  simulation_box: Optional[SimulationBox] = None,
-                 operators: Optional[List[Tuple[str, float]]] = None):
+                 operators: Optional[List[Tuple[str, float]]] = None,
+                 logger: Optional[Logger] = None,
+                 worker_log_file: str = "bhmc_workers.log"):
         """Initialize the BHMC sampler.
         
         Args:
             config: BHMC configuration
             simulation_box: Optional simulation box for constraining structures
-            operators: Optional list of (operator_name, weight) tuples. 
-                      Uses DEFAULT_OPERATORS if not provided.
+            operators: Optional list of (operator_name, weight) tuples.
+            logger: Optional Logger for summary output (cluster_gen.out)
+            worker_log_file: Path to log file for worker-level detail.
+                            Set to None to disable worker logging.
         """
         self.config = config
         self.simulation_box = simulation_box
         self.operators = operators or self.DEFAULT_OPERATORS
+        self.logger = logger
+        self.worker_log_file = worker_log_file
         
         # Storage for Phase A results
         self.phase_a_structures: List[Tuple[Molecule, float]] = []
-    
+
+    def _log(self, msg: str, level: str = "info") -> None:
+        """Log a summary message to the main log file."""
+        if self.config.verbose:
+            print(msg)
+        if self.logger:
+            getattr(self.logger, level)(msg)
+
     def run_phase_a(self, 
                     initial_molecule: Molecule,
                     submolecule_indices: List[List[int]],
                     n_structures_per_worker: int = 300,
                     n_processes: int = 10) -> List[Tuple[Molecule, float]]:
         """Run Phase A: Parallel exploration with independent BHMC chains.
-        
-        Each worker runs an independent BHMC chain using nonlocal operators to
-        explore the potential energy surface.
         
         Args:
             initial_molecule: Starting molecular structure
@@ -263,33 +268,33 @@ class MultiPhaseBHMC:
         Returns:
             List of (Molecule, energy) tuples for all accepted structures
         """
-        print(f"\n{'='*70}")
-        print(f"Phase A: Global Exploration with Parallel BHMC Chains")
-        print(f"{'='*70}")
-        print(f"Configuration:")
-        print(f"  Workers: {n_processes}")
-        print(f"  Steps per worker: {n_structures_per_worker}")
-        print(f"  Total structures: {n_processes * n_structures_per_worker}")
-        print(f"  Method/Basis: {self.config.method}/{self.config.basis}")
-        print(f"  Temperature: {self.config.temperature} K")
-        print(f"  Operators: {', '.join(op[0] for op in self.operators)}")
-        if self.simulation_box:
-            print(f"  Simulation Box: {self.simulation_box}")
-        print(f"{'='*70}\n")
+        if self.logger:
+            self.logger.header("Phase A: Global PES Exploration")
         
-        # Configuration dictionary for workers
+        self._log(f"Configuration:")
+        self._log(f"  Workers: {n_processes}")
+        self._log(f"  Steps per worker: {n_structures_per_worker}")
+        self._log(f"  Total steps: {n_processes * n_structures_per_worker}")
+        self._log(f"  Method/Basis: {self.config.method}/{self.config.basis}")
+        self._log(f"  Temperature: {self.config.temperature} K")
+        self._log(f"  Adaptive operators: {self.config.adaptive_operators}")
+        self._log(f"  Operators: {', '.join(op[0] for op in self.operators)}")
+        if self.simulation_box:
+            self._log(f"  Simulation Box: {self.simulation_box}")
+        if self.worker_log_file:
+            self._log(f"  Worker log: {self.worker_log_file}")
+        
         config_dict = {
             'method': self.config.method,
             'basis': self.config.basis,
             'temperature': self.config.temperature,
             'verbose': self.config.verbose,
-            'adaptive_operators': self.config.adaptive_operators  # Add this line
+            'adaptive_operators': self.config.adaptive_operators,
         }
         
-        # Serialize simulation box if present
         sim_box_dict = self.simulation_box.to_dict() if self.simulation_box else None
         
-        # Prepare arguments for each worker
+        # Workers get the WORKER log file, not the main summary log
         args_list = [
             (
                 initial_molecule,
@@ -298,50 +303,50 @@ class MultiPhaseBHMC:
                 self.operators,
                 config_dict,
                 worker_id,
-                sim_box_dict
+                sim_box_dict,
+                self.worker_log_file,  # separate file for worker detail
             )
             for worker_id in range(n_processes)
         ]
         
-        # Run parallel workers
-        print("Starting parallel BHMC chains...\n")
+        self._log("Starting parallel BHMC chains...")
         
         with Pool(processes=n_processes) as pool:
             results = pool.map(_phase_a_worker, args_list)
         
-        # Collect results
+        # Collect results — summary goes to main log
         all_accepted_structures = []
         for worker_id, worker_results in enumerate(results):
             n_accepted = len(worker_results)
             all_accepted_structures.extend(worker_results)
-            print(f"Worker {worker_id}: Collected {n_accepted} structures")
+            self._log(f"  Worker {worker_id}: {n_accepted} structures accepted")
         
         self.phase_a_structures = all_accepted_structures
         
-        # Print statistics
+        # Summary statistics — main log only
         total_generated = n_processes * n_structures_per_worker
         total_accepted = len(all_accepted_structures)
         
-        print(f"\n{'='*70}")
-        print(f"Phase A Complete")
-        print(f"{'='*70}")
-        print(f"Total structures generated: {total_generated}")
-        print(f"Total structures accepted: {total_accepted}")
-        print(f"Overall acceptance rate: {total_accepted/total_generated*100:.2f}%")
+        if self.logger:
+            self.logger.section("Phase A Results")
+        
+        self._log(f"Total steps: {total_generated}")
+        self._log(f"Total accepted: {total_accepted}")
+        if total_generated > 0:
+            self._log(f"Overall acceptance rate: {total_accepted/total_generated*100:.2f}%")
         
         if all_accepted_structures:
             energies = [e for _, e in all_accepted_structures]
-            print(f"\nEnergy Statistics (Hartree):")
-            print(f"  Range: [{min(energies):.6f}, {max(energies):.6f}]")
-            print(f"  Mean: {np.mean(energies):.6f}")
-            print(f"  Std: {np.std(energies):.6f}")
-        
-        print(f"{'='*70}\n")
+            self._log(f"Energy Statistics (Hartree):")
+            self._log(f"  Min:  {min(energies):.6f}")
+            self._log(f"  Max:  {max(energies):.6f}")
+            self._log(f"  Mean: {np.mean(energies):.6f}")
+            self._log(f"  Std:  {np.std(energies):.6f}")
         
         return self.phase_a_structures
     
-    @staticmethod
     def analyse_phase_a_results(
+            self,
             phase_a_structures: List[Tuple[Molecule, float]], 
             submolecule_indices: Optional[List[List[int]]] = None,
             n_clusters: int = 10,
@@ -349,57 +354,51 @@ class MultiPhaseBHMC:
             ) -> List[Molecule]:
         """Analyze Phase A results and extract representative structures.
         
-        Performs RMSD filtering, clustering, and various analyses on the
-        Phase A structures to identify unique cluster representatives.
-        
         Args:
             phase_a_structures: List of (Molecule, energy) tuples from Phase A
             submolecule_indices: Optional submolecule indices for clustering
             n_clusters: Number of clusters to identify
+            simulation_box: Optional simulation box for trajectory plots
         
         Returns:
             List of representative Molecule structures from each cluster
         """
-        print(f"\n{'='*70}")
-        print(f"Analyzing Phase A Results")
-        print(f"{'='*70}")
-        print(f"Total structures: {len(phase_a_structures)}")
-        print(f"Target clusters: {n_clusters}")
-        print(f"{'='*70}\n")
+        if self.logger:
+            self.logger.header("Phase A Analysis")
+        
+        self._log(f"Total structures: {len(phase_a_structures)}")
+        self._log(f"Target clusters: {n_clusters}")
         
         analyzer = BHMCAnalyzer(submolecule_indices=submolecule_indices)
         analyzer.add_structures_batch(phase_a_structures)
         
-        # Plot com Trajectories
+        self._log("Generating COM trajectory plot...")
         analyzer.plot_com_trajectory_2d_projection(
             simulation_box=simulation_box,
             save_path="figures/phase_a_com_trajectory.png",
             separate_submolecules=True
         )
 
-
-        # Filter duplicates
+        self._log("Running RMSD filtering...")
         analyzer.rmsd_filtering()
 
-
-        # Generate analysis plots
+        self._log("Generating analysis plots...")
         analyzer.plot_energy_distribution()
         analyzer.plot_energy_vs_rmsd()
         analyzer.plot_rg_vs_energy()
         analyzer.plot_int_d_vs_e()
         analyzer.plot_pca_agglomerative(n_clusters=n_clusters)
         
-        # Perform clustering and extract representatives
-        analyzer.AgglomerativeClustering(n_clusters=n_clusters)
+        self._log("Performing agglomerative clustering...")
+        analyzer.agglomerative_clustering(n_clusters=n_clusters)
         representatives = analyzer.get_cluster_representatives()
         
-        print(f"\nExtracted {len(representatives)} cluster representatives\n")
+        self._log(f"Extracted {len(representatives)} cluster representatives")
         
         return representatives
 
 
-# =================================== Benchmarking and Analysis =========================================
-
+# =================================== Benchmarking =========================================
 
 def benchmark_temperature_acceptance(
     initial_molecule: Molecule,
@@ -412,31 +411,37 @@ def benchmark_temperature_acceptance(
     n_trials: int = 5,
     operators: Optional[List[Tuple[str, float]]] = None,
     save_plot: bool = True,
-    plot_filename: str = "acceptance_vs_temperature.png"
+    plot_filename: str = "acceptance_vs_temperature.png",
+    logger: Optional[Logger] = None,
+    verbose: bool = True
 ) -> Dict[float, Dict[str, float]]:
     """Benchmark acceptance rates across different temperatures.
-    
-    Runs short BHMC chains at various temperatures to determine optimal
-    temperature for exploration.
     
     Args:
         initial_molecule: Starting molecular structure
         submolecule_indices: List of submolecule atom indices
         simulation_box: Optional simulation box
-        temperatures: List of temperatures to test (K). Default: [50, 100, 200, 300, 400, 500, 750, 1000]
+        temperatures: List of temperatures to test (K).
         method: QM method for energy evaluation
         basis: Basis set
         n_steps: Number of BHMC steps per trial
         n_trials: Number of independent trials per temperature
-        operators: Optional operator list. Uses DEFAULT_OPERATORS if None
+        operators: Optional operator list.
         save_plot: Whether to save the plot
         plot_filename: Output filename for plot
+        logger: Optional Logger for summary output.
+        verbose: Whether to print to stdout.
         
     Returns:
-        Dictionary mapping temperature to {'mean_acceptance': float, 'std_acceptance': float,
-                                           'mean_energy_change': float, 'std_energy_change': float}
+        Dictionary mapping temperature to acceptance/energy statistics.
     """
     import matplotlib.pyplot as plt
+    
+    def _log(msg: str, level: str = "info") -> None:
+        if verbose:
+            print(msg)
+        if logger:
+            getattr(logger, level)(msg)
     
     if temperatures is None:
         temperatures = [50, 100, 200, 300, 400, 500, 750, 1000, 1500]
@@ -444,19 +449,16 @@ def benchmark_temperature_acceptance(
     if operators is None:
         operators = MultiPhaseBHMC.DEFAULT_OPERATORS
     
-    print(f"\n{'='*70}")
-    print(f"Temperature Benchmark")
-    print(f"{'='*70}")
-    print(f"Testing {len(temperatures)} temperatures with {n_trials} trials each")
-    print(f"Steps per trial: {n_steps}")
-    print(f"Method/Basis: {method}/{basis}")
-    print(f"{'='*70}\n")
+    if logger:
+        logger.header("Temperature Benchmark")
     
-    # Constants
-    k_B = 8.617333262145e-5  # Boltzmann constant in eV/K
+    _log(f"Testing {len(temperatures)} temperatures with {n_trials} trials each")
+    _log(f"Steps per trial: {n_steps}")
+    _log(f"Method/Basis: {method}/{basis}")
+    
+    k_B = 8.617333262145e-5
     HARTREE_TO_EV = 27.2114
     
-    # Setup operators
     sim_box = simulation_box
     nonlocal_ops = NonLocalOperators(simulation_box=sim_box)
     
@@ -479,15 +481,11 @@ def benchmark_temperature_acceptance(
     weights = np.array(weights)
     weights /= weights.sum()
     
-    # Energy evaluator
     evaluator = EnergyEvaluator(method=method, basis=basis)
-    
-    # Results storage
     results = {}
     
-    # Test each temperature
     for temp in temperatures:
-        print(f"\nTesting T = {temp} K:")
+        _log(f"\nT = {temp} K:")
         beta = 1.0 / (k_B * temp)
         
         trial_acceptance_rates = []
@@ -498,14 +496,13 @@ def benchmark_temperature_acceptance(
             current_energy = evaluator.evaluate(current_structure)
             
             if current_energy is None:
-                print(f"  Trial {trial+1}: Failed to evaluate initial energy")
+                _log(f"  Trial {trial+1}: Initial energy failed", level="warning")
                 continue
             
             n_accepted = 0
             energy_changes = []
             
             for step in range(n_steps):
-                # Select and apply operator
                 op_idx = np.random.choice(len(operator_funcs), p=weights)
                 operator = operator_funcs[op_idx]
                 
@@ -516,7 +513,6 @@ def benchmark_temperature_acceptance(
                     if new_energy is None:
                         continue
                     
-                    # Metropolis criterion
                     delta_e = new_energy - current_energy
                     delta_e_ev = delta_e * HARTREE_TO_EV
                     
@@ -541,7 +537,7 @@ def benchmark_temperature_acceptance(
             trial_acceptance_rates.append(acceptance_rate)
             trial_energy_changes.append(avg_energy_change)
             
-            print(f"  Trial {trial+1}/{n_trials}: Acceptance = {acceptance_rate*100:.1f}%")
+            _log(f"  Trial {trial+1}/{n_trials}: {acceptance_rate*100:.1f}%")
         
         if trial_acceptance_rates:
             results[temp] = {
@@ -550,23 +546,21 @@ def benchmark_temperature_acceptance(
                 'mean_energy_change': np.mean(trial_energy_changes),
                 'std_energy_change': np.std(trial_energy_changes)
             }
-            
-            print(f"  Average acceptance: {results[temp]['mean_acceptance']*100:.1f}% "
-                  f"± {results[temp]['std_acceptance']*100:.1f}%")
+            _log(f"  Average: {results[temp]['mean_acceptance']*100:.1f}% "
+                 f"± {results[temp]['std_acceptance']*100:.1f}%")
         else:
-            print(f"  All trials failed for T = {temp} K")
+            _log(f"  All trials failed for T = {temp} K", level="warning")
     
-    # Create plot
+    # Plot
     if save_plot and results:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
         
         temps = sorted(results.keys())
         mean_acc = [results[t]['mean_acceptance'] * 100 for t in temps]
         std_acc = [results[t]['std_acceptance'] * 100 for t in temps]
-        mean_energy = [results[t]['mean_energy_change'] * HARTREE_TO_EV * 1000 for t in temps]  # meV
+        mean_energy = [results[t]['mean_energy_change'] * HARTREE_TO_EV * 1000 for t in temps]
         std_energy = [results[t]['std_energy_change'] * HARTREE_TO_EV * 1000 for t in temps]
         
-        # Acceptance rate plot
         ax1.errorbar(temps, mean_acc, yerr=std_acc, marker='o', capsize=5, 
                     linewidth=2, markersize=8, color='steelblue')
         ax1.axhline(y=50, color='red', linestyle='--', alpha=0.5, label='50% target')
@@ -578,7 +572,6 @@ def benchmark_temperature_acceptance(
         ax1.legend()
         ax1.set_ylim(0, 100)
         
-        # Energy change plot
         ax2.errorbar(temps, mean_energy, yerr=std_energy, marker='s', capsize=5,
                     linewidth=2, markersize=8, color='darkorange')
         ax2.set_xlabel('Temperature (K)', fontsize=12)
@@ -588,34 +581,28 @@ def benchmark_temperature_acceptance(
         
         plt.tight_layout()
         plt.savefig(plot_filename, dpi=300, bbox_inches='tight')
-        print(f"\n✓ Plot saved to {plot_filename}")
+        _log(f"Plot saved to {plot_filename}")
         plt.close()
     
-    # Print summary
-    print(f"\n{'='*70}")
-    print(f"Benchmark Summary")
-    print(f"{'='*70}")
-    print(f"{'Temperature (K)':<15} {'Acceptance Rate (%)':<25} {'Avg ΔE (meV)':<20}")
-    print(f"{'-'*70}")
-    for temp in sorted(results.keys()):
-        mean_acc = results[temp]['mean_acceptance'] * 100
-        std_acc = results[temp]['std_acceptance'] * 100
-        mean_e = results[temp]['mean_energy_change'] * HARTREE_TO_EV * 1000
-        std_e = results[temp]['std_energy_change'] * HARTREE_TO_EV * 1000
-        print(f"{temp:<15.0f} {mean_acc:>6.1f} ± {std_acc:<5.1f} {'':<10} {mean_e:>6.2f} ± {std_e:<6.2f}")
-    print(f"{'='*70}\n")
+    # Summary
+    if logger:
+        logger.section("Benchmark Summary")
     
-    # Suggest optimal temperature
+    _log(f"{'Temp (K)':<12} {'Acceptance (%)':<22} {'Avg ΔE (meV)':<20}")
+    _log(f"{'-'*54}")
+    for temp in sorted(results.keys()):
+        ma = results[temp]['mean_acceptance'] * 100
+        sa = results[temp]['std_acceptance'] * 100
+        me = results[temp]['mean_energy_change'] * HARTREE_TO_EV * 1000
+        se = results[temp]['std_energy_change'] * HARTREE_TO_EV * 1000
+        _log(f"{temp:<12.0f} {ma:>6.1f} ± {sa:<5.1f}        {me:>6.2f} ± {se:<6.2f}")
+    
     if results:
-        # Find temperature closest to 40-50% acceptance
-        temps_sorted = sorted(results.keys())
         target = 0.45
-        best_temp = min(temps_sorted, 
+        best_temp = min(sorted(results.keys()), 
                        key=lambda t: abs(results[t]['mean_acceptance'] - target))
         best_acc = results[best_temp]['mean_acceptance'] * 100
-        
-        print(f"Recommended temperature: {best_temp} K (acceptance: {best_acc:.1f}%)")
-        print(f"{'='*70}\n")
+        _log(f"Recommended temperature: {best_temp} K (acceptance: {best_acc:.1f}%)")
     
     return results
 

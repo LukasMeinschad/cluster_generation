@@ -350,7 +350,8 @@ class MultiPhaseBHMC:
             phase_a_structures: List[Tuple[Molecule, float]], 
             submolecule_indices: Optional[List[List[int]]] = None,
             n_clusters: int = 10,
-            simulation_box: Optional[SimulationBox] = None
+            simulation_box: Optional[SimulationBox] = None,
+            logger: Optional[Logger] = None
             ) -> List[Molecule]:
         """Analyze Phase A results and extract representative structures.
         
@@ -369,31 +370,35 @@ class MultiPhaseBHMC:
         self._log(f"Total structures: {len(phase_a_structures)}")
         self._log(f"Target clusters: {n_clusters}")
         
-        analyzer = BHMCAnalyzer(submolecule_indices=submolecule_indices)
+        analyzer = BHMCAnalyzer(submolecule_indices=submolecule_indices, logger=logger)
         analyzer.add_structures_batch(phase_a_structures)
         
-        self._log("Generating COM trajectory plot...")
+        # Get energy statistics for analysis log
+        energy_stats = analyzer.get_energy_statistics()
+        
+
+        
         analyzer.plot_com_trajectory_2d_projection(
             simulation_box=simulation_box,
             save_path="figures/phase_a_com_trajectory.png",
             separate_submolecules=True
         )
 
-        self._log("Running RMSD filtering...")
         analyzer.rmsd_filtering()
-
-        self._log("Generating analysis plots...")
+        analyzer.plot_rmsd_heatmap()
         analyzer.plot_energy_distribution()
         analyzer.plot_energy_vs_rmsd()
         analyzer.plot_rg_vs_energy()
         analyzer.plot_int_d_vs_e()
+        analyzer.plot_pca_explained_variance()
         analyzer.plot_pca_agglomerative(n_clusters=n_clusters)
-        
-        self._log("Performing agglomerative clustering...")
+        analyzer.plot_tsne_agglomerative(n_clusters=n_clusters)
+
+
         analyzer.agglomerative_clustering(n_clusters=n_clusters)
         representatives = analyzer.get_cluster_representatives()
         
-        self._log(f"Extracted {len(representatives)} cluster representatives")
+
         
         return representatives
 

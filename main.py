@@ -82,7 +82,7 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecule=initial_molecule,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=1000,
+        n_structures_per_worker=500,
         n_processes=28
     )
 
@@ -90,11 +90,13 @@ if __name__ == "__main__":
     phase_a_structures = [structure for structure, energy in phase_a_candidates]
 
     # ── Analysis ────────────────────────────────────────────────
+    logger_analysis = Logger(name="analysis", log_file="cluster_gen.out", file_mode="a")
     representatives = bhmc_sampler.analyse_phase_a_results(
         phase_a_candidates,
         submolecule_indices=submol_indices,
         n_clusters=10,
-        simulation_box=simulation_box
+        simulation_box=simulation_box, 
+        logger = logger_analysis
     )
 
     # ── Local Optimization ──────────────────────────────────────
@@ -105,8 +107,28 @@ if __name__ == "__main__":
     calc = Psi4Calculator(config=config, verbose=False)
     optimization_results = calc.batch_optimize_parallel_unordered(representatives, n_processes=20)
     optimized_mols = [result.molecule for result in optimization_results if result.success]
+    optimized_energies = [result.energy for result in optimization_results if result.success]
 
     logger_opt.info(f"Optimized {len(optimized_mols)}/{len(representatives)} structures successfully")
+
+    # --- Write Trajectories
+    # Phase A candidates
+    phase_a_energies = [energy for structure, energy in phase_a_candidates]
+    logger_opt.write_xyz_trajectory(
+        molecules=phase_a_structures,
+        filepath="trajectories/phase_a_candidates.xyz",
+        energies=phase_a_energies,
+    )
+
+    # Write optimizes representatives
+    logger_opt.write_xyz_trajectory(
+        molecules=optimized_mols,
+        filepath="trajectories/optimized_representatives.xyz",
+        energies=optimized_energies
+    )
+
+    
+
 
     # ── Timing ──────────────────────────────────────────────────
     elapsed = time.time() - time_start

@@ -1,15 +1,15 @@
-[2026-02-27 11:38:02] [INFO    ] ================================================================================
-[2026-02-27 11:38:02] [INFO    ]                                   CLUSTER GEN                                   
-[2026-02-27 11:38:02] [INFO    ] ================================================================================
-[2026-02-27 11:38:02] [INFO    ] Start Time: 2026-02-27 11:38:02
-[2026-02-27 11:38:02] [INFO    ] Python Version: 3.9.23
-[2026-02-27 11:38:02] [INFO    ] Working Directory: /media/storage_6/lme/master_thesis/cluster_generation
-[2026-02-27 11:38:02] [INFO    ] Log File: /media/storage_6/lme/master_thesis/cluster_generation/cluster_gen.out
-[2026-02-27 11:38:02] [INFO    ] Made by: Lukas Meinschad
-[2026-02-27 11:38:02] [INFO    ] ========================================================================
-[2026-02-27 11:38:02] [INFO    ]                          Cluster Initialization                         
-[2026-02-27 11:38:02] [INFO    ] ========================================================================
-[2026-02-27 11:38:02] [INFO    ] Configuration:
+[2026-03-01 18:52:43] [INFO    ] ================================================================================
+[2026-03-01 18:52:43] [INFO    ]                                   CLUSTER GEN                                   
+[2026-03-01 18:52:43] [INFO    ] ================================================================================
+[2026-03-01 18:52:43] [INFO    ] Start Time: 2026-03-01 18:52:43
+[2026-03-01 18:52:43] [INFO    ] Python Version: 3.9.23
+[2026-03-01 18:52:43] [INFO    ] Working Directory: /media/storage_6/lme/master_thesis/cluster_generation
+[2026-03-01 18:52:43] [INFO    ] Log File: /media/storage_6/lme/master_thesis/cluster_generation/cluster_gen.out
+[2026-03-01 18:52:43] [INFO    ] Made by: Lukas Meinschad
+[2026-03-01 18:52:43] [INFO    ] ========================================================================
+[2026-03-01 18:52:43] [INFO    ]                          Cluster Initialization                         
+[2026-03-01 18:52:43] [INFO    ] ========================================================================
+[2026-03-01 18:52:43] [INFO    ] Configuration:
   Method: mp2
   Basis set: cc-pvdz
   Box type: sphere
@@ -17,102 +17,303 @@
   Minimum distance: 1.8 Angstrom
   Optimize submolecules: True
 
-[2026-02-27 11:38:02] [INFO    ] 
+[2026-03-01 18:52:43] [INFO    ] 
 [1/5] Loading molecule from test_molecules/h2o_2.xyz
-[2026-02-27 11:38:02] [INFO    ]  Loaded: 6 atoms
-[2026-02-27 11:38:02] [INFO    ] 
+[2026-03-01 18:52:43] [INFO    ]  Loaded: 6 atoms
+[2026-03-01 18:52:43] [INFO    ] 
 [2/5] Fragmenting molecule into submolecules
-[2026-02-27 11:38:02] [INFO    ]  Found 2 submolecules:
-[2026-02-27 11:38:02] [INFO    ]   Submolecule 1: 3 atoms
-[2026-02-27 11:38:02] [INFO    ]   Submolecule 2: 3 atoms
-[2026-02-27 11:38:02] [INFO    ] 
+[2026-03-01 18:52:43] [INFO    ]  Found 2 submolecules:
+[2026-03-01 18:52:43] [INFO    ]   Submolecule 1: 3 atoms
+[2026-03-01 18:52:43] [INFO    ]   Submolecule 2: 3 atoms
+[2026-03-01 18:52:43] [INFO    ] 
 [3/5] Optimizing Submolecules (parallelized)
-[2026-02-27 11:38:02] [INFO    ] Workers: 2
-[2026-02-27 11:38:10] [INFO    ]   Submolecule 2 optimized successfully
-[2026-02-27 11:38:11] [INFO    ]   Submolecule 1 optimized successfully
-[2026-02-27 11:38:11] [INFO    ] 
+[2026-03-01 18:52:43] [INFO    ] Workers: 2
+[2026-03-01 18:52:51] [INFO    ]   Submolecule 2 optimized successfully
+[2026-03-01 18:52:52] [INFO    ]   Submolecule 1 optimized successfully
+[2026-03-01 18:52:52] [INFO    ] 
 [4/5] Creating simulation box
-[2026-02-27 11:38:11] [INFO    ]  Box type:  sphere
-[2026-02-27 11:38:11] [INFO    ]  Radius: 3.39 Angstrom
-[2026-02-27 11:38:11] [INFO    ]  Volume: 163.69 Angstrom^3
-[2026-02-27 11:38:11] [INFO    ] 
+[2026-03-01 18:52:52] [INFO    ]  Box type:  sphere
+[2026-03-01 18:52:52] [INFO    ]  Radius: 3.39 Angstrom
+[2026-03-01 18:52:52] [INFO    ]  Volume: 163.69 Angstrom^3
+[2026-03-01 18:52:52] [INFO    ] 
 [5/5] Generating random initial configuration
-[2026-02-27 11:38:11] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
-[2026-02-27 11:38:11] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
-[2026-02-27 11:38:11] [INFO    ] ============================================================
+[2026-03-01 18:52:52] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-01 18:52:52] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-01 18:52:52] [INFO    ] ============================================================
 Initialization Complete!
 Total atoms: 6
 Submolecules: 2
 Simulation box type: sphere
 Box radius: 3.39 Angstrom
 Box volume: 163.69 Angstrom^3
-[2026-02-27 11:38:11] [INFO    ] ========================================================================
-[2026-02-27 11:38:11] [INFO    ]                     Phase A: Global PES Exploration                     
-[2026-02-27 11:38:11] [INFO    ] ========================================================================
-[2026-02-27 11:38:11] [INFO    ] Configuration:
-[2026-02-27 11:38:11] [INFO    ]   Workers: 28
-[2026-02-27 11:38:11] [INFO    ]   Steps per worker: 1000
-[2026-02-27 11:38:11] [INFO    ]   Total steps: 28000
-[2026-02-27 11:38:11] [INFO    ]   Method/Basis: mp2/cc-pvdz
-[2026-02-27 11:38:11] [INFO    ]   Temperature: 800 K
-[2026-02-27 11:38:11] [INFO    ]   Adaptive operators: True
-[2026-02-27 11:38:11] [INFO    ]   Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3
-[2026-02-27 11:38:11] [INFO    ]   Simulation Box: <box.SimulationBox object at 0x7f9fe5faadc0>
-[2026-02-27 11:38:11] [INFO    ]   Worker log: bhmc_workers.log
-[2026-02-27 11:38:11] [INFO    ] Starting parallel BHMC chains...
-[2026-02-27 11:45:34] [INFO    ]   Worker 0: 264 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 1: 254 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 2: 268 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 3: 292 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 4: 307 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 5: 256 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 6: 236 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 7: 248 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 8: 325 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 9: 243 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 10: 262 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 11: 273 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 12: 266 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 13: 252 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 14: 311 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 15: 290 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 16: 277 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 17: 302 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 18: 260 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 19: 265 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 20: 282 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 21: 220 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 22: 278 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 23: 258 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 24: 249 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 25: 291 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 26: 289 structures accepted
-[2026-02-27 11:45:34] [INFO    ]   Worker 27: 256 structures accepted
-[2026-02-27 11:45:34] [INFO    ] ------------------------------------------------------------------------
-[2026-02-27 11:45:34] [INFO    ] Phase A Results
-[2026-02-27 11:45:34] [INFO    ] ------------------------------------------------------------------------
-[2026-02-27 11:45:34] [INFO    ] Total steps: 28000
-[2026-02-27 11:45:34] [INFO    ] Total accepted: 7574
-[2026-02-27 11:45:34] [INFO    ] Overall acceptance rate: 27.05%
-[2026-02-27 11:45:34] [INFO    ] Energy Statistics (Hartree):
-[2026-02-27 11:45:34] [INFO    ]   Min:  -152.473361
-[2026-02-27 11:45:34] [INFO    ]   Max:  -152.454676
-[2026-02-27 11:45:34] [INFO    ]   Mean: -152.466864
-[2026-02-27 11:45:34] [INFO    ]   Std:  0.003105
-[2026-02-27 11:45:34] [INFO    ] ========================================================================
-[2026-02-27 11:45:34] [INFO    ]                             Phase A Analysis                            
-[2026-02-27 11:45:34] [INFO    ] ========================================================================
-[2026-02-27 11:45:34] [INFO    ] Total structures: 7574
-[2026-02-27 11:45:34] [INFO    ] Target clusters: 10
-[2026-02-27 11:45:34] [INFO    ] Generating COM trajectory plot...
-[2026-02-27 11:45:36] [INFO    ] Running RMSD filtering...
-[2026-02-27 11:45:38] [INFO    ] Generating analysis plots...
-[2026-02-27 11:45:46] [INFO    ] Performing agglomerative clustering...
-[2026-02-27 11:45:50] [INFO    ] Extracted 10 cluster representatives
-[2026-02-27 11:45:50] [INFO    ] ========================================================================
-[2026-02-27 11:45:50] [INFO    ]                            Local Optimization                           
-[2026-02-27 11:45:50] [INFO    ] ========================================================================
-[2026-02-27 11:46:38] [INFO    ] Optimized 7/10 structures successfully
-[2026-02-27 11:46:38] [INFO    ] ========================================================================
-[2026-02-27 11:46:38] [INFO    ] Total runtime: 515.7s (8.6 min)
-[2026-02-27 11:46:38] [INFO    ] ========================================================================
+[2026-03-01 18:52:52] [INFO    ] ========================================================================
+[2026-03-01 18:52:52] [INFO    ]                     Phase A: Global PES Exploration                     
+[2026-03-01 18:52:52] [INFO    ] ========================================================================
+[2026-03-01 18:52:52] [INFO    ] Configuration:
+[2026-03-01 18:52:52] [INFO    ]   Workers: 28
+[2026-03-01 18:52:52] [INFO    ]   Steps per worker: 500
+[2026-03-01 18:52:52] [INFO    ]   Total steps: 14000
+[2026-03-01 18:52:52] [INFO    ]   Method/Basis: mp2/cc-pvdz
+[2026-03-01 18:52:52] [INFO    ]   Temperature: 800 K
+[2026-03-01 18:52:52] [INFO    ]   Adaptive operators: True
+[2026-03-01 18:52:52] [INFO    ]   Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3
+[2026-03-01 18:52:52] [INFO    ]   Simulation Box: <box.SimulationBox object at 0x1490b7f4eb20>
+[2026-03-01 18:52:52] [INFO    ]   Worker log: bhmc_workers.log
+[2026-03-01 18:52:52] [INFO    ] Starting parallel BHMC chains...
+[2026-03-01 18:56:35] [INFO    ]   Worker 0: 133 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 1: 137 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 2: 139 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 3: 137 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 4: 116 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 5: 166 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 6: 143 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 7: 133 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 8: 143 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 9: 92 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 10: 159 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 11: 130 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 12: 137 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 13: 127 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 14: 109 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 15: 157 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 16: 140 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 17: 130 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 18: 115 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 19: 117 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 20: 114 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 21: 131 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 22: 146 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 23: 154 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 24: 135 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 25: 129 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 26: 133 structures accepted
+[2026-03-01 18:56:35] [INFO    ]   Worker 27: 139 structures accepted
+[2026-03-01 18:56:35] [INFO    ] ------------------------------------------------------------------------
+[2026-03-01 18:56:35] [INFO    ] Phase A Results
+[2026-03-01 18:56:35] [INFO    ] ------------------------------------------------------------------------
+[2026-03-01 18:56:35] [INFO    ] Total steps: 14000
+[2026-03-01 18:56:35] [INFO    ] Total accepted: 3741
+[2026-03-01 18:56:35] [INFO    ] Overall acceptance rate: 26.72%
+[2026-03-01 18:56:35] [INFO    ] Energy Statistics (Hartree):
+[2026-03-01 18:56:35] [INFO    ]   Min:  -152.473171
+[2026-03-01 18:56:35] [INFO    ]   Max:  -152.454853
+[2026-03-01 18:56:35] [INFO    ]   Mean: -152.466995
+[2026-03-01 18:56:35] [INFO    ]   Std:  0.003029
+[2026-03-01 18:56:35] [INFO    ] ========================================================================
+[2026-03-01 18:56:35] [INFO    ]                             Phase A Analysis                            
+[2026-03-01 18:56:35] [INFO    ] ========================================================================
+[2026-03-01 18:56:35] [INFO    ] Total structures: 3741
+[2026-03-01 18:56:35] [INFO    ] Target clusters: 10
+[2026-03-01 18:56:35] [INFO    ] Added 3741 structures to BHMCAnalyzer (phase: unknown). Total structures: 3741
+[2026-03-01 18:56:35] [INFO    ] Energy Statistics (phase: all):
+[2026-03-01 18:56:35] [INFO    ]   N Structures: 3741
+[2026-03-01 18:56:35] [INFO    ]   Min: -152.473171
+[2026-03-01 18:56:35] [INFO    ]   Max: -152.454853
+[2026-03-01 18:56:35] [INFO    ]   Mean: -152.466995
+[2026-03-01 18:56:35] [INFO    ]   Median: -152.467301
+[2026-03-01 18:56:35] [INFO    ]   Std: 0.003029
+[2026-03-01 18:56:35] [INFO    ]   Q25: -152.469350
+[2026-03-01 18:56:35] [INFO    ]   Q75: -152.464765
+[2026-03-01 18:56:35] [INFO    ]   IQR: 0.004584
+[2026-03-01 18:56:37] [INFO    ] RMSD filtering (threshold=0.500 Å) - Phase: all - Starting with 3741 structures
+[2026-03-01 18:56:37] [INFO    ] RMSD filtering completed - Phase: all - 1818 structures remaining (removed 1923)
+[2026-03-01 18:56:37] [INFO    ] Computing 1818x1818 RMSD matrix for phase: all
+[2026-03-01 19:00:02] [INFO    ] RMSD matrix computed: Range: [0.0000, 1.8891 ]
+[2026-03-01 19:00:07] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:08] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:08] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:08] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:08] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:08] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:08] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:08] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:08] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:08] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:09] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:09] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:09] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:09] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:09] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:09] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:09] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:09] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:09] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:10] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:10] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:10] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:10] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:10] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:10] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:10] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:10] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:10] [INFO    ] Performing Agglomerative Clustering (n_clusters=10, linkage='ward') for phase: all - n_structures: 1818
+[2026-03-01 19:00:10] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:11] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:11] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:11] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:11] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:11] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:11] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:11] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:11] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:11] [INFO    ] Cluster distribution:
+[2026-03-01 19:00:11] [INFO    ]  Cluster 0: 194 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:11] [INFO    ]  Cluster 1: 226 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:11] [INFO    ]  Cluster 2: 120 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:11] [INFO    ]  Cluster 3: 233 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:11] [INFO    ]  Cluster 4: 206 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:11] [INFO    ]  Cluster 5: 163 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:11] [INFO    ]  Cluster 6: 54 structures | Energy range: -152.46 to -152.46
+[2026-03-01 19:00:11] [INFO    ]  Cluster 7: 184 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:11] [INFO    ]  Cluster 8: 237 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:11] [INFO    ]  Cluster 9: 201 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:12] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:13] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:13] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:13] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:13] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:13] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:13] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:13] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:13] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:15] [INFO    ] Performing Agglomerative Clustering (n_clusters=10, linkage='ward') for phase: all - n_structures: 1818
+[2026-03-01 19:00:15] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:16] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:16] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:16] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:16] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:16] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:16] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:16] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:16] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:16] [INFO    ] Cluster distribution:
+[2026-03-01 19:00:16] [INFO    ]  Cluster 0: 194 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:16] [INFO    ]  Cluster 1: 226 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:16] [INFO    ]  Cluster 2: 120 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:16] [INFO    ]  Cluster 3: 233 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:16] [INFO    ]  Cluster 4: 206 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:16] [INFO    ]  Cluster 5: 163 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:16] [INFO    ]  Cluster 6: 54 structures | Energy range: -152.46 to -152.46
+[2026-03-01 19:00:16] [INFO    ]  Cluster 7: 184 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:16] [INFO    ]  Cluster 8: 237 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:16] [INFO    ]  Cluster 9: 201 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:16] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:17] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:17] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:17] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:17] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:17] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:17] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:17] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:17] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:20] [INFO    ] Performing Agglomerative Clustering (n_clusters=10, linkage='ward') for phase: all - n_structures: 1818
+[2026-03-01 19:00:20] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:21] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:21] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:21] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:21] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:21] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:21] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:21] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:21] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:21] [INFO    ] Cluster distribution:
+[2026-03-01 19:00:21] [INFO    ]  Cluster 0: 194 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:21] [INFO    ]  Cluster 1: 226 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:21] [INFO    ]  Cluster 2: 120 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:21] [INFO    ]  Cluster 3: 233 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:21] [INFO    ]  Cluster 4: 206 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:21] [INFO    ]  Cluster 5: 163 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:21] [INFO    ]  Cluster 6: 54 structures | Energy range: -152.46 to -152.46
+[2026-03-01 19:00:21] [INFO    ]  Cluster 7: 184 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:21] [INFO    ]  Cluster 8: 237 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:21] [INFO    ]  Cluster 9: 201 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:21] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:22] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:22] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:22] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:22] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:22] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:22] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:22] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:22] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:25] [INFO    ] Performing Agglomerative Clustering (n_clusters=10, linkage='ward') for phase: all - n_structures: 1818
+[2026-03-01 19:00:25] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:26] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:26] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:26] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:26] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:26] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:26] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:26] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:26] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:26] [INFO    ] Cluster distribution:
+[2026-03-01 19:00:26] [INFO    ]  Cluster 0: 194 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:26] [INFO    ]  Cluster 1: 226 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:26] [INFO    ]  Cluster 2: 120 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:26] [INFO    ]  Cluster 3: 233 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:26] [INFO    ]  Cluster 4: 206 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:26] [INFO    ]  Cluster 5: 163 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:26] [INFO    ]  Cluster 6: 54 structures | Energy range: -152.46 to -152.46
+[2026-03-01 19:00:26] [INFO    ]  Cluster 7: 184 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:26] [INFO    ]  Cluster 8: 237 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:26] [INFO    ]  Cluster 9: 201 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:26] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:27] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:27] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:27] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:27] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:27] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:27] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:27] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:27] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:30] [INFO    ] Performing Agglomerative Clustering (n_clusters=10, linkage='ward') for phase: all - n_structures: 1818
+[2026-03-01 19:00:30] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:31] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:31] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:31] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:31] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:31] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:31] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:31] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:31] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:31] [INFO    ] Cluster distribution:
+[2026-03-01 19:00:31] [INFO    ]  Cluster 0: 194 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:31] [INFO    ]  Cluster 1: 226 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:31] [INFO    ]  Cluster 2: 120 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:31] [INFO    ]  Cluster 3: 233 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:31] [INFO    ]  Cluster 4: 206 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:31] [INFO    ]  Cluster 5: 163 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:31] [INFO    ]  Cluster 6: 54 structures | Energy range: -152.46 to -152.46
+[2026-03-01 19:00:31] [INFO    ]  Cluster 7: 184 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:31] [INFO    ]  Cluster 8: 237 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:31] [INFO    ]  Cluster 9: 201 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:33] [INFO    ] Performing Agglomerative Clustering (n_clusters=10, linkage='ward') for phase: all - n_structures: 1818
+[2026-03-01 19:00:33] [INFO    ] Constructing feature matrix...
+[2026-03-01 19:00:34] [INFO    ] Computing H-bond features (angle_threshold=150.0°) for phase: all - n_structures: 1818
+[2026-03-01 19:00:34] [INFO    ] Structures with H-bonds: 120/1818
+[2026-03-01 19:00:34] [INFO    ] Total H-bond configs: 120
+[2026-03-01 19:00:34] [INFO    ] Avg H-bonds per struct: 1.00
+[2026-03-01 19:00:34] [INFO    ] Avg H-bond angle across all configs: 159.92°
+[2026-03-01 19:00:34] [INFO    ] Min/Max H-bond angle: 150.02° / 178.91°
+[2026-03-01 19:00:34] [INFO    ] Feature matrix shape: (1818, 23)
+[2026-03-01 19:00:34] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']
+[2026-03-01 19:00:34] [INFO    ] Cluster distribution:
+[2026-03-01 19:00:34] [INFO    ]  Cluster 0: 194 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:34] [INFO    ]  Cluster 1: 226 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:34] [INFO    ]  Cluster 2: 120 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:34] [INFO    ]  Cluster 3: 233 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:34] [INFO    ]  Cluster 4: 206 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:34] [INFO    ]  Cluster 5: 163 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:34] [INFO    ]  Cluster 6: 54 structures | Energy range: -152.46 to -152.46
+[2026-03-01 19:00:34] [INFO    ]  Cluster 7: 184 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:34] [INFO    ]  Cluster 8: 237 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:34] [INFO    ]  Cluster 9: 201 structures | Energy range: -152.47 to -152.46
+[2026-03-01 19:00:34] [INFO    ] ========================================================================
+[2026-03-01 19:00:34] [INFO    ]                            Local Optimization                           
+[2026-03-01 19:00:34] [INFO    ] ========================================================================
+[2026-03-01 19:01:19] [INFO    ] Optimized 9/10 structures successfully
+[2026-03-01 19:01:19] [INFO    ] Wrote 3741 structures to trajectories/phase_a_candidates.xyz
+[2026-03-01 19:01:19] [INFO    ] Wrote 9 structures to trajectories/optimized_representatives.xyz
+[2026-03-01 19:01:19] [INFO    ] ========================================================================
+[2026-03-01 19:01:19] [INFO    ] Total runtime: 515.9s (8.6 min)
+[2026-03-01 19:01:19] [INFO    ] ========================================================================

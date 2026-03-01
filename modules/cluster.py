@@ -11,10 +11,12 @@ from sklearn.cluster import AgglomerativeClustering as SklearnAgglomerativeClust
 from sklearn.preprocessing import StandardScaler
 from scipy.spatial.distance import cdist, pdist
 from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
 from molecule_class import Molecule
 from transformations import GeometryOps
 from box import SimulationBox
+from logger import Logger
 
 @dataclass
 class StructureData:
@@ -33,11 +35,21 @@ class BHMCAnalyzer:
     """   
     Analyzer for the Basin Hopping Monte Carlo results
     """
-    def __init__(self, name: str = "BHMC_Analysis", submolecule_indices: Optional[List[int]] = None):
+    def __init__(self, name: str = "BHMC_Analysis", submolecule_indices: Optional[List[int]] = None, logger: Optional[Logger] = None):
         self.name = name 
         self.structures: List[StructureData] = []
         self.phases: Dict[str, List[StructureData]] = defaultdict(list)
         self.submolecule_indices = submolecule_indices
+        self.logger = logger
+        self.labels = None # Cluster labels
+
+    def _log(self, msg: str, level: str = "info"):
+        """ 
+        Log a message if the logger is available
+        """
+        if self.logger:
+            getattr(self.logger, level)(msg)
+
 
 
 
@@ -76,6 +88,10 @@ class BHMCAnalyzer:
         """
         for mol, energy in structures:
             self.add_structure(mol, energy, phase=phase)
+        self._log(f"Added {len(structures)} structures to BHMCAnalyzer (phase: {phase}). Total structures: {len(self.structures)}")
+
+
+
 
     # ==================== Energy Statistics =====================
     def get_energy_statistics(self, phase: Optional[str] = None) -> Dict[str, float]:
@@ -94,21 +110,34 @@ class BHMCAnalyzer:
             energies = [s.energy for s in self.structures]
 
         if not energies:
+            self._log(f"No energy statistics!", level="warning")
             return {}
         
         energies = np.array(energies)
-        return {
-            "n_structures": len(energies),
-            "min": np.min(energies),
-            "max": np.max(energies),
-            "mean": np.mean(energies),
-            "median": np.median(energies),
-            "std": np.std(energies),
-            "q25": np.percentile(energies, 25),
-            "q75": np.percentile(energies, 75),
-            "iqr": np.percentile(energies, 75) - np.percentile(energies, 25)
+        stats = {
+                "n_structures": len(energies),
+                "min": np.min(energies),
+                "max": np.max(energies),
+                "mean": np.mean(energies),
+                "median": np.median(energies),
+                "std": np.std(energies),
+                "q25": np.percentile(energies, 25),
+                "q75": np.percentile(energies, 75),
+                "iqr": np.percentile(energies, 75) - np.percentile(energies, 25)
         }
-    
+        self._log(f"Energy Statistics (phase: {phase if phase else 'all'}):")
+        self._log(f"  N Structures: {stats['n_structures']}")
+        self._log(f"  Min: {stats['min']:.6f}")
+        self._log(f"  Max: {stats['max']:.6f}")
+        self._log(f"  Mean: {stats['mean']:.6f}")
+        self._log(f"  Median: {stats['median']:.6f}")
+        self._log(f"  Std: {stats['std']:.6f}")
+        self._log(f"  Q25: {stats['q25']:.6f}")
+        self._log(f"  Q75: {stats['q75']:.6f}")
+        self._log(f"  IQR: {stats['iqr']:.6f}")
+        return stats
+
+
     def compute_rmsd_matrix(self, phase: Optional[str] = None) -> np.ndarray:
         """   
         Compute pairwise RMSD Matrix for the structures in the specified phase
@@ -121,6 +150,7 @@ class BHMCAnalyzer:
         else:
             structures = self.structures
         n = len(structures)
+        self._log(f"Computing {n}x{n} RMSD matrix for phase: {phase if phase else 'all'}")
         coords_list = [s.molecule.coordinates for s in structures]
         rmsd_matrix = np.zeros((n, n))
         for i in range(n):
@@ -129,7 +159,23 @@ class BHMCAnalyzer:
                 rmsd = self._calculate_rmsd(ci, coords_list[j])
                 rmsd_matrix[i, j] = rmsd
                 rmsd_matrix[j, i] = rmsd
+        self._log(f"RMSD matrix computed: Range: [{rmsd_matrix[rmsd_matrix > 0].min():.4f}, {rmsd_matrix.max():.4f} ]")
         return rmsd_matrix
+
+
+    def plot_rmsd_heatmap(self, phase: Optional[str] = None):
+        """  
+        Helper function to plot the pairwise rmsd matrix as a heatmap
+        """
+        rmsd_matrix = self.compute_rmsd_matrix(phase=phase)
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(rmsd_matrix, cmap='viridis')
+        plt.title(f'RMSD Matrix Heatmap - Phase: {phase if phase else "All"}')
+        plt.xlabel('Structure Index')
+        plt.ylabel('Structure Index')
+        plt.savefig(f"figures/rmsd_heatmap_{phase if phase else 'all'}.png")
+        plt.close()
+
 
 
 
@@ -417,8 +463,11 @@ class BHMCAnalyzer:
         else:
             structures = self.structures
         if not structures:
-            print(f"No structures found for phase: {phase}")
+            self._log(f"No structures found for phase: {phase}", level="warning")
             return
+        n_before = len(structures)
+        self._log(f"RMSD filtering (threshold={threshold:.3f} Å) - Phase: {phase if phase else 'all'} - Starting with {n_before} structures")
+
         # Extract all coordinates
         all_coords = np.array([s.molecule.coordinates for s in structures]) 
         n_atoms = all_coords[0].shape[0]
@@ -445,7 +494,9 @@ class BHMCAnalyzer:
             self.phases[phase] = filtered_structures
         else:
             self.structures = filtered_structures
-    
+        n_after = len(filtered_structures)
+        self._log(f"RMSD filtering completed - Phase: {phase if phase else 'all'} - {n_after} structures remaining (removed {n_before - n_after})")  
+
 
 
 
@@ -749,7 +800,7 @@ class BHMCAnalyzer:
     # =========================== Hydrogen Bond Analysis ===========================
 
     def compute_hbond_features(self,
-                               angle_treshold: float = 150.0,
+                               angle_threshold: float = 150.0,
                                phase: Optional[str] = None) -> np.ndarray:
         """ 
         Computes hydrogen bond features for all structures
@@ -759,9 +810,51 @@ class BHMCAnalyzer:
             + Average Hydrogen bond angle (0.0 if no H-Bonds found)
 
         Args:
+            angle_treshold: Minimum angle (in degrees) for a valid hydrogen bond
+            phase: Specified phase to compute for. If None, computes for all structures.
 
+        Returns:
+            Numpy array of shape (n_structures, 2) with columns [n_hbonds, avg_angle]
         """
-        #TODO Implement this
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+
+        self._log(f"Computing H-bond features (angle_threshold={angle_threshold}°) for phase: {phase if phase else 'all'} - n_structures: {len(structures)}")
+
+        features = np.zeros((len(structures),2)) # n_hbonds, avg_angle
+        total_hbonds = 0
+        structures_with_hbonds = 0
+        for i, structure_data in enumerate(structures):
+            mol = structure_data.molecule 
+
+            # Ensure the bonds are computed
+            if not mol._bonds_computed:
+                mol.compute_bonds()
+            
+            # Get valid H-bond configurations
+            valid_configs = mol.get_valid_hbond_configurations(angle_threshold=angle_threshold)
+            n_hbonds = len(valid_configs)
+            avg_angle = np.mean([c.angle for c in valid_configs]) if valid_configs else 0.0
+            features[i, 0] = n_hbonds
+            features[i, 1] = avg_angle
+
+            total_hbonds += n_hbonds
+            if n_hbonds > 0:
+                structures_with_hbonds += 1
+        
+        self._log(f"Structures with H-bonds: {structures_with_hbonds}/{len(structures)}")
+        self._log(f"Total H-bond configs: {total_hbonds}")
+        if structures_with_hbonds > 0 :
+            self._log(f"Avg H-bonds per struct: {total_hbonds / structures_with_hbonds:.2f}")
+            hbond_angles = features[features[:,0] > 0, 1]
+            self._log(f"Avg H-bond angle across all configs: {np.mean(hbond_angles):.2f}°")
+            self._log(f"Min/Max H-bond angle: {np.min(hbond_angles):.2f}° / {np.max(hbond_angles):.2f}°")
+        
+        return features
+
+
 
     # ====================== Clustering Methods =======================
 
@@ -774,16 +867,29 @@ class BHMCAnalyzer:
         3. Radius of Gyration
         4. Rotational Constants (A,B,C)
         5. Intermolecular Distance Matrix (flattened upper triangle)
+        6. Number of valid H-bond configurations
+        7. Average H-bond angle
         """
+        self._log("Constructing feature matrix...")
         delta_e = np.array([s.energy - self.get_lowest_energy_structure().energy for s in self.structures])
         rmsd_values = np.array([self._calculate_rmsd(s.molecule.coordinates, self.get_lowest_energy_structure().molecule.coordinates) for s in self.structures])
         rg_values = np.array([self.radius_of_gyration(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
         rotational_constants = np.array([self.determine_rotational_constants(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
         intermolecular_distances = np.array(self.compute_interatomic_distance_matrix())
+        hbond_features = self.compute_hbond_features()
 
-        feature_matrix = np.hstack((delta_e.reshape(-1, 1), rmsd_values.reshape(-1, 1), rg_values.reshape(-1, 1), rotational_constants, intermolecular_distances)) 
+        feature_matrix = np.hstack((delta_e.reshape(-1, 1),
+                                    rmsd_values.reshape(-1, 1), 
+                                    rg_values.reshape(-1, 1), 
+                                    rotational_constants, 
+                                    intermolecular_distances,
+                                    hbond_features)) 
 
-        # Normalize using StandardScaler
+        self._log(f"Feature matrix shape: {feature_matrix.shape}")
+        self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']")
+
+
+        # Normalize using StandardScaler        
         scaler = StandardScaler()
         if normalize:
             feature_matrix = scaler.fit_transform(feature_matrix)
@@ -807,10 +913,21 @@ class BHMCAnalyzer:
         if not structures:
             print(f"No structures found for phase: {phase}")
             return np.array([])
+
+        self._log(f"Performing Agglomerative Clustering (n_clusters={n_clusters}, linkage='{linkage}') for phase: {phase if phase else 'all'} - n_structures: {len(structures)}")
+        
         feature_matrix = self.feature_matrix()
         clustering_model = SklearnAgglomerativeClustering(n_clusters=n_clusters, linkage=linkage)
         labels = clustering_model.fit_predict(feature_matrix)
         self.labels = labels
+
+        unique, counts = np.unique(labels, return_counts=True)
+        self._log(f"Cluster distribution:")
+        for cluster_id, count in zip(unique, counts):
+            cluster_energies = [s.energy for s,l in zip(structures, labels) if l == cluster_id]
+            self._log(f" Cluster {cluster_id}: {count} structures | Energy range: {min(cluster_energies):.2f} to {max(cluster_energies):.2f}")
+    
+
         return labels
     
     def pca(self, n_components: int = 2, phase: Optional[str] = None) -> np.ndarray:
@@ -831,8 +948,33 @@ class BHMCAnalyzer:
         feature_matrix = self.feature_matrix()
         pca_model = PCA(n_components=n_components)
         pca_result = pca_model.fit_transform(feature_matrix)
-        return pca_result
-    
+        explained_variance = pca_model.explained_variance_ratio_
+        return pca_result, explained_variance
+
+    def plot_pca_explained_variance(self, n_components: int = 20, phase: Optional[str] = None):
+        """  
+        Plots the explained variance ratio for PCA components
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        if not structures:
+            print(f"No structures found for phase: {phase}")
+            return
+        feature_matrix = self.feature_matrix()
+        pca_result, explained_variance = self.pca(n_components=n_components, phase=phase)
+        plt.figure(figsize=(10, 6))
+        plt.bar(range(1, n_components + 1), explained_variance * 100, color='skyblue')
+        plt.xlabel('Principal Component')
+        plt.ylabel('Explained Variance (%)')
+        plt.title(f'PCA Explained Variance - Phase: {phase if phase else "All"}')
+        plt.xticks(range(1, n_components + 1))
+        plt.grid(True, alpha=0.3)
+        plt.savefig(f"figures/pca_explained_variance_{phase if phase else 'all'}.png")
+        plt.close()
+
+
     def plot_pca_agglomerative(self, n_clusters: int = 5, phase: Optional[str] = None, linkage: str = "ward"):
         """   
         Plots the PCA projection of the structures colored by Agglomerative Clustering labels
@@ -842,15 +984,15 @@ class BHMCAnalyzer:
             phase: Specified phase to analyze. If None, analyzes all structures.
             linkage: Linkage criterion for agglomerative clustering ("ward", "complete", "average", "single")
         """
-        pca_result = self.pca(phase=phase)
+        pca_result, explained_variance = self.pca(phase=phase)
         labels = self.agglomerative_clustering(n_clusters=n_clusters, phase=phase, linkage=linkage)
         plt.figure(figsize=(10, 6))
-        sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=labels, palette='Set2', alpha=0.7)
+        scatter = plt.scatter(pca_result[:, 0], pca_result[:, 1], c=labels, cmap='tab10', alpha=0.7)
+        plt.xlabel(f'PC1 ({explained_variance[0]*100:.1f}%)')
+        plt.ylabel(f'PC2 ({explained_variance[1]*100:.1f}%)')
         plt.title(f'PCA Projection with Agglomerative Clustering - Phase: {phase if phase else "All"}')
-        plt.xlabel('Principal Component 1')
-        plt.ylabel('Principal Component 2')
-        plt.legend(title='Cluster')
-        plt.grid(True)
+        plt.colorbar(scatter, label='Cluster Label')
+        plt.grid(True, alpha=0.3)
         plt.savefig(f"figures/pca_agglomerative_{phase if phase else 'all'}.png")
         plt.close()
 
@@ -867,7 +1009,7 @@ class BHMCAnalyzer:
         else:
             structures = self.structures
         if not structures:
-            print(f"No structures found for phase: {phase}")
+            self._log(f"No structures found for phase: {phase}", level="warning")
             return {}
         if self.labels is None:
             print("Clustering has not been performed yet. Please run Clustering method first.")
@@ -883,6 +1025,76 @@ class BHMCAnalyzer:
         cluster_representatives_mol = [rep.molecule for rep in cluster_representatives.values()]
         return cluster_representatives_mol
 
+    def tsne(self, n_components: int = 2, perplexity: float = 30.0, n_iter: int = 1000, random_state: int = 42, phase: Optional[str] = None) -> np.ndarray:
+        """   
+        Performs t-SNE dimensionality reduction on the feature matrix
+
+        t-SNE (t-distributed Stochastic Neighbor Embedding) is a non-linear dimensionality reduction technique for visualization of high-dimenional data
+
+        Args:
+            n_components: Number of dimensions to reduce to (typically 2 or 3 for visualization)
+            perplexity: Perplexity parameter for t-SNE (related to number of nearest neighbors)
+            n_iter: Number of iterations for optimization
+            random_state: Random seed for reproducibility
+            phase: Specified phase to analyze. If None, analyzes all structures.
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        if not structures:
+            return np.array([])
+        feature_mat = self.feature_matrix()
+
+        # Adjust perplexity < n_samples
+        n_samples = feature_mat.shape[0]
+        effective_perplexity = min(perplexity, max(5.0, n_samples - 1))
+        if effective_perplexity != perplexity:
+            perplexity = effective_perplexity
+        tsne_model = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter, random_state=random_state)
+        tsne_result = tsne_model.fit_transform(feature_mat)
+        return tsne_result
+
+    def plot_tsne_agglomerative(self,
+                                n_clusters: int = 5,
+                                phase: Optional[str] = None,
+                                linkage: str = "ward",
+                                n_iter: int = 1000,
+                                random_state: int = 42,
+                                colored_by: str = "cluster") -> None:
+        """
+        Plots the t-SNE projection of the structures colored by Agglomerative Clustering labels
+
+        This makes 4x4 subplots with perplexities [20, 40, 60, 80]
+        Args:
+            n_clusters: Number of clusters to form
+            phase: Specified phase to analyze. If None, analyzes all structures.
+            linkage: Linkage criterion for agglomerative clustering ("ward", "complete", "average", "single")
+            n_iter: Number of iterations for t-SNE optimization
+            random_state: Random seed for reproducibility
+            colored_by: Whether to color points by "cluster" labels or "energy" values
+        """
+        perplexities = [20, 40, 60, 80]
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        for ax, perplexity in zip(axes.flatten(), perplexities):
+            tsne_result = self.tsne(n_components=2, perplexity=perplexity, n_iter=n_iter, random_state=random_state, phase=phase)
+            labels = self.agglomerative_clustering(n_clusters=n_clusters, phase=phase, linkage=linkage)
+            if colored_by == "cluster":
+                scatter = ax.scatter(tsne_result[:, 0], tsne_result[:, 1], c=labels, cmap='tab10', alpha=0.7)
+                ax.set_title(f't-SNE (perplexity={perplexity}) - Colored by Cluster', fontsize=12)
+                plt.colorbar(scatter, ax=ax, label='Cluster Label')
+            elif colored_by == "energy":
+                energies = np.array([s.energy for s in (self.phases[phase] if phase else self.structures)])
+                scatter = ax.scatter(tsne_result[:, 0], tsne_result[:, 1], c=energies, cmap='viridis', alpha=0.7)
+                ax.set_title(f't-SNE (perplexity={perplexity}) - Colored by Energy', fontsize=12)
+                plt.colorbar(scatter, ax=ax, label='Energy')
+            ax.set_xlabel('t-SNE Dimension 1')
+            ax.set_ylabel('t-SNE Dimension 2')
+            ax.grid(True, alpha=0.3)
+        plt.suptitle(f't-SNE Projection with Agglomerative Clustering - Phase: {phase if phase else "All"}', fontsize=14, fontweight='bold')
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+        plt.savefig(f"figures/tsne_agglomerative_{phase if phase else 'all'}_{colored_by}.png")
+        plt.close()
 
 
 
@@ -890,4 +1102,56 @@ class BHMCAnalyzer:
 
 
 
+
+
+if __name__ == "__main__":
+    import os
+    import sys 
+    def parse_multi_xyz(filepath: str) -> List[Tuple[Molecule, float]]:
+        """  
+        Parse a multi-structure XYZ file into a list of (Molecule, energy)
+        """
+        structures = []
+        with open(filepath, 'r') as f:
+            lines = f.readlines()
+
+        i = 0
+        sample_idx = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            if not line:
+                i += 1 
+                continue
+            n_atoms = int(line)
+            comment = lines[i+1].strip()
+            mol = Molecule(name=f"Sample_{sample_idx}")
+            for j in range(n_atoms):
+                parts = lines[i+2+j].split()
+                label = parts[0]
+                coords = [float(parts[1]), float(parts[2]), float(parts[3])]
+                mol.add_atom(label, coords)
+            # Use sample index as a dummy energy
+            energy = float(sample_idx) * 0.01
+            structures.append((mol,energy))
+            i += 2 + n_atoms
+            sample_idx += 1
+        return structures
+    
+    xyz_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/test_structures.xyz"
+    submolecule_indices = [[0,1,2], [3,4,5]]  # Example submolecule indices for two water molecule
+    structures = parse_multi_xyz(xyz_path)
+    print(f"Loading Structures from {xyz_path}...")
+    print(f"Parsed {len(structures)} structures.")
+    
+    # Initialize Analyzer
+    analyzer = BHMCAnalyzer(name="Test Analysis", submolecule_indices=submolecule_indices)
+    analyzer.add_structures_batch(structures)
+    print(f"Added {len(analyzer.structures)} structures to the analyzer.")
+
+    h_bond_features = analyzer.compute_hbond_features()
+    # Search for != 0 values
+    print("H-Bond Features (n_hbonds, avg_angle):")
+    for i, (n_hbonds, avg_angle) in enumerate(h_bond_features):
+        if n_hbonds > 0:
+            print(f"Structure {i}: n_hbonds = {n_hbonds}, avg_angle = {avg_angle:.2f} degrees")
 

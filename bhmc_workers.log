@@ -53430,3 +53430,1286 @@
 [2026-03-01 21:02:38] [WARNING ] Worker 23 step 498: large_displacement — no coordinate change (box rejection?)
 [2026-03-01 21:02:38] [WARNING ] Worker 23 step 499: mirror — no coordinate change (box rejection?)
 [2026-03-01 21:02:38] [INFO    ] Worker 23: DONE — 152/500 accepted (30.4%)
+[2026-03-01 22:08:21] [INFO    ] Worker 8: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 0: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 1: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 2: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 3: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 4: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 5: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 6: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 7: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 6: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 8: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 9: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 0: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 10: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 11: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 12: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 1: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 13: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 2: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 3: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 4: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 5: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 6: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 7: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 8: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 9: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 10: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 11: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 12: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 5: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 6 step 13: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 5 step 0: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 5 step 1: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 5 step 2: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 5 step 3: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 5 step 4: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 2: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 2 step 0: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 2 step 1: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 2 step 2: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 2 step 3: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 2 step 4: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 2 step 5: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 2 step 6: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 0: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 0: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 1: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 2: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 3: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 4: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 5: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 6: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 7: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 8: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 9: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 10: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 11: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 12: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 13: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 14: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 15: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 16: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 17: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 18: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 19: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 20: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 21: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 9: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 9 step 0: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 9 step 1: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 9 step 2: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 9 step 3: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 9 step 4: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 9 step 5: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 9 step 6: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 9 step 7: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 9 step 8: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 9 step 9: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 14: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [INFO    ] Worker 4: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [INFO    ] Worker 7: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 0: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 0: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 7 step 0: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 1: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 2: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 7 step 1: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 1: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 7 step 2: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 3: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 7 step 3: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 4: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 2: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 5: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 6: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 3: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 7: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 8: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 4: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 9: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 5: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 10: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 11: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 6: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 12: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 7: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 13: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 14: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 8: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 15: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 3: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 16: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 9: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 3 step 0: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 17: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 3 step 1: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 18: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 10: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 3 step 2: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 19: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 3 step 3: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 20: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 11: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 21: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 3 step 4: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 22: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 12: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 3 step 5: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 3 step 6: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 23: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 13: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 24: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 25: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 14: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 26: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 15: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 27: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 28: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 16: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 29: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 17: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 30: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 31: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 18: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 32: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 33: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 19: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 34: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 35: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 20: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 36: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 14 step 37: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 21: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 22: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 4 step 23: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 15: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 15 step 0: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 15 step 1: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 15 step 2: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 15 step 3: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 15 step 4: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 15 step 5: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 15 step 6: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 15 step 7: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 1: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 0: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 1: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 2: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 11: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [INFO    ] Worker 12: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 3: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 12 step 0: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 4: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 5: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 12 step 1: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 6: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 12 step 2: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 7: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 12 step 3: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 8: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 12 step 4: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 9: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 12 step 5: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 10: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 12 step 6: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 1 step 11: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 16: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 0: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 1: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 2: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 3: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 4: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 5: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 6: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 7: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 8: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 9: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 10: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 11: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 12: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 13: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 14: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 15: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 16: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 17: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 18: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 19: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 20: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 21: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 22: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 23: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 24: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 25: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 26: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 27: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 28: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 29: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 30: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 31: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 32: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 16 step 33: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 17: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 17 step 0: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 17 step 1: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 10: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 0: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 1: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 2: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 3: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 4: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 5: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 6: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 7: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 8: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 9: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 10: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 10 step 11: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 2 step 7: ACCEPTED twist E=-152.456861 Ha
+[2026-03-01 22:08:21] [WARNING ] Worker 2 step 8: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 2 step 9: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 2 step 10: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 13: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 13 step 0: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 13 step 1: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 13 step 2: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 22: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [INFO    ] Worker 20: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 0: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 1: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 2: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 3: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 4: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 5: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 6: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 23: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 24: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 7: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 25: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 0 step 26: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 8: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 9: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 15: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 10: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 16: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 11: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 17: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 20 step 12: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 8 step 18: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [INFO    ] Worker 5 step 5: ACCEPTED random_so3 E=-152.463898 Ha
+[2026-03-01 22:08:21] [WARNING ] Worker 5 step 6: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 5 step 7: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 5 step 8: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 5 step 9: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 5 step 10: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:21] [WARNING ] Worker 5 step 11: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 6 step 14: ACCEPTED twist E=-152.462183 Ha
+[2026-03-01 22:08:22] [INFO    ] Worker 23: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 0: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 1: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 11: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 2: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 12: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 3: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 13: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 4: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 14: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 5: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 15: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 6: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 16: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 7: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 17: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 8: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 18: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 9: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 19: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 10: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 11: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 19: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 0: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 1: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 2: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 3: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 4: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 3 step 8: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 3 step 9: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 3 step 10: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 3 step 11: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 3 step 12: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 3 step 13: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 3 step 14: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 3 step 15: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 3 step 16: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 3 step 17: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 18: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 0: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 1: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 2: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 3: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 4: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 5: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 6: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 7: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 8: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 9: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 10: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 11: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 12: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 13: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 14: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 15: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 16: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 17: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 15 step 9: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 18: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 15 step 10: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 18 step 19: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 15 step 11: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 15 step 12: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 21: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 0: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 1: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 2: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 3: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 4: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 5: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 6: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 7: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 8: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 9: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 17 step 2: ACCEPTED twist E=-152.460327 Ha
+[2026-03-01 22:08:22] [WARNING ] Worker 17 step 3: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 27: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 25: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 0: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 26: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 1: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 2: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 24: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 27: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 3: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 0: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 4: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 28: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 1: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 5: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 29: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 2: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 6: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 3: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 7: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 30: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 4: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 8: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 5: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 9: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 2 step 11: ACCEPTED exchange E=-152.455198 Ha
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 31: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 6: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 10: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 7: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 32: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 11: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 8: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 12: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 35: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 33: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 9: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 13: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 10: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 14: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 36: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 11: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 34: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 15: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 12: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 16: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 37: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 13: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 35: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 17: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 18: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 14: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 36: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 38: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 15: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 19: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 37: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 16: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 27 step 20: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 39: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 17: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 38: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 18: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 40: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 19: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 39: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 20: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 21: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 41: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 40: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 22: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 42: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 41: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 23: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 24: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 42: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 25: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 43: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 26: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 43: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 25: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:22] [WARNING ] Worker 24 step 27: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 44: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 44: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 25 step 0: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 45: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 45: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 25 step 1: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 46: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 46: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 25 step 2: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 47: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 47: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 25 step 3: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 48: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 25 step 4: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 16 step 48: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 4 step 49: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 4: DONE — 0/50 accepted (0.0%)
+[2026-03-01 22:08:22] [WARNING ] Worker 25 step 5: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 25 step 6: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 13: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 14: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 15: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 16: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 17: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 18: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 19: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 20: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 21: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 0 step 27: ACCEPTED large_displacement E=-152.459291 Ha
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 22: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 23: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 24: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 25: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 26: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 27: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 28: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 29: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 10 step 30: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 5: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 6: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 7: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 8: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 9: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 10: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 11: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 12: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 13: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 14: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 15: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 16: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 17: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 18: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 19: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 20: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 21: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 22: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 23: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 24: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 25: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 26: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 27: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 28: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 7 step 29: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 11 step 0: ACCEPTED twist E=-152.456072 Ha
+[2026-03-01 22:08:22] [INFO    ] Worker 12 step 7: ACCEPTED random_so3 E=-152.462586 Ha
+[2026-03-01 22:08:22] [WARNING ] Worker 11 step 1: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 11 step 2: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 1 step 13: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 1 step 14: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 1 step 15: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 1 step 16: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 1 step 17: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 1 step 18: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 1 step 19: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 5 step 12: ACCEPTED mirror E=-152.463898 Ha
+[2026-03-01 22:08:22] [INFO    ] Worker 23 step 12: ACCEPTED random_so3 E=-152.462810 Ha
+[2026-03-01 22:08:22] [WARNING ] Worker 23 step 13: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 6: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 7: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 8: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 9: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 10: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 11: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 12: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 13: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 14: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 15: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 16: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 17: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 18: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 19: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 20: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 21: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 19 step 22: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 26: Starting energy = -152.461810 Hartree
+[2026-03-01 22:08:22] [WARNING ] Worker 26 step 0: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 26 step 1: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 3 step 18: ACCEPTED large_displacement E=-152.454043 Ha
+[2026-03-01 22:08:22] [WARNING ] Worker 15 step 14: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 15 step 15: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 21 step 10: ACCEPTED twist E=-152.460062 Ha
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 11: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 13 step 3: ACCEPTED random_so3 E=-152.472145 Ha
+[2026-03-01 22:08:22] [WARNING ] Worker 21 step 12: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 14 step 39: ACCEPTED random_so3 E=-152.465003 Ha
+[2026-03-01 22:08:22] [INFO    ] Worker 14: 40/50 — accepted=1, rate=2.5%
+[2026-03-01 22:08:22] [INFO    ] Worker 17 step 4: ACCEPTED large_displacement E=-152.466395 Ha
+[2026-03-01 22:08:22] [WARNING ] Worker 17 step 5: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 17 step 6: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 8: 20/50 — accepted=0, rate=0.0%
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 20: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [INFO    ] Worker 9 step 20: ACCEPTED random_so3 E=-152.462595 Ha
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 21: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 22: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 21: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 23: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 22: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 24: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 23: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 25: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 24: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 26: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 25: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 27: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 28: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 9 step 26: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 20 step 14: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 29: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 30: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 31: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 32: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 33: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:22] [WARNING ] Worker 8 step 34: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 27 step 22: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 27 step 23: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 27 step 24: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 27 step 25: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 27 step 26: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 27 step 27: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 27 step 28: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 27 step 29: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 27 step 30: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 24 step 29: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 24 step 30: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 24 step 31: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 24 step 32: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 24 step 33: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 24 step 34: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 24 step 35: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 24 step 36: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 24 step 37: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 22 step 1: ACCEPTED random_so3 E=-152.473189 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 8: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 9: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 10: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 11: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 12: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 10 step 32: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 10 step 33: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 10 step 34: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 18 step 21: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 18 step 22: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 18 step 23: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 18 step 24: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 18 step 25: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 18 step 26: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 18 step 27: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 1 step 20: ACCEPTED twist E=-152.457673 Ha
+[2026-03-01 22:08:23] [INFO    ] Worker 5 step 13: ACCEPTED roto_reflection E=-152.464570 Ha
+[2026-03-01 22:08:23] [INFO    ] Worker 23 step 14: ACCEPTED twist E=-152.464718 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 7 step 31: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 2 step 12: ACCEPTED large_displacement E=-152.459091 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 24: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 25: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 26: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 27: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 28: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 29: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 30: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 31: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 32: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 33: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 34: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 35: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 36: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 37: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 38: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 39: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 40: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 41: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 42: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 43: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 26 step 3: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 44: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 26 step 4: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 45: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 26 step 5: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 46: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 26 step 6: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 47: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 26 step 7: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 48: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 26 step 8: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 19 step 49: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 19: DONE — 0/50 accepted (0.0%)
+[2026-03-01 22:08:23] [WARNING ] Worker 26 step 9: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 26 step 10: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 16: 50/50 — accepted=0, rate=0.0%
+[2026-03-01 22:08:23] [INFO    ] Worker 16: DONE — 0/50 accepted (0.0%)
+[2026-03-01 22:08:23] [INFO    ] Worker 3 step 19: ACCEPTED large_displacement E=-152.456584 Ha
+[2026-03-01 22:08:23] [INFO    ] Worker 3: 20/50 — accepted=2, rate=10.0%
+[2026-03-01 22:08:23] [WARNING ] Worker 21 step 14: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 17 step 7: ACCEPTED large_displacement E=-152.470873 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 17 step 8: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 15 step 17: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 15 step 18: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 15 step 19: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 15 step 20: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 15 step 21: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 12 step 8: ACCEPTED twist E=-152.462843 Ha
+[2026-03-01 22:08:23] [INFO    ] Worker 27 step 31: ACCEPTED random_so3 E=-152.461477 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 27 step 32: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 22 step 2: ACCEPTED mirror E=-152.473189 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 22 step 3: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 22 step 4: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 0 step 29: ACCEPTED roto_reflection E=-152.462943 Ha
+[2026-03-01 22:08:23] [INFO    ] Worker 0: 30/50 — accepted=2, rate=6.7%
+[2026-03-01 22:08:23] [INFO    ] Worker 11 step 3: ACCEPTED exchange E=-152.459993 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 14: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 15: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 16: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 17: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 18: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 19: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 20: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 21: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 22: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 23: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 24: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 25: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 26: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 27: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 28: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 29: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 30: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 31: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 32: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 33: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 34: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 35: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 36: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 37: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 38: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 39: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 40: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 41: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 42: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 43: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 44: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 45: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 46: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 47: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 48: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 25 step 49: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 25: DONE — 0/50 accepted (0.0%)
+[2026-03-01 22:08:23] [INFO    ] Worker 20 step 15: ACCEPTED random_so3 E=-152.457996 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 20 step 16: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 20 step 17: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 20 step 18: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 20 step 19: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 20 step 20: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 5 step 14: ACCEPTED large_displacement E=-152.464209 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 15: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 16: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 17: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 18: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 19: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 20: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 21: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 22: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 23: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 24: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 25: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 26: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 27: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 28: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 29: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 23 step 15: ACCEPTED twist E=-152.465335 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 30: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 23 step 16: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 31: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 32: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 33: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 5 step 34: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 7 step 32: ACCEPTED random_so3 E=-152.469805 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 8 step 36: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 8 step 37: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [INFO    ] Worker 2 step 13: ACCEPTED mirror E=-152.459091 Ha
+[2026-03-01 22:08:23] [WARNING ] Worker 8 step 38: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:23] [WARNING ] Worker 8 step 39: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 8 step 40: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 8 step 41: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 8 step 42: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 8 step 43: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 8 step 44: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 8 step 45: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 8 step 46: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 8 step 47: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 8 step 48: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 26 step 11: ACCEPTED random_so3 E=-152.464690 Ha
+[2026-03-01 22:08:24] [WARNING ] Worker 8 step 49: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 8: DONE — 0/50 accepted (0.0%)
+[2026-03-01 22:08:24] [INFO    ] Worker 6 step 17: ACCEPTED exchange E=-152.462907 Ha
+[2026-03-01 22:08:24] [WARNING ] Worker 10 step 36: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 10 step 37: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 10 step 38: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 10 step 39: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 10 step 40: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 10 step 41: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 10 step 42: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 10 step 43: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 1 step 21: ACCEPTED mirror E=-152.457673 Ha
+[2026-03-01 22:08:24] [WARNING ] Worker 18 step 29: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 18 step 30: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 18 step 31: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 18 step 32: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 3 step 20: ACCEPTED roto_reflection E=-152.460242 Ha
+[2026-03-01 22:08:24] [INFO    ] Worker 21 step 15: ACCEPTED random_so3 E=-152.457837 Ha
+[2026-03-01 22:08:24] [INFO    ] Worker 17: 10/50 — accepted=3, rate=30.0%
+[2026-03-01 22:08:24] [WARNING ] Worker 17 step 10: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 17 step 11: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 17 step 12: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 12: 10/50 — accepted=2, rate=20.0%
+[2026-03-01 22:08:24] [WARNING ] Worker 12 step 10: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 12 step 11: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 12 step 12: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 12 step 13: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 34: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 35: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 36: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 37: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 38: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 39: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 40: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 41: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 42: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 24: 40/50 — accepted=0, rate=0.0%
+[2026-03-01 22:08:24] [WARNING ] Worker 24 step 40: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 24 step 41: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 24 step 42: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 24 step 43: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 24 step 44: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 24 step 45: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 24 step 46: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 24 step 47: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 24 step 48: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 24 step 49: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 24: DONE — 0/50 accepted (0.0%)
+[2026-03-01 22:08:24] [INFO    ] Worker 0 step 30: ACCEPTED mirror E=-152.462943 Ha
+[2026-03-01 22:08:24] [INFO    ] Worker 5 step 35: ACCEPTED large_displacement E=-152.464024 Ha
+[2026-03-01 22:08:24] [WARNING ] Worker 13 step 6: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 7 step 33: ACCEPTED mirror E=-152.469804 Ha
+[2026-03-01 22:08:24] [INFO    ] Worker 9 step 28: ACCEPTED twist E=-152.460389 Ha
+[2026-03-01 22:08:24] [WARNING ] Worker 9 step 29: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 9 step 30: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 9 step 31: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 9 step 32: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 9 step 33: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 2 step 14: ACCEPTED roto_reflection E=-152.459527 Ha
+[2026-03-01 22:08:24] [INFO    ] Worker 26 step 12: ACCEPTED mirror E=-152.464690 Ha
+[2026-03-01 22:08:24] [INFO    ] Worker 6 step 18: ACCEPTED roto_reflection E=-152.465374 Ha
+[2026-03-01 22:08:24] [INFO    ] Worker 10 step 44: ACCEPTED random_so3 E=-152.461652 Ha
+[2026-03-01 22:08:24] [INFO    ] Worker 14 step 41: ACCEPTED large_displacement E=-152.471090 Ha
+[2026-03-01 22:08:24] [WARNING ] Worker 18 step 34: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 18 step 35: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 18 step 36: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 18 step 37: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 18 step 38: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 21 step 16: ACCEPTED random_so3 E=-152.465221 Ha
+[2026-03-01 22:08:24] [INFO    ] Worker 17 step 13: ACCEPTED twist E=-152.470850 Ha
+[2026-03-01 22:08:24] [WARNING ] Worker 17 step 14: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 3 step 21: ACCEPTED twist E=-152.461160 Ha
+[2026-03-01 22:08:24] [WARNING ] Worker 3 step 22: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 15 step 24: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 1 step 22: ACCEPTED twist E=-152.464093 Ha
+[2026-03-01 22:08:24] [INFO    ] Worker 12 step 14: ACCEPTED mirror E=-152.464191 Ha
+[2026-03-01 22:08:24] [WARNING ] Worker 22 step 7: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 22 step 8: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 0 step 31: ACCEPTED mirror E=-152.462943 Ha
+[2026-03-01 22:08:24] [INFO    ] Worker 27 step 43: ACCEPTED large_displacement E=-152.461587 Ha
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 44: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 45: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 46: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 47: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 48: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [WARNING ] Worker 27 step 49: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:24] [INFO    ] Worker 27: DONE — 2/50 accepted (4.0%)
+[2026-03-01 22:08:25] [INFO    ] Worker 20 step 22: ACCEPTED twist E=-152.466331 Ha
+[2026-03-01 22:08:25] [INFO    ] Worker 5 step 36: ACCEPTED large_displacement E=-152.463674 Ha
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 37: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 38: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 39: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 40: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 41: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 23 step 19: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 42: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 43: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 44: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 45: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [INFO    ] Worker 13 step 7: ACCEPTED mirror E=-152.472145 Ha
+[2026-03-01 22:08:25] [WARNING ] Worker 13 step 8: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 7 step 35: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [INFO    ] Worker 9 step 34: ACCEPTED random_so3 E=-152.461719 Ha
+[2026-03-01 22:08:25] [WARNING ] Worker 9 step 35: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [INFO    ] Worker 2 step 15: ACCEPTED roto_reflection E=-152.461904 Ha
+[2026-03-01 22:08:25] [INFO    ] Worker 6: 20/50 — accepted=3, rate=15.0%
+[2026-03-01 22:08:25] [INFO    ] Worker 10 step 45: ACCEPTED large_displacement E=-152.464059 Ha
+[2026-03-01 22:08:25] [WARNING ] Worker 21 step 18: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 21 step 19: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [INFO    ] Worker 18: 40/50 — accepted=0, rate=0.0%
+[2026-03-01 22:08:25] [WARNING ] Worker 17 step 16: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [INFO    ] Worker 3 step 23: ACCEPTED mirror E=-152.461157 Ha
+[2026-03-01 22:08:25] [INFO    ] Worker 1 step 23: ACCEPTED random_so3 E=-152.464246 Ha
+[2026-03-01 22:08:25] [WARNING ] Worker 12 step 16: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [INFO    ] Worker 22: 10/50 — accepted=2, rate=20.0%
+[2026-03-01 22:08:25] [INFO    ] Worker 0 step 32: ACCEPTED large_displacement E=-152.463040 Ha
+[2026-03-01 22:08:25] [INFO    ] Worker 5 step 46: ACCEPTED twist E=-152.462536 Ha
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 47: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 48: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 5 step 49: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [INFO    ] Worker 5: DONE — 7/50 accepted (14.0%)
+[2026-03-01 22:08:25] [INFO    ] Worker 23 step 20: ACCEPTED exchange E=-152.462118 Ha
+[2026-03-01 22:08:25] [INFO    ] Worker 13: 10/50 — accepted=2, rate=20.0%
+[2026-03-01 22:08:25] [INFO    ] Worker 11 step 6: ACCEPTED random_so3 E=-152.463268 Ha
+[2026-03-01 22:08:25] [INFO    ] Worker 9 step 36: ACCEPTED twist E=-152.458897 Ha
+[2026-03-01 22:08:25] [WARNING ] Worker 26 step 15: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [INFO    ] Worker 2 step 16: ACCEPTED mirror E=-152.461904 Ha
+[2026-03-01 22:08:25] [INFO    ] Worker 6 step 20: ACCEPTED mirror E=-152.465383 Ha
+[2026-03-01 22:08:25] [INFO    ] Worker 10 step 46: ACCEPTED mirror E=-152.454591 Ha
+[2026-03-01 22:08:25] [WARNING ] Worker 10 step 47: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 10 step 48: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 10 step 49: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [INFO    ] Worker 10: DONE — 3/50 accepted (6.0%)
+[2026-03-01 22:08:25] [WARNING ] Worker 18 step 41: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 18 step 42: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 18 step 43: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 18 step 44: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 18 step 45: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:25] [WARNING ] Worker 17 step 18: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [INFO    ] Worker 3 step 24: ACCEPTED exchange E=-152.463129 Ha
+[2026-03-01 22:08:26] [INFO    ] Worker 15 step 26: ACCEPTED large_displacement E=-152.460815 Ha
+[2026-03-01 22:08:26] [WARNING ] Worker 15 step 27: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 15 step 28: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 15 step 29: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [INFO    ] Worker 12 step 17: ACCEPTED large_displacement E=-152.464833 Ha
+[2026-03-01 22:08:26] [WARNING ] Worker 12 step 18: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [INFO    ] Worker 0 step 33: ACCEPTED exchange E=-152.464620 Ha
+[2026-03-01 22:08:26] [WARNING ] Worker 0 step 34: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 20 step 25: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 20 step 26: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [INFO    ] Worker 23 step 21: ACCEPTED exchange E=-152.465335 Ha
+[2026-03-01 22:08:26] [WARNING ] Worker 7 step 38: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [INFO    ] Worker 26 step 16: ACCEPTED large_displacement E=-152.469358 Ha
+[2026-03-01 22:08:26] [INFO    ] Worker 2 step 17: ACCEPTED random_so3 E=-152.464324 Ha
+[2026-03-01 22:08:26] [INFO    ] Worker 6 step 21: ACCEPTED roto_reflection E=-152.465330 Ha
+[2026-03-01 22:08:26] [WARNING ] Worker 14 step 45: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 21 step 22: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 21 step 23: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 21 step 24: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 21 step 25: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [INFO    ] Worker 17 step 19: ACCEPTED random_so3 E=-152.470868 Ha
+[2026-03-01 22:08:26] [INFO    ] Worker 17: 20/50 — accepted=5, rate=25.0%
+[2026-03-01 22:08:26] [WARNING ] Worker 18 step 47: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 18 step 48: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 18 step 49: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [INFO    ] Worker 18: DONE — 0/50 accepted (0.0%)
+[2026-03-01 22:08:26] [WARNING ] Worker 1 step 26: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 1 step 27: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [INFO    ] Worker 15 step 30: ACCEPTED large_displacement E=-152.459769 Ha
+[2026-03-01 22:08:26] [WARNING ] Worker 15 step 31: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 15 step 32: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 15 step 33: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [INFO    ] Worker 12 step 19: ACCEPTED mirror E=-152.464833 Ha
+[2026-03-01 22:08:26] [INFO    ] Worker 12: 20/50 — accepted=5, rate=25.0%
+[2026-03-01 22:08:26] [WARNING ] Worker 12 step 20: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 0 step 36: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 20 step 28: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 20 step 29: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 20 step 30: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 20 step 31: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [WARNING ] Worker 20 step 32: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [INFO    ] Worker 7: 40/50 — accepted=2, rate=5.0%
+[2026-03-01 22:08:26] [INFO    ] Worker 23 step 22: ACCEPTED random_so3 E=-152.459553 Ha
+[2026-03-01 22:08:26] [WARNING ] Worker 13 step 12: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:26] [INFO    ] Worker 9 step 38: ACCEPTED exchange E=-152.466727 Ha
+[2026-03-01 22:08:26] [INFO    ] Worker 26 step 17: ACCEPTED twist E=-152.468371 Ha
+[2026-03-01 22:08:26] [INFO    ] Worker 6 step 22: ACCEPTED twist E=-152.466125 Ha
+[2026-03-01 22:08:27] [INFO    ] Worker 2 step 18: ACCEPTED mirror E=-152.469537 Ha
+[2026-03-01 22:08:27] [WARNING ] Worker 2 step 19: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 2 step 20: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 2 step 21: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 2 step 22: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [INFO    ] Worker 21 step 26: ACCEPTED twist E=-152.464693 Ha
+[2026-03-01 22:08:27] [WARNING ] Worker 17 step 21: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 17 step 22: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 17 step 23: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 17 step 24: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [INFO    ] Worker 3 step 26: ACCEPTED large_displacement E=-152.463595 Ha
+[2026-03-01 22:08:27] [INFO    ] Worker 1 step 28: ACCEPTED roto_reflection E=-152.463802 Ha
+[2026-03-01 22:08:27] [INFO    ] Worker 15 step 34: ACCEPTED exchange E=-152.467678 Ha
+[2026-03-01 22:08:27] [WARNING ] Worker 15 step 35: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 0 step 38: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 0 step 39: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [INFO    ] Worker 20 step 33: ACCEPTED large_displacement E=-152.464992 Ha
+[2026-03-01 22:08:27] [WARNING ] Worker 20 step 34: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [INFO    ] Worker 23 step 23: ACCEPTED exchange E=-152.466163 Ha
+[2026-03-01 22:08:27] [INFO    ] Worker 13 step 13: ACCEPTED mirror E=-152.472152 Ha
+[2026-03-01 22:08:27] [INFO    ] Worker 9 step 39: ACCEPTED mirror E=-152.468226 Ha
+[2026-03-01 22:08:27] [INFO    ] Worker 9: 40/50 — accepted=6, rate=15.0%
+[2026-03-01 22:08:27] [WARNING ] Worker 7 step 41: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 7 step 42: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 7 step 43: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [INFO    ] Worker 11 step 9: ACCEPTED mirror E=-152.463268 Ha
+[2026-03-01 22:08:27] [INFO    ] Worker 11: 10/50 — accepted=4, rate=40.0%
+[2026-03-01 22:08:27] [INFO    ] Worker 26 step 18: ACCEPTED exchange E=-152.467601 Ha
+[2026-03-01 22:08:27] [INFO    ] Worker 6 step 23: ACCEPTED large_displacement E=-152.464020 Ha
+[2026-03-01 22:08:27] [WARNING ] Worker 14 step 48: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 14 step 49: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [INFO    ] Worker 14: DONE — 2/50 accepted (4.0%)
+[2026-03-01 22:08:27] [INFO    ] Worker 21 step 27: ACCEPTED twist E=-152.464351 Ha
+[2026-03-01 22:08:27] [WARNING ] Worker 21 step 28: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 21 step 29: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [WARNING ] Worker 21 step 30: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:27] [INFO    ] Worker 3 step 27: ACCEPTED mirror E=-152.463596 Ha
+[2026-03-01 22:08:27] [INFO    ] Worker 1 step 29: ACCEPTED exchange E=-152.462087 Ha
+[2026-03-01 22:08:27] [INFO    ] Worker 1: 30/50 — accepted=6, rate=20.0%
+[2026-03-01 22:08:27] [INFO    ] Worker 12 step 22: ACCEPTED twist E=-152.464329 Ha
+[2026-03-01 22:08:27] [INFO    ] Worker 0 step 40: ACCEPTED large_displacement E=-152.465089 Ha
+[2026-03-01 22:08:28] [INFO    ] Worker 20 step 35: ACCEPTED random_so3 E=-152.465184 Ha
+[2026-03-01 22:08:28] [WARNING ] Worker 20 step 36: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 20 step 37: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 20 step 38: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 23 step 25: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 13 step 15: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 13 step 16: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [INFO    ] Worker 11 step 10: ACCEPTED twist E=-152.467476 Ha
+[2026-03-01 22:08:28] [INFO    ] Worker 26 step 19: ACCEPTED exchange E=-152.468371 Ha
+[2026-03-01 22:08:28] [INFO    ] Worker 26: 20/50 — accepted=6, rate=30.0%
+[2026-03-01 22:08:28] [INFO    ] Worker 6 step 24: ACCEPTED roto_reflection E=-152.464512 Ha
+[2026-03-01 22:08:28] [WARNING ] Worker 2 step 25: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 2 step 26: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 2 step 27: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 2 step 28: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 17 step 27: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 17 step 28: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 21 step 32: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 21 step 33: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 21 step 34: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [INFO    ] Worker 3 step 28: ACCEPTED roto_reflection E=-152.463329 Ha
+[2026-03-01 22:08:28] [INFO    ] Worker 0 step 41: ACCEPTED twist E=-152.466366 Ha
+[2026-03-01 22:08:28] [WARNING ] Worker 22 step 15: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [INFO    ] Worker 20: 40/50 — accepted=4, rate=10.0%
+[2026-03-01 22:08:28] [INFO    ] Worker 9 step 41: ACCEPTED exchange E=-152.468990 Ha
+[2026-03-01 22:08:28] [WARNING ] Worker 9 step 42: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 9 step 43: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [INFO    ] Worker 13 step 17: ACCEPTED random_so3 E=-152.470533 Ha
+[2026-03-01 22:08:28] [INFO    ] Worker 26 step 20: ACCEPTED exchange E=-152.467601 Ha
+[2026-03-01 22:08:28] [WARNING ] Worker 26 step 21: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [INFO    ] Worker 7 step 45: ACCEPTED mirror E=-152.469804 Ha
+[2026-03-01 22:08:28] [INFO    ] Worker 6 step 25: ACCEPTED mirror E=-152.464512 Ha
+[2026-03-01 22:08:28] [INFO    ] Worker 2 step 29: ACCEPTED mirror E=-152.469536 Ha
+[2026-03-01 22:08:28] [INFO    ] Worker 2: 30/50 — accepted=10, rate=33.3%
+[2026-03-01 22:08:28] [WARNING ] Worker 2 step 30: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [INFO    ] Worker 17: 30/50 — accepted=5, rate=16.7%
+[2026-03-01 22:08:28] [WARNING ] Worker 17 step 30: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 17 step 31: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [WARNING ] Worker 21 step 36: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [INFO    ] Worker 3: 30/50 — accepted=9, rate=30.0%
+[2026-03-01 22:08:28] [WARNING ] Worker 3 step 30: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:28] [INFO    ] Worker 1 step 31: ACCEPTED roto_reflection E=-152.462671 Ha
+[2026-03-01 22:08:29] [INFO    ] Worker 12 step 24: ACCEPTED twist E=-152.465594 Ha
+[2026-03-01 22:08:29] [WARNING ] Worker 0 step 43: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [WARNING ] Worker 20 step 41: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [WARNING ] Worker 20 step 42: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [WARNING ] Worker 20 step 43: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [INFO    ] Worker 23 step 27: ACCEPTED large_displacement E=-152.465801 Ha
+[2026-03-01 22:08:29] [WARNING ] Worker 26 step 23: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [INFO    ] Worker 6 step 26: ACCEPTED roto_reflection E=-152.468599 Ha
+[2026-03-01 22:08:29] [WARNING ] Worker 2 step 32: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [WARNING ] Worker 2 step 33: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [WARNING ] Worker 17 step 33: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [WARNING ] Worker 17 step 34: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [INFO    ] Worker 21 step 37: ACCEPTED random_so3 E=-152.465428 Ha
+[2026-03-01 22:08:29] [WARNING ] Worker 21 step 38: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [INFO    ] Worker 3 step 31: ACCEPTED mirror E=-152.463341 Ha
+[2026-03-01 22:08:29] [WARNING ] Worker 21 step 39: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [WARNING ] Worker 21 step 40: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [INFO    ] Worker 1 step 32: ACCEPTED roto_reflection E=-152.466735 Ha
+[2026-03-01 22:08:29] [INFO    ] Worker 0 step 44: ACCEPTED mirror E=-152.466366 Ha
+[2026-03-01 22:08:29] [INFO    ] Worker 15 step 39: ACCEPTED mirror E=-152.467678 Ha
+[2026-03-01 22:08:29] [INFO    ] Worker 15: 40/50 — accepted=4, rate=10.0%
+[2026-03-01 22:08:29] [WARNING ] Worker 15 step 40: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [INFO    ] Worker 12 step 25: ACCEPTED roto_reflection E=-152.468441 Ha
+[2026-03-01 22:08:29] [INFO    ] Worker 9 step 45: ACCEPTED large_displacement E=-152.470300 Ha
+[2026-03-01 22:08:29] [INFO    ] Worker 11 step 13: ACCEPTED roto_reflection E=-152.467486 Ha
+[2026-03-01 22:08:29] [INFO    ] Worker 13: 20/50 — accepted=4, rate=20.0%
+[2026-03-01 22:08:29] [INFO    ] Worker 26 step 24: ACCEPTED mirror E=-152.462109 Ha
+[2026-03-01 22:08:29] [INFO    ] Worker 7 step 47: ACCEPTED mirror E=-152.469800 Ha
+[2026-03-01 22:08:29] [INFO    ] Worker 6 step 27: ACCEPTED exchange E=-152.464120 Ha
+[2026-03-01 22:08:29] [INFO    ] Worker 2 step 34: ACCEPTED large_displacement E=-152.464647 Ha
+[2026-03-01 22:08:29] [WARNING ] Worker 2 step 35: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [WARNING ] Worker 2 step 36: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:29] [WARNING ] Worker 2 step 37: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:30] [INFO    ] Worker 3 step 32: ACCEPTED exchange E=-152.464443 Ha
+[2026-03-01 22:08:30] [INFO    ] Worker 1 step 33: ACCEPTED exchange E=-152.470074 Ha
+[2026-03-01 22:08:30] [WARNING ] Worker 1 step 34: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:30] [INFO    ] Worker 12 step 26: ACCEPTED exchange E=-152.467836 Ha
+[2026-03-01 22:08:30] [WARNING ] Worker 22 step 19: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:30] [INFO    ] Worker 23: 30/50 — accepted=8, rate=26.7%
+[2026-03-01 22:08:30] [INFO    ] Worker 9 step 46: ACCEPTED exchange E=-152.467407 Ha
+[2026-03-01 22:08:30] [INFO    ] Worker 26 step 25: ACCEPTED roto_reflection E=-152.468749 Ha
+[2026-03-01 22:08:30] [INFO    ] Worker 7 step 48: ACCEPTED twist E=-152.469261 Ha
+[2026-03-01 22:08:30] [INFO    ] Worker 6 step 28: ACCEPTED twist E=-152.462433 Ha
+[2026-03-01 22:08:30] [WARNING ] Worker 6 step 29: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:30] [WARNING ] Worker 6 step 30: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:30] [INFO    ] Worker 2 step 38: ACCEPTED random_so3 E=-152.463458 Ha
+[2026-03-01 22:08:30] [WARNING ] Worker 2 step 39: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:30] [INFO    ] Worker 3 step 33: ACCEPTED mirror E=-152.464443 Ha
+[2026-03-01 22:08:30] [INFO    ] Worker 17 step 36: ACCEPTED large_displacement E=-152.469825 Ha
+[2026-03-01 22:08:30] [INFO    ] Worker 21 step 42: ACCEPTED large_displacement E=-152.466707 Ha
+[2026-03-01 22:08:30] [WARNING ] Worker 21 step 43: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:30] [WARNING ] Worker 21 step 44: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:30] [INFO    ] Worker 0 step 46: ACCEPTED random_so3 E=-152.469885 Ha
+[2026-03-01 22:08:30] [WARNING ] Worker 0 step 47: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:30] [INFO    ] Worker 15 step 42: ACCEPTED mirror E=-152.467678 Ha
+[2026-03-01 22:08:30] [INFO    ] Worker 12 step 27: ACCEPTED exchange E=-152.468441 Ha
+[2026-03-01 22:08:30] [INFO    ] Worker 22 step 20: ACCEPTED mirror E=-152.473189 Ha
+[2026-03-01 22:08:30] [INFO    ] Worker 20 step 46: ACCEPTED large_displacement E=-152.465120 Ha
+[2026-03-01 22:08:31] [INFO    ] Worker 9 step 47: ACCEPTED exchange E=-152.470300 Ha
+[2026-03-01 22:08:31] [INFO    ] Worker 23 step 30: ACCEPTED roto_reflection E=-152.469149 Ha
+[2026-03-01 22:08:31] [WARNING ] Worker 9 step 48: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [WARNING ] Worker 9 step 49: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [INFO    ] Worker 9: DONE — 10/50 accepted (20.0%)
+[2026-03-01 22:08:31] [INFO    ] Worker 11 step 15: ACCEPTED mirror E=-152.467488 Ha
+[2026-03-01 22:08:31] [WARNING ] Worker 11 step 16: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [INFO    ] Worker 7: 50/50 — accepted=5, rate=10.0%
+[2026-03-01 22:08:31] [INFO    ] Worker 7: DONE — 5/50 accepted (10.0%)
+[2026-03-01 22:08:31] [INFO    ] Worker 26 step 26: ACCEPTED twist E=-152.468518 Ha
+[2026-03-01 22:08:31] [INFO    ] Worker 13 step 21: ACCEPTED twist E=-152.469460 Ha
+[2026-03-01 22:08:31] [INFO    ] Worker 6 step 31: ACCEPTED large_displacement E=-152.468624 Ha
+[2026-03-01 22:08:31] [WARNING ] Worker 6 step 32: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [WARNING ] Worker 6 step 33: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [INFO    ] Worker 1 step 36: ACCEPTED roto_reflection E=-152.470071 Ha
+[2026-03-01 22:08:31] [WARNING ] Worker 1 step 37: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [WARNING ] Worker 21 step 46: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [WARNING ] Worker 21 step 47: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [WARNING ] Worker 21 step 48: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [WARNING ] Worker 17 step 38: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [INFO    ] Worker 15 step 43: ACCEPTED mirror E=-152.467678 Ha
+[2026-03-01 22:08:31] [INFO    ] Worker 12 step 28: ACCEPTED mirror E=-152.468441 Ha
+[2026-03-01 22:08:31] [INFO    ] Worker 20 step 47: ACCEPTED large_displacement E=-152.463250 Ha
+[2026-03-01 22:08:31] [WARNING ] Worker 20 step 48: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [WARNING ] Worker 20 step 49: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [INFO    ] Worker 20: DONE — 6/50 accepted (12.0%)
+[2026-03-01 22:08:31] [INFO    ] Worker 23 step 31: ACCEPTED twist E=-152.471652 Ha
+[2026-03-01 22:08:31] [WARNING ] Worker 23 step 32: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [WARNING ] Worker 23 step 33: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [WARNING ] Worker 23 step 34: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [INFO    ] Worker 11 step 17: ACCEPTED large_displacement E=-152.469424 Ha
+[2026-03-01 22:08:31] [WARNING ] Worker 11 step 18: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [WARNING ] Worker 11 step 19: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [INFO    ] Worker 2 step 41: ACCEPTED random_so3 E=-152.463536 Ha
+[2026-03-01 22:08:31] [INFO    ] Worker 0: 50/50 — accepted=10, rate=20.0%
+[2026-03-01 22:08:31] [INFO    ] Worker 0: DONE — 10/50 accepted (20.0%)
+[2026-03-01 22:08:31] [INFO    ] Worker 17: 40/50 — accepted=6, rate=15.0%
+[2026-03-01 22:08:31] [WARNING ] Worker 17 step 40: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:31] [INFO    ] Worker 21 step 49: ACCEPTED twist E=-152.465411 Ha
+[2026-03-01 22:08:31] [INFO    ] Worker 21: 50/50 — accepted=8, rate=16.0%
+[2026-03-01 22:08:31] [INFO    ] Worker 21: DONE — 8/50 accepted (16.0%)
+[2026-03-01 22:08:31] [INFO    ] Worker 3 step 35: ACCEPTED random_so3 E=-152.463536 Ha
+[2026-03-01 22:08:31] [INFO    ] Worker 15 step 44: ACCEPTED mirror E=-152.467678 Ha
+[2026-03-01 22:08:32] [INFO    ] Worker 12: 30/50 — accepted=11, rate=36.7%
+[2026-03-01 22:08:32] [INFO    ] Worker 23 step 35: ACCEPTED large_displacement E=-152.471165 Ha
+[2026-03-01 22:08:32] [WARNING ] Worker 23 step 36: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [WARNING ] Worker 23 step 37: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [INFO    ] Worker 13 step 23: ACCEPTED large_displacement E=-152.469482 Ha
+[2026-03-01 22:08:32] [INFO    ] Worker 11 step 20: ACCEPTED twist E=-152.469064 Ha
+[2026-03-01 22:08:32] [WARNING ] Worker 2 step 43: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [INFO    ] Worker 1 step 39: ACCEPTED roto_reflection E=-152.470212 Ha
+[2026-03-01 22:08:32] [INFO    ] Worker 1: 40/50 — accepted=11, rate=27.5%
+[2026-03-01 22:08:32] [INFO    ] Worker 17 step 41: ACCEPTED large_displacement E=-152.469106 Ha
+[2026-03-01 22:08:32] [INFO    ] Worker 3 step 36: ACCEPTED large_displacement E=-152.465725 Ha
+[2026-03-01 22:08:32] [WARNING ] Worker 3 step 37: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [WARNING ] Worker 15 step 46: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [INFO    ] Worker 22 step 23: ACCEPTED mirror E=-152.473186 Ha
+[2026-03-01 22:08:32] [WARNING ] Worker 22 step 24: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [INFO    ] Worker 12 step 30: ACCEPTED twist E=-152.467477 Ha
+[2026-03-01 22:08:32] [WARNING ] Worker 23 step 39: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [WARNING ] Worker 23 step 40: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [WARNING ] Worker 23 step 41: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [WARNING ] Worker 23 step 42: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [INFO    ] Worker 6 step 36: ACCEPTED exchange E=-152.466618 Ha
+[2026-03-01 22:08:32] [WARNING ] Worker 6 step 37: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [WARNING ] Worker 6 step 38: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [INFO    ] Worker 13 step 24: ACCEPTED random_so3 E=-152.469126 Ha
+[2026-03-01 22:08:32] [INFO    ] Worker 26: 30/50 — accepted=10, rate=33.3%
+[2026-03-01 22:08:32] [WARNING ] Worker 11 step 22: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [INFO    ] Worker 2 step 44: ACCEPTED random_so3 E=-152.463672 Ha
+[2026-03-01 22:08:32] [WARNING ] Worker 2 step 45: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:32] [WARNING ] Worker 2 step 46: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [WARNING ] Worker 17 step 43: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [WARNING ] Worker 17 step 44: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [WARNING ] Worker 17 step 45: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [WARNING ] Worker 17 step 46: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [INFO    ] Worker 3 step 38: ACCEPTED twist E=-152.463575 Ha
+[2026-03-01 22:08:33] [INFO    ] Worker 15 step 47: ACCEPTED mirror E=-152.467678 Ha
+[2026-03-01 22:08:33] [WARNING ] Worker 22 step 26: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [INFO    ] Worker 12 step 31: ACCEPTED large_displacement E=-152.467635 Ha
+[2026-03-01 22:08:33] [WARNING ] Worker 12 step 32: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [INFO    ] Worker 23 step 43: ACCEPTED large_displacement E=-152.472711 Ha
+[2026-03-01 22:08:33] [INFO    ] Worker 6 step 39: ACCEPTED twist E=-152.466687 Ha
+[2026-03-01 22:08:33] [INFO    ] Worker 6: 40/50 — accepted=15, rate=37.5%
+[2026-03-01 22:08:33] [WARNING ] Worker 13 step 26: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [INFO    ] Worker 26 step 30: ACCEPTED large_displacement E=-152.467520 Ha
+[2026-03-01 22:08:33] [INFO    ] Worker 2 step 47: ACCEPTED exchange E=-152.464684 Ha
+[2026-03-01 22:08:33] [WARNING ] Worker 2 step 48: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [WARNING ] Worker 2 step 49: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [INFO    ] Worker 2: DONE — 15/50 accepted (30.0%)
+[2026-03-01 22:08:33] [INFO    ] Worker 17 step 47: ACCEPTED twist E=-152.468518 Ha
+[2026-03-01 22:08:33] [WARNING ] Worker 17 step 48: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [INFO    ] Worker 3: 40/50 — accepted=15, rate=37.5%
+[2026-03-01 22:08:33] [INFO    ] Worker 15 step 48: ACCEPTED roto_reflection E=-152.466317 Ha
+[2026-03-01 22:08:33] [INFO    ] Worker 22 step 27: ACCEPTED mirror E=-152.473186 Ha
+[2026-03-01 22:08:33] [INFO    ] Worker 12 step 33: ACCEPTED exchange E=-152.469173 Ha
+[2026-03-01 22:08:33] [INFO    ] Worker 13 step 27: ACCEPTED large_displacement E=-152.466562 Ha
+[2026-03-01 22:08:33] [WARNING ] Worker 13 step 28: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:33] [WARNING ] Worker 13 step 29: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:34] [WARNING ] Worker 11 step 25: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:34] [INFO    ] Worker 1 step 42: ACCEPTED mirror E=-152.470212 Ha
+[2026-03-01 22:08:34] [INFO    ] Worker 17 step 49: ACCEPTED large_displacement E=-152.466653 Ha
+[2026-03-01 22:08:34] [INFO    ] Worker 17: 50/50 — accepted=9, rate=18.0%
+[2026-03-01 22:08:34] [INFO    ] Worker 17: DONE — 9/50 accepted (18.0%)
+[2026-03-01 22:08:34] [INFO    ] Worker 15: 50/50 — accepted=9, rate=18.0%
+[2026-03-01 22:08:34] [INFO    ] Worker 15: DONE — 9/50 accepted (18.0%)
+[2026-03-01 22:08:34] [INFO    ] Worker 12 step 34: ACCEPTED roto_reflection E=-152.462819 Ha
+[2026-03-01 22:08:34] [WARNING ] Worker 12 step 35: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:34] [WARNING ] Worker 12 step 36: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:34] [WARNING ] Worker 12 step 37: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:34] [INFO    ] Worker 23 step 45: ACCEPTED mirror E=-152.472711 Ha
+[2026-03-01 22:08:34] [WARNING ] Worker 6 step 42: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:34] [WARNING ] Worker 6 step 43: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:34] [WARNING ] Worker 6 step 44: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:34] [INFO    ] Worker 13 step 30: ACCEPTED twist E=-152.464122 Ha
+[2026-03-01 22:08:34] [INFO    ] Worker 26 step 32: ACCEPTED mirror E=-152.467520 Ha
+[2026-03-01 22:08:34] [INFO    ] Worker 11 step 26: ACCEPTED twist E=-152.468938 Ha
+[2026-03-01 22:08:34] [INFO    ] Worker 1 step 43: ACCEPTED mirror E=-152.470211 Ha
+[2026-03-01 22:08:34] [WARNING ] Worker 1 step 44: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:34] [INFO    ] Worker 3 step 41: ACCEPTED exchange E=-152.467233 Ha
+[2026-03-01 22:08:34] [INFO    ] Worker 22: 30/50 — accepted=5, rate=16.7%
+[2026-03-01 22:08:34] [INFO    ] Worker 12 step 38: ACCEPTED large_displacement E=-152.462756 Ha
+[2026-03-01 22:08:35] [WARNING ] Worker 23 step 47: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [INFO    ] Worker 6 step 45: ACCEPTED exchange E=-152.468572 Ha
+[2026-03-01 22:08:35] [WARNING ] Worker 6 step 46: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [INFO    ] Worker 13 step 31: ACCEPTED large_displacement E=-152.463711 Ha
+[2026-03-01 22:08:35] [INFO    ] Worker 26 step 33: ACCEPTED random_so3 E=-152.467091 Ha
+[2026-03-01 22:08:35] [WARNING ] Worker 1 step 46: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [INFO    ] Worker 3 step 42: ACCEPTED large_displacement E=-152.468855 Ha
+[2026-03-01 22:08:35] [WARNING ] Worker 3 step 43: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [WARNING ] Worker 3 step 44: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [WARNING ] Worker 3 step 45: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [INFO    ] Worker 12 step 39: ACCEPTED roto_reflection E=-152.463300 Ha
+[2026-03-01 22:08:35] [INFO    ] Worker 12: 40/50 — accepted=17, rate=42.5%
+[2026-03-01 22:08:35] [WARNING ] Worker 6 step 48: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [INFO    ] Worker 13 step 32: ACCEPTED random_so3 E=-152.463191 Ha
+[2026-03-01 22:08:35] [WARNING ] Worker 13 step 33: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [WARNING ] Worker 13 step 34: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [WARNING ] Worker 13 step 35: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [WARNING ] Worker 13 step 36: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [WARNING ] Worker 13 step 37: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [WARNING ] Worker 26 step 35: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:35] [WARNING ] Worker 11 step 29: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:36] [INFO    ] Worker 22 step 31: ACCEPTED twist E=-152.472601 Ha
+[2026-03-01 22:08:36] [INFO    ] Worker 23: 50/50 — accepted=13, rate=26.0%
+[2026-03-01 22:08:36] [INFO    ] Worker 23: DONE — 13/50 accepted (26.0%)
+[2026-03-01 22:08:36] [INFO    ] Worker 6: 50/50 — accepted=16, rate=32.0%
+[2026-03-01 22:08:36] [INFO    ] Worker 6: DONE — 16/50 accepted (32.0%)
+[2026-03-01 22:08:36] [INFO    ] Worker 13 step 38: ACCEPTED exchange E=-152.467792 Ha
+[2026-03-01 22:08:36] [INFO    ] Worker 26 step 36: ACCEPTED large_displacement E=-152.468612 Ha
+[2026-03-01 22:08:36] [INFO    ] Worker 11 step 30: ACCEPTED twist E=-152.469950 Ha
+[2026-03-01 22:08:36] [WARNING ] Worker 1 step 49: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:36] [INFO    ] Worker 1: DONE — 13/50 accepted (26.0%)
+[2026-03-01 22:08:36] [INFO    ] Worker 3 step 47: ACCEPTED twist E=-152.469694 Ha
+[2026-03-01 22:08:36] [INFO    ] Worker 13: 40/50 — accepted=12, rate=30.0%
+[2026-03-01 22:08:36] [WARNING ] Worker 13 step 40: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:36] [WARNING ] Worker 13 step 41: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:36] [INFO    ] Worker 26 step 37: ACCEPTED twist E=-152.468986 Ha
+[2026-03-01 22:08:36] [INFO    ] Worker 11 step 31: ACCEPTED large_displacement E=-152.466216 Ha
+[2026-03-01 22:08:36] [WARNING ] Worker 11 step 32: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:36] [WARNING ] Worker 11 step 33: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:37] [INFO    ] Worker 12 step 42: ACCEPTED mirror E=-152.463301 Ha
+[2026-03-01 22:08:37] [WARNING ] Worker 13 step 43: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:37] [INFO    ] Worker 11 step 34: ACCEPTED random_so3 E=-152.462802 Ha
+[2026-03-01 22:08:37] [INFO    ] Worker 3 step 49: ACCEPTED mirror E=-152.469694 Ha
+[2026-03-01 22:08:37] [INFO    ] Worker 3: 50/50 — accepted=19, rate=38.0%
+[2026-03-01 22:08:37] [INFO    ] Worker 3: DONE — 19/50 accepted (38.0%)
+[2026-03-01 22:08:37] [INFO    ] Worker 26 step 39: ACCEPTED mirror E=-152.468981 Ha
+[2026-03-01 22:08:37] [INFO    ] Worker 26: 40/50 — accepted=16, rate=40.0%
+[2026-03-01 22:08:37] [WARNING ] Worker 13 step 45: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:37] [INFO    ] Worker 11 step 35: ACCEPTED large_displacement E=-152.461980 Ha
+[2026-03-01 22:08:37] [WARNING ] Worker 11 step 36: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:37] [WARNING ] Worker 11 step 37: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:38] [WARNING ] Worker 22 step 36: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:38] [INFO    ] Worker 12 step 44: ACCEPTED mirror E=-152.463304 Ha
+[2026-03-01 22:08:38] [INFO    ] Worker 13 step 46: ACCEPTED twist E=-152.464814 Ha
+[2026-03-01 22:08:38] [WARNING ] Worker 13 step 47: random_so3 — no coordinate change (box rejection?)
+[2026-03-01 22:08:38] [WARNING ] Worker 13 step 48: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:38] [INFO    ] Worker 11 step 38: ACCEPTED exchange E=-152.461511 Ha
+[2026-03-01 22:08:38] [WARNING ] Worker 11 step 39: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:38] [INFO    ] Worker 26 step 40: ACCEPTED large_displacement E=-152.460841 Ha
+[2026-03-01 22:08:38] [INFO    ] Worker 12 step 45: ACCEPTED roto_reflection E=-152.465295 Ha
+[2026-03-01 22:08:39] [INFO    ] Worker 11 step 40: ACCEPTED large_displacement E=-152.461788 Ha
+[2026-03-01 22:08:39] [WARNING ] Worker 11 step 41: mirror — no coordinate change (box rejection?)
+[2026-03-01 22:08:39] [INFO    ] Worker 13 step 49: ACCEPTED twist E=-152.466914 Ha
+[2026-03-01 22:08:39] [INFO    ] Worker 13: 50/50 — accepted=14, rate=28.0%
+[2026-03-01 22:08:39] [INFO    ] Worker 13: DONE — 14/50 accepted (28.0%)
+[2026-03-01 22:08:39] [INFO    ] Worker 12 step 46: ACCEPTED mirror E=-152.465307 Ha
+[2026-03-01 22:08:39] [INFO    ] Worker 11 step 42: ACCEPTED exchange E=-152.462698 Ha
+[2026-03-01 22:08:39] [WARNING ] Worker 11 step 43: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:39] [WARNING ] Worker 11 step 44: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:39] [WARNING ] Worker 11 step 45: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:39] [WARNING ] Worker 11 step 46: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:39] [WARNING ] Worker 11 step 47: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:39] [INFO    ] Worker 22: 40/50 — accepted=6, rate=15.0%
+[2026-03-01 22:08:39] [INFO    ] Worker 12 step 47: ACCEPTED twist E=-152.469637 Ha
+[2026-03-01 22:08:39] [WARNING ] Worker 12 step 48: large_displacement — no coordinate change (box rejection?)
+[2026-03-01 22:08:40] [WARNING ] Worker 11 step 49: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:40] [INFO    ] Worker 11: DONE — 17/50 accepted (34.0%)
+[2026-03-01 22:08:40] [WARNING ] Worker 22 step 41: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:40] [WARNING ] Worker 22 step 42: twist — no coordinate change (box rejection?)
+[2026-03-01 22:08:40] [INFO    ] Worker 12: 50/50 — accepted=22, rate=44.0%
+[2026-03-01 22:08:40] [INFO    ] Worker 12: DONE — 22/50 accepted (44.0%)
+[2026-03-01 22:08:41] [WARNING ] Worker 22 step 45: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:41] [WARNING ] Worker 22 step 46: roto_reflection — no coordinate change (box rejection?)
+[2026-03-01 22:08:41] [INFO    ] Worker 22 step 47: ACCEPTED mirror E=-152.472602 Ha
+[2026-03-01 22:08:41] [WARNING ] Worker 22 step 48: exchange — no coordinate change (box rejection?)
+[2026-03-01 22:08:42] [INFO    ] Worker 26 step 47: ACCEPTED twist E=-152.460231 Ha
+[2026-03-01 22:08:42] [INFO    ] Worker 22: 50/50 — accepted=7, rate=14.0%
+[2026-03-01 22:08:42] [INFO    ] Worker 22: DONE — 7/50 accepted (14.0%)
+[2026-03-01 22:08:43] [INFO    ] Worker 26: 50/50 — accepted=18, rate=36.0%
+[2026-03-01 22:08:43] [INFO    ] Worker 26: DONE — 18/50 accepted (36.0%)

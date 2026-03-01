@@ -13,6 +13,7 @@ from scipy.spatial.distance import cdist, pdist
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from multiprocessing import Pool, cpu_count
+import time
 
 
 
@@ -822,6 +823,54 @@ class BHMCAnalyzer:
         """
         return ''.join(filter(lambda x: not x.isdigit(), s))
 
+    def compute_gyration_tensor_features(self, phase: Optional[str] = None) -> np.ndarray:
+        """  
+        Computes shape descriptors based on the eigenvalues of the gyration tensor for each structure
+
+        + Asphericity: Measures the deviation of the molecule's shape from a perfect spherical symmetry. Values near zero indicate a perfectly spherical distribution
+        + Acylindrity: Measures the deviation of the molecule's shape from cylindrical symmetry (rod-like). Values near zero indicate a perfect cylindrical distribution
+        + Relative Shape Anisotropy: kappa^2 = 0 is spherically symmetric, kappa^2 = 1 is perfect rod shaped
+        
+        Args:
+            phase: Specified phase to compute for. If None, computes for all structures.
+        """ 
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        
+        self._log(f"Computing gyration tensor based shape descriptors for {len(structures)} structures - Phase: {phase if phase else 'all'}")
+        features = np.zeros((len(structures), 3))  # Columns: [asphericity, acylindricity, kappa^2]
+        for i, s in enumerate(structures):
+            coords = s.molecule.coordinates
+            masses = s.molecule.masses
+            com = GeometryOps.center_of_mass(coords, masses)
+            centered = coords - com 
+
+            # Gyration Tensor S_alpha,beta = 1/sum(m_i) * sum(m_i * r_i,alpha * r_i,beta)
+            total_mass = np.sum(masses)
+            S = np.zeros((3, 3))
+            for j in range(len(masses)):
+                S += masses[j] * np.outer(centered[j], centered[j])
+            S /= total_mass
+            eigenvalues = np.sort(np.linalg.eigvalsh(S))  # Sort eigenvalues in ascending order: lambda_1 <= lambda_2 <= lambda_3
+            l1,l2,l3 = eigenvalues
+
+            asphericity = l3 - 0.5 * (l1 + l2)
+            acylindricity = l2 - l1
+            trace = l1 + l2 + l3
+            if trace > 1e-12:
+                kappa_squared = (3/2) * (l1**2 + l2**2 + l3**2) / (trace**2) - 0.5
+            else:
+                kappa_squared = 0.0
+
+            features[i] = [asphericity, acylindricity, kappa_squared]
+        
+        self._log(f"Gyration tensor features computed - Asphericity range: {features[:,0].min():.3f} to {features[:,0].max():.3f}, "
+                    f"Acylindricity range: {features[:,1].min():.3f} to {features[:,1].max():.3f}, "
+                    f"Kappa^2 range: {features[:,2].min():.3f} to {features[:,2].max():.3f}")
+        return features
+
 
     # =========================== Hydrogen Bond Analysis ===========================
 
@@ -860,7 +909,7 @@ class BHMCAnalyzer:
 
         # Number of processes
         if n_processes is None:
-            n_processes = max(cpu_count() - 1, n_structures)
+            n_processes = min(cpu_count() - 2, n_structures)
         n_processes = max(1, min(n_processes, n_structures))
         self._log(f"Using {n_processes} parallel processes for H-bond computation")
 
@@ -914,6 +963,7 @@ class BHMCAnalyzer:
         5. Intermolecular Distance Matrix (flattened upper triangle)
         6. Number of valid H-bond configurations
         7. Average H-bond angle
+        8. Gyration Tensor Shape Descriptors (Asphericity, Acylindricity, Kappa^2)
         """
         self._log("Constructing feature matrix...")
         delta_e = np.array([s.energy - self.get_lowest_energy_structure().energy for s in self.structures])
@@ -922,16 +972,18 @@ class BHMCAnalyzer:
         rotational_constants = np.array([self.determine_rotational_constants(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
         intermolecular_distances = np.array(self.compute_interatomic_distance_matrix())
         hbond_features = self.compute_hbond_features()
+        gyration_tensor_features = self.compute_gyration_tensor_features()
 
         feature_matrix = np.hstack((delta_e.reshape(-1, 1),
                                     rmsd_values.reshape(-1, 1), 
                                     rg_values.reshape(-1, 1), 
                                     rotational_constants, 
                                     intermolecular_distances,
-                                    hbond_features)) 
+                                    hbond_features,
+                                    gyration_tensor_features)) 
 
         self._log(f"Feature matrix shape: {feature_matrix.shape}")
-        self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...']")
+        self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2']")
 
 
         # Normalize using StandardScaler        
@@ -1188,15 +1240,25 @@ if __name__ == "__main__":
     print(f"Loading Structures from {xyz_path}...")
     print(f"Parsed {len(structures)} structures.")
     
-    # Initialize Analyzer
-    analyzer = BHMCAnalyzer(name="Test Analysis", submolecule_indices=submolecule_indices)
-    analyzer.add_structures_batch(structures)
-    print(f"Added {len(analyzer.structures)} structures to the analyzer.")
 
-    h_bond_features = analyzer.compute_hbond_features()
-    # Search for != 0 values
-    print("H-Bond Features (n_hbonds, avg_angle):")
-    for i, (n_hbonds, avg_angle) in enumerate(h_bond_features):
-        if n_hbonds > 0:
-            print(f"Structure {i}: n_hbonds = {n_hbonds}, avg_angle = {avg_angle:.2f} degrees")
+    multiplies = 10 # More structures for more effective speed comparison
+    structures_large = structures * multiplies
+    n_large = len(structures_large)
+    print(f"Testing H-bond feature computation on {n_large} structures with multiprocessing...")
+    analyzer = BHMCAnalyzer(submolecule_indices=submolecule_indices)
+    analyzer.add_structures_batch(structures_large)
+
+    # Serial
+    t0 = time.time()
+    features_serial = analyzer.compute_hbond_features(n_processes=1)
+    t_serial = time.time() - t0
+    print(f"Serial computation time: {t_serial:.2f} seconds")
+
+    procs = [2, 4, 8, 16]
+    for n_procs in procs:
+        t0 = time.time()
+        features_parallel = analyzer.compute_hbond_features(n_processes=n_procs)
+        t_parallel = time.time() - t0
+        print(f"Parallel computation time with {n_procs} processes: {t_parallel:.2f} seconds | Speedup: {t_serial / t_parallel:.2f}x")
+
 

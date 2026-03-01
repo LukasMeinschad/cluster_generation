@@ -12,11 +12,37 @@ from sklearn.preprocessing import StandardScaler
 from scipy.spatial.distance import cdist, pdist
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from multiprocessing import Pool, cpu_count
+
+
 
 from molecule_class import Molecule
 from transformations import GeometryOps
 from box import SimulationBox
 from logger import Logger
+
+def _compute_hbond_single(args: Tuple) -> Tuple[int,float]:
+    """  
+    Worker function to compute the H-bond configs, top-level for pickling
+
+    Args:
+        args: Tuple of (atom_labels, coordinates, angle_threshold)
+            - atom_labels: List[str]
+            - coordinates: np.ndarray of shape (n_atoms, 3)
+            - angle_threshold: float in degrees
+    """
+    atom_labels, coordinates, angle_threshold = args 
+
+    # Reconstruct molecule
+    mol = Molecule(name="worker_mol")
+    mol.add_atoms_batch(atom_labels, coordinates)
+    mol.compute_bonds()
+    valid_configs = mol.get_valid_hbond_configurations(angle_threshold=angle_threshold)
+    n_hbonds = len(valid_configs)
+    avg_angle = float(np.mean([c.angle for c in valid_configs])) if valid_configs else 0.0
+    return n_hbonds, avg_angle
+
+
 
 @dataclass
 class StructureData:
@@ -799,9 +825,12 @@ class BHMCAnalyzer:
 
     # =========================== Hydrogen Bond Analysis ===========================
 
+
+
     def compute_hbond_features(self,
                                angle_threshold: float = 150.0,
-                               phase: Optional[str] = None) -> np.ndarray:
+                               phase: Optional[str] = None,
+                               n_processes: Optional[int] = None) -> np.ndarray:
         """ 
         Computes hydrogen bond features for all structures
 
@@ -809,9 +838,12 @@ class BHMCAnalyzer:
             + Number of valid Hydrogen bond configuration 
             + Average Hydrogen bond angle (0.0 if no H-Bonds found)
 
+        Uses multiprocessing to parallelize the computation across structures
+            
         Args:
             angle_treshold: Minimum angle (in degrees) for a valid hydrogen bond
             phase: Specified phase to compute for. If None, computes for all structures.
+            n_processes: Number of parallel processes to use for computation. If None, uses all available cores.
 
         Returns:
             Numpy array of shape (n_structures, 2) with columns [n_hbonds, avg_angle]
@@ -820,38 +852,51 @@ class BHMCAnalyzer:
             structures = self.phases[phase]
         else:
             structures = self.structures
+        n_structures = len(structures)
+        self._log(f"Computing H-bond features for {n_structures} (angle_threshold={angle_threshold}°) - Phase: {phase if phase else 'all'}")
 
-        self._log(f"Computing H-bond features (angle_threshold={angle_threshold}°) for phase: {phase if phase else 'all'} - n_structures: {len(structures)}")
+        if n_structures == 0:
+            return np.zeros((0, 2))
 
-        features = np.zeros((len(structures),2)) # n_hbonds, avg_angle
+        # Number of processes
+        if n_processes is None:
+            n_processes = max(cpu_count() - 1, n_structures)
+        n_processes = max(1, min(n_processes, n_structures))
+        self._log(f"Using {n_processes} parallel processes for H-bond computation")
+
+        worker_args = []
+        for structure_data in structures:
+            mol = structure_data.molecule
+            worker_args.append((
+                list(mol.atom_labels),
+                np.array(mol.coordinates),
+                angle_threshold
+            ))
+        if n_processes > 1:
+            self._log("Starting multiprocessing pool for H-bond feature computation...")
+            with Pool(processes=n_processes) as pool:
+                results = pool.map(_compute_hbond_single, worker_args, chunksize=max(1, n_structures // (n_processes * 4)))
+        else:
+            self._log("Computing H-bond features sequentially (n_processes=1)...")
+            results = list(map(_compute_hbond_single, worker_args))
+        # Collect results
+        features = np.zeros((n_structures, 2))
         total_hbonds = 0
         structures_with_hbonds = 0
-        for i, structure_data in enumerate(structures):
-            mol = structure_data.molecule 
-
-            # Ensure the bonds are computed
-            if not mol._bonds_computed:
-                mol.compute_bonds()
-            
-            # Get valid H-bond configurations
-            valid_configs = mol.get_valid_hbond_configurations(angle_threshold=angle_threshold)
-            n_hbonds = len(valid_configs)
-            avg_angle = np.mean([c.angle for c in valid_configs]) if valid_configs else 0.0
+        for i ,(n_hbonds, avg_angle) in enumerate(results):
             features[i, 0] = n_hbonds
             features[i, 1] = avg_angle
-
             total_hbonds += n_hbonds
             if n_hbonds > 0:
                 structures_with_hbonds += 1
-        
-        self._log(f"Structures with H-bonds: {structures_with_hbonds}/{len(structures)}")
+        self._log(f"Structures with H-bonds: {structures_with_hbonds}/{n_structures}")
         self._log(f"Total H-bond configs: {total_hbonds}")
-        if structures_with_hbonds > 0 :
-            self._log(f"Avg H-bonds per struct: {total_hbonds / structures_with_hbonds:.2f}")
-            hbond_angles = features[features[:,0] > 0, 1]
-            self._log(f"Avg H-bond angle across all configs: {np.mean(hbond_angles):.2f}°")
+        if structures_with_hbonds > 0:
+            self._log(f"Avg H-bonds per struct (with H-bonds): {total_hbonds / structures_with_hbonds:.2f}")
+            hbond_angles = features[features[:, 0] > 0, 1]
+            self._log(f"Avg H-bond angle: {np.mean(hbond_angles):.2f}° (std: {np.std(hbond_angles):.2f}°)")
             self._log(f"Min/Max H-bond angle: {np.min(hbond_angles):.2f}° / {np.max(hbond_angles):.2f}°")
-        
+
         return features
 
 

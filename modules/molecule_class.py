@@ -46,12 +46,16 @@ class HBondConfiguration:
     hydrogen_idx: int
     acceptor_idx: int
     angle: Optional[float] = None
+    donor_acceptor_distance: Optional[float] = None 
     
-    def is_valid(self, threshold: float = 150.0) -> bool:
+    def is_valid(self, threshold: float = 150.0, max_distance: float = 3.5) -> bool:
         """
         Check if configuration meets angle threshold
         """
-        return self.angle is not None and self.angle >= threshold
+        angle_ok = self.angle is not None and self.angle >= threshold
+        distance_ok = self.donor_acceptor_distance is not None and self.donor_acceptor_distance <= max_distance
+        return angle_ok and distance_ok
+
 
 
 class GeometryCalculator:
@@ -182,10 +186,24 @@ class HydrogenBondAnalyzer:
                 h_idx = np.where(self.molecule.atom_labels == h_label)[0][0]
                 config = HBondConfiguration(donor_idx, h_idx, acceptor_idx)
                 config.angle = self._calculate_config_angle(config)
+                config.donor_acceptor_distance = self._calculate_donor_acceptor_distance(config)
                 configurations.append(config)
         
         return configurations
-    
+
+    def _calculate_donor_acceptor_distance(self, config: HBondConfiguration) -> float:
+        """  
+        Helper function to calculate the distacne between the donor and acceptor atoms
+
+        Args:
+            config (HBondConfiguration): The hydrogen bond configuration for which to calculate the distance
+        """    
+        coords_donor = self.molecule.coordinates[config.donor_idx]
+        coords_acceptor = self.molecule.coordinates[config.acceptor_idx]
+        return self.geometry.calculate_distance(coords_donor, coords_acceptor)
+
+
+
     def _find_common_hydrogens(
         self, 
         donor_bonds: List[Bond], 
@@ -474,13 +492,14 @@ class Molecule:
     
     def get_valid_hbond_configurations(
         self, 
-        angle_threshold: float = 150.0
+        angle_threshold: float = 150.0,
+        max_distance: float = 3.5
         ) -> List[HBondConfiguration]:
         """
         Get hydrogen bond configurations meeting angle criterion
         """
         configs = self.find_hbond_configurations()
-        return [c for c in configs if c.is_valid(angle_threshold)]
+        return [c for c in configs if c.is_valid(angle_threshold, max_distance)]
     
     def get_hbond_donor_environments(self) -> List["SubMolecule"]:
         """

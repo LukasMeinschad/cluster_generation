@@ -386,6 +386,11 @@ class MultiPhaseBHMC:
 
         analyzer.rmsd_filtering()
         analyzer.plot_rmsd_heatmap()
+        
+        # Precompute the feature matrix
+        analyzer.feature_matrix(normalize=True)  # Normalized features for clustering
+
+
         analyzer.plot_energy_distribution()
         analyzer.plot_energy_vs_rmsd()
         analyzer.plot_rg_vs_energy()
@@ -393,6 +398,7 @@ class MultiPhaseBHMC:
         analyzer.plot_pca_explained_variance()
         analyzer.plot_pca_agglomerative(n_clusters=n_clusters)
         analyzer.plot_tsne_agglomerative(n_clusters=n_clusters)
+        analyzer.plot_umap_agglomerative(n_clusters=n_clusters)
 
 
         analyzer.agglomerative_clustering(n_clusters=n_clusters)

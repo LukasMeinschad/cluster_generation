@@ -16,6 +16,15 @@ from multiprocessing import Pool, cpu_count
 import time
 
 
+# UMAP Import 
+try:
+    from umap import UMAP
+except ImportError:
+    UMAP = None
+    print("UMAP is not installed. Install with `pip install umap-learn` to use UMAP dimensionality reduction.")
+
+
+
 
 from molecule_class import Molecule
 from transformations import GeometryOps
@@ -31,17 +40,23 @@ def _compute_hbond_single(args: Tuple) -> Tuple[int,float]:
             - atom_labels: List[str]
             - coordinates: np.ndarray of shape (n_atoms, 3)
             - angle_threshold: float in degrees
+            - max_distance: float in Angstroms the donor-acceptor distance threshold
     """
-    atom_labels, coordinates, angle_threshold = args 
+    atom_labels, coordinates, angle_threshold, max_distance  = args 
 
     # Reconstruct molecule
     mol = Molecule(name="worker_mol")
     mol.add_atoms_batch(atom_labels, coordinates)
     mol.compute_bonds()
-    valid_configs = mol.get_valid_hbond_configurations(angle_threshold=angle_threshold)
+    valid_configs = mol.get_valid_hbond_configurations(angle_threshold=angle_threshold, max_distance=max_distance)
+    
+    # Distance based filtering
+    valid_configs = [c for c in valid_configs if c.donor_acceptor_distance is not None and c.donor_acceptor_distance <= max_distance]
+    
     n_hbonds = len(valid_configs)
     avg_angle = float(np.mean([c.angle for c in valid_configs])) if valid_configs else 0.0
-    return n_hbonds, avg_angle
+    avg_da_distance = float(np.mean([c.donor_acceptor_distance for c in valid_configs])) if valid_configs else 0.0
+    return n_hbonds, avg_angle, avg_da_distance 
 
 
 
@@ -69,6 +84,13 @@ class BHMCAnalyzer:
         self.submolecule_indices = submolecule_indices
         self.logger = logger
         self.labels = None # Cluster labels
+
+        # Storage of feature matrix
+        self._feature_matrix_raw: Optional[np.ndarray] = None 
+        self._feature_matrix_normalized: Optional[np.ndarray] = None 
+
+
+
 
     def _log(self, msg: str, level: str = "info"):
         """ 
@@ -878,6 +900,7 @@ class BHMCAnalyzer:
 
     def compute_hbond_features(self,
                                angle_threshold: float = 150.0,
+                               max_distance: float = 3.5,
                                phase: Optional[str] = None,
                                n_processes: Optional[int] = None) -> np.ndarray:
         """ 
@@ -886,16 +909,18 @@ class BHMCAnalyzer:
         Computes:
             + Number of valid Hydrogen bond configuration 
             + Average Hydrogen bond angle (0.0 if no H-Bonds found)
+            + Average Hydrogen bond distance (0.0 if no H-Bonds found)
 
         Uses multiprocessing to parallelize the computation across structures
             
         Args:
             angle_treshold: Minimum angle (in degrees) for a valid hydrogen bond
+            max_distance: Maximum distance (in Å) for a valid hydrogen bond
             phase: Specified phase to compute for. If None, computes for all structures.
             n_processes: Number of parallel processes to use for computation. If None, uses all available cores.
 
         Returns:
-            Numpy array of shape (n_structures, 2) with columns [n_hbonds, avg_angle]
+            Numpy array of shape (n_structures, 3) with columns [n_hbonds, avg_angle, avg_da_distance]
         """
         if phase:
             structures = self.phases[phase]
@@ -905,7 +930,7 @@ class BHMCAnalyzer:
         self._log(f"Computing H-bond features for {n_structures} (angle_threshold={angle_threshold}°) - Phase: {phase if phase else 'all'}")
 
         if n_structures == 0:
-            return np.zeros((0, 2))
+            return np.zeros((0, 3))
 
         # Number of processes
         if n_processes is None:
@@ -919,7 +944,8 @@ class BHMCAnalyzer:
             worker_args.append((
                 list(mol.atom_labels),
                 np.array(mol.coordinates),
-                angle_threshold
+                angle_threshold,
+                max_distance
             ))
         if n_processes > 1:
             self._log("Starting multiprocessing pool for H-bond feature computation...")
@@ -929,12 +955,13 @@ class BHMCAnalyzer:
             self._log("Computing H-bond features sequentially (n_processes=1)...")
             results = list(map(_compute_hbond_single, worker_args))
         # Collect results
-        features = np.zeros((n_structures, 2))
+        features = np.zeros((n_structures, 3))
         total_hbonds = 0
         structures_with_hbonds = 0
-        for i ,(n_hbonds, avg_angle) in enumerate(results):
+        for i ,(n_hbonds, avg_angle, avg_da_distance) in enumerate(results):
             features[i, 0] = n_hbonds
             features[i, 1] = avg_angle
+            features[i, 2] = avg_da_distance
             total_hbonds += n_hbonds
             if n_hbonds > 0:
                 structures_with_hbonds += 1
@@ -943,14 +970,47 @@ class BHMCAnalyzer:
         if structures_with_hbonds > 0:
             self._log(f"Avg H-bonds per struct (with H-bonds): {total_hbonds / structures_with_hbonds:.2f}")
             hbond_angles = features[features[:, 0] > 0, 1]
+            hbond_distances = features[features[:, 0] > 0, 2]
             self._log(f"Avg H-bond angle: {np.mean(hbond_angles):.2f}° (std: {np.std(hbond_angles):.2f}°)")
             self._log(f"Min/Max H-bond angle: {np.min(hbond_angles):.2f}° / {np.max(hbond_angles):.2f}°")
+            self._log(f"Avg D-A distance: {np.mean(hbond_distances):.2f} Å (std: {np.std(hbond_distances):.2f} Å)")
 
         return features
 
 
 
     # ====================== Clustering Methods =======================
+
+    def _ensure_feature_matrix(self):
+        """   
+        Compute and cache the feature matrix if not already done.
+        """
+        if self._feature_matrix_raw is not None:
+            return 
+        self._log("Computing and caching feature matrix...")
+        delta_e = np.array([s.energy - self.get_lowest_energy_structure().energy for s in self.structures])
+        rmsd_values = np.array([self._calculate_rmsd(s.molecule.coordinates, self.get_lowest_energy_structure().molecule.coordinates) for s in self.structures])
+        rg_values = np.array([self.radius_of_gyration(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
+        rotational_constants = np.array([self.determine_rotational_constants(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
+        intermolecular_distances = np.array(self.compute_interatomic_distance_matrix())
+        hbond_features = self.compute_hbond_features()
+        gyration_tensor_features = self.compute_gyration_tensor_features()
+
+        self._feature_matrix_raw = np.hstack((delta_e.reshape(-1, 1),
+                                            rmsd_values.reshape(-1, 1), 
+                                            rg_values.reshape(-1, 1), 
+                                            rotational_constants, 
+                                            intermolecular_distances,
+                                            hbond_features,
+                                            gyration_tensor_features))
+        self._log(f"Feature matrix shape: {self._feature_matrix_raw.shape}")
+        self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2']")
+        scaler = StandardScaler()
+        self._feature_matrix_normalized = scaler.fit_transform(self._feature_matrix_raw)
+        self._log("Feature matrix computed and cached.")
+
+
+
 
     def feature_matrix(self, normalize = True) -> np.ndarray:
         """   
@@ -963,36 +1023,16 @@ class BHMCAnalyzer:
         5. Intermolecular Distance Matrix (flattened upper triangle)
         6. Number of valid H-bond configurations
         7. Average H-bond angle
-        8. Gyration Tensor Shape Descriptors (Asphericity, Acylindricity, Kappa^2)
+        8. Average D-A distance
+        9. Gyration Tensor Shape Descriptors (Asphericity, Acylindricity, Kappa^2)
         """
-        self._log("Constructing feature matrix...")
-        delta_e = np.array([s.energy - self.get_lowest_energy_structure().energy for s in self.structures])
-        rmsd_values = np.array([self._calculate_rmsd(s.molecule.coordinates, self.get_lowest_energy_structure().molecule.coordinates) for s in self.structures])
-        rg_values = np.array([self.radius_of_gyration(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
-        rotational_constants = np.array([self.determine_rotational_constants(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
-        intermolecular_distances = np.array(self.compute_interatomic_distance_matrix())
-        hbond_features = self.compute_hbond_features()
-        gyration_tensor_features = self.compute_gyration_tensor_features()
-
-        feature_matrix = np.hstack((delta_e.reshape(-1, 1),
-                                    rmsd_values.reshape(-1, 1), 
-                                    rg_values.reshape(-1, 1), 
-                                    rotational_constants, 
-                                    intermolecular_distances,
-                                    hbond_features,
-                                    gyration_tensor_features)) 
-
-        self._log(f"Feature matrix shape: {feature_matrix.shape}")
-        self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2']")
-
-
-        # Normalize using StandardScaler        
-        scaler = StandardScaler()
+        self._ensure_feature_matrix()
         if normalize:
-            feature_matrix = scaler.fit_transform(feature_matrix)
-
-
-        return feature_matrix
+            return self._feature_matrix_normalized
+        else:
+            return self._feature_matrix_raw
+        
+        
     
     def agglomerative_clustering(self, n_clusters: int = 5, phase: Optional[str] = None, linkage: str = "ward") -> np.ndarray:
         """   
@@ -1059,7 +1099,6 @@ class BHMCAnalyzer:
         if not structures:
             print(f"No structures found for phase: {phase}")
             return
-        feature_matrix = self.feature_matrix()
         pca_result, explained_variance = self.pca(n_components=n_components, phase=phase)
         plt.figure(figsize=(10, 6))
         plt.bar(range(1, n_components + 1), explained_variance * 100, color='skyblue')
@@ -1082,7 +1121,11 @@ class BHMCAnalyzer:
             linkage: Linkage criterion for agglomerative clustering ("ward", "complete", "average", "single")
         """
         pca_result, explained_variance = self.pca(phase=phase)
-        labels = self.agglomerative_clustering(n_clusters=n_clusters, phase=phase, linkage=linkage)
+        # Use cached labels if available with matching n_clusters, otherwise compute
+        if self.labels is None or len(np.unique(self.labels)) != n_clusters:
+            labels = self.agglomerative_clustering(n_clusters=n_clusters, phase=phase, linkage=linkage)
+        else:
+            labels = self.labels
         plt.figure(figsize=(10, 6))
         scatter = plt.scatter(pca_result[:, 0], pca_result[:, 1], c=labels, cmap='tab10', alpha=0.7)
         plt.xlabel(f'PC1 ({explained_variance[0]*100:.1f}%)')
@@ -1152,6 +1195,98 @@ class BHMCAnalyzer:
         tsne_result = tsne_model.fit_transform(feature_mat)
         return tsne_result
 
+    def umap(self,
+             n_components: int = 2,
+             n_neighbors: int = 15,
+             min_dist: float = 0.1,
+             metric: str = 'euclidean',
+             random_state: int = 42,
+             phase: Optional[str] = None) -> np.ndarray:
+        """  
+        Performs UMAP dimensionality reduction on the feature matrix
+        
+        Args:
+            n_components: Number of dimensions to reduce to (typically 2 or 3 for visualization)
+            n_neighbors: Number of neighbors to consider for local structure
+            min_dist: Minimum distance between points in the embedding space
+            metric: Distance metric to use (e.g., 'euclidean', 'manhattan')
+            random_state: Random seed for reproducibility
+            phase: Specified phase to analyze. If None, analyzes all structures.
+        """
+        if UMAP is None:
+            raise ImportError("UMAP is not installed. Please install umap-learn to use this method.")
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        if not structures:
+            return np.array([])
+        feature_mat = self.feature_matrix()
+        n_samples = feature_mat.shape[0]
+        effective_n_neighbors = min(n_neighbors, n_samples - 1)
+        if effective_n_neighbors != n_neighbors:
+            self._log(f"Adjusting n_neighbors from {n_neighbors} to {effective_n_neighbors} due to number of samples ({n_samples})", level="warning")
+            n_neighbors = effective_n_neighbors
+        
+        umap_model = UMAP(
+            n_components = n_components,
+            n_neighbors = n_neighbors,
+            min_dist = min_dist,
+            metric = metric,
+            random_state = random_state
+        )
+        umap_result = umap_model.fit_transform(feature_mat) 
+        return umap_result
+
+    def plot_umap_agglomerative(self, n_clusters: int = 5, 
+                                phase: Optional[str] = None,
+                                linkage: str = "ward", 
+                                random_state: int = 42, 
+                                colored_by: str = "cluster") -> None:
+        """  
+        Plots the UMAP projection of the structures colored by Agglomerative Clustering labels
+
+        Creates a 2x2 grid with different n_neighbors values [10, 15, 30, 50]
+        
+        Args:
+            n_clusters: Number of clusters to form
+            phase: Specified phase to analyze. If None, analyzes all structures.
+            linkage: Linkage criterion for agglomerative clustering ("ward", "complete", "average", "single")
+            random_state: Random seed for reproducibility
+            colored_by: Whether to color points by "cluster" labels or "energy" values
+        """
+        if UMAP is None:
+            raise ImportError("UMAP is not installed. Please install umap-learn to use this method.")
+    
+        # Compute clustering once before the loop
+        if self.labels is None or len(np.unique(self.labels)) != n_clusters:
+            labels = self.agglomerative_clustering(n_clusters=n_clusters, phase=phase, linkage=linkage)
+        else:
+            labels = self.labels
+        
+        n_neighbors_list = [10, 15, 30, 50]
+        fig,axes = plt.subplots(2, 2, figsize=(16, 12))
+        for ax, n_neighbors in zip(axes.flatten(), n_neighbors_list):
+            umap_result = self.umap(n_components=2, n_neighbors=n_neighbors, random_state=random_state, phase=phase)
+            if colored_by == "cluster":
+                scatter = ax.scatter(umap_result[:, 0], umap_result[:, 1], c=labels, cmap='tab10', alpha=0.7)
+                ax.set_title(f'UMAP (n_neighbors={n_neighbors}) - Colored by Cluster', fontsize=12)
+                plt.colorbar(scatter, ax=ax, label='Cluster Label')
+            elif colored_by == "energy":
+                energies = np.array([s.energy for s in (self.phases[phase] if phase else self.structures)])
+                scatter = ax.scatter(umap_result[:, 0], umap_result[:, 1], c=energies, cmap='viridis', alpha=0.7)
+                ax.set_title(f'UMAP (n_neighbors={n_neighbors}) - Colored by Energy', fontsize=12)
+                plt.colorbar(scatter, ax=ax, label='Energy')
+            ax.set_xlabel('UMAP Dimension 1')
+            ax.set_ylabel('UMAP Dimension 2')
+            ax.grid(True, alpha=0.3)
+        plt.suptitle(f'UMAP Projection with Agglomerative Clustering - Phase: {phase if phase else "All"}', fontsize=14, fontweight='bold')
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+        plt.savefig(f"figures/umap_agglomerative_{phase if phase else 'all'}_{colored_by}.png")
+        plt.close()
+
+
+
     def plot_tsne_agglomerative(self,
                                 n_clusters: int = 5,
                                 phase: Optional[str] = None,
@@ -1171,11 +1306,16 @@ class BHMCAnalyzer:
             random_state: Random seed for reproducibility
             colored_by: Whether to color points by "cluster" labels or "energy" values
         """
+        # Compute clustering once before the loop
+        if self.labels is None or len(np.unique(self.labels)) != n_clusters:
+            labels = self.agglomerative_clustering(n_clusters=n_clusters, phase=phase, linkage=linkage)
+        else:
+            labels = self.labels
+
         perplexities = [20, 40, 60, 80]
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         for ax, perplexity in zip(axes.flatten(), perplexities):
             tsne_result = self.tsne(n_components=2, perplexity=perplexity, n_iter=n_iter, random_state=random_state, phase=phase)
-            labels = self.agglomerative_clustering(n_clusters=n_clusters, phase=phase, linkage=linkage)
             if colored_by == "cluster":
                 scatter = ax.scatter(tsne_result[:, 0], tsne_result[:, 1], c=labels, cmap='tab10', alpha=0.7)
                 ax.set_title(f't-SNE (perplexity={perplexity}) - Colored by Cluster', fontsize=12)
@@ -1248,17 +1388,24 @@ if __name__ == "__main__":
     analyzer = BHMCAnalyzer(submolecule_indices=submolecule_indices)
     analyzer.add_structures_batch(structures_large)
 
-    # Serial
-    t0 = time.time()
-    features_serial = analyzer.compute_hbond_features(n_processes=1)
-    t_serial = time.time() - t0
-    print(f"Serial computation time: {t_serial:.2f} seconds")
+    # Test donor acceptor dist
+    features = analyzer.compute_hbond_features(angle_threshold=150.0, max_distance=3.5, n_processes=4)
+    print(f"Computed H-bond features for {features.shape[0]} structures. Sample output (first 5 rows):")
+    print("n_hbonds | avg_angle | avg_donor-acceptor_distance")
+    print(features[:5]) 
 
-    procs = [2, 4, 8, 16]
-    for n_procs in procs:
-        t0 = time.time()
-        features_parallel = analyzer.compute_hbond_features(n_processes=n_procs)
-        t_parallel = time.time() - t0
-        print(f"Parallel computation time with {n_procs} processes: {t_parallel:.2f} seconds | Speedup: {t_serial / t_parallel:.2f}x")
+
+#    # Serial
+#    t0 = time.time()
+#    features_serial = analyzer.compute_hbond_features(n_processes=1)
+#    t_serial = time.time() - t0
+#    print(f"Serial computation time: {t_serial:.2f} seconds")
+#
+#    procs = [2, 4, 8, 16]
+#    for n_procs in procs:
+#        t0 = time.time()
+#        features_parallel = analyzer.compute_hbond_features(n_processes=n_procs)
+#        t_parallel = time.time() - t0
+#        print(f"Parallel computation time with {n_procs} processes: {t_parallel:.2f} seconds | Speedup: {t_serial / t_parallel:.2f}x")
 
 

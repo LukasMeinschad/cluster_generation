@@ -152,6 +152,8 @@ def _single_point_worker(molecule: Molecule, config_dict: Dict) -> Dict:
     result = {
         'success': False,
         'energy': None,
+        'dipole_vec': None,
+        'dipole_magnitude': None,
         'error': '',
         'wall_time': 0.0,
         'coordinates': None
@@ -183,8 +185,17 @@ def _single_point_worker(molecule: Molecule, config_dict: Dict) -> Dict:
         
         # Calculate energy
         method_basis = f"{config_dict['method']}/{config_dict['basis']}"
-        energy = psi4.energy(method_basis, molecule=psi4_mol)
+        energy, wfn = psi4.energy(method_basis, molecule=psi4_mol, return_wfn=True)
         
+        # Compute dipole moment
+        psi4.oeprop(wfn, 'DIPOLE')
+        vec = psi4.variable('SCF DIPOLE')
+        vec = np.array(vec)
+        magnitude = np.linalg.norm(vec)
+
+        result['dipole_vec'] = vec.tolist()
+        result['dipole_magnitude'] = magnitude
+
         result['success'] = True
         result['energy'] = float(energy)
         result['wall_time'] = time.time() - start_time
@@ -339,7 +350,7 @@ def direct_energy(molecule: Molecule,
         multiplicity: Spin multiplicity
         
     Returns:
-        Energy in Hartree or None if failed
+        Tuple of (energy in Hartree, dipole vector [dx,dy,dz], dipole magnitude) or None if failed
     """
     config_dict = {
         'method': method,
@@ -358,7 +369,7 @@ def direct_energy(molecule: Molecule,
             return None
             
         if result.get('success'):
-            return result.get('energy')
+            return result.get('energy'), result.get('dipole_vec'), result.get('dipole_magnitude')
         else:
             # Zeige Fehler an für Debugging
             error = result.get('error', 'Unknown error')

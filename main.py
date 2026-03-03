@@ -48,10 +48,10 @@ if __name__ == "__main__":
     init_logger = Logger(name="init", log_file="cluster_gen.out", file_mode="a")
 
     init_config = InitializationConfig(
-        method="mp2",
+        method="hf",
         basis="cc-pvdz",
         box_type="sphere",
-        box_scale_factor=2.0,
+        box_scale_factor=5,
         min_distance=1.8,
         optimize_submolecules=True,
         verbose=False
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     bhmc_config = BHMCConfig(
         temperature=800,
-        method="mp2",
+        method="hf",
         basis="cc-pvdz",
         verbose=False,
         adaptive_operators=True
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecule=initial_molecule,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=100,
+        n_structures_per_worker=28,
         n_processes=28
     )
 

@@ -24,6 +24,13 @@ if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
 
+
+    N_WORKERS = 28 
+
+    
+
+
+
     # Parse the Arguments
     args = get_args()
 
@@ -51,13 +58,16 @@ if __name__ == "__main__":
         method="hf",
         basis="cc-pvdz",
         box_type="sphere",
-        box_scale_factor=5,
+        box_scale_factor=2.5,
         min_distance=1.8,
         optimize_submolecules=True,
         verbose=False
     )
     initializer = ClusterInitializer(config=init_config, logger=init_logger)
-    initial_molecule, submol_indices, simulation_box = initializer.initialize_from_xyz(args.i[0])
+    initial_molecules, submol_indices, simulation_box = initializer.initialize_from_xyz(
+        args.i[0], 
+        n_configurations=N_WORKERS
+    )
 
     # ── BHMC Phase A ────────────────────────────────────────────
     # Summary logger → cluster_gen.out
@@ -80,14 +90,19 @@ if __name__ == "__main__":
     )
 
     phase_a_candidates = bhmc_sampler.run_phase_a(
-        initial_molecule=initial_molecule,
+        initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
         n_structures_per_worker=28,
-        n_processes=28
+        n_processes=N_WORKERS
     )
 
+    # Structure of phase a candidates
+    # (molecule, energy, [dx,dy,dz] 'dipole vector', float - magnitude)
+
+
     # Obtain all structures
-    phase_a_structures = [structure for structure, energy in phase_a_candidates]
+    phase_a_structures = [candidate[0] for candidate in phase_a_candidates]
+
 
     # ── Analysis ────────────────────────────────────────────────
     logger_analysis = Logger(name="analysis", log_file="cluster_gen.out", file_mode="a")
@@ -113,7 +128,7 @@ if __name__ == "__main__":
 
     # --- Write Trajectories
     # Phase A candidates
-    phase_a_energies = [energy for structure, energy in phase_a_candidates]
+    phase_a_energies = [candidate[1] for candidate in phase_a_candidates] 
     logger_opt.write_xyz_trajectory(
         molecules=phase_a_structures,
         filepath="trajectories/phase_a_candidates.xyz",

@@ -1,132 +1,318 @@
-[2026-03-03 14:49:04] [INFO    ] ================================================================================
-[2026-03-03 14:49:04] [INFO    ]                                   CLUSTER GEN                                   
-[2026-03-03 14:49:04] [INFO    ] ================================================================================
-[2026-03-03 14:49:04] [INFO    ] Start Time: 2026-03-03 14:49:04
-[2026-03-03 14:49:04] [INFO    ] Python Version: 3.9.23
-[2026-03-03 14:49:04] [INFO    ] Working Directory: /media/storage_6/lme/master_thesis/cluster_generation
-[2026-03-03 14:49:04] [INFO    ] Log File: /media/storage_6/lme/master_thesis/cluster_generation/cluster_gen.out
-[2026-03-03 14:49:04] [INFO    ] Made by: Lukas Meinschad
-[2026-03-03 14:49:04] [INFO    ] ========================================================================
-[2026-03-03 14:49:04] [INFO    ]                          Cluster Initialization                         
-[2026-03-03 14:49:04] [INFO    ] ========================================================================
-[2026-03-03 14:49:04] [INFO    ] Configuration:
+[2026-03-04 14:11:00] [INFO    ] ================================================================================
+[2026-03-04 14:11:00] [INFO    ]                                   CLUSTER GEN                                   
+[2026-03-04 14:11:00] [INFO    ] ================================================================================
+[2026-03-04 14:11:00] [INFO    ] Start Time: 2026-03-04 14:11:00
+[2026-03-04 14:11:00] [INFO    ] Python Version: 3.9.23
+[2026-03-04 14:11:00] [INFO    ] Working Directory: /media/storage_6/lme/master_thesis/cluster_generation
+[2026-03-04 14:11:00] [INFO    ] Log File: /media/storage_6/lme/master_thesis/cluster_generation/cluster_gen.out
+[2026-03-04 14:11:00] [INFO    ] Made by: Lukas Meinschad
+[2026-03-04 14:11:00] [INFO    ] ========================================================================
+[2026-03-04 14:11:00] [INFO    ]                          Cluster Initialization                         
+[2026-03-04 14:11:00] [INFO    ] ========================================================================
+[2026-03-04 14:11:00] [INFO    ] Configuration:
   Method: hf
   Basis set: cc-pvdz
   Box type: sphere
-  Box scale factor: 5
+  Box scale factor: 2.5
   Minimum distance: 1.8 Angstrom
   Optimize submolecules: True
+  Initial configurations: 28
 
-[2026-03-03 14:49:04] [INFO    ] 
-[1/5] Loading molecule from test_molecules/nh3_2.xyz
-[2026-03-03 14:49:04] [INFO    ]  Loaded: 8 atoms
-[2026-03-03 14:49:04] [INFO    ] 
+[2026-03-04 14:11:00] [INFO    ] 
+[1/5] Loading molecule from test_molecules/h2o_2.xyz
+[2026-03-04 14:11:00] [INFO    ]  Loaded: 6 atoms
+[2026-03-04 14:11:00] [INFO    ] 
 [2/5] Fragmenting molecule into submolecules
-[2026-03-03 14:49:04] [INFO    ]  Found 2 submolecules:
-[2026-03-03 14:49:04] [INFO    ]   Submolecule 1: 4 atoms
-[2026-03-03 14:49:04] [INFO    ]   Submolecule 2: 4 atoms
-[2026-03-03 14:49:04] [INFO    ] 
+[2026-03-04 14:11:00] [INFO    ]  Found 2 submolecules:
+[2026-03-04 14:11:00] [INFO    ]   Submolecule 1: 3 atoms
+[2026-03-04 14:11:00] [INFO    ]   Submolecule 2: 3 atoms
+[2026-03-04 14:11:00] [INFO    ] 
 [3/5] Optimizing Submolecules (parallelized)
-[2026-03-03 14:49:04] [INFO    ] Workers: 2
-[2026-03-03 14:49:31] [INFO    ]   Submolecule 1 optimized successfully
-[2026-03-03 14:49:31] [INFO    ]   Submolecule 2 optimized successfully
-[2026-03-03 14:49:32] [INFO    ] 
+[2026-03-04 14:11:00] [INFO    ] Workers: 2
+[2026-03-04 14:11:25] [INFO    ]   Submolecule 2 optimized successfully
+[2026-03-04 14:11:25] [INFO    ]   Submolecule 1 optimized successfully
+[2026-03-04 14:11:26] [INFO    ] 
 [4/5] Creating simulation box
-[2026-03-03 14:49:32] [INFO    ]  Box type:  sphere
-[2026-03-03 14:49:32] [INFO    ]  Radius: 9.30 Angstrom
-[2026-03-03 14:49:32] [INFO    ]  Volume: 3367.22 Angstrom^3
-[2026-03-03 14:49:32] [INFO    ] 
+[2026-03-04 14:11:26] [INFO    ]  Box type:  sphere
+[2026-03-04 14:11:26] [INFO    ]  Radius: 4.24 Angstrom
+[2026-03-04 14:11:26] [INFO    ]  Volume: 319.70 Angstrom^3
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating 28 random initial configurations
+[2026-03-04 14:11:26] [INFO    ] 
 [5/5] Generating random initial configuration
-[2026-03-03 14:49:32] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
-[2026-03-03 14:49:32] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
-[2026-03-03 14:49:32] [INFO    ] ============================================================
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 1 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 2 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 3 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 4 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 5 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 6 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 7 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 8 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 9 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 10 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 11 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 12 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 13 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 14 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 15 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 16 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 4 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 17 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 18 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 19 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 20 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 2 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 21 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 22 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 23 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 24 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 25 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 26 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 27 generated successfully
+[2026-03-04 14:11:26] [INFO    ] 
+[5/5] Generating random initial configuration
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 1 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Submolecule 2 placed successfully after 1 attempts
+[2026-03-04 14:11:26] [INFO    ]   Configuration 28 generated successfully
+[2026-03-04 14:11:26] [INFO    ] ============================================================
 Initialization Complete!
-Total atoms: 8
+Total atoms: 6
 Submolecules: 2
 Simulation box type: sphere
-Box radius: 9.30 Angstrom
-Box volume: 3367.22 Angstrom^3
-[2026-03-03 14:49:32] [INFO    ] ========================================================================
-[2026-03-03 14:49:32] [INFO    ]                     Phase A: Global PES Exploration                     
-[2026-03-03 14:49:32] [INFO    ] ========================================================================
-[2026-03-03 14:49:32] [INFO    ] Configuration:
-[2026-03-03 14:49:32] [INFO    ]   Workers: 28
-[2026-03-03 14:49:32] [INFO    ]   Steps per worker: 28
-[2026-03-03 14:49:32] [INFO    ]   Total steps: 784
-[2026-03-03 14:49:32] [INFO    ]   Method/Basis: hf/cc-pvdz
-[2026-03-03 14:49:32] [INFO    ]   Temperature: 800 K
-[2026-03-03 14:49:32] [INFO    ]   Adaptive operators: True
-[2026-03-03 14:49:32] [INFO    ]   Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3
-[2026-03-03 14:49:32] [INFO    ]   Simulation Box: <box.SimulationBox object at 0x7f016ea28dc0>
-[2026-03-03 14:49:32] [INFO    ]   Worker log: bhmc_workers.log
-[2026-03-03 14:49:32] [INFO    ] Starting parallel BHMC chains...
-[2026-03-03 14:50:26] [INFO    ]   Worker 0: 1 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 1: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 2: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 3: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 4: 2 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 5: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 6: 1 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 7: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 8: 2 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 9: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 10: 2 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 11: 3 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 12: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 13: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 14: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 15: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 16: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 17: 1 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 18: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 19: 2 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 20: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 21: 1 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 22: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 23: 1 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 24: 0 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 25: 2 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 26: 2 structures accepted
-[2026-03-03 14:50:26] [INFO    ]   Worker 27: 1 structures accepted
-[2026-03-03 14:50:26] [INFO    ] ------------------------------------------------------------------------
-[2026-03-03 14:50:26] [INFO    ] Phase A Results
-[2026-03-03 14:50:26] [INFO    ] ------------------------------------------------------------------------
-[2026-03-03 14:50:26] [INFO    ] Total steps: 784
-[2026-03-03 14:50:26] [INFO    ] Total accepted: 21
-[2026-03-03 14:50:26] [INFO    ] Overall acceptance rate: 2.68%
-[2026-03-03 14:50:26] [INFO    ] Energy Statistics (Hartree):
-[2026-03-03 14:50:26] [INFO    ]   Min:  -112.391880
-[2026-03-03 14:50:26] [INFO    ]   Max:  -112.391283
-[2026-03-03 14:50:26] [INFO    ]   Mean: -112.391762
-[2026-03-03 14:50:26] [INFO    ]   Std:  0.000179
-[2026-03-03 14:50:26] [INFO    ] ========================================================================
-[2026-03-03 14:50:26] [INFO    ]                             Phase A Analysis                            
-[2026-03-03 14:50:26] [INFO    ] ========================================================================
-[2026-03-03 14:50:26] [INFO    ] Total structures: 21
-[2026-03-03 14:50:26] [INFO    ] Target clusters: 10
-[2026-03-03 14:50:26] [INFO    ] Added 21 structures to BHMCAnalyzer (phase: unknown). Total structures: 21
-[2026-03-03 14:50:26] [INFO    ] Energy Statistics (phase: all):
-[2026-03-03 14:50:26] [INFO    ]   N Structures: 21
-[2026-03-03 14:50:26] [INFO    ]   Min: -112.391880
-[2026-03-03 14:50:26] [INFO    ]   Max: -112.391283
-[2026-03-03 14:50:26] [INFO    ]   Mean: -112.391762
-[2026-03-03 14:50:26] [INFO    ]   Median: -112.391810
-[2026-03-03 14:50:26] [INFO    ]   Std: 0.000179
-[2026-03-03 14:50:26] [INFO    ]   Q25: -112.391880
-[2026-03-03 14:50:26] [INFO    ]   Q75: -112.391810
-[2026-03-03 14:50:26] [INFO    ]   IQR: 0.000069
-[2026-03-03 14:50:28] [INFO    ] RMSD filtering (threshold=0.500 Å) - Phase: all - Starting with 21 structures
-[2026-03-03 14:50:28] [INFO    ] RMSD filtering completed - Phase: all - 3 structures remaining (removed 18)
-[2026-03-03 14:50:28] [INFO    ] Computing 3x3 RMSD matrix for phase: all
-[2026-03-03 14:50:28] [INFO    ] RMSD matrix computed: Range: [0.0108, 0.6498 ]
-[2026-03-03 14:50:28] [INFO    ] Computing and caching feature matrix...
-[2026-03-03 14:50:28] [INFO    ] Computing H-bond features for 3 (angle_threshold=150.0°) - Phase: all
-[2026-03-03 14:50:28] [INFO    ] Using 3 parallel processes for H-bond computation
-[2026-03-03 14:50:28] [INFO    ] Starting multiprocessing pool for H-bond feature computation...
-[2026-03-03 14:50:40] [INFO    ] Structures with H-bonds: 0/3
-[2026-03-03 14:50:40] [INFO    ] Total H-bond configs: 0
-[2026-03-03 14:50:40] [INFO    ] Computing gyration tensor based shape descriptors for 3 structures - Phase: all
-[2026-03-03 14:50:40] [INFO    ] Gyration tensor features computed - Asphericity range: 7.576 to 7.578, Acylindricity range: 0.030 to 0.033, Kappa^2 range: 0.958 to 0.959
-[2026-03-03 14:50:40] [INFO    ] Feature matrix shape: (3, 40)
-[2026-03-03 14:50:40] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2']
-[2026-03-03 14:50:40] [INFO    ] Feature matrix computed and cached.
+Box radius: 4.24 Angstrom
+Box volume: 319.70 Angstrom^3
+[2026-03-04 14:11:26] [INFO    ] ========================================================================
+[2026-03-04 14:11:26] [INFO    ]                     Phase A: Global PES Exploration                     
+[2026-03-04 14:11:26] [INFO    ] ========================================================================
+[2026-03-04 14:11:26] [INFO    ] Configuration:
+[2026-03-04 14:11:26] [INFO    ]   Workers: 28
+[2026-03-04 14:11:26] [INFO    ]   Steps per worker: 28
+[2026-03-04 14:11:26] [INFO    ]   Total steps: 784
+[2026-03-04 14:11:26] [INFO    ]   Method/Basis: hf/cc-pvdz
+[2026-03-04 14:11:26] [INFO    ]   Temperature: 800 K
+[2026-03-04 14:11:26] [INFO    ]   Adaptive operators: True
+[2026-03-04 14:11:26] [INFO    ]   Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3
+[2026-03-04 14:11:26] [INFO    ]   Independent initial configs: 28
+[2026-03-04 14:11:26] [INFO    ]   Simulation Box: <box.SimulationBox object at 0x7f4a10fb8340>
+[2026-03-04 14:11:26] [INFO    ]   Worker log: bhmc_workers.log
+[2026-03-04 14:11:26] [INFO    ] Starting parallel BHMC chains...
+[2026-03-04 14:12:00] [INFO    ]   Worker 0: 0 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 1: 14 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 2: 13 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 3: 8 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 4: 0 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 5: 11 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 6: 11 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 7: 11 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 8: 10 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 9: 16 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 10: 14 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 11: 6 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 12: 13 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 13: 8 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 14: 15 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 15: 7 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 16: 14 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 17: 8 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 18: 9 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 19: 4 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 20: 17 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 21: 15 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 22: 0 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 23: 13 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 24: 3 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 25: 11 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 26: 6 structures accepted
+[2026-03-04 14:12:00] [INFO    ]   Worker 27: 13 structures accepted
+[2026-03-04 14:12:00] [INFO    ] ------------------------------------------------------------------------
+[2026-03-04 14:12:00] [INFO    ] Phase A Results
+[2026-03-04 14:12:00] [INFO    ] ------------------------------------------------------------------------
+[2026-03-04 14:12:00] [INFO    ] Total steps: 784
+[2026-03-04 14:12:00] [INFO    ] Total accepted: 270
+[2026-03-04 14:12:00] [INFO    ] Overall acceptance rate: 34.44%
+[2026-03-04 14:12:00] [INFO    ] Energy Statistics (Hartree):
+[2026-03-04 14:12:00] [INFO    ]   Min:  -152.061385
+[2026-03-04 14:12:00] [INFO    ]   Max:  -152.004297
+[2026-03-04 14:12:00] [INFO    ]   Mean: -152.055570
+[2026-03-04 14:12:00] [INFO    ]   Std:  0.005457
+[2026-03-04 14:12:00] [INFO    ] Dipole Statistics (Debye):
+[2026-03-04 14:12:00] [INFO    ]   Min:  0.1812
+[2026-03-04 14:12:00] [INFO    ]   Max:  1.8263
+[2026-03-04 14:12:00] [INFO    ]   Mean: 1.0988
+[2026-03-04 14:12:00] [INFO    ] ========================================================================
+[2026-03-04 14:12:00] [INFO    ]                             Phase A Analysis                            
+[2026-03-04 14:12:00] [INFO    ] ========================================================================
+[2026-03-04 14:12:00] [INFO    ] Total structures: 270
+[2026-03-04 14:12:00] [INFO    ] Target clusters: 10
+[2026-03-04 14:12:00] [INFO    ] Added batch of 270 structures to phase: unknown. Total structures in this phase: 270
+[2026-03-04 14:12:00] [INFO    ] Energy Statistics (phase: all):
+[2026-03-04 14:12:00] [INFO    ]   N Structures: 270
+[2026-03-04 14:12:00] [INFO    ]   Min: -152.061385
+[2026-03-04 14:12:00] [INFO    ]   Max: -152.004297
+[2026-03-04 14:12:00] [INFO    ]   Mean: -152.055570
+[2026-03-04 14:12:00] [INFO    ]   Median: -152.055371
+[2026-03-04 14:12:00] [INFO    ]   Std: 0.005457
+[2026-03-04 14:12:00] [INFO    ]   Q25: -152.058159
+[2026-03-04 14:12:00] [INFO    ]   Q75: -152.053932
+[2026-03-04 14:12:00] [INFO    ]   IQR: 0.004227
+[2026-03-04 14:12:00] [INFO    ] Dipole Magnitude Statistics (Debye):
+[2026-03-04 14:12:00] [INFO    ]   Min:  0.1812
+[2026-03-04 14:12:00] [INFO    ]   Max:  1.8263
+[2026-03-04 14:12:00] [INFO    ]   Mean: 1.0988
+[2026-03-04 14:12:00] [INFO    ]   Std:  0.3769
+[2026-03-04 14:12:02] [INFO    ] RMSD filtering (threshold=0.500 Å) - Phase: all - Starting with 270 structures
+[2026-03-04 14:12:02] [INFO    ] RMSD filtering completed - Phase: all - 179 structures remaining (removed 91)
+[2026-03-04 14:12:02] [INFO    ] Computing 179x179 RMSD matrix for phase: all
+[2026-03-04 14:12:04] [INFO    ] RMSD matrix computed: Range: [0.0803, 2.6645 ]
+[2026-03-04 14:12:05] [INFO    ] Computing and caching feature matrix...
+[2026-03-04 14:12:05] [INFO    ] Computing H-bond features for 179 (angle_threshold=150.0°) - Phase: all
+[2026-03-04 14:12:05] [INFO    ] Using 42 parallel processes for H-bond computation
+[2026-03-04 14:12:05] [INFO    ] Starting multiprocessing pool for H-bond feature computation...
+[2026-03-04 14:12:22] [INFO    ] Structures with H-bonds: 2/179
+[2026-03-04 14:12:22] [INFO    ] Total H-bond configs: 2
+[2026-03-04 14:12:22] [INFO    ] Avg H-bonds per struct (with H-bonds): 1.00
+[2026-03-04 14:12:22] [INFO    ] Avg H-bond angle: 161.60° (std: 0.15°)
+[2026-03-04 14:12:22] [INFO    ] Min/Max H-bond angle: 161.44° / 161.75°
+[2026-03-04 14:12:22] [INFO    ] Avg D-A distance: 2.68 Å (std: 0.02 Å)
+[2026-03-04 14:12:22] [INFO    ] Computing gyration tensor based shape descriptors for 179 structures - Phase: all
+[2026-03-04 14:12:22] [INFO    ] Gyration tensor features computed - Asphericity range: 1.044 to 12.682, Acylindricity range: 0.001 to 0.056, Kappa^2 range: 0.827 to 0.986
+[2026-03-04 14:12:22] [INFO    ] Feature matrix shape: (179, 28)
+[2026-03-04 14:12:22] [INFO    ] Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude']
+[2026-03-04 14:12:22] [INFO    ] Feature matrix computed and cached.
+[2026-03-04 14:12:23] [INFO    ] Performing Agglomerative Clustering (n_clusters=10, linkage='ward') for phase: all - n_structures: 179
+[2026-03-04 14:12:23] [INFO    ] Cluster distribution:
+[2026-03-04 14:12:23] [INFO    ]  Cluster 0: 22 structures | Energy range: -152.05 to -152.05
+[2026-03-04 14:12:23] [INFO    ]  Cluster 1: 25 structures | Energy range: -152.06 to -152.05
+[2026-03-04 14:12:23] [INFO    ]  Cluster 2: 29 structures | Energy range: -152.06 to -152.05
+[2026-03-04 14:12:23] [INFO    ]  Cluster 3: 6 structures | Energy range: -152.05 to -152.04
+[2026-03-04 14:12:23] [INFO    ]  Cluster 4: 29 structures | Energy range: -152.06 to -152.05
+[2026-03-04 14:12:23] [INFO    ]  Cluster 5: 2 structures | Energy range: -152.06 to -152.06
+[2026-03-04 14:12:23] [INFO    ]  Cluster 6: 41 structures | Energy range: -152.06 to -152.05
+[2026-03-04 14:12:23] [INFO    ]  Cluster 7: 2 structures | Energy range: -152.00 to -152.00
+[2026-03-04 14:12:23] [INFO    ]  Cluster 8: 9 structures | Energy range: -152.05 to -152.05
+[2026-03-04 14:12:23] [INFO    ]  Cluster 9: 14 structures | Energy range: -152.06 to -152.05
+[2026-03-04 14:12:34] [INFO    ] Performing Agglomerative Clustering (n_clusters=10, linkage='ward') for phase: all - n_structures: 179
+[2026-03-04 14:12:34] [INFO    ] Cluster distribution:
+[2026-03-04 14:12:34] [INFO    ]  Cluster 0: 22 structures | Energy range: -152.05 to -152.05
+[2026-03-04 14:12:34] [INFO    ]  Cluster 1: 25 structures | Energy range: -152.06 to -152.05
+[2026-03-04 14:12:34] [INFO    ]  Cluster 2: 29 structures | Energy range: -152.06 to -152.05
+[2026-03-04 14:12:34] [INFO    ]  Cluster 3: 6 structures | Energy range: -152.05 to -152.04
+[2026-03-04 14:12:34] [INFO    ]  Cluster 4: 29 structures | Energy range: -152.06 to -152.05
+[2026-03-04 14:12:34] [INFO    ]  Cluster 5: 2 structures | Energy range: -152.06 to -152.06
+[2026-03-04 14:12:34] [INFO    ]  Cluster 6: 41 structures | Energy range: -152.06 to -152.05
+[2026-03-04 14:12:34] [INFO    ]  Cluster 7: 2 structures | Energy range: -152.00 to -152.00
+[2026-03-04 14:12:34] [INFO    ]  Cluster 8: 9 structures | Energy range: -152.05 to -152.05
+[2026-03-04 14:12:34] [INFO    ]  Cluster 9: 14 structures | Energy range: -152.06 to -152.05
+[2026-03-04 14:12:34] [INFO    ] ========================================================================
+[2026-03-04 14:12:34] [INFO    ]                            Local Optimization                           
+[2026-03-04 14:12:34] [INFO    ] ========================================================================
+[2026-03-04 14:13:32] [INFO    ] Optimized 7/10 structures successfully
+[2026-03-04 14:13:32] [INFO    ] Wrote 270 structures to trajectories/phase_a_candidates.xyz
+[2026-03-04 14:13:32] [INFO    ] Wrote 7 structures to trajectories/optimized_representatives.xyz
+[2026-03-04 14:13:32] [INFO    ] ========================================================================
+[2026-03-04 14:13:32] [INFO    ] Total runtime: 151.5s (2.5 min)
+[2026-03-04 14:13:32] [INFO    ] ========================================================================

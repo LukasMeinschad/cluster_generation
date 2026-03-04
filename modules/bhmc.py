@@ -40,7 +40,13 @@ class EnergyEvaluator:
         self.method = method
         self.basis_set = basis
 
-    def evaluate(self, molecule: Molecule) -> Optional[float]:
+    def evaluate(self, molecule: Molecule) -> Tuple[Optional[float], Optional[List[float]], Optional[float]]:
+        """ 
+        Evaluate energy and the dipole moment using Psi4
+
+        Returns:
+            Tuple of (energy in Hartree, dipole vector [dx,dy,dz], dipole magnitude) or (None, None, None) if evaluation fails.
+        """
         return direct_energy(molecule, method=self.method, basis=self.basis_set)
 
 
@@ -67,7 +73,7 @@ def _get_worker_logger(log_file: Optional[str] = None, worker_id: int = 0) -> Op
 
 # ================================ Multiprocessing Worker ================================
 
-def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
+def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], float]]:
     """Worker function for parallel BHMC Phase A exploration.
     
     Args:
@@ -75,7 +81,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
               operator_list, config_dict, worker_id, sim_box_dict, worker_log_file)
               
     Returns:
-        List of (Molecule, energy) tuples for accepted structures
+        List of (Molecule, energy, dipole_vec, dipole_magnitude) tuples for accepted structures
     """
     (initial_molecule, submolecule_indices, n_structures,
      operator_list, config_dict, worker_id, sim_box_dict, worker_log_file) = args
@@ -134,7 +140,13 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
     )
     
     current_structure = copy.deepcopy(initial_molecule)
-    current_energy = evaluator.evaluate(current_structure)
+    eval_result = evaluator.evaluate(current_structure)
+    
+    if eval_result is None:
+        _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
+        return []
+    
+    current_energy, current_dipole_vec, current_dipole_mag = eval_result
     
     if current_energy is None:
         _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
@@ -167,10 +179,17 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
                 n_rejected += 1
                 continue
             
-            new_energy = evaluator.evaluate(new_structure)
+            new_eval = evaluator.evaluate(new_structure)
+            
+            if new_eval is None:
+                _log(f"Worker {worker_id} step {step}: Energy eval failed after {operator['name']}", level="warning")
+                n_rejected += 1
+                continue
+            
+            new_energy, new_dipole_vec, new_dipole_mag = new_eval
             
             if new_energy is None:
-                _log(f"Worker {worker_id} step {step}: Energy eval failed after {operator['name']}", level="warning")
+                _log(f"Worker {worker_id} step {step}: Energy eval returned None after {operator['name']}", level="warning")
                 n_rejected += 1
                 continue
             
@@ -184,9 +203,16 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float]]:
             if accept:
                 current_structure = copy.deepcopy(new_structure)
                 current_energy = new_energy
-                accepted_structures.append((copy.deepcopy(current_structure), current_energy))
+                current_dipole_vec = new_dipole_vec
+                current_dipole_mag = new_dipole_mag
+                accepted_structures.append((
+                    copy.deepcopy(current_structure), 
+                    current_energy,
+                    current_dipole_vec,
+                    current_dipole_mag
+                ))
                 n_accepted += 1
-                _log(f"Worker {worker_id} step {step}: ACCEPTED {operator['name']} E={current_energy:.6f} Ha")
+                _log(f"Worker {worker_id} step {step}: ACCEPTED {operator['name']} E={current_energy:.6f} Ha dipole={current_dipole_mag:.4f} D")
             else:
                 n_rejected += 1
                 
@@ -243,7 +269,7 @@ class MultiPhaseBHMC:
         self.worker_log_file = worker_log_file
         
         # Storage for Phase A results
-        self.phase_a_structures: List[Tuple[Molecule, float]] = []
+        self.phase_a_structures: List[Tuple[Molecule, float, List[float], float]] = []
 
     def _log(self, msg: str, level: str = "info") -> None:
         """Log a summary message to the main log file."""
@@ -253,21 +279,29 @@ class MultiPhaseBHMC:
             getattr(self.logger, level)(msg)
 
     def run_phase_a(self, 
-                    initial_molecule: Molecule,
+                    initial_molecules: List[Molecule],
                     submolecule_indices: List[List[int]],
                     n_structures_per_worker: int = 300,
-                    n_processes: int = 10) -> List[Tuple[Molecule, float]]:
+                    n_processes: int = 10) -> List[Tuple[Molecule, float, List[float], float]]:
         """Run Phase A: Parallel exploration with independent BHMC chains.
-        
+
+        Each worker starts from a different initial configuration for better PES coverage.
+         
         Args:
-            initial_molecule: Starting molecular structure
-            submolecule_indices: List of submolecule atom indices for operators
-            n_structures_per_worker: Number of BHMC steps per worker
-            n_processes: Number of parallel workers
+            initial_molecules: List of initial molecules, one per worker. Length determines the number of workers if n_processes is not specified.
+            submolecule_indices: List of submolecule atom indices for operator application
+            n_structures_per_worker: Number of BHMC steps each worker will perform
             
         Returns:
-            List of (Molecule, energy) tuples for all accepted structures
+            List of (Molecule, energy, dipole_vec, dipole_magnitude) tuples
         """
+        if n_processes is None:
+            n_processes = len(initial_molecules)
+        
+        if len(initial_molecules) != n_processes:
+            raise ValueError(f"Number of initial molecules ({len(initial_molecules)}) must match n_processes ({n_processes})")
+        
+
         if self.logger:
             self.logger.header("Phase A: Global PES Exploration")
         
@@ -279,6 +313,8 @@ class MultiPhaseBHMC:
         self._log(f"  Temperature: {self.config.temperature} K")
         self._log(f"  Adaptive operators: {self.config.adaptive_operators}")
         self._log(f"  Operators: {', '.join(op[0] for op in self.operators)}")
+        self._log(f"  Independent initial configs: {n_processes}")
+
         if self.simulation_box:
             self._log(f"  Simulation Box: {self.simulation_box}")
         if self.worker_log_file:
@@ -294,10 +330,10 @@ class MultiPhaseBHMC:
         
         sim_box_dict = self.simulation_box.to_dict() if self.simulation_box else None
         
-        # Workers get the WORKER log file, not the main summary log
+        # Here each worker gets its own initial molecule
         args_list = [
             (
-                initial_molecule,
+                initial_molecules[worker_id],
                 submolecule_indices,
                 n_structures_per_worker,
                 self.operators,
@@ -336,12 +372,17 @@ class MultiPhaseBHMC:
             self._log(f"Overall acceptance rate: {total_accepted/total_generated*100:.2f}%")
         
         if all_accepted_structures:
-            energies = [e for _, e in all_accepted_structures]
+            energies = [e for _, e, _, _ in all_accepted_structures]
+            dipoles = [d for _, _, _, d in all_accepted_structures]
             self._log(f"Energy Statistics (Hartree):")
             self._log(f"  Min:  {min(energies):.6f}")
             self._log(f"  Max:  {max(energies):.6f}")
             self._log(f"  Mean: {np.mean(energies):.6f}")
             self._log(f"  Std:  {np.std(energies):.6f}")
+            self._log(f"Dipole Statistics (Debye):")
+            self._log(f"  Min:  {min(dipoles):.4f}")
+            self._log(f"  Max:  {max(dipoles):.4f}")
+            self._log(f"  Mean: {np.mean(dipoles):.4f}")
         
         return self.phase_a_structures
     
@@ -376,8 +417,15 @@ class MultiPhaseBHMC:
         # Get energy statistics for analysis log
         energy_stats = analyzer.get_energy_statistics()
         
+        # Log dipole statistics
+        dipoles = np.array([s.dipole_magnitude for s in analyzer.structures])
+        if np.any(dipoles > 0):
+            self._log(f"Dipole Magnitude Statistics (Debye):")
+            self._log(f"  Min:  {np.min(dipoles):.4f}")
+            self._log(f"  Max:  {np.max(dipoles):.4f}")
+            self._log(f"  Mean: {np.mean(dipoles):.4f}")
+            self._log(f"  Std:  {np.std(dipoles):.4f}")
 
-        
         analyzer.plot_com_trajectory_2d_projection(
             simulation_box=simulation_box,
             save_path="figures/phase_a_com_trajectory.png",

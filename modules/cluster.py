@@ -71,6 +71,8 @@ class StructureData:
     step: int = -1
     worker_id: int = -1
     accepted: bool = True
+    dipole_vector: Optional[List[float]] = None 
+    dipole_magnitude: float = 0.0
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 class BHMCAnalyzer:
@@ -106,6 +108,8 @@ class BHMCAnalyzer:
                       molecule: Molecule,
                       energy: float, 
                       phase: str = "unknown",
+                      dipole_vector: Optional[List[float]] = None,
+                      dipole_magnitude: float = 0.0,
                       **kwargs):
         """   
         Add a structure to the analysis
@@ -114,12 +118,16 @@ class BHMCAnalyzer:
             molecule: Molecule object representing the structure
             energy: Energy of the structure
             phase: Phase of the BHMC process (e.g., "phase_a", "phase_b", "phase_c")
+            dipole_vector: Optional list of 3 floats representing the dipole vector
+            dipole_magnitude: Optional float representing the magnitude of the dipole moment
             **kwargs: Additional properties (e.g., step, worker_id, accepted)
         """
         structure_data = StructureData(
             molecule=molecule,
             energy=energy,
             phase=phase,
+            dipole_vector = dipole_vector,
+            dipole_magnitude=dipole_magnitude,
             metadata=kwargs
         )
         self.structures.append(structure_data)
@@ -132,12 +140,26 @@ class BHMCAnalyzer:
         Add multiple structures at once
 
         Args:
-            structures: List of tuples containing (Molecule, energy)
+            structures: List of tuples containing (Molecule, energy) or (Molecule, energy, dipole_vec, dipole_magnitude)
             phase: Phase of the BHMC process for all structures
         """
-        for mol, energy in structures:
-            self.add_structure(mol, energy, phase=phase)
-        self._log(f"Added {len(structures)} structures to BHMCAnalyzer (phase: {phase}). Total structures: {len(self.structures)}")
+        for item in structures:
+            if len(item) == 4:
+                mol, energy, dipole_vec, dipole_mag = item 
+                self.add_structure(molecule=mol,
+                                   energy=energy,
+                                   phase=phase,
+                                   dipole_vector=dipole_vec,
+                                   dipole_magnitude=dipole_mag) 
+                
+            elif len(item) == 2:
+                mol, energy = item
+                self.add_structure(molecule=mol,
+                                      energy=energy,
+                                      phase=phase)
+            else:
+                raise ValueError(f"Invalid structure tuple length: {len(item)}. Expected 2 or 4.")
+        self._log(f"Added batch of {len(structures)} structures to phase: {phase}. Total structures in this phase: {len(self.phases[phase])}")
 
 
 
@@ -995,6 +1017,9 @@ class BHMCAnalyzer:
         intermolecular_distances = np.array(self.compute_interatomic_distance_matrix())
         hbond_features = self.compute_hbond_features()
         gyration_tensor_features = self.compute_gyration_tensor_features()
+        dipole_magnitudes = np.array([s.dipole_magnitude for s in self.structures])
+
+
 
         self._feature_matrix_raw = np.hstack((delta_e.reshape(-1, 1),
                                             rmsd_values.reshape(-1, 1), 
@@ -1002,9 +1027,10 @@ class BHMCAnalyzer:
                                             rotational_constants, 
                                             intermolecular_distances,
                                             hbond_features,
-                                            gyration_tensor_features))
+                                            gyration_tensor_features,
+                                            dipole_magnitudes.reshape(-1, 1)))
         self._log(f"Feature matrix shape: {self._feature_matrix_raw.shape}")
-        self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2']")
+        self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude']")
         scaler = StandardScaler()
         self._feature_matrix_normalized = scaler.fit_transform(self._feature_matrix_raw)
         self._log("Feature matrix computed and cached.")
@@ -1025,6 +1051,7 @@ class BHMCAnalyzer:
         7. Average H-bond angle
         8. Average D-A distance
         9. Gyration Tensor Shape Descriptors (Asphericity, Acylindricity, Kappa^2)
+        10. Dipole Magnitude (Debye)
         """
         self._ensure_feature_matrix()
         if normalize:

@@ -61,14 +61,16 @@ class ClusterInitializer:
         if self.logger:
            getattr(self.logger, level)(msg) 
 
-    def initialize_from_xyz(self, xyz_file: str) -> Tuple[Molecule, List[List[int]], SimulationBox]:
+    def initialize_from_xyz(self, xyz_file: str, n_configurations: int = 1) -> Tuple[Molecule, List[List[int]], SimulationBox]:
         """Complete initialization workflow from XYZ file.
         
         Args:
             xyz_file: Path to XYZ file containing molecular structure
+            n_configurations: Number of random initial configurations to generate (e.g, one per BHMC worker)
+
             
         Returns:
-            Tuple of (initial_molecule, submolecule_indices, simulation_box)
+            Tuple of (initial_molecules, submolecule_indices, simulation_box)
         """
         if self.logger:
             self.logger.header("Cluster Initialization")
@@ -78,9 +80,9 @@ class ClusterInitializer:
                     f"  Box type: {self.config.box_type}\n" \
                     f"  Box scale factor: {self.config.box_scale_factor}\n" \
                     f"  Minimum distance: {self.config.min_distance} Angstrom\n" \
-                    f"  Optimize submolecules: {self.config.optimize_submolecules}\n"
+                    f"  Optimize submolecules: {self.config.optimize_submolecules}\n" \
+                    f"  Initial configurations: {n_configurations}\n"
             self.logger.info(msg)
-        
         
         # Step 1: Load molecule
         molecule = self._load_molecule(xyz_file)
@@ -99,14 +101,14 @@ class ClusterInitializer:
         simulation_box = self._create_simulation_box(submolecules)
     
         # Step 5: Generate random initial configuration
-        initial_molecule = self._generate_random_configuration(
-            submolecules, simulation_box
+        initial_molecules = self._generate_random_configurations(
+            submolecules, simulation_box, n_configurations
         )
     
         summary_lines = [
             f"{'='*60}",
             f"Initialization Complete!",
-            f"Total atoms: {len(initial_molecule.coordinates)}",
+            f"Total atoms: {len(initial_molecules[0].coordinates)}",
             f"Submolecules: {len(submolecules)}",
             f"Simulation box type: {simulation_box.box_type}",
         ]
@@ -120,8 +122,34 @@ class ClusterInitializer:
         summary = "\n".join(summary_lines)
         self._log(summary)
     
-        return initial_molecule, submol_indices, simulation_box
+        return initial_molecules, submol_indices, simulation_box
     
+    def _generate_random_configurations(
+            self,
+            submolecules: List[Molecule],
+            simulation_box: SimulationBox,
+            n_configurations: int = 1
+        ) -> List[Molecule]:
+        """   
+        Helper function to generate multiple random initial configurations inside the simulation box
+
+        Args:
+            submolecules: List of submolecules to place
+            simulation_box: Simulation box to place molecules in
+            n_configurations: Number of random configurations to generate
+        """
+        self._log(f"\n[5/5] Generating {n_configurations} random initial configurations")
+
+        configurations = []
+        for config_idx in range(n_configurations):
+            mol = self._generate_random_configuration(submolecules, simulation_box)
+            configurations.append(mol)
+            if n_configurations > 1:
+                self._log(f"  Configuration {config_idx+1} generated successfully")
+        return configurations 
+
+
+
     def _load_molecule(self, xyz_file: str) -> Molecule:
         """Load molecule from XYZ file."""
         self._log(f"\n[1/5] Loading molecule from {xyz_file}") 
@@ -369,6 +397,7 @@ def test_initializer(xyz_file: str,
                      box_type: str = "sphere",
                      box_scale: float = 2.5,
                      min_distance: float = 2.0,
+                     n_configurations: int = 1,
                      save_output: bool = True):
     """   
     Test the ClusterInitializer with a given XYZ file
@@ -404,9 +433,15 @@ def test_initializer(xyz_file: str,
 
     initializer = ClusterInitializer(config=config)
     try:
-        initial_molecule, submol_indices, simulation_box = initializer.initialize_from_xyz(xyz_file)
+        initial_molecules, submol_indices, simulation_box = initializer.initialize_from_xyz(
+            xyz_file, n_configurations=n_configurations
+        )
+        
+        # Use first configuration for diagnostics
+        initial_molecule = initial_molecules[0]
         
         print(f"\nInitialization successful!")
+        print(f"Generated {len(initial_molecules)} initial configuration(s)")
         print(f"Molecule Information:")
         print(f"  Total atoms: {len(initial_molecule.coordinates)}")
         print(f" Total mass: {np.sum(initial_molecule.masses):.2f} amu")
@@ -458,11 +493,14 @@ def test_initializer(xyz_file: str,
             print(f"  Only one submolecule, skipping distance check.")
         # Save output files
         if save_output:
-            # Write xyz file for initial configuration
-            initial_xyz = initial_molecule.to_xyz()
-            with open("initial_configuration.xyz", "w") as f:
-                f.write(initial_xyz)
-            print(f"\nInitial configuration saved to initial_configuration.xyz")
+            # Write all initial configuration into 1 xyz file
+            with open("initial_configurations.xyz", "w") as f:
+                for idx, mol in enumerate(initial_molecules):
+                    f.write(f"{len(mol.coordinates)}\n")
+                    f.write(f"Configuration {idx+1}\n")
+                    for label, coord in zip(mol.atom_labels, mol.coordinates):
+                        f.write(f"{label} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}\n")
+            print(f"\nInitial configurations saved to initial_configurations.xyz") 
         
     except Exception as e:
         print(f"\nInitialization failed with error: {e}")
@@ -482,6 +520,7 @@ if __name__ == "__main__":
     box_scale = 2.5
     min_distance = 2.0
     save_output = True
+    n_configurations = 28
 
     test_initializer(
         xyz_file=xyz_file,
@@ -491,7 +530,8 @@ if __name__ == "__main__":
         box_type=box_type,
         box_scale=box_scale,
         min_distance=min_distance,
-        save_output=save_output
+        save_output=save_output,
+        n_configurations=n_configurations
     )
 
 

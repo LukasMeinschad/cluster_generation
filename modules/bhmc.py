@@ -81,7 +81,11 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
               operator_list, config_dict, worker_id, sim_box_dict, worker_log_file)
               
     Returns:
-        List of (Molecule, energy, dipole_vec, dipole_magnitude) tuples for accepted structures
+       Dictionary with keys:
+              'accepted_structures': List of (Molecule, energy, dipole_vec, dipole_magnitude) tuples
+              'energy_trajectory': List of (step, current_energy) for every step
+              'worker_id': Unique identifier for the worker
+
     """
     (initial_molecule, submolecule_indices, n_structures,
      operator_list, config_dict, worker_id, sim_box_dict, worker_log_file) = args
@@ -129,7 +133,8 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
     
     if not operators:
         _log(f"Worker {worker_id}: No valid operators found!", level="error")
-        return []
+        return {'accepted_structures': [], 'energy_trajectory': [], 'worker_id': worker_id}
+    
     
     weights = np.array(weights)
     weights /= weights.sum()
@@ -144,17 +149,18 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
     
     if eval_result is None:
         _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
-        return []
+        return {'accepted_structures': [], 'energy_trajectory': [], 'worker_id': worker_id}
     
     current_energy, current_dipole_vec, current_dipole_mag = eval_result
     
     if current_energy is None:
         _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
-        return []
+        return {'accepted_structures': [], 'energy_trajectory': [], 'worker_id': worker_id}
     
     _log(f"Worker {worker_id}: Starting energy = {current_energy:.6f} Hartree")
 
     accepted_structures = []
+    energy_trajectory = [(0, current_energy)] # Track energy at each step
     n_accepted = 0
     n_rejected = 0
     temperature = config_dict['temperature']
@@ -177,6 +183,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
             if np.allclose(new_structure.coordinates, current_structure.coordinates):
                 _log(f"Worker {worker_id} step {step}: {operator['name']} — no coordinate change (box rejection?)", level="warning")
                 n_rejected += 1
+                energy_trajectory.append((step+1, current_energy))
                 continue
             
             new_eval = evaluator.evaluate(new_structure)
@@ -184,6 +191,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
             if new_eval is None:
                 _log(f"Worker {worker_id} step {step}: Energy eval failed after {operator['name']}", level="warning")
                 n_rejected += 1
+                energy_trajectory.append((step+1, current_energy))
                 continue
             
             new_energy, new_dipole_vec, new_dipole_mag = new_eval
@@ -191,6 +199,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
             if new_energy is None:
                 _log(f"Worker {worker_id} step {step}: Energy eval returned None after {operator['name']}", level="warning")
                 n_rejected += 1
+                energy_trajectory.append((step+1, current_energy))
                 continue
             
             if new_energy < current_energy:
@@ -215,10 +224,14 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
                 _log(f"Worker {worker_id} step {step}: ACCEPTED {operator['name']} E={current_energy:.6f} Ha dipole={current_dipole_mag:.4f} D")
             else:
                 n_rejected += 1
+            
+            # Record energy trajectory for every step, accepted or not
+            energy_trajectory.append((step+1, current_energy))
                 
         except Exception as e:
             _log(f"Worker {worker_id} step {step}: Exception in {operator['name']}: {e}", level="error")
             n_rejected += 1
+            energy_trajectory.append((step+1, current_energy))
             continue
         
         if (step + 1) % 10 == 0:
@@ -229,7 +242,10 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
     rate = n_accepted / total * 100 if total > 0 else 0.0
     _log(f"Worker {worker_id}: DONE — {n_accepted}/{total} accepted ({rate:.1f}%)")
     
-    return accepted_structures
+    return {
+        'accepted_structures': accepted_structures,
+        'energy_trajectory': energy_trajectory,
+        'worker_id': worker_id}
 
 
 # ================================ Main BHMC Class ================================
@@ -267,6 +283,7 @@ class MultiPhaseBHMC:
         self.operators = operators or self.DEFAULT_OPERATORS
         self.logger = logger
         self.worker_log_file = worker_log_file
+        self.worker_trajectories = {}  # Store energy trajectories for each worker
         
         # Storage for Phase A results
         self.phase_a_structures: List[Tuple[Molecule, float, List[float], float]] = []
@@ -284,16 +301,8 @@ class MultiPhaseBHMC:
                     n_structures_per_worker: int = 300,
                     n_processes: int = 10) -> List[Tuple[Molecule, float, List[float], float]]:
         """Run Phase A: Parallel exploration with independent BHMC chains.
-
+        
         Each worker starts from a different initial configuration for better PES coverage.
-         
-        Args:
-            initial_molecules: List of initial molecules, one per worker. Length determines the number of workers if n_processes is not specified.
-            submolecule_indices: List of submolecule atom indices for operator application
-            n_structures_per_worker: Number of BHMC steps each worker will perform
-            
-        Returns:
-            List of (Molecule, energy, dipole_vec, dipole_magnitude) tuples
         """
         if n_processes is None:
             n_processes = len(initial_molecules)
@@ -301,7 +310,6 @@ class MultiPhaseBHMC:
         if len(initial_molecules) != n_processes:
             raise ValueError(f"Number of initial molecules ({len(initial_molecules)}) must match n_processes ({n_processes})")
         
-
         if self.logger:
             self.logger.header("Phase A: Global PES Exploration")
         
@@ -314,7 +322,6 @@ class MultiPhaseBHMC:
         self._log(f"  Adaptive operators: {self.config.adaptive_operators}")
         self._log(f"  Operators: {', '.join(op[0] for op in self.operators)}")
         self._log(f"  Independent initial configs: {n_processes}")
-
         if self.simulation_box:
             self._log(f"  Simulation Box: {self.simulation_box}")
         if self.worker_log_file:
@@ -330,7 +337,6 @@ class MultiPhaseBHMC:
         
         sim_box_dict = self.simulation_box.to_dict() if self.simulation_box else None
         
-        # Here each worker gets its own initial molecule
         args_list = [
             (
                 initial_molecules[worker_id],
@@ -340,7 +346,7 @@ class MultiPhaseBHMC:
                 config_dict,
                 worker_id,
                 sim_box_dict,
-                self.worker_log_file,  # separate file for worker detail
+                self.worker_log_file,
             )
             for worker_id in range(n_processes)
         ]
@@ -350,16 +356,22 @@ class MultiPhaseBHMC:
         with Pool(processes=n_processes) as pool:
             results = pool.map(_phase_a_worker, args_list)
         
-        # Collect results — summary goes to main log
+        # Collect results and trajectories
         all_accepted_structures = []
-        for worker_id, worker_results in enumerate(results):
-            n_accepted = len(worker_results)
-            all_accepted_structures.extend(worker_results)
-            self._log(f"  Worker {worker_id}: {n_accepted} structures accepted")
+        self.worker_trajectories = {}  # Store for plotting
+        
+        for worker_result in results:
+            wid = worker_result['worker_id']
+            accepted = worker_result['accepted_structures']
+            trajectory = worker_result['energy_trajectory']
+            
+            all_accepted_structures.extend(accepted)
+            self.worker_trajectories[wid] = trajectory
+            self._log(f"  Worker {wid}: {len(accepted)} structures accepted, {len(trajectory)} trajectory points")
         
         self.phase_a_structures = all_accepted_structures
         
-        # Summary statistics — main log only
+        # Summary statistics
         total_generated = n_processes * n_structures_per_worker
         total_accepted = len(all_accepted_structures)
         
@@ -383,6 +395,9 @@ class MultiPhaseBHMC:
             self._log(f"  Min:  {min(dipoles):.4f}")
             self._log(f"  Max:  {max(dipoles):.4f}")
             self._log(f"  Mean: {np.mean(dipoles):.4f}")
+        
+        # Plot worker trajectories
+        self.plot_worker_trajectories()
         
         return self.phase_a_structures
     
@@ -425,6 +440,9 @@ class MultiPhaseBHMC:
             self._log(f"  Max:  {np.max(dipoles):.4f}")
             self._log(f"  Mean: {np.mean(dipoles):.4f}")
             self._log(f"  Std:  {np.std(dipoles):.4f}")
+        
+     
+
 
         analyzer.plot_com_trajectory_2d_projection(
             simulation_box=simulation_box,
@@ -447,14 +465,57 @@ class MultiPhaseBHMC:
         analyzer.plot_pca_agglomerative(n_clusters=n_clusters)
         analyzer.plot_tsne_agglomerative(n_clusters=n_clusters)
         analyzer.plot_umap_agglomerative(n_clusters=n_clusters)
-
+        
 
         analyzer.agglomerative_clustering(n_clusters=n_clusters)
         representatives = analyzer.get_cluster_representatives()
-        
+
+
+        analyzer.plot_cluster_populations()
+        analyzer.plot_cluster_graph(
+                representatives=representatives,
+                
+        ) 
 
         
         return representatives
+    
+    # Additional plotting utilities for worker trajectories
+    def plot_worker_trajectories(self,
+                                 save_path: str = "figures/worker_energy_trajectories.png") -> None:
+        """  
+        Plot energy vs step for each BHMC worker
+        """
+        import matplotlib.pyplot as plt
+        from pathlib import Path
+
+        if not hasattr(self, 'worker_trajectories') or not self.worker_trajectories:
+            self._log("No worker trajectories to plot.", level="warning")
+            return
+        
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        n_workers = len(self.worker_trajectories)
+
+        cmap = plt.get_cmap('tab20', n_workers)
+
+        plt.figure(figsize=(12, 6))
+        for worker_id, trajectory in self.worker_trajectories.items():
+            steps, energies = zip(*trajectory)
+            plt.plot(steps, energies, label=f"Worker {worker_id}", color=cmap(worker_id))
+
+        plt.xlabel("Step")
+        plt.ylabel("Energy (Hartree)")
+        plt.title("Energy Trajectories of BHMC Workers")
+        plt.legend(
+            ncols = 4,
+            loc = "upper right",
+            columnspacing = 0.5,
+        )
+        plt.grid(True)
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300)
+        plt.close()
+
 
 
 # =================================== Benchmarking =========================================

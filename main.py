@@ -25,7 +25,7 @@ if __name__ == "__main__":
     mp.set_start_method('spawn', force=True)
 
 
-    N_WORKERS = 28 
+    N_WORKERS = 8 
 
     
 
@@ -58,8 +58,8 @@ if __name__ == "__main__":
         method="hf",
         basis="cc-pvdz",
         box_type="sphere",
-        box_scale_factor=2.5,
-        min_distance=1.8,
+        box_scale_factor=3,
+        min_distance=1.5,
         optimize_submolecules=True,
         verbose=False
     )
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     representatives = bhmc_sampler.analyse_phase_a_results(
         phase_a_candidates,
         submolecule_indices=submol_indices,
-        n_clusters=10,
+        n_clusters=5,
         simulation_box=simulation_box, 
         logger = logger_analysis
     )
@@ -134,6 +134,13 @@ if __name__ == "__main__":
         filepath="trajectories/phase_a_candidates.xyz",
         energies=phase_a_energies,
     )
+
+    logger_opt.write_xyz_trajectory(
+        molecules=representatives,
+        filepath="trajectories/representatives.xyz",
+        energies=None
+    )    
+
 
     # Write optimizes representatives
     logger_opt.write_xyz_trajectory(

@@ -266,7 +266,26 @@ class Molecule:
     
     hbond_donors = ["O", "N", "F"]
     hbond_acceptors = ["O", "N", "F"]
-    
+
+    ELEMENT_COLORS = {
+        'H': 'white', 'He': 'cyan',
+        'C': 'gray', 'N': 'blue', 'O': 'red', 'F': 'green',
+        'Ne': 'cyan', 'Na': 'purple', 'Mg': 'darkgreen',
+        'P': 'orange', 'S': 'yellow', 'Cl': 'lime',
+        'Ar': 'cyan', 'K': 'purple', 'Ca': 'darkgreen',
+        'Br': 'darkred', 'I': 'darkviolet',
+    }
+
+    ELEMENT_SIZES = {
+        'H': 50, 'He': 60,
+        'C': 100, 'N': 110, 'O': 120, 'F': 100,
+        'Ne': 80, 'Na': 140, 'Mg': 130,
+        'P': 130, 'S': 140, 'Cl': 130,
+        'Ar': 120, 'K': 160, 'Ca': 150,
+        'Br': 140, 'I': 150
+    }
+
+
     def __init__(self, name: str = "Unnamed Molecule", logger: Optional[object] = None):
         """   
         Initializes the Molecule instance with name additionally the logger can be provided 
@@ -439,6 +458,32 @@ class Molecule:
         """Get coordinates of multiple atoms"""
         coords_list = [self.get_coords_by_label(label) for label in atom_labels]
         return np.vstack(coords_list)
+    def get_element(self, atom_label: str) -> str:
+        """  
+        Get element symbol from atom label (strips digits)
+        """
+        return self._remove_digits_from_label(atom_label)  
+    
+    def get_atom_colors(self) -> list:
+        """  
+        Get CPK colors for all the atoms, based on element type
+        """
+        return [
+            self.ELEMENT_COLORS.get(self._remove_digits_from_label(label), 'magenta')
+            for label in self.atom_labels
+        ]
+    
+    def get_atom_sizes(self) -> list:
+        """  
+        Get scatter plot sizes for all atoms, based on element type
+        """
+        return [
+            self.ELEMENT_SIZES.get(self._remove_digits_from_label(label), 100)
+            for label in self.atom_labels
+        ]
+    
+    
+
     
     def get_mass_by_label(self, atom_label: str) -> float:
         """Get atomic mass by atom label"""

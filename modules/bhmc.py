@@ -118,6 +118,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
         'roto_reflection': nonlocal_ops.roto_reflection_operator,
         'exchange': nonlocal_ops.exchange_operator,
         'random_so3': nonlocal_ops.random_so3_operator,
+        'principal_axis_rotation': nonlocal_ops.principal_axis_rotation_operator,
     }
     
     operators = []
@@ -260,6 +261,7 @@ class MultiPhaseBHMC:
         ('roto_reflection', 0.8),
         ('exchange', 0.7),
         ('random_so3', 0.5),
+        ('principal_axis_rotation', 0.8),
     ]
     
     def __init__(self, 
@@ -462,20 +464,19 @@ class MultiPhaseBHMC:
         analyzer.plot_rg_vs_energy()
         analyzer.plot_int_d_vs_e()
         analyzer.plot_pca_explained_variance()
-        analyzer.plot_pca_agglomerative(n_clusters=n_clusters)
-        analyzer.plot_tsne_agglomerative(n_clusters=n_clusters)
-        analyzer.plot_umap_agglomerative(n_clusters=n_clusters)
+         
         
 
-        analyzer.agglomerative_clustering(n_clusters=n_clusters)
+        analyzer.cluster(method="kmeans", n_clusters=n_clusters)
+
+
+        analyzer.plot_pca_clustered(n_cluster=n_clusters)
+        analyzer.plot_tsne_clustered(n_cluster=n_clusters)
+        analyzer.plot_umap_clustered(n_cluster=n_clusters)
+
         representatives = analyzer.get_cluster_representatives()
-
-
-        analyzer.plot_cluster_populations()
-        analyzer.plot_cluster_graph(
-                representatives=representatives,
-                
-        ) 
+        
+    
 
         
         return representatives

@@ -92,7 +92,7 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=28,
+        n_structures_per_worker=200,
         n_processes=N_WORKERS
     )
 
@@ -113,6 +113,8 @@ if __name__ == "__main__":
         simulation_box=simulation_box, 
         logger = logger_analysis
     )
+    # extract molecule from each representative
+    representatives = [rep.molecule for rep in representatives]
 
     # ── Local Optimization ──────────────────────────────────────
     logger_opt = Logger(name="optimization", log_file="cluster_gen.out", file_mode="a")

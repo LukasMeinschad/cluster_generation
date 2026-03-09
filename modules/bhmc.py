@@ -15,7 +15,7 @@ import copy
 
 # Module imports
 from molecule_class import Molecule
-from transformations import NonLocalOperators
+from transformations import NonLocalOperators, LocalOperators
 from cluster import BHMCAnalyzer
 from box import SimulationBox
 from psi4_interface import direct_energy
@@ -246,7 +246,178 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
     return {
         'accepted_structures': accepted_structures,
         'energy_trajectory': energy_trajectory,
-        'worker_id': worker_id}
+        'worker_id': worker_id} 
+
+
+def _phase_b_worker(args: Tuple) -> Dict:
+    """ 
+    Worker function for parallel BHMC Phase B local refinement.
+
+    Each worker starts from a representative structure found in Phase A and applies
+    local operators to refine within that basin of attraction
+
+    Args:
+        args: Tuple containing (initial_molecule, initial_energy, submolecule_indices,
+        n_steps, operator_list, config_dict, worker_id, sim_box_dict, worker_log_file)
+    Returns:
+       Dictionary with keys:
+                'best_strucutre': (Molecule, energy, dipole_vec, dipole_magnitude) tuple of the best structure found
+                'accepted_structures': List of (Molecule, energy, dipole_vec, dipole_mag) tuples
+                'energy_trajectory': List of (step, current_energy) for every step
+                'worker_id': Unique identifier for the worker
+    """
+    (initial_molecule, initial_energy, submolecule_indices,
+     n_steps, operator_list, config_dict, worker_id, sim_box_dict, worker_log_file) = args
+    
+    logger = _get_worker_logger(worker_log_file, worker_id)
+
+    def _log(msg: str, level: str = "info") -> None:
+        if config_dict.get('verbose', False):
+            print(msg)
+        if logger:
+            getattr(logger, level)(msg)
+
+    # Constants
+    k_B = 8.617333262145e-5  # Boltzmann constant in eV/K
+    HARTREE_TO_EV = 27.2114
+
+    # Setup
+    sim_box = SimulationBox.from_dict(sim_box_dict) if sim_box_dict else None
+    local_ops = LocalOperators(simulation_box=sim_box)
+    adaptive = config_dict.get('adaptive_operators', True)
+
+
+    op_map = {
+        "random_displacement": local_ops.random_displacement_submolecule,
+        "random_rotation": local_ops.random_rotation_submolecule,
+        "local_twist": local_ops.local_twist_submolecule,
+        "correlated_displacement": local_ops.correlated_displacement,
+        "small_principal_axis_rotation": local_ops.small_principal_axis_rotation
+    }
+
+    operators = []
+    weights = []
+    for op_name, weight in operator_list:
+        if op_name in op_map:
+            operators.append({"name": op_name, "func": op_map[op_map]})
+            weights.append(weight)
+
+    if not operators:
+        _log(f"Worker {worker_id}: No valid local operator found!", level="error")
+        return {
+            "best_structure": None,
+            "accepted_structures": [],
+            "energy_trajectory": [],
+            "worker_id": worker_id
+        }
+    weights = np.array(weights)
+    weights /= weights.sum()
+    evaluator = EnergyEvaluator(
+        method=config_dict['method'],
+        basis=config_dict['basis']
+    )
+
+    current_structure = copy.deepcopy(initial_molecule)
+
+    # TODO this can be improved
+    eval_result = evaluator.evaluate(current_structure)
+    if eval_result is None or eval_result[0] is None:
+        _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
+        return {
+            "best_structure": None,
+            "accepted_structures": [],
+            "energy_trajectory": [],
+            "worker_id": worker_id
+        }
+    current_energy, current_dipole_vec, current_dipole_mag = eval_result
+    _log(f"Worker {worker_id}: Starting energy = {current_energy:.6f} Hartree")
+
+    # Track best structure found
+    best_energy = current_energy
+    best_structure = copy.deepcopy(current_structure)
+    best_dipole_vec = current_dipole_vec
+    best_dipole_mag = current_dipole_mag
+    
+    accepted_structures = []
+    energy_trajectory = [(0, current_energy)] # Track energy at each step
+    n_accepted = 0
+    n_rejected = 0
+    temperature = config_dict['temperature']
+    beta = 1.0 / (k_B * temperature)
+
+    for step in range(n_steps):
+        op_idx = np.random.choice(len(operators), p=weights)
+        operator = operators[op_idx]
+
+        try:
+            new_structure = operator['func'](
+                current_structure, submolecule_indices, adaptive=adaptive
+            )
+            if np.allclose(new_structure.coordinates, current_structure.coordinates):
+                _log(f"Worker {worker_id} step {step}: {operator['name']} — no coordinate change (box rejection?)", level="warning")
+                n_rejected += 1
+                energy_trajectory.append((step+1, current_energy))
+                continue
+            new_eval = evaluator.evaluate(new_structure)
+            if new_eval is None or new_eval[0] is None:
+                _log(f"Worker {worker_id} step {step}: Energy eval failed after {operator['name']}", level="warning")
+                n_rejected += 1
+                energy_trajectory.append((step+1, current_energy))
+                continue
+            new_energy, new_dipole_vec, new_dipole_mag = new_eval
+
+            # Metropolis acceptance
+            if new_energy < current_energy:
+                accept = True
+            else:
+                delta_e_ev = (new_energy - current_energy) * HARTREE_TO_EV
+                prob = np.exp(-beta * delta_e_ev)
+                accept = random.random() < prob
+
+            if accept:
+                current_structure = copy.deepcopy(new_structure)
+                current_energy = new_energy
+                current_dipole_vec = new_dipole_vec
+                current_dipole_mag = new_dipole_mag
+                accepted_structures.append((
+                    copy.deepcopy(current_structure), 
+                    current_energy,
+                    current_dipole_vec,
+                    current_dipole_mag
+                ))
+                n_accepted += 1
+                _log(f"Worker {worker_id} step {step}: ACCEPTED {operator['name']} E={current_energy:.6f} Ha dipole={current_dipole_mag:.4f} D")
+                
+                if current_energy < best_energy:
+                    best_energy = current_energy
+                    best_structure = copy.deepcopy(current_structure)
+                    best_dipole_vec = current_dipole_vec
+                    best_dipole_mag = current_dipole_mag
+            else:
+                n_rejected += 1
+            energy_trajectory.append((step+1, current_energy))
+
+        except Exception as e:
+            _log(f"Worker {worker_id} step {step}: Exception in {operator['name']}: {e}", level="error")
+            n_rejected += 1
+            energy_trajectory.append((step+1, current_energy))
+            continue
+
+        if (step + 1) % 10 == 0:
+            rate = n_accepted / (n_accepted + n_rejected) * 100 if (n_accepted + n_rejected) > 0 else 0.0
+            _log(f"Worker {worker_id}: {step+1}/{n_steps} — accepted={n_accepted}, rate={rate:.1f}%")
+
+    total = n_accepted + n_rejected
+    rate = n_accepted / total * 100 if total > 0 else 0.0
+    _log(f"Worker {worker_id}: DONE — {n_accepted}/{total} accepted ({rate:.1f}%)")
+    
+    return {
+        "best_structure": (best_structure, best_energy, best_dipole_vec, best_dipole_mag),
+        "accepted_structures": accepted_structures,
+        "energy_trajectory": energy_trajectory,
+        "worker_id": worker_id
+    }
+
 
 
 # ================================ Main BHMC Class ================================
@@ -467,7 +638,7 @@ class MultiPhaseBHMC:
          
         
 
-        analyzer.cluster(method="kmeans", n_clusters=n_clusters)
+        labels = analyzer.cluster(method="kmeans", n_clusters=n_clusters)
 
 
         analyzer.plot_pca_clustered(n_cluster=n_clusters)
@@ -475,9 +646,8 @@ class MultiPhaseBHMC:
         analyzer.plot_umap_clustered(n_cluster=n_clusters)
 
         representatives = analyzer.get_cluster_representatives()
-        
+        analyzer.log_representative_features(representatives,labels=labels) 
     
-
         
         return representatives
     

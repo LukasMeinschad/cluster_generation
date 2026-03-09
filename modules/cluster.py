@@ -1489,3 +1489,69 @@ class BHMCAnalyzer:
         plt.savefig(f"figures/umap_{cluster_method}_{phase if phase else 'all'}_{colored_by}.png", dpi=200, bbox_inches='tight')
         plt.close()
 
+    def log_representative_features(
+            self,
+            representatives: List[StructureData],
+            labels: Optional[np.ndarray] = None
+        ) -> None:
+        """ 
+        Log the feature matrix rows for the given representative structures
+
+        Args:
+            representatives: List of StructureData objects representing the cluster centers
+            labels: Cluster labels array to identify which representative belongs to which cluster. If None, uses cached labels.
+        """
+        if not self.logger:
+            return
+        self._ensure_feature_matrix()
+        raw = self._feature_matrix_raw
+        normalized = self._feature_matrix_normalized
+
+        # Find the indices of the representatives
+        rep_indices = []
+        for rep in representatives:
+            try:
+                idx = self.structures.index(rep)
+                rep_indices.append(idx)
+            except ValueError:
+                self._log(f"Representative structure not found in structures list: {rep}", level="warning")
+                continue
+        if not rep_indices:
+            self._log("No valid representative indices found for logging features.", level="warning")
+            return
+    
+        if labels is not None:
+            unique_non_noise = [l for l in np.unique(labels) if l != -1]
+            row_labels = [f"Cluster {labels[idx]}" for idx in rep_indices]
+        else:
+            row_labels = [f"Rep {i}" for i in range(len(rep_indices))]
+        
+        col_labels = [
+            "Delta_E", "RMSD", "Rg",
+            "Rot_A", "Rot_B", "Rot_C",
+            "N_Hbond", "Avg_HB_Ang", "Avg_DA_Dist",
+        ]
+        n_interatomic = raw.shape[1] - 13
+        col_labels += [f"IAD_{j}" for j in range(n_interatomic)]
+        col_labels += ["Asphericity", "Acylindricity", "Kappa^2", "Dipole_Mag"]
+
+        rep_matrix_raw = raw[rep_indices]
+        rep_matrix_norm = normalized[rep_indices]
+
+        self.logger.log_matrix(
+            matrix=rep_matrix_raw,
+            row_labels=row_labels,
+            col_labels=col_labels,
+            title="Representative Structures (Raw)",
+            fmt=".4f",
+            max_col_width=12
+        )
+        self.logger.log_matrix(
+            matrix=rep_matrix_norm,
+            row_labels=row_labels,
+            col_labels=col_labels,
+            title="Representative Structures (Normalized)",
+            fmt=".4f",
+            max_col_width=12
+        )
+

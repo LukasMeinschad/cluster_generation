@@ -953,36 +953,30 @@ class LocalOperators(MolecularOperators):
         # Apply displacement to selected submolecule atoms
         mol_copy.coordinates[submol_idx] += displacement
         return self._apply_box_constraints(mol_copy, molecule)
-    
-    def random_rotation_submolecule(self,
-                                    molecule: "Molecule",
-                                    submolecule_indices: List[List[int]],
-                                    angle_range: Tuple[float, float] = (-30, 30),
-                                    adaptive: bool = True) -> "Molecule":
-        """ 
-        Randomly rotate a submolecule around its center of mass
-        Uses fast rotation matrix from GeometryOps
+
+    def random_rotation_submolecule(
+            self,
+            molecule: "Molecule",
+            submolecule_indices: List[List[int]],
+            angle_range: Tuple[float, float] = (-30, 30),
+            adaptive: bool = True) -> "Molecule":
+        """  
+        Randomly rotate a submolecule around its center of mass using a random axis and a small angle.
+        Analogous to the nonlocal twist but with local-scale angle
 
         Args:
-            molecule: Input molecule
-            submolecule_indices: List of submolecule index lists
-            angle_range: Range for rotation angle in degrees
+            molecule: Molecule object to modify
+            submolecule_indices: List of lists of atom indices defining submolecules
+            angle_range: Range for random rotation angle in degrees (default is (-30, 30))
             adaptive: If True, scale angle range by box/molecule size ratio
-
-        Returns:
-            Modified Molecule
         """
         mol_copy = molecule.copy()
 
-        # Select random submolecule
         submol_idx = self._select_random_submolecule(submolecule_indices)
-
-        # Calculate COM
         submol_coords = mol_copy.coordinates[submol_idx]
-        submol_masses = mol_copy.masses[submol_idx]
+        submol_masses = mol_copy.masses[submol_idx] 
         center = GeometryOps.center_of_mass(submol_coords, submol_masses)
 
-        # Apply adaptive scaling to angle range
         if adaptive:
             scale = self._compute_scaling_factor(molecule, operator_type="local")
             effective_range = (angle_range[0] * scale, angle_range[1] * scale)
@@ -993,12 +987,136 @@ class LocalOperators(MolecularOperators):
         axis = self._random_unit_vetor()
 
         R = GeometryOps.rotation_matrix_rodrigues(axis, angle)
-        # Rotate Submolecule around its center
         coords_centered = mol_copy.coordinates[submol_idx] - center
         coords_rotated = coords_centered @ R.T
         mol_copy.coordinates[submol_idx] = coords_rotated + center
         return self._apply_box_constraints(mol_copy, molecule)
     
+    def local_twist_submolecule(
+            self,
+            molecule: "Molecule",
+            submolecule_indices: List[List[int]],
+            angle_range: Tuple[float, float] = (-15, 15),
+            adaptive: bool = True) -> "Molecule":
+        """  
+        Local Twist: Rotate one submolecule around the axis connecting two submolecule
+        centers of mass by a small angle
+
+        This is physically motivated - the twist axis is the intermolecular COM-to-COM direction, so it
+        presevers the intermolecular distance while changing the relative orientation
+
+        Algorithm:
+            1. Select two submolecules (reference + rotating)
+            2. Compute the COM-to-COM axis
+            3. Rotate the second submolecule around that axis by a small angle
+
+        Args:
+            molecule: Molecule object to modify
+            submolecule_indices: List of lists of atom indices defining submolecules
+            angle_range: Range for random rotation angle in degrees (default is (-15, 15))
+            adaptive: If True, scale angle range by box/molecule size ratio
+        """
+        mol_copy = molecule.copy()
+        ref_submol, rot_submol = self._select_two_submolecules(submolecule_indices)
+        ref_center = GeometryOps.center_of_mass(mol_copy.coordinates[ref_submol], mol_copy.masses[ref_submol])
+        rot_center = GeometryOps.center_of_mass(mol_copy.coordinates[rot_submol], mol_copy.masses[rot_submol])
+        
+        # Twist axis: COM to COM
+        twist_axis = rot_center - ref_center
+        if np.linalg.norm(twist_axis) < 1e-8:
+            return mol_copy # Cannot define twist because submolecules overlap
+        axis = GeometryOps.normalize_vector(twist_axis)
+
+        if adaptive:
+            scale = self._compute_scaling_factor(molecule, operator_type="local")
+            effective_range = (angle_range[0] * scale, angle_range[1] * scale)
+        else:
+            effective_range = angle_range
+        angle = np.radians(random.uniform(*effective_range))
+        R = GeometryOps.rotation_matrix_rodrigues(axis, angle)
+        coords_centered = mol_copy.coordinates[rot_submol] - rot_center
+        coords_rotated = coords_centered @ R.T
+        mol_copy.coordinates[rot_submol] = coords_rotated + rot_center
+        return self._apply_box_constraints(mol_copy, molecule)
+
+    def correlated_displacement(
+        self,
+        molecule: "Molecule",
+        submolecule_indices: List[List[int]],
+        delta_range: Tuple[float, float] = (-0.3, 0.3),
+        adaptive: bool = True) -> "Molecule":
+        """ 
+        Displace two or more submolecules simultaneously in a correlated manner
+
+        Args:
+            molecule: Molecule object to modify
+            submolecule_indices: List of lists of atom indices defining submolecules
+            delta_range: Range for random displacement in Angstrom (default is (-0.3, 0.3))
+            adaptive: If True, scale range by box/molecule size ratio
+        """
+        mol_copy = molecule.copy()
+
+        n_select = random.randint(2, len(submolecule_indices))
+        selected = random.sample(submolecule_indices, n_select)
+        if adaptive:
+            scale = self._compute_scaling_factor(molecule, operator_type="local")
+            effective_range = (delta_range[0] * scale, delta_range[1] * scale)
+        else:
+            effective_range = delta_range
+        magnitude = random.uniform(*effective_range)
+
+        direction = self._random_unit_vetor()
+        displacement = direction * magnitude
+        for submol_idx in selected:
+            mol_copy.coordinates[submol_idx] += displacement
+        return self._apply_box_constraints(mol_copy, molecule)
+
+    def small_principal_axis_rotation(
+            self,
+            molecule: "Molecule",
+            submolecule_indices: List[List[int]],
+            angle_range: Tuple[float, float] = (-15,15),
+            adaptive: bool = True) -> "Molecule":
+        """  
+        Rotate a single submolecule around one of its own principal axes
+        computed from the inertia tensor by a small angle
+
+        Algorithm:
+            1. Select random submolecule
+            2. Compute its reference frame and principal axes
+            3. Select random principal axis
+            4. Rotate submolecule around that axis by a small angle
+
+        Args:            
+            molecule: Molecule object to modify
+            submolecule_indices: List of lists of atom indices defining submolecules
+            angle_range: Range for random rotation angle in degrees (default is (-15, 15))
+            adaptive: If True, scale angle range by box/molecule size ratio
+        """
+        mol_copy = molecule.copy()
+        submol_idx = self._select_random_submolecule(submolecule_indices)
+        coords = mol_copy.coordinates[submol_idx]
+        masses = mol_copy.masses[submol_idx]
+        center = GeometryOps.center_of_mass(coords, masses)
+
+        ref_frame = self.transformer.compute_reference_frame(coords, masses, center=center)
+        principal_axes = [ref_frame.x_axis, ref_frame.y_axis, ref_frame.z_axis]
+        axis = random.choice(principal_axes)
+
+        if adaptive:
+            scale = self._compute_scaling_factor(molecule, operator_type="local")
+            effective_range = (angle_range[0] * scale, angle_range[1] * scale)
+        else:
+            effective_range = angle_range
+        angle = np.radians(random.uniform(*effective_range))
+        R = GeometryOps.rotation_matrix_rodrigues(axis, angle)
+        coords_centered = mol_copy.coordinates[submol_idx] - center
+        coords_rotated = coords_centered @ R.T
+        mol_copy.coordinates[submol_idx] = coords_rotated + center
+        return self._apply_box_constraints(mol_copy, molecule)
+
+    
+
 class NonLocalOperators(MolecularOperators):
     """   
     Non-local operators for large structural perturbations of the molecule

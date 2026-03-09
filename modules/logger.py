@@ -181,6 +181,52 @@ class Logger:
             append=append
         )
 
+    def log_matrix(
+            self,
+            matrix: "np.ndarray",
+            row_labels: Optional[List[str]] = None,
+            col_labels: Optional[List[str]] = None,
+            title: str = "Matrix",
+            fmt: str = ".4f",
+            max_col_width: int = 14
+        ) -> None:
+        """  
+        Log a 2D numpy array as a formatted table
+
+        Args:
+            matrix (np.ndarray): 2D array to log.
+            row_labels (List[str], optional): Labels for rows. Defaults to None.
+            col_labels (List[str], optional): Labels for columns. Defaults to None.
+            title (str): Title for the matrix. Defaults to "Matrix".
+            fmt (str): Format string for values (e.g., ".4f"). Defaults to ".4f".
+            max_col_width (int): Maximum width for each column in characters. Defaults to 14.
+        """
+        import numpy as np
+        if matrix.ndim != 2:
+            self.warning(f"log_matrix expects a 2D array, but got {matrix.ndim}D array.")
+            return
+        n_rows, n_cols = matrix.shape 
+        if row_labels is None:
+            row_labels = [f"Row {i}" for i in range(n_rows)]
+        if col_labels is None:
+            col_labels = [f"Col {j}" for j in range(n_cols)]
+        # Truncate labels to max_col_width
+        col_labels = [l[:max_col_width] for l in col_labels]
+        row_label_width = max(len(l) for l in row_labels) + 2
+        self.section(title)
+        # Header Line
+        header = " " * row_label_width + " ".join(f"{c:{max_col_width}}" for c in col_labels)
+        self._logger.info(header)
+        self.separator(char="-", width=len(header))
+
+        # Data Lines
+        for i, row in enumerate(matrix):
+            values = " ".join(f"{v:{max_col_width}{fmt}}" for v in row)
+            self._logger.info(f"{row_labels[i]:<{row_label_width}}{values}")
+
+        self.separator(char="=", width=len(header))
+
+
     @staticmethod
     def remove_digits(s: str) -> str:
         """  

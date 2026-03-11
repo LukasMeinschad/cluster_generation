@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List, Tuple, Optional, Union, Protocol
+from typing import List, Tuple, Optional, Union, Protocol, Dict
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
 import time
@@ -155,6 +155,51 @@ class Quaternion:
         y = (self.w * other.y - self.x * other.z + self.y * other.w + self.z * other.x)
         z = (self.w * other.z + self.x * other.y - self.y * other.x + self.z * other.w)
         return Quaternion(w, x, y, z)
+
+
+    def from_rotation_matrix(R: np.ndarray) -> "Quaternion":
+        """  
+        Converts a rotation matrix to quaternion
+        uses the method of the homepage  https://danceswithcode.net/engineeringnotes/quaternions/quaternions.html
+
+        Is the numerically stable Shepperd Method
+
+        Step 1: Compute the magnitude of each quaternion component. This leaves the sign of each component undetermined
+        Step 2: Find the largest component, assume its sign is positive,
+                then compute t he ramaining components from the of diagonal elements
+                Taking the largest magnitude avoids division by small numbers
+        """
+        # Step 1 compute the magnitude from diagonal elements
+        q0_sq = (1 + R[0,0] + R[1,1] + R[2,2]) / 4.0
+        q1_sq = (1 + R[0,0] - R[1,1] - R[2,2]) / 4.0
+        q2_sq = (1 - R[0,0] + R[1,1] - R[2,2]) / 4.0 
+        s3_sq = (1 - R[0,0] - R[1,1] + R[2,2]) / 4.0
+
+        # Pick largest to avoid division by small numbers
+        idx = np.argmax([q0_sq, q1_sq, q2_sq, s3_sq])
+        if idx == 0:
+            q0 = np.sqrt(max(q0_sq, 0))
+            q1 = (R[2,1] - R[1,2]) / (4 * q0)
+            q2 = (R[0,2] - R[2,0]) / (4 * q0)
+            q3 = (R[1,0] - R[0,1]) / (4 * q0)
+        elif idx == 1:
+            q1 = np.sqrt(max(q1_sq, 0))
+            q0 = (R[2,1] - R[1,2]) / (4 * q1)
+            q2 = (R[0,1] + R[1,0]) / (4 * q1)
+            q3 = (R[1,2] + R[2,1]) / (4 * q1)
+        elif idx == 2:
+            q2 = np.sqrt(max(q2_sq, 0))
+            q0 = (R[0,2] - R[2,0]) / (4 * q2)
+            q1 = (R[0,1] + R[1,0]) / (4 * q2)
+            q3 = (R[1,2] + R[2,1]) / (4 * q2)
+        else:
+            q3 = np.sqrt(max(s3_sq, 0))
+            q0 = (R[1,0] - R[0,1]) / (4 * q3)
+            q1 = (R[0,2] + R[2,0]) / (4 * q3)
+            q2 = (R[1,2] + R[2,1]) / (4 * q3)
+        return Quaternion(q0, q1, q2, q3)
+    
+
     
     def to_rotation_matrix(self) -> np.ndarray:
         """  
@@ -240,7 +285,34 @@ class GeometryOps:
         return np.array([[Ixx, Ixy, Ixz],
                          [Ixy, Iyy, Iyz],
                          [Ixz, Iyz, Izz]])
+
+    @staticmethod
+    def kabsch_rotation(P: np.ndarray, Q: np.ndarray) -> np.ndarray:
+        """  
+        Computes the optimal rotation matrix R that minimizes the RMSD between two centered
+        coordinate sets using the Kabsch algorithm
+
+        Solves min_R || P - R @ Q || via SVD of Cross-Covariand H = P Q
+        
+        Args:
+            P: Target coordinates (Nx3)
+            Q: Source coordinates (Nx3)
+        
+        Returns:
+            R: 3x3 rotation matrix that best aligns Q to P
+        """
+        H = P.T @ Q
+        U, S, Vt = np.linalg.svd(H)
+
+        # Ensure proper rotation (det = +1) not reflection
+        d = np.linalg.det(U @ Vt)
+        sign_matrix = np.diag([1, 1, np.sign(d)])
+        R = U @ sign_matrix @ Vt
+        return R
     
+
+
+
     @staticmethod 
     def normalize_vector(v: np.ndarray) -> np.ndarray: 
         """   
@@ -792,6 +864,54 @@ class Transformation:
             if normalize:
                 vector = GeometryOps.normalize_vector(vector)
             return vector
+    
+
+    def kabsch_interpolate(
+            self,
+            mol_a: "Molecule",
+            mol_b: "Molecule",
+            lambdas: Optional[List[float]] = None,
+            n_points: int = 3
+        ) -> List["Molecule"]:
+        """
+        Generate interpolated structures between two molecules using Kabsch alignment
+
+        1. Center both structures at the origin
+        2. Compute optimal rotation R (Kabsch) to align B onto A
+        3. For each lambda in [0,1]: r_new = (1-lambda) * r_A + lambda * (R @ r_B)
+
+        Args:
+            mol_a: First Molecule object
+            mol_b: Second Molecule object (must have same number of atoms)
+            lambdas: Optional list of interpolation parameters between 0 and 1
+            n_points: Number of interpolated points to generate if lambdas not provided
+        """
+        if len(mol_a.coordinates) != len(mol_b.coordinates):
+            raise ValueError("Molecules must have the same number of atoms for interpolation")
+        if lambdas is None:
+            lambdas = np.linspace(0, 1, n_points + 2)[1:-1]
+
+        # Center both structures 
+        coords_a = mol_a.coordinates.copy()
+        coords_b = mol_b.coordinates.copy()
+        centroid_a = np.mean(coords_a, axis=0)
+        centroid_b = np.mean(coords_b, axis=0)
+        P = coords_a - centroid_a
+        Q = coords_b - centroid_b
+        # Kabsch Rotation
+        R = GeometryOps.kabsch_rotation(P,Q)
+        Q_aligned = (R @ Q.T).T
+
+        interpolated = []
+        for lam in lambdas:
+            coords_new = (1- lam) * P + lam * Q_aligned
+            # Shift back to centroid of A
+            coords_new += centroid_a
+            new_mol = mol_a.copy()
+            new_mol.coordinates = coords_new
+            interpolated.append(new_mol)
+
+        return interpolated
 
 
 class MolecularOperators:
@@ -918,7 +1038,7 @@ class LocalOperators(MolecularOperators):
     def random_displacement_submolecule(self,
                                         molecule: "Molecule",
                                         submolecule_indices: List[List[int]],
-                                        delta_range: Tuple[float, float] = (-0.3, 0.3),
+                                        delta_range: Tuple[float, float] = (-0.5, 0.5),
                                         adaptive: bool = True) -> "Molecule":
         """  
         Randomly displaces a submolecule by a random vector
@@ -958,7 +1078,7 @@ class LocalOperators(MolecularOperators):
             self,
             molecule: "Molecule",
             submolecule_indices: List[List[int]],
-            angle_range: Tuple[float, float] = (-30, 30),
+            angle_range: Tuple[float, float] = (-40, 40),
             adaptive: bool = True) -> "Molecule":
         """  
         Randomly rotate a submolecule around its center of mass using a random axis and a small angle.
@@ -1115,7 +1235,162 @@ class LocalOperators(MolecularOperators):
         mol_copy.coordinates[submol_idx] = coords_rotated + center
         return self._apply_box_constraints(mol_copy, molecule)
 
-    
+    def diagnose_perturbations(
+        self,
+        molecule: "Molecule",
+        submolecule_indices: List[List[int]],
+        n_samples: int = 200,
+        adaptive: bool = True
+    ) -> Dict:
+        """
+        Diagnose the actual perturbation magnitudes produced by each local operator.
+        
+        Applies each operator n_samples times and reports statistics on:
+          - RMSD between original and perturbed structures
+          - Max single-atom displacement
+          - COM displacement of the perturbed submolecule
+          - Effective scaling factor and parameter ranges
+          
+        Args:
+            molecule: Molecule to test operators on
+            submolecule_indices: Submolecule index lists
+            n_samples: Number of random applications per operator
+            adaptive: Whether to use adaptive scaling
+            
+        Returns:
+            Dict with operator names as keys, each containing displacement statistics
+        """
+        from scipy.spatial.distance import pdist
+            
+        # First report the raw scaling info
+        scale = self._compute_scaling_factor(molecule, operator_type="local")
+        coords = molecule.coordinates
+        if len(coords) > 1:
+            mol_diameter = np.max(pdist(coords))
+        else:
+            mol_diameter = 2.0 * molecule.covalent_radii.max()
+        avg_radius = np.mean(molecule.covalent_radii)
+        effective_mol_size = mol_diameter + 2 * avg_radius
+        
+        if self.simulation_box is not None:
+            if self.simulation_box.box_type == "sphere":
+                box_length = self.simulation_box.radius * 2
+            else:
+                box_length = self.simulation_box.box_dimensions
+            free_space = max(box_length - effective_mol_size, 0.1)
+            size_ratio = effective_mol_size / free_space
+        else:
+            box_length = None
+            free_space = None
+            size_ratio = None
+            
+        print("=" * 70)
+        print("LOCAL OPERATOR PERTURBATION DIAGNOSTICS")
+        print("=" * 70)
+        print(f"  Molecule diameter:     {mol_diameter:.3f} Å")
+        print(f"  Effective mol size:    {effective_mol_size:.3f} Å")
+        if box_length is not None:
+            print(f"  Box length (diameter): {box_length:.3f} Å")
+            print(f"  Free space:            {free_space:.3f} Å")
+            print(f"  Size ratio:            {size_ratio:.3f}")
+        print(f"  Adaptive scale factor: {scale:.4f}")
+        print(f"  Adaptive enabled:      {adaptive}")
+        print()
+        
+        # Define operators with their default ranges and the effective ranges
+        operators_info = {
+            "random_displacement": {
+                "func": self.random_displacement_submolecule,
+                "default_range": (-0.3, 0.3),
+                "unit": "Å",
+                "range_type": "displacement"
+            },
+            "random_rotation": {
+                "func": self.random_rotation_submolecule,
+                "default_range": (-30, 30),
+                "unit": "°",
+                "range_type": "angle"
+            },
+            "local_twist": {
+                "func": self.local_twist_submolecule,
+                "default_range": (-15, 15),
+                "unit": "°",
+                "range_type": "angle"
+            },
+            "correlated_displacement": {
+                "func": self.correlated_displacement,
+                "default_range": (-0.3, 0.3),
+                "unit": "Å",
+                "range_type": "displacement"
+            },
+            "small_principal_axis_rotation": {
+                "func": self.small_principal_axis_rotation,
+                "default_range": (-15, 15),
+                "unit": "°",
+                "range_type": "angle"
+            },
+        }
+        
+        results = {}
+        
+        for op_name, info in operators_info.items():
+            default_range = info["default_range"]
+            if adaptive:
+                effective_range = (default_range[0] * scale, default_range[1] * scale)
+            else:
+                effective_range = default_range
+                
+            rmsds = []
+            max_displacements = []
+            box_rejections = 0
+            
+            for _ in range(n_samples):
+                original_coords = molecule.coordinates.copy()
+                perturbed = info["func"](molecule, submolecule_indices, adaptive=adaptive)
+                
+                # Check if box rejected (returned original)
+                if np.allclose(perturbed.coordinates, original_coords):
+                    box_rejections += 1
+                    continue
+                
+                diff = perturbed.coordinates - original_coords
+                per_atom_disp = np.linalg.norm(diff, axis=1)
+                rmsd = np.sqrt(np.mean(per_atom_disp**2))
+                
+                rmsds.append(rmsd)
+                max_displacements.append(np.max(per_atom_disp))
+            
+            rmsds = np.array(rmsds) if rmsds else np.array([0.0])
+            max_displacements = np.array(max_displacements) if max_displacements else np.array([0.0])
+            
+            results[op_name] = {
+                "effective_range": effective_range,
+                "rmsd_mean": np.mean(rmsds),
+                "rmsd_std": np.std(rmsds),
+                "max_disp_mean": np.mean(max_displacements),
+                "max_disp_std": np.std(max_displacements),
+                "box_rejection_rate": box_rejections / n_samples,
+            }
+            
+            print(f"  {op_name}")
+            print(f"    Default range:    ({default_range[0]}, {default_range[1]}) {info['unit']}")
+            print(f"    Effective range:  ({effective_range[0]:.4f}, {effective_range[1]:.4f}) {info['unit']}")
+            print(f"    RMSD:             {np.mean(rmsds):.4f} ± {np.std(rmsds):.4f} Å")
+            print(f"    Max atom disp:    {np.mean(max_displacements):.4f} ± {np.std(max_displacements):.4f} Å")
+            print(f"    Box rejections:   {box_rejections}/{n_samples} ({box_rejections/n_samples*100:.1f}%)")
+            print()
+        
+        print("=" * 70)
+        print("REFERENCE: Typical chemical scales")
+        print(f"  O-H bond length:        0.96 Å")
+        print(f"  H-bond (O···H):         1.8-2.0 Å")
+        print(f"  O···O in water dimer:    2.9 Å")
+        print(f"  Useful displacement:     0.05-0.5 Å")
+        print(f"  Useful rotation:         5-45°")
+        print("=" * 70)
+        
+        return results
+
 
 class NonLocalOperators(MolecularOperators):
     """   

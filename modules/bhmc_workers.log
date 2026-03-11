@@ -1,0 +1,974 @@
+[2026-03-11 14:31:09] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 0: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 1: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 2: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 3: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 4: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 5: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 6: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 7: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 8: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 9: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 10: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 11: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 12: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 13: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 14: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 15: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 16: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 17: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 18: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 19: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 20: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 21: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 22: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 23: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 24: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 25: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 26: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 27: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 28: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 29: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 30: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 31: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 32: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 33: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 34: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 35: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 36: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 37: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 38: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 39: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 40: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 41: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 42: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 43: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 44: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 45: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 46: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 47: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 48: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [WARNING ] Worker 0 step 49: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:31:09] [INFO    ] Worker 0: DONE — 0/50 accepted (0.0%)
+[2026-03-11 14:33:22] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 0: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 1: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 2: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 3: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 4: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 5: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 6: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 7: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 8: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 9: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 10: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 11: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 12: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 13: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 14: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 15: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 16: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 17: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 18: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 19: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 20: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 21: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 22: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 23: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 24: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 25: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 26: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 27: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 28: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 29: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 30: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 31: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 32: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 33: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 34: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 35: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 36: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 37: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 38: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 39: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 40: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 41: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 42: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 43: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 44: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 45: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 46: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 47: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 48: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [WARNING ] Worker 0 step 49: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:33:22] [INFO    ] Worker 0: DONE — 0/50 accepted (0.0%)
+[2026-03-11 14:34:54] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 0: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 1: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 2: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 3: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 4: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 5: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 6: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 7: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 8: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 9: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 10: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 11: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 12: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 13: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 14: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 15: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 16: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 17: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 18: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 19: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 20: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 21: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 22: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 23: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 24: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 25: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 26: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 27: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 28: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 29: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 30: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 31: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 32: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 33: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 34: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 35: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 36: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 37: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 38: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 39: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 40: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 41: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 42: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 43: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 44: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 45: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 46: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 47: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 48: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [WARNING ] Worker 0 step 49: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:34:54] [INFO    ] Worker 0: DONE — 0/50 accepted (0.0%)
+[2026-03-11 14:35:26] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 0: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 1: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 2: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 3: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 4: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 5: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 6: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 7: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 8: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 9: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 10: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 11: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 12: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 13: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 14: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 15: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 16: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 17: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 18: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 19: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 20: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 21: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 22: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 23: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 24: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 25: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 26: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 27: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 28: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 29: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 30: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 31: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 32: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 33: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 34: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 35: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 36: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 37: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 38: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 39: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 40: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 41: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 42: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 43: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 44: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 45: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 46: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 47: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 48: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [WARNING ] Worker 0 step 49: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:35:26] [INFO    ] Worker 0: DONE — 0/50 accepted (0.0%)
+[2026-03-11 14:37:02] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 0: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 1: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 2: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 3: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 4: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 5: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 6: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 7: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 8: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 9: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 10: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 11: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 12: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 13: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 14: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 15: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 16: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 17: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 18: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 19: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 20: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 21: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 22: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 23: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 24: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 25: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 26: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 27: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 28: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 29: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 30: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 31: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 32: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 33: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 34: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 35: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 36: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 37: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 38: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 39: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 40: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 41: small_principal_axis_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 42: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 43: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 44: correlated_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 45: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 46: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 47: random_rotation — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 48: local_twist — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [WARNING ] Worker 0 step 49: random_displacement — no coordinate change (box rejection?)
+[2026-03-11 14:37:02] [INFO    ] Worker 0: DONE — 0/50 accepted (0.0%)
+[2026-03-11 14:39:34] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 14:39:34] [INFO    ] Worker 0 step 0: ACCEPTED correlated_displacement E=-152.095832 Ha dipole=1.5655 D
+[2026-03-11 14:39:35] [INFO    ] Worker 0 step 1: ACCEPTED random_rotation E=-152.095837 Ha dipole=1.5662 D
+[2026-03-11 14:39:35] [INFO    ] Worker 0 step 2: ACCEPTED correlated_displacement E=-152.095837 Ha dipole=1.5662 D
+[2026-03-11 14:39:36] [INFO    ] Worker 0 step 3: ACCEPTED correlated_displacement E=-152.095837 Ha dipole=1.5662 D
+[2026-03-11 14:39:36] [INFO    ] Worker 0 step 4: ACCEPTED random_rotation E=-152.095945 Ha dipole=1.5621 D
+[2026-03-11 14:39:36] [INFO    ] Worker 0 step 5: ACCEPTED small_principal_axis_rotation E=-152.095948 Ha dipole=1.5648 D
+[2026-03-11 14:39:37] [INFO    ] Worker 0 step 6: ACCEPTED random_rotation E=-152.096078 Ha dipole=1.5409 D
+[2026-03-11 14:39:37] [INFO    ] Worker 0 step 7: ACCEPTED random_displacement E=-152.096087 Ha dipole=1.5411 D
+[2026-03-11 14:39:38] [INFO    ] Worker 0 step 8: ACCEPTED random_rotation E=-152.096144 Ha dipole=1.5352 D
+[2026-03-11 14:39:38] [INFO    ] Worker 0 step 9: ACCEPTED small_principal_axis_rotation E=-152.096174 Ha dipole=1.5354 D
+[2026-03-11 14:39:38] [INFO    ] Worker 0: 10/50 — accepted=10, rate=100.0%
+[2026-03-11 14:39:39] [INFO    ] Worker 0 step 10: ACCEPTED local_twist E=-152.096169 Ha dipole=1.5349 D
+[2026-03-11 14:39:39] [INFO    ] Worker 0 step 11: ACCEPTED random_displacement E=-152.096211 Ha dipole=1.5356 D
+[2026-03-11 14:39:40] [INFO    ] Worker 0 step 12: ACCEPTED local_twist E=-152.096211 Ha dipole=1.5355 D
+[2026-03-11 14:39:40] [INFO    ] Worker 0 step 13: ACCEPTED random_displacement E=-152.096335 Ha dipole=1.5377 D
+[2026-03-11 14:39:40] [INFO    ] Worker 0 step 14: ACCEPTED local_twist E=-152.096349 Ha dipole=1.5391 D
+[2026-03-11 14:39:41] [INFO    ] Worker 0 step 15: ACCEPTED random_displacement E=-152.096402 Ha dipole=1.5398 D
+[2026-03-11 14:39:41] [INFO    ] Worker 0 step 16: ACCEPTED local_twist E=-152.096402 Ha dipole=1.5399 D
+[2026-03-11 14:39:42] [INFO    ] Worker 0 step 17: ACCEPTED correlated_displacement E=-152.096402 Ha dipole=1.5399 D
+[2026-03-11 14:39:42] [INFO    ] Worker 0 step 18: ACCEPTED local_twist E=-152.096407 Ha dipole=1.5403 D
+[2026-03-11 14:39:43] [INFO    ] Worker 0 step 19: ACCEPTED small_principal_axis_rotation E=-152.096379 Ha dipole=1.5399 D
+[2026-03-11 14:39:43] [INFO    ] Worker 0: 20/50 — accepted=20, rate=100.0%
+[2026-03-11 14:39:43] [INFO    ] Worker 0 step 20: ACCEPTED small_principal_axis_rotation E=-152.096413 Ha dipole=1.5404 D
+[2026-03-11 14:39:43] [INFO    ] Worker 0 step 21: ACCEPTED random_rotation E=-152.096439 Ha dipole=1.5362 D
+[2026-03-11 14:39:44] [INFO    ] Worker 0 step 22: ACCEPTED local_twist E=-152.096444 Ha dipole=1.5367 D
+[2026-03-11 14:39:44] [INFO    ] Worker 0 step 23: ACCEPTED random_rotation E=-152.096440 Ha dipole=1.5350 D
+[2026-03-11 14:39:45] [INFO    ] Worker 0 step 24: ACCEPTED random_displacement E=-152.096513 Ha dipole=1.5362 D
+[2026-03-11 14:39:45] [INFO    ] Worker 0 step 25: ACCEPTED correlated_displacement E=-152.096513 Ha dipole=1.5362 D
+[2026-03-11 14:39:45] [INFO    ] Worker 0 step 26: ACCEPTED random_rotation E=-152.096468 Ha dipole=1.5217 D
+[2026-03-11 14:39:46] [INFO    ] Worker 0 step 27: ACCEPTED random_displacement E=-152.096535 Ha dipole=1.5228 D
+[2026-03-11 14:39:46] [INFO    ] Worker 0 step 28: ACCEPTED random_rotation E=-152.096536 Ha dipole=1.5226 D
+[2026-03-11 14:39:47] [INFO    ] Worker 0 step 29: ACCEPTED random_displacement E=-152.096451 Ha dipole=1.5211 D
+[2026-03-11 14:39:47] [INFO    ] Worker 0: 30/50 — accepted=30, rate=100.0%
+[2026-03-11 14:39:47] [INFO    ] Worker 0 step 30: ACCEPTED small_principal_axis_rotation E=-152.096445 Ha dipole=1.5210 D
+[2026-03-11 14:39:48] [INFO    ] Worker 0 step 31: ACCEPTED correlated_displacement E=-152.096446 Ha dipole=1.5210 D
+[2026-03-11 14:39:48] [INFO    ] Worker 0 step 32: ACCEPTED local_twist E=-152.096434 Ha dipole=1.5198 D
+[2026-03-11 14:39:48] [INFO    ] Worker 0 step 33: ACCEPTED random_displacement E=-152.096395 Ha dipole=1.5191 D
+[2026-03-11 14:39:49] [INFO    ] Worker 0 step 34: ACCEPTED random_displacement E=-152.096256 Ha dipole=1.5167 D
+[2026-03-11 14:39:49] [INFO    ] Worker 0 step 35: ACCEPTED correlated_displacement E=-152.096256 Ha dipole=1.5167 D
+[2026-03-11 14:39:50] [INFO    ] Worker 0 step 36: ACCEPTED correlated_displacement E=-152.096256 Ha dipole=1.5167 D
+[2026-03-11 14:39:50] [INFO    ] Worker 0 step 37: ACCEPTED random_displacement E=-152.096258 Ha dipole=1.5168 D
+[2026-03-11 14:39:50] [INFO    ] Worker 0 step 38: ACCEPTED small_principal_axis_rotation E=-152.096221 Ha dipole=1.5197 D
+[2026-03-11 14:39:51] [INFO    ] Worker 0 step 39: ACCEPTED random_displacement E=-152.096233 Ha dipole=1.5200 D
+[2026-03-11 14:39:51] [INFO    ] Worker 0: 40/50 — accepted=40, rate=100.0%
+[2026-03-11 14:39:51] [INFO    ] Worker 0 step 40: ACCEPTED small_principal_axis_rotation E=-152.096164 Ha dipole=1.5319 D
+[2026-03-11 14:39:52] [INFO    ] Worker 0 step 41: ACCEPTED small_principal_axis_rotation E=-152.096100 Ha dipole=1.5431 D
+[2026-03-11 14:39:52] [INFO    ] Worker 0 step 42: ACCEPTED random_displacement E=-152.096118 Ha dipole=1.5434 D
+[2026-03-11 14:39:52] [INFO    ] Worker 0 step 43: ACCEPTED correlated_displacement E=-152.096118 Ha dipole=1.5434 D
+[2026-03-11 14:39:53] [INFO    ] Worker 0 step 44: ACCEPTED local_twist E=-152.096119 Ha dipole=1.5435 D
+[2026-03-11 14:39:53] [INFO    ] Worker 0 step 45: ACCEPTED small_principal_axis_rotation E=-152.096092 Ha dipole=1.5400 D
+[2026-03-11 14:39:54] [INFO    ] Worker 0 step 46: ACCEPTED local_twist E=-152.096092 Ha dipole=1.5401 D
+[2026-03-11 14:39:54] [INFO    ] Worker 0 step 47: ACCEPTED local_twist E=-152.096097 Ha dipole=1.5407 D
+[2026-03-11 14:39:55] [INFO    ] Worker 0 step 48: ACCEPTED random_displacement E=-152.096099 Ha dipole=1.5407 D
+[2026-03-11 14:39:55] [INFO    ] Worker 0 step 49: ACCEPTED random_rotation E=-152.096058 Ha dipole=1.5315 D
+[2026-03-11 14:39:55] [INFO    ] Worker 0: 50/50 — accepted=50, rate=100.0%
+[2026-03-11 14:39:55] [INFO    ] Worker 0: DONE — 50/50 accepted (100.0%)
+[2026-03-11 14:41:32] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 14:41:33] [INFO    ] Worker 0 step 0: ACCEPTED random_rotation E=-152.095926 Ha dipole=1.5507 D
+[2026-03-11 14:41:33] [INFO    ] Worker 0 step 1: ACCEPTED small_principal_axis_rotation E=-152.095968 Ha dipole=1.5491 D
+[2026-03-11 14:41:34] [INFO    ] Worker 0 step 2: ACCEPTED random_displacement E=-152.095950 Ha dipole=1.5488 D
+[2026-03-11 14:41:34] [INFO    ] Worker 0 step 3: ACCEPTED random_rotation E=-152.095950 Ha dipole=1.5518 D
+[2026-03-11 14:41:35] [INFO    ] Worker 0 step 4: ACCEPTED random_displacement E=-152.095924 Ha dipole=1.5514 D
+[2026-03-11 14:41:35] [INFO    ] Worker 0 step 5: ACCEPTED random_rotation E=-152.095901 Ha dipole=1.5255 D
+[2026-03-11 14:41:35] [INFO    ] Worker 0 step 6: ACCEPTED correlated_displacement E=-152.095901 Ha dipole=1.5255 D
+[2026-03-11 14:41:36] [INFO    ] Worker 0 step 7: ACCEPTED random_rotation E=-152.095856 Ha dipole=1.5257 D
+[2026-03-11 14:41:36] [INFO    ] Worker 0 step 8: ACCEPTED small_principal_axis_rotation E=-152.095801 Ha dipole=1.5181 D
+[2026-03-11 14:41:37] [INFO    ] Worker 0 step 9: ACCEPTED random_rotation E=-152.095830 Ha dipole=1.5256 D
+[2026-03-11 14:41:37] [INFO    ] Worker 0: 10/50 — accepted=10, rate=100.0%
+[2026-03-11 14:41:37] [INFO    ] Worker 0 step 10: ACCEPTED correlated_displacement E=-152.095830 Ha dipole=1.5256 D
+[2026-03-11 14:41:38] [INFO    ] Worker 0 step 11: ACCEPTED local_twist E=-152.095818 Ha dipole=1.5242 D
+[2026-03-11 14:41:38] [INFO    ] Worker 0 step 12: ACCEPTED random_rotation E=-152.095880 Ha dipole=1.5446 D
+[2026-03-11 14:41:38] [INFO    ] Worker 0 step 13: ACCEPTED random_displacement E=-152.095802 Ha dipole=1.5433 D
+[2026-03-11 14:41:39] [INFO    ] Worker 0 step 14: ACCEPTED random_displacement E=-152.095793 Ha dipole=1.5432 D
+[2026-03-11 14:41:39] [INFO    ] Worker 0 step 15: ACCEPTED random_displacement E=-152.095751 Ha dipole=1.5425 D
+[2026-03-11 14:41:40] [INFO    ] Worker 0 step 16: ACCEPTED random_displacement E=-152.095743 Ha dipole=1.5424 D
+[2026-03-11 14:41:40] [INFO    ] Worker 0 step 17: ACCEPTED random_rotation E=-152.095670 Ha dipole=1.5271 D
+[2026-03-11 14:41:40] [INFO    ] Worker 0 step 18: ACCEPTED correlated_displacement E=-152.095670 Ha dipole=1.5271 D
+[2026-03-11 14:41:41] [INFO    ] Worker 0 step 19: ACCEPTED random_displacement E=-152.095705 Ha dipole=1.5275 D
+[2026-03-11 14:41:41] [INFO    ] Worker 0: 20/50 — accepted=20, rate=100.0%
+[2026-03-11 14:41:41] [INFO    ] Worker 0 step 20: ACCEPTED local_twist E=-152.095713 Ha dipole=1.5287 D
+[2026-03-11 14:41:42] [INFO    ] Worker 0 step 21: ACCEPTED local_twist E=-152.095728 Ha dipole=1.5310 D
+[2026-03-11 14:41:42] [INFO    ] Worker 0 step 22: ACCEPTED random_displacement E=-152.095647 Ha dipole=1.5296 D
+[2026-03-11 14:41:43] [INFO    ] Worker 0 step 23: ACCEPTED correlated_displacement E=-152.095647 Ha dipole=1.5296 D
+[2026-03-11 14:41:43] [INFO    ] Worker 0 step 24: ACCEPTED random_rotation E=-152.095547 Ha dipole=1.5530 D
+[2026-03-11 14:41:43] [INFO    ] Worker 0 step 25: ACCEPTED small_principal_axis_rotation E=-152.095576 Ha dipole=1.5462 D
+[2026-03-11 14:41:44] [INFO    ] Worker 0 step 26: ACCEPTED random_rotation E=-152.095591 Ha dipole=1.5452 D
+[2026-03-11 14:41:44] [INFO    ] Worker 0 step 27: ACCEPTED random_rotation E=-152.095583 Ha dipole=1.5366 D
+[2026-03-11 14:41:45] [INFO    ] Worker 0 step 28: ACCEPTED random_displacement E=-152.095597 Ha dipole=1.5368 D
+[2026-03-11 14:41:45] [INFO    ] Worker 0 step 29: ACCEPTED random_rotation E=-152.095654 Ha dipole=1.5218 D
+[2026-03-11 14:41:45] [INFO    ] Worker 0: 30/50 — accepted=30, rate=100.0%
+[2026-03-11 14:41:46] [INFO    ] Worker 0 step 30: ACCEPTED small_principal_axis_rotation E=-152.095583 Ha dipole=1.5235 D
+[2026-03-11 14:41:46] [INFO    ] Worker 0 step 31: ACCEPTED local_twist E=-152.095578 Ha dipole=1.5223 D
+[2026-03-11 14:41:46] [INFO    ] Worker 0 step 32: ACCEPTED correlated_displacement E=-152.095578 Ha dipole=1.5223 D
+[2026-03-11 14:41:47] [INFO    ] Worker 0 step 33: ACCEPTED random_rotation E=-152.095588 Ha dipole=1.5259 D
+[2026-03-11 14:41:47] [INFO    ] Worker 0 step 34: ACCEPTED random_displacement E=-152.095511 Ha dipole=1.5246 D
+[2026-03-11 14:41:48] [INFO    ] Worker 0 step 35: ACCEPTED random_rotation E=-152.095439 Ha dipole=1.5253 D
+[2026-03-11 14:41:48] [INFO    ] Worker 0 step 36: ACCEPTED random_displacement E=-152.095407 Ha dipole=1.5248 D
+[2026-03-11 14:41:48] [INFO    ] Worker 0 step 37: ACCEPTED random_rotation E=-152.095407 Ha dipole=1.5116 D
+[2026-03-11 14:41:49] [INFO    ] Worker 0 step 38: ACCEPTED random_rotation E=-152.095402 Ha dipole=1.5090 D
+[2026-03-11 14:41:49] [INFO    ] Worker 0 step 39: ACCEPTED small_principal_axis_rotation E=-152.095381 Ha dipole=1.5088 D
+[2026-03-11 14:41:49] [INFO    ] Worker 0: 40/50 — accepted=40, rate=100.0%
+[2026-03-11 14:41:50] [INFO    ] Worker 0 step 40: ACCEPTED random_displacement E=-152.095397 Ha dipole=1.5091 D
+[2026-03-11 14:41:50] [INFO    ] Worker 0 step 41: ACCEPTED random_rotation E=-152.095436 Ha dipole=1.5017 D
+[2026-03-11 14:41:51] [INFO    ] Worker 0 step 42: ACCEPTED correlated_displacement E=-152.095436 Ha dipole=1.5017 D
+[2026-03-11 14:41:51] [INFO    ] Worker 0 step 43: ACCEPTED random_rotation E=-152.095414 Ha dipole=1.4918 D
+[2026-03-11 14:41:51] [INFO    ] Worker 0 step 44: ACCEPTED random_rotation E=-152.095488 Ha dipole=1.4802 D
+[2026-03-11 14:41:52] [INFO    ] Worker 0 step 45: ACCEPTED random_displacement E=-152.095403 Ha dipole=1.4787 D
+[2026-03-11 14:41:52] [INFO    ] Worker 0 step 46: ACCEPTED local_twist E=-152.095402 Ha dipole=1.4783 D
+[2026-03-11 14:41:53] [INFO    ] Worker 0 step 47: ACCEPTED small_principal_axis_rotation E=-152.095361 Ha dipole=1.4778 D
+[2026-03-11 14:41:53] [INFO    ] Worker 0 step 48: ACCEPTED random_displacement E=-152.095361 Ha dipole=1.4776 D
+[2026-03-11 14:41:53] [INFO    ] Worker 0 step 49: ACCEPTED correlated_displacement E=-152.095361 Ha dipole=1.4776 D
+[2026-03-11 14:41:53] [INFO    ] Worker 0: 50/50 — accepted=50, rate=100.0%
+[2026-03-11 14:41:53] [INFO    ] Worker 0: DONE — 50/50 accepted (100.0%)
+[2026-03-11 14:43:28] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 14:43:28] [INFO    ] Worker 0 step 0: ACCEPTED random_displacement E=-152.095685 Ha dipole=1.5630 D
+[2026-03-11 14:43:29] [INFO    ] Worker 0 step 1: ACCEPTED local_twist E=-152.095680 Ha dipole=1.5624 D
+[2026-03-11 14:43:29] [INFO    ] Worker 0 step 2: ACCEPTED correlated_displacement E=-152.095680 Ha dipole=1.5624 D
+[2026-03-11 14:43:29] [INFO    ] Worker 0 step 3: ACCEPTED small_principal_axis_rotation E=-152.095726 Ha dipole=1.5608 D
+[2026-03-11 14:43:30] [INFO    ] Worker 0 step 4: ACCEPTED random_rotation E=-152.095740 Ha dipole=1.5571 D
+[2026-03-11 14:43:30] [INFO    ] Worker 0 step 5: ACCEPTED random_displacement E=-152.095858 Ha dipole=1.5590 D
+[2026-03-11 14:43:31] [INFO    ] Worker 0 step 6: ACCEPTED random_displacement E=-152.095859 Ha dipole=1.5590 D
+[2026-03-11 14:43:31] [INFO    ] Worker 0 step 7: ACCEPTED local_twist E=-152.095863 Ha dipole=1.5594 D
+[2026-03-11 14:43:31] [INFO    ] Worker 0 step 8: ACCEPTED local_twist E=-152.095848 Ha dipole=1.5581 D
+[2026-03-11 14:43:32] [INFO    ] Worker 0 step 9: ACCEPTED small_principal_axis_rotation E=-152.095799 Ha dipole=1.5593 D
+[2026-03-11 14:43:32] [INFO    ] Worker 0: 10/50 — accepted=10, rate=100.0%
+[2026-03-11 14:43:33] [INFO    ] Worker 0 step 11: ACCEPTED random_displacement E=-152.095710 Ha dipole=1.5579 D
+[2026-03-11 14:43:33] [INFO    ] Worker 0 step 12: ACCEPTED small_principal_axis_rotation E=-152.095755 Ha dipole=1.5489 D
+[2026-03-11 14:43:33] [INFO    ] Worker 0 step 13: ACCEPTED random_displacement E=-152.095736 Ha dipole=1.5485 D
+[2026-03-11 14:43:34] [INFO    ] Worker 0 step 14: ACCEPTED random_displacement E=-152.095759 Ha dipole=1.5489 D
+[2026-03-11 14:43:34] [INFO    ] Worker 0 step 15: ACCEPTED small_principal_axis_rotation E=-152.095780 Ha dipole=1.5448 D
+[2026-03-11 14:43:35] [INFO    ] Worker 0 step 16: ACCEPTED random_displacement E=-152.095805 Ha dipole=1.5453 D
+[2026-03-11 14:43:35] [INFO    ] Worker 0 step 17: ACCEPTED correlated_displacement E=-152.095805 Ha dipole=1.5453 D
+[2026-03-11 14:43:35] [INFO    ] Worker 0 step 18: ACCEPTED correlated_displacement E=-152.095805 Ha dipole=1.5453 D
+[2026-03-11 14:43:36] [INFO    ] Worker 0 step 19: ACCEPTED random_displacement E=-152.095831 Ha dipole=1.5457 D
+[2026-03-11 14:43:36] [INFO    ] Worker 0: 20/50 — accepted=19, rate=95.0%
+[2026-03-11 14:43:36] [INFO    ] Worker 0 step 20: ACCEPTED small_principal_axis_rotation E=-152.095829 Ha dipole=1.5423 D
+[2026-03-11 14:43:36] [INFO    ] Worker 0 step 21: ACCEPTED small_principal_axis_rotation E=-152.095844 Ha dipole=1.5425 D
+[2026-03-11 14:43:37] [INFO    ] Worker 0 step 22: ACCEPTED small_principal_axis_rotation E=-152.095831 Ha dipole=1.5424 D
+[2026-03-11 14:43:37] [INFO    ] Worker 0 step 23: ACCEPTED random_displacement E=-152.095781 Ha dipole=1.5414 D
+[2026-03-11 14:43:38] [INFO    ] Worker 0 step 24: ACCEPTED local_twist E=-152.095782 Ha dipole=1.5415 D
+[2026-03-11 14:43:38] [INFO    ] Worker 0 step 25: ACCEPTED random_displacement E=-152.095892 Ha dipole=1.5434 D
+[2026-03-11 14:43:38] [INFO    ] Worker 0 step 26: ACCEPTED correlated_displacement E=-152.095892 Ha dipole=1.5434 D
+[2026-03-11 14:43:39] [INFO    ] Worker 0 step 27: ACCEPTED local_twist E=-152.095885 Ha dipole=1.5426 D
+[2026-03-11 14:43:39] [INFO    ] Worker 0 step 28: ACCEPTED correlated_displacement E=-152.095885 Ha dipole=1.5426 D
+[2026-03-11 14:43:40] [INFO    ] Worker 0 step 29: ACCEPTED correlated_displacement E=-152.095885 Ha dipole=1.5426 D
+[2026-03-11 14:43:40] [INFO    ] Worker 0: 30/50 — accepted=29, rate=96.7%
+[2026-03-11 14:43:40] [INFO    ] Worker 0 step 30: ACCEPTED small_principal_axis_rotation E=-152.095938 Ha dipole=1.5328 D
+[2026-03-11 14:43:40] [INFO    ] Worker 0 step 31: ACCEPTED random_displacement E=-152.096066 Ha dipole=1.5351 D
+[2026-03-11 14:43:41] [INFO    ] Worker 0 step 32: ACCEPTED random_displacement E=-152.096154 Ha dipole=1.5366 D
+[2026-03-11 14:43:41] [INFO    ] Worker 0 step 33: ACCEPTED random_displacement E=-152.096124 Ha dipole=1.5361 D
+[2026-03-11 14:43:42] [INFO    ] Worker 0 step 34: ACCEPTED local_twist E=-152.096109 Ha dipole=1.5347 D
+[2026-03-11 14:43:42] [INFO    ] Worker 0 step 35: ACCEPTED random_rotation E=-152.096221 Ha dipole=1.5570 D
+[2026-03-11 14:43:42] [INFO    ] Worker 0 step 36: ACCEPTED random_displacement E=-152.096095 Ha dipole=1.5548 D
+[2026-03-11 14:43:43] [INFO    ] Worker 0 step 37: ACCEPTED local_twist E=-152.096092 Ha dipole=1.5544 D
+[2026-03-11 14:43:43] [INFO    ] Worker 0 step 38: ACCEPTED small_principal_axis_rotation E=-152.096111 Ha dipole=1.5544 D
+[2026-03-11 14:43:44] [INFO    ] Worker 0 step 39: ACCEPTED small_principal_axis_rotation E=-152.096083 Ha dipole=1.5544 D
+[2026-03-11 14:43:44] [INFO    ] Worker 0: 40/50 — accepted=39, rate=97.5%
+[2026-03-11 14:43:44] [INFO    ] Worker 0 step 40: ACCEPTED local_twist E=-152.096095 Ha dipole=1.5555 D
+[2026-03-11 14:43:44] [INFO    ] Worker 0 step 41: ACCEPTED random_rotation E=-152.096145 Ha dipole=1.5546 D
+[2026-03-11 14:43:45] [INFO    ] Worker 0 step 42: ACCEPTED random_displacement E=-152.096142 Ha dipole=1.5545 D
+[2026-03-11 14:43:45] [INFO    ] Worker 0 step 43: ACCEPTED small_principal_axis_rotation E=-152.096165 Ha dipole=1.5548 D
+[2026-03-11 14:43:45] [INFO    ] Worker 0 step 44: ACCEPTED random_displacement E=-152.096112 Ha dipole=1.5539 D
+[2026-03-11 14:43:46] [INFO    ] Worker 0 step 45: ACCEPTED random_displacement E=-152.096138 Ha dipole=1.5543 D
+[2026-03-11 14:43:46] [INFO    ] Worker 0 step 46: ACCEPTED small_principal_axis_rotation E=-152.096173 Ha dipole=1.5548 D
+[2026-03-11 14:43:47] [INFO    ] Worker 0 step 47: ACCEPTED local_twist E=-152.096176 Ha dipole=1.5550 D
+[2026-03-11 14:43:47] [INFO    ] Worker 0 step 48: ACCEPTED correlated_displacement E=-152.096176 Ha dipole=1.5550 D
+[2026-03-11 14:43:47] [INFO    ] Worker 0 step 49: ACCEPTED random_rotation E=-152.096185 Ha dipole=1.5569 D
+[2026-03-11 14:43:47] [INFO    ] Worker 0: 50/50 — accepted=49, rate=98.0%
+[2026-03-11 14:43:47] [INFO    ] Worker 0: DONE — 49/50 accepted (98.0%)
+[2026-03-11 14:44:39] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 14:44:40] [INFO    ] Worker 0 step 0: ACCEPTED random_displacement E=-152.095846 Ha dipole=1.5657 D
+[2026-03-11 14:44:40] [INFO    ] Worker 0 step 1: ACCEPTED local_twist E=-152.095851 Ha dipole=1.5663 D
+[2026-03-11 14:44:41] [INFO    ] Worker 0 step 2: ACCEPTED random_rotation E=-152.095866 Ha dipole=1.5604 D
+[2026-03-11 14:44:41] [INFO    ] Worker 0 step 3: ACCEPTED correlated_displacement E=-152.095866 Ha dipole=1.5604 D
+[2026-03-11 14:44:41] [INFO    ] Worker 0 step 4: ACCEPTED small_principal_axis_rotation E=-152.095902 Ha dipole=1.5538 D
+[2026-03-11 14:44:42] [INFO    ] Worker 0 step 6: ACCEPTED random_rotation E=-152.095967 Ha dipole=1.5694 D
+[2026-03-11 14:44:42] [INFO    ] Worker 0 step 7: ACCEPTED random_displacement E=-152.095935 Ha dipole=1.5688 D
+[2026-03-11 14:44:43] [INFO    ] Worker 0 step 8: ACCEPTED random_displacement E=-152.096018 Ha dipole=1.5702 D
+[2026-03-11 14:44:43] [INFO    ] Worker 0 step 9: ACCEPTED random_displacement E=-152.096000 Ha dipole=1.5699 D
+[2026-03-11 14:44:43] [INFO    ] Worker 0: 10/50 — accepted=9, rate=90.0%
+[2026-03-11 14:44:44] [INFO    ] Worker 0 step 10: ACCEPTED small_principal_axis_rotation E=-152.095980 Ha dipole=1.5733 D
+[2026-03-11 14:44:44] [INFO    ] Worker 0 step 11: ACCEPTED local_twist E=-152.095966 Ha dipole=1.5716 D
+[2026-03-11 14:44:44] [INFO    ] Worker 0 step 12: ACCEPTED random_displacement E=-152.095852 Ha dipole=1.5695 D
+[2026-03-11 14:44:45] [INFO    ] Worker 0 step 13: ACCEPTED random_rotation E=-152.095674 Ha dipole=1.5467 D
+[2026-03-11 14:44:45] [INFO    ] Worker 0 step 14: ACCEPTED correlated_displacement E=-152.095674 Ha dipole=1.5467 D
+[2026-03-11 14:44:46] [INFO    ] Worker 0 step 16: ACCEPTED correlated_displacement E=-152.095674 Ha dipole=1.5467 D
+[2026-03-11 14:44:46] [INFO    ] Worker 0 step 17: ACCEPTED local_twist E=-152.095680 Ha dipole=1.5477 D
+[2026-03-11 14:44:47] [INFO    ] Worker 0 step 18: ACCEPTED small_principal_axis_rotation E=-152.095688 Ha dipole=1.5475 D
+[2026-03-11 14:44:47] [INFO    ] Worker 0 step 19: ACCEPTED local_twist E=-152.095700 Ha dipole=1.5495 D
+[2026-03-11 14:44:47] [INFO    ] Worker 0: 20/50 — accepted=18, rate=90.0%
+[2026-03-11 14:44:48] [INFO    ] Worker 0 step 20: ACCEPTED small_principal_axis_rotation E=-152.095636 Ha dipole=1.5419 D
+[2026-03-11 14:44:48] [INFO    ] Worker 0 step 21: ACCEPTED small_principal_axis_rotation E=-152.095582 Ha dipole=1.5413 D
+[2026-03-11 14:44:48] [INFO    ] Worker 0 step 22: ACCEPTED local_twist E=-152.095584 Ha dipole=1.5416 D
+[2026-03-11 14:44:49] [INFO    ] Worker 0 step 23: ACCEPTED random_displacement E=-152.095586 Ha dipole=1.5416 D
+[2026-03-11 14:44:49] [INFO    ] Worker 0 step 24: ACCEPTED random_displacement E=-152.095603 Ha dipole=1.5420 D
+[2026-03-11 14:44:50] [INFO    ] Worker 0 step 25: ACCEPTED random_rotation E=-152.095627 Ha dipole=1.5380 D
+[2026-03-11 14:44:50] [INFO    ] Worker 0 step 26: ACCEPTED random_rotation E=-152.095629 Ha dipole=1.5376 D
+[2026-03-11 14:44:50] [INFO    ] Worker 0 step 27: ACCEPTED random_rotation E=-152.095538 Ha dipole=1.5340 D
+[2026-03-11 14:44:51] [INFO    ] Worker 0 step 28: ACCEPTED random_displacement E=-152.095499 Ha dipole=1.5334 D
+[2026-03-11 14:44:51] [INFO    ] Worker 0 step 29: ACCEPTED local_twist E=-152.095504 Ha dipole=1.5345 D
+[2026-03-11 14:44:51] [INFO    ] Worker 0: 30/50 — accepted=28, rate=93.3%
+[2026-03-11 14:44:52] [INFO    ] Worker 0 step 30: ACCEPTED correlated_displacement E=-152.095504 Ha dipole=1.5345 D
+[2026-03-11 14:44:52] [INFO    ] Worker 0 step 31: ACCEPTED random_rotation E=-152.095505 Ha dipole=1.5346 D
+[2026-03-11 14:44:52] [INFO    ] Worker 0 step 32: ACCEPTED random_rotation E=-152.095629 Ha dipole=1.5187 D
+[2026-03-11 14:44:53] [INFO    ] Worker 0 step 33: ACCEPTED correlated_displacement E=-152.095629 Ha dipole=1.5187 D
+[2026-03-11 14:44:53] [INFO    ] Worker 0 step 34: ACCEPTED correlated_displacement E=-152.095629 Ha dipole=1.5187 D
+[2026-03-11 14:44:54] [INFO    ] Worker 0 step 35: ACCEPTED random_displacement E=-152.095651 Ha dipole=1.5190 D
+[2026-03-11 14:44:54] [INFO    ] Worker 0 step 36: ACCEPTED random_displacement E=-152.095673 Ha dipole=1.5194 D
+[2026-03-11 14:44:54] [INFO    ] Worker 0 step 37: ACCEPTED small_principal_axis_rotation E=-152.095638 Ha dipole=1.5189 D
+[2026-03-11 14:44:55] [INFO    ] Worker 0 step 38: ACCEPTED random_rotation E=-152.095647 Ha dipole=1.5255 D
+[2026-03-11 14:44:55] [INFO    ] Worker 0 step 39: ACCEPTED small_principal_axis_rotation E=-152.095625 Ha dipole=1.5231 D
+[2026-03-11 14:44:55] [INFO    ] Worker 0: 40/50 — accepted=38, rate=95.0%
+[2026-03-11 14:44:56] [INFO    ] Worker 0 step 40: ACCEPTED correlated_displacement E=-152.095625 Ha dipole=1.5231 D
+[2026-03-11 14:44:56] [INFO    ] Worker 0 step 41: ACCEPTED random_rotation E=-152.095749 Ha dipole=1.5356 D
+[2026-03-11 14:44:56] [INFO    ] Worker 0 step 42: ACCEPTED small_principal_axis_rotation E=-152.095782 Ha dipole=1.5360 D
+[2026-03-11 14:44:57] [INFO    ] Worker 0 step 43: ACCEPTED correlated_displacement E=-152.095782 Ha dipole=1.5360 D
+[2026-03-11 14:44:57] [INFO    ] Worker 0 step 44: ACCEPTED random_displacement E=-152.095760 Ha dipole=1.5356 D
+[2026-03-11 14:44:58] [INFO    ] Worker 0 step 45: ACCEPTED small_principal_axis_rotation E=-152.095795 Ha dipole=1.5360 D
+[2026-03-11 14:44:58] [INFO    ] Worker 0 step 46: ACCEPTED random_rotation E=-152.095895 Ha dipole=1.5341 D
+[2026-03-11 14:44:59] [INFO    ] Worker 0 step 47: ACCEPTED random_rotation E=-152.095818 Ha dipole=1.5286 D
+[2026-03-11 14:44:59] [INFO    ] Worker 0 step 48: ACCEPTED small_principal_axis_rotation E=-152.095835 Ha dipole=1.5288 D
+[2026-03-11 14:44:59] [INFO    ] Worker 0 step 49: ACCEPTED local_twist E=-152.095849 Ha dipole=1.5318 D
+[2026-03-11 14:44:59] [INFO    ] Worker 0: 50/50 — accepted=48, rate=96.0%
+[2026-03-11 14:44:59] [INFO    ] Worker 0: DONE — 48/50 accepted (96.0%)
+[2026-03-11 14:46:27] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 14:46:27] [INFO    ] Worker 0 step 0: ACCEPTED local_twist E=-152.095817 Ha dipole=1.5640 D
+[2026-03-11 14:46:28] [INFO    ] Worker 0 step 1: ACCEPTED random_rotation E=-152.095813 Ha dipole=1.5641 D
+[2026-03-11 14:46:28] [INFO    ] Worker 0 step 2: ACCEPTED small_principal_axis_rotation E=-152.095818 Ha dipole=1.5642 D
+[2026-03-11 14:46:29] [INFO    ] Worker 0 step 3: ACCEPTED random_rotation E=-152.095755 Ha dipole=1.5695 D
+[2026-03-11 14:46:29] [INFO    ] Worker 0 step 4: ACCEPTED random_displacement E=-152.095751 Ha dipole=1.5695 D
+[2026-03-11 14:46:30] [INFO    ] Worker 0 step 6: ACCEPTED random_displacement E=-152.095669 Ha dipole=1.5681 D
+[2026-03-11 14:46:31] [INFO    ] Worker 0 step 8: ACCEPTED random_rotation E=-152.095666 Ha dipole=1.5681 D
+[2026-03-11 14:46:31] [INFO    ] Worker 0 step 9: ACCEPTED random_rotation E=-152.095634 Ha dipole=1.5692 D
+[2026-03-11 14:46:31] [INFO    ] Worker 0: 10/50 — accepted=8, rate=80.0%
+[2026-03-11 14:46:31] [INFO    ] Worker 0 step 10: ACCEPTED correlated_displacement E=-152.095634 Ha dipole=1.5692 D
+[2026-03-11 14:46:32] [INFO    ] Worker 0 step 11: ACCEPTED random_displacement E=-152.095618 Ha dipole=1.5690 D
+[2026-03-11 14:46:32] [INFO    ] Worker 0 step 12: ACCEPTED small_principal_axis_rotation E=-152.095676 Ha dipole=1.5754 D
+[2026-03-11 14:46:32] [INFO    ] Worker 0 step 13: ACCEPTED random_displacement E=-152.095588 Ha dipole=1.5740 D
+[2026-03-11 14:46:33] [INFO    ] Worker 0 step 15: ACCEPTED random_rotation E=-152.095628 Ha dipole=1.5891 D
+[2026-03-11 14:46:34] [INFO    ] Worker 0 step 16: ACCEPTED correlated_displacement E=-152.095628 Ha dipole=1.5891 D
+[2026-03-11 14:46:34] [INFO    ] Worker 0 step 17: ACCEPTED random_displacement E=-152.095603 Ha dipole=1.5888 D
+[2026-03-11 14:46:34] [INFO    ] Worker 0 step 18: ACCEPTED correlated_displacement E=-152.095603 Ha dipole=1.5888 D
+[2026-03-11 14:46:35] [INFO    ] Worker 0 step 19: ACCEPTED random_rotation E=-152.095505 Ha dipole=1.5992 D
+[2026-03-11 14:46:35] [INFO    ] Worker 0: 20/50 — accepted=17, rate=85.0%
+[2026-03-11 14:46:36] [INFO    ] Worker 0 step 21: ACCEPTED random_displacement E=-152.095530 Ha dipole=1.5996 D
+[2026-03-11 14:46:36] [INFO    ] Worker 0 step 22: ACCEPTED local_twist E=-152.095523 Ha dipole=1.5986 D
+[2026-03-11 14:46:36] [INFO    ] Worker 0 step 23: ACCEPTED random_displacement E=-152.095583 Ha dipole=1.5995 D
+[2026-03-11 14:46:37] [INFO    ] Worker 0 step 24: ACCEPTED random_rotation E=-152.095576 Ha dipole=1.5993 D
+[2026-03-11 14:46:37] [INFO    ] Worker 0 step 25: ACCEPTED correlated_displacement E=-152.095576 Ha dipole=1.5993 D
+[2026-03-11 14:46:38] [INFO    ] Worker 0 step 26: ACCEPTED random_rotation E=-152.095505 Ha dipole=1.5772 D
+[2026-03-11 14:46:38] [INFO    ] Worker 0 step 27: ACCEPTED small_principal_axis_rotation E=-152.095518 Ha dipole=1.5773 D
+[2026-03-11 14:46:38] [INFO    ] Worker 0 step 28: ACCEPTED random_displacement E=-152.095517 Ha dipole=1.5774 D
+[2026-03-11 14:46:39] [INFO    ] Worker 0 step 29: ACCEPTED local_twist E=-152.095511 Ha dipole=1.5768 D
+[2026-03-11 14:46:39] [INFO    ] Worker 0: 30/50 — accepted=26, rate=86.7%
+[2026-03-11 14:46:40] [INFO    ] Worker 0 step 31: ACCEPTED random_rotation E=-152.095513 Ha dipole=1.5784 D
+[2026-03-11 14:46:40] [INFO    ] Worker 0 step 32: ACCEPTED local_twist E=-152.095505 Ha dipole=1.5774 D
+[2026-03-11 14:46:40] [INFO    ] Worker 0 step 33: ACCEPTED random_displacement E=-152.095486 Ha dipole=1.5770 D
+[2026-03-11 14:46:41] [INFO    ] Worker 0 step 34: ACCEPTED random_displacement E=-152.095518 Ha dipole=1.5776 D
+[2026-03-11 14:46:41] [INFO    ] Worker 0 step 35: ACCEPTED correlated_displacement E=-152.095518 Ha dipole=1.5776 D
+[2026-03-11 14:46:42] [INFO    ] Worker 0 step 36: ACCEPTED random_displacement E=-152.095534 Ha dipole=1.5779 D
+[2026-03-11 14:46:42] [INFO    ] Worker 0 step 38: ACCEPTED random_displacement E=-152.095545 Ha dipole=1.5780 D
+[2026-03-11 14:46:43] [INFO    ] Worker 0 step 39: ACCEPTED random_rotation E=-152.095604 Ha dipole=1.5795 D
+[2026-03-11 14:46:43] [INFO    ] Worker 0: 40/50 — accepted=34, rate=85.0%
+[2026-03-11 14:46:43] [INFO    ] Worker 0 step 40: ACCEPTED random_rotation E=-152.095601 Ha dipole=1.5805 D
+[2026-03-11 14:46:43] [INFO    ] Worker 0 step 41: ACCEPTED small_principal_axis_rotation E=-152.095621 Ha dipole=1.5760 D
+[2026-03-11 14:46:44] [INFO    ] Worker 0 step 42: ACCEPTED random_rotation E=-152.095633 Ha dipole=1.5754 D
+[2026-03-11 14:46:44] [INFO    ] Worker 0 step 43: ACCEPTED random_displacement E=-152.095602 Ha dipole=1.5750 D
+[2026-03-11 14:46:45] [INFO    ] Worker 0 step 44: ACCEPTED correlated_displacement E=-152.095602 Ha dipole=1.5750 D
+[2026-03-11 14:46:45] [INFO    ] Worker 0 step 45: ACCEPTED local_twist E=-152.095606 Ha dipole=1.5754 D
+[2026-03-11 14:46:45] [INFO    ] Worker 0 step 46: ACCEPTED random_displacement E=-152.095690 Ha dipole=1.5768 D
+[2026-03-11 14:46:46] [INFO    ] Worker 0 step 47: ACCEPTED random_displacement E=-152.095815 Ha dipole=1.5788 D
+[2026-03-11 14:46:46] [INFO    ] Worker 0 step 48: ACCEPTED local_twist E=-152.095796 Ha dipole=1.5774 D
+[2026-03-11 14:46:47] [INFO    ] Worker 0 step 49: ACCEPTED random_rotation E=-152.095829 Ha dipole=1.5727 D
+[2026-03-11 14:46:47] [INFO    ] Worker 0: 50/50 — accepted=44, rate=88.0%
+[2026-03-11 14:46:47] [INFO    ] Worker 0: DONE — 44/50 accepted (88.0%)
+[2026-03-11 15:08:59] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 15:08:59] [INFO    ] Worker 0 step 0: ACCEPTED random_displacement E=-152.095866 Ha dipole=1.5661 D
+[2026-03-11 15:09:00] [INFO    ] Worker 0 step 1: ACCEPTED random_displacement E=-152.095886 Ha dipole=1.5664 D
+[2026-03-11 15:09:00] [INFO    ] Worker 0 step 2: ACCEPTED local_twist E=-152.095899 Ha dipole=1.5677 D
+[2026-03-11 15:09:01] [INFO    ] Worker 0 step 3: ACCEPTED random_displacement E=-152.095890 Ha dipole=1.5677 D
+[2026-03-11 15:09:01] [INFO    ] Worker 0 step 4: ACCEPTED local_twist E=-152.095877 Ha dipole=1.5662 D
+[2026-03-11 15:09:01] [INFO    ] Worker 0 step 5: ACCEPTED local_twist E=-152.095885 Ha dipole=1.5671 D
+[2026-03-11 15:09:02] [INFO    ] Worker 0 step 6: ACCEPTED random_rotation E=-152.095885 Ha dipole=1.5670 D
+[2026-03-11 15:09:02] [INFO    ] Worker 0 step 7: ACCEPTED small_principal_axis_rotation E=-152.095916 Ha dipole=1.5661 D
+[2026-03-11 15:09:02] [INFO    ] Worker 0 step 8: ACCEPTED correlated_displacement E=-152.095916 Ha dipole=1.5661 D
+[2026-03-11 15:09:03] [INFO    ] Worker 0 step 9: ACCEPTED local_twist E=-152.095928 Ha dipole=1.5674 D
+[2026-03-11 15:09:03] [INFO    ] Worker 0: 10/50 — accepted=10, rate=100.0%
+[2026-03-11 15:09:03] [INFO    ] Worker 0 step 10: ACCEPTED random_rotation E=-152.095942 Ha dipole=1.5652 D
+[2026-03-11 15:09:04] [INFO    ] Worker 0 step 11: ACCEPTED random_displacement E=-152.095938 Ha dipole=1.5652 D
+[2026-03-11 15:09:04] [INFO    ] Worker 0 step 12: ACCEPTED correlated_displacement E=-152.095938 Ha dipole=1.5652 D
+[2026-03-11 15:09:04] [INFO    ] Worker 0 step 13: ACCEPTED random_displacement E=-152.095938 Ha dipole=1.5652 D
+[2026-03-11 15:09:05] [INFO    ] Worker 0 step 14: ACCEPTED small_principal_axis_rotation E=-152.095884 Ha dipole=1.5750 D
+[2026-03-11 15:09:05] [INFO    ] Worker 0 step 15: ACCEPTED random_rotation E=-152.095901 Ha dipole=1.5734 D
+[2026-03-11 15:09:06] [INFO    ] Worker 0 step 16: ACCEPTED correlated_displacement E=-152.095901 Ha dipole=1.5734 D
+[2026-03-11 15:09:06] [INFO    ] Worker 0 step 17: ACCEPTED random_displacement E=-152.095892 Ha dipole=1.5733 D
+[2026-03-11 15:09:06] [INFO    ] Worker 0 step 18: ACCEPTED random_displacement E=-152.095943 Ha dipole=1.5742 D
+[2026-03-11 15:09:07] [INFO    ] Worker 0 step 19: ACCEPTED small_principal_axis_rotation E=-152.095958 Ha dipole=1.5735 D
+[2026-03-11 15:09:07] [INFO    ] Worker 0: 20/50 — accepted=20, rate=100.0%
+[2026-03-11 15:09:07] [INFO    ] Worker 0 step 20: ACCEPTED correlated_displacement E=-152.095958 Ha dipole=1.5735 D
+[2026-03-11 15:09:08] [INFO    ] Worker 0 step 21: ACCEPTED small_principal_axis_rotation E=-152.095980 Ha dipole=1.5722 D
+[2026-03-11 15:09:08] [INFO    ] Worker 0 step 22: ACCEPTED random_displacement E=-152.096001 Ha dipole=1.5725 D
+[2026-03-11 15:09:08] [INFO    ] Worker 0 step 23: ACCEPTED random_displacement E=-152.096017 Ha dipole=1.5728 D
+[2026-03-11 15:09:09] [INFO    ] Worker 0 step 24: ACCEPTED local_twist E=-152.096036 Ha dipole=1.5740 D
+[2026-03-11 15:09:09] [INFO    ] Worker 0 step 25: ACCEPTED random_displacement E=-152.096019 Ha dipole=1.5737 D
+[2026-03-11 15:09:10] [INFO    ] Worker 0 step 26: ACCEPTED random_displacement E=-152.096152 Ha dipole=1.5759 D
+[2026-03-11 15:09:10] [INFO    ] Worker 0 step 27: ACCEPTED random_rotation E=-152.096176 Ha dipole=1.5643 D
+[2026-03-11 15:09:10] [INFO    ] Worker 0 step 28: ACCEPTED random_rotation E=-152.096250 Ha dipole=1.5538 D
+[2026-03-11 15:09:11] [INFO    ] Worker 0 step 29: ACCEPTED random_rotation E=-152.096286 Ha dipole=1.5499 D
+[2026-03-11 15:09:11] [INFO    ] Worker 0: 30/50 — accepted=30, rate=100.0%
+[2026-03-11 15:09:11] [INFO    ] Worker 0 step 30: ACCEPTED correlated_displacement E=-152.096286 Ha dipole=1.5499 D
+[2026-03-11 15:09:12] [INFO    ] Worker 0 step 31: ACCEPTED random_rotation E=-152.096282 Ha dipole=1.5489 D
+[2026-03-11 15:09:12] [INFO    ] Worker 0 step 32: ACCEPTED random_displacement E=-152.096261 Ha dipole=1.5486 D
+[2026-03-11 15:09:13] [INFO    ] Worker 0 step 33: ACCEPTED random_rotation E=-152.096254 Ha dipole=1.5522 D
+[2026-03-11 15:09:13] [INFO    ] Worker 0 step 35: ACCEPTED random_rotation E=-152.096321 Ha dipole=1.5413 D
+[2026-03-11 15:09:14] [INFO    ] Worker 0 step 36: ACCEPTED correlated_displacement E=-152.096321 Ha dipole=1.5413 D
+[2026-03-11 15:09:14] [INFO    ] Worker 0 step 37: ACCEPTED correlated_displacement E=-152.096321 Ha dipole=1.5413 D
+[2026-03-11 15:09:15] [INFO    ] Worker 0 step 38: ACCEPTED random_displacement E=-152.096327 Ha dipole=1.5414 D
+[2026-03-11 15:09:15] [INFO    ] Worker 0 step 39: ACCEPTED random_displacement E=-152.096319 Ha dipole=1.5413 D
+[2026-03-11 15:09:15] [INFO    ] Worker 0: 40/50 — accepted=39, rate=97.5%
+[2026-03-11 15:09:15] [INFO    ] Worker 0 step 40: ACCEPTED local_twist E=-152.096303 Ha dipole=1.5394 D
+[2026-03-11 15:09:16] [INFO    ] Worker 0 step 41: ACCEPTED random_displacement E=-152.096286 Ha dipole=1.5391 D
+[2026-03-11 15:09:16] [INFO    ] Worker 0 step 42: ACCEPTED small_principal_axis_rotation E=-152.096290 Ha dipole=1.5388 D
+[2026-03-11 15:09:17] [INFO    ] Worker 0 step 43: ACCEPTED random_displacement E=-152.096264 Ha dipole=1.5384 D
+[2026-03-11 15:09:17] [INFO    ] Worker 0 step 44: ACCEPTED random_displacement E=-152.096337 Ha dipole=1.5398 D
+[2026-03-11 15:09:18] [INFO    ] Worker 0 step 45: ACCEPTED random_displacement E=-152.096385 Ha dipole=1.5406 D
+[2026-03-11 15:09:18] [INFO    ] Worker 0 step 46: ACCEPTED random_displacement E=-152.096401 Ha dipole=1.5409 D
+[2026-03-11 15:09:19] [INFO    ] Worker 0 step 47: ACCEPTED small_principal_axis_rotation E=-152.096355 Ha dipole=1.5478 D
+[2026-03-11 15:09:19] [INFO    ] Worker 0 step 48: ACCEPTED small_principal_axis_rotation E=-152.096364 Ha dipole=1.5464 D
+[2026-03-11 15:09:19] [INFO    ] Worker 0 step 49: ACCEPTED local_twist E=-152.096355 Ha dipole=1.5454 D
+[2026-03-11 15:09:19] [INFO    ] Worker 0: 50/50 — accepted=49, rate=98.0%
+[2026-03-11 15:09:19] [INFO    ] Worker 0: DONE — 49/50 accepted (98.0%)
+[2026-03-11 15:09:48] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 15:09:49] [INFO    ] Worker 0 step 0: ACCEPTED local_twist E=-152.095784 Ha dipole=1.5610 D
+[2026-03-11 15:09:49] [INFO    ] Worker 0 step 1: ACCEPTED random_displacement E=-152.095792 Ha dipole=1.5611 D
+[2026-03-11 15:09:49] [INFO    ] Worker 0 step 2: ACCEPTED random_rotation E=-152.095840 Ha dipole=1.5539 D
+[2026-03-11 15:09:50] [INFO    ] Worker 0 step 3: ACCEPTED random_rotation E=-152.096137 Ha dipole=1.4417 D
+[2026-03-11 15:09:50] [INFO    ] Worker 0 step 4: ACCEPTED random_displacement E=-152.096108 Ha dipole=1.4404 D
+[2026-03-11 15:09:51] [INFO    ] Worker 0 step 5: ACCEPTED random_rotation E=-152.096442 Ha dipole=1.3832 D
+[2026-03-11 15:09:51] [INFO    ] Worker 0 step 6: ACCEPTED correlated_displacement E=-152.096442 Ha dipole=1.3832 D
+[2026-03-11 15:09:51] [INFO    ] Worker 0 step 7: ACCEPTED local_twist E=-152.096459 Ha dipole=1.3695 D
+[2026-03-11 15:09:52] [INFO    ] Worker 0 step 8: ACCEPTED small_principal_axis_rotation E=-152.096477 Ha dipole=1.3698 D
+[2026-03-11 15:09:52] [INFO    ] Worker 0: 10/50 — accepted=9, rate=90.0%
+[2026-03-11 15:09:52] [INFO    ] Worker 0 step 10: ACCEPTED random_displacement E=-152.096755 Ha dipole=1.3755 D
+[2026-03-11 15:09:53] [INFO    ] Worker 0 step 12: ACCEPTED small_principal_axis_rotation E=-152.096926 Ha dipole=1.3753 D
+[2026-03-11 15:09:54] [INFO    ] Worker 0 step 13: ACCEPTED random_displacement E=-152.096891 Ha dipole=1.3740 D
+[2026-03-11 15:09:54] [INFO    ] Worker 0 step 14: ACCEPTED random_displacement E=-152.097049 Ha dipole=1.3767 D
+[2026-03-11 15:09:54] [INFO    ] Worker 0 step 15: ACCEPTED local_twist E=-152.097047 Ha dipole=1.3775 D
+[2026-03-11 15:09:55] [INFO    ] Worker 0 step 17: ACCEPTED local_twist E=-152.097041 Ha dipole=1.3805 D
+[2026-03-11 15:09:56] [INFO    ] Worker 0 step 19: ACCEPTED small_principal_axis_rotation E=-152.097020 Ha dipole=1.3801 D
+[2026-03-11 15:09:56] [INFO    ] Worker 0: 20/50 — accepted=16, rate=80.0%
+[2026-03-11 15:09:56] [INFO    ] Worker 0 step 20: ACCEPTED small_principal_axis_rotation E=-152.097226 Ha dipole=1.4539 D
+[2026-03-11 15:09:57] [INFO    ] Worker 0 step 22: ACCEPTED local_twist E=-152.097210 Ha dipole=1.4574 D
+[2026-03-11 15:09:58] [INFO    ] Worker 0 step 23: ACCEPTED random_displacement E=-152.097620 Ha dipole=1.4647 D
+[2026-03-11 15:09:58] [INFO    ] Worker 0 step 25: ACCEPTED small_principal_axis_rotation E=-152.097642 Ha dipole=1.4649 D
+[2026-03-11 15:09:59] [INFO    ] Worker 0 step 26: ACCEPTED random_displacement E=-152.097850 Ha dipole=1.4679 D
+[2026-03-11 15:09:59] [INFO    ] Worker 0 step 27: ACCEPTED local_twist E=-152.097884 Ha dipole=1.4614 D
+[2026-03-11 15:10:00] [INFO    ] Worker 0 step 28: ACCEPTED correlated_displacement E=-152.097884 Ha dipole=1.4614 D
+[2026-03-11 15:10:00] [INFO    ] Worker 0: 30/50 — accepted=23, rate=76.7%
+[2026-03-11 15:10:01] [INFO    ] Worker 0 step 31: ACCEPTED random_displacement E=-152.097857 Ha dipole=1.4609 D
+[2026-03-11 15:10:01] [INFO    ] Worker 0 step 32: ACCEPTED random_displacement E=-152.098137 Ha dipole=1.4669 D
+[2026-03-11 15:10:02] [INFO    ] Worker 0 step 34: ACCEPTED random_rotation E=-152.097983 Ha dipole=1.5872 D
+[2026-03-11 15:10:02] [INFO    ] Worker 0 step 35: ACCEPTED random_displacement E=-152.098663 Ha dipole=1.6003 D
+[2026-03-11 15:10:03] [INFO    ] Worker 0 step 36: ACCEPTED random_rotation E=-152.098665 Ha dipole=1.5970 D
+[2026-03-11 15:10:03] [INFO    ] Worker 0 step 37: ACCEPTED random_displacement E=-152.098661 Ha dipole=1.5969 D
+[2026-03-11 15:10:04] [INFO    ] Worker 0 step 38: ACCEPTED correlated_displacement E=-152.098661 Ha dipole=1.5969 D
+[2026-03-11 15:10:04] [INFO    ] Worker 0: 40/50 — accepted=30, rate=75.0%
+[2026-03-11 15:10:04] [INFO    ] Worker 0 step 40: ACCEPTED random_rotation E=-152.098462 Ha dipole=1.5457 D
+[2026-03-11 15:10:05] [INFO    ] Worker 0 step 41: ACCEPTED random_displacement E=-152.098991 Ha dipole=1.5567 D
+[2026-03-11 15:10:05] [INFO    ] Worker 0 step 42: ACCEPTED small_principal_axis_rotation E=-152.098974 Ha dipole=1.5538 D
+[2026-03-11 15:10:06] [INFO    ] Worker 0 step 45: ACCEPTED local_twist E=-152.099030 Ha dipole=1.5409 D
+[2026-03-11 15:10:07] [INFO    ] Worker 0 step 46: ACCEPTED correlated_displacement E=-152.099030 Ha dipole=1.5409 D
+[2026-03-11 15:10:07] [INFO    ] Worker 0 step 47: ACCEPTED local_twist E=-152.098991 Ha dipole=1.5504 D
+[2026-03-11 15:10:08] [INFO    ] Worker 0 step 48: ACCEPTED random_displacement E=-152.099363 Ha dipole=1.5602 D
+[2026-03-11 15:10:08] [INFO    ] Worker 0 step 49: ACCEPTED local_twist E=-152.099422 Ha dipole=1.5466 D
+[2026-03-11 15:10:08] [INFO    ] Worker 0: 50/50 — accepted=38, rate=76.0%
+[2026-03-11 15:10:08] [INFO    ] Worker 0: DONE — 38/50 accepted (76.0%)
+[2026-03-11 15:15:16] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 15:15:17] [INFO    ] Worker 0 step 0: ACCEPTED small_principal_axis_rotation E=-152.095995 Ha dipole=1.5676 D
+[2026-03-11 15:15:17] [INFO    ] Worker 0 step 1: ACCEPTED correlated_displacement E=-152.095995 Ha dipole=1.5676 D
+[2026-03-11 15:15:17] [INFO    ] Worker 0 step 2: ACCEPTED local_twist E=-152.095998 Ha dipole=1.5681 D
+[2026-03-11 15:15:18] [INFO    ] Worker 0 step 4: ACCEPTED random_displacement E=-152.095838 Ha dipole=1.5653 D
+[2026-03-11 15:15:19] [INFO    ] Worker 0 step 5: ACCEPTED local_twist E=-152.095876 Ha dipole=1.5746 D
+[2026-03-11 15:15:19] [INFO    ] Worker 0 step 7: ACCEPTED small_principal_axis_rotation E=-152.095787 Ha dipole=1.5733 D
+[2026-03-11 15:15:20] [INFO    ] Worker 0 step 9: ACCEPTED correlated_displacement E=-152.095787 Ha dipole=1.5733 D
+[2026-03-11 15:15:20] [INFO    ] Worker 0: 10/100 — accepted=7, rate=70.0%
+[2026-03-11 15:15:21] [INFO    ] Worker 0 step 10: ACCEPTED random_displacement E=-152.095946 Ha dipole=1.5758 D
+[2026-03-11 15:15:21] [INFO    ] Worker 0 step 11: ACCEPTED local_twist E=-152.095967 Ha dipole=1.5811 D
+[2026-03-11 15:15:21] [INFO    ] Worker 0 step 12: ACCEPTED random_displacement E=-152.096237 Ha dipole=1.5852 D
+[2026-03-11 15:15:22] [INFO    ] Worker 0 step 13: ACCEPTED local_twist E=-152.096217 Ha dipole=1.5814 D
+[2026-03-11 15:15:22] [INFO    ] Worker 0 step 14: ACCEPTED correlated_displacement E=-152.096217 Ha dipole=1.5814 D
+[2026-03-11 15:15:24] [INFO    ] Worker 0 step 18: ACCEPTED local_twist E=-152.096138 Ha dipole=1.5748 D
+[2026-03-11 15:15:24] [INFO    ] Worker 0 step 19: ACCEPTED local_twist E=-152.096179 Ha dipole=1.5774 D
+[2026-03-11 15:15:24] [INFO    ] Worker 0: 20/100 — accepted=14, rate=70.0%
+[2026-03-11 15:15:25] [INFO    ] Worker 0 step 21: ACCEPTED random_displacement E=-152.096158 Ha dipole=1.5771 D
+[2026-03-11 15:15:25] [INFO    ] Worker 0 step 22: ACCEPTED random_displacement E=-152.095373 Ha dipole=1.5637 D
+[2026-03-11 15:15:26] [INFO    ] Worker 0 step 24: ACCEPTED random_rotation E=-152.095238 Ha dipole=1.4864 D
+[2026-03-11 15:15:26] [INFO    ] Worker 0 step 25: ACCEPTED random_rotation E=-152.095301 Ha dipole=1.5741 D
+[2026-03-11 15:15:27] [INFO    ] Worker 0 step 26: ACCEPTED local_twist E=-152.095308 Ha dipole=1.5740 D
+[2026-03-11 15:15:27] [INFO    ] Worker 0 step 27: ACCEPTED random_displacement E=-152.095272 Ha dipole=1.5734 D
+[2026-03-11 15:15:28] [INFO    ] Worker 0 step 28: ACCEPTED random_displacement E=-152.095316 Ha dipole=1.5743 D
+[2026-03-11 15:15:28] [INFO    ] Worker 0 step 29: ACCEPTED random_displacement E=-152.095492 Ha dipole=1.5774 D
+[2026-03-11 15:15:28] [INFO    ] Worker 0: 30/100 — accepted=22, rate=73.3%
+[2026-03-11 15:15:28] [INFO    ] Worker 0 step 30: ACCEPTED random_displacement E=-152.095647 Ha dipole=1.5798 D
+[2026-03-11 15:15:29] [INFO    ] Worker 0 step 31: ACCEPTED random_displacement E=-152.096354 Ha dipole=1.5918 D
+[2026-03-11 15:15:29] [INFO    ] Worker 0 step 32: ACCEPTED random_displacement E=-152.096325 Ha dipole=1.5916 D
+[2026-03-11 15:15:30] [INFO    ] Worker 0 step 33: ACCEPTED random_displacement E=-152.096423 Ha dipole=1.5932 D
+[2026-03-11 15:15:30] [INFO    ] Worker 0 step 34: ACCEPTED correlated_displacement E=-152.096423 Ha dipole=1.5932 D
+[2026-03-11 15:15:30] [INFO    ] Worker 0 step 35: ACCEPTED local_twist E=-152.096373 Ha dipole=1.5949 D
+[2026-03-11 15:15:31] [INFO    ] Worker 0 step 36: ACCEPTED random_rotation E=-152.096418 Ha dipole=1.6203 D
+[2026-03-11 15:15:31] [INFO    ] Worker 0 step 37: ACCEPTED random_rotation E=-152.095954 Ha dipole=1.4654 D
+[2026-03-11 15:15:32] [INFO    ] Worker 0 step 38: ACCEPTED small_principal_axis_rotation E=-152.095772 Ha dipole=1.4781 D
+[2026-03-11 15:15:32] [INFO    ] Worker 0 step 39: ACCEPTED random_rotation E=-152.095236 Ha dipole=1.5368 D
+[2026-03-11 15:15:32] [INFO    ] Worker 0: 40/100 — accepted=32, rate=80.0%
+[2026-03-11 15:15:32] [INFO    ] Worker 0 step 40: ACCEPTED local_twist E=-152.095243 Ha dipole=1.5356 D
+[2026-03-11 15:15:33] [INFO    ] Worker 0 step 42: ACCEPTED random_displacement E=-152.095598 Ha dipole=1.5422 D
+[2026-03-11 15:15:34] [INFO    ] Worker 0 step 43: ACCEPTED random_displacement E=-152.095413 Ha dipole=1.5386 D
+[2026-03-11 15:15:34] [INFO    ] Worker 0 step 44: ACCEPTED random_displacement E=-152.095641 Ha dipole=1.5430 D
+[2026-03-11 15:15:34] [INFO    ] Worker 0 step 45: ACCEPTED random_rotation E=-152.095589 Ha dipole=1.5314 D
+[2026-03-11 15:15:35] [INFO    ] Worker 0 step 46: ACCEPTED small_principal_axis_rotation E=-152.095554 Ha dipole=1.5282 D
+[2026-03-11 15:15:35] [INFO    ] Worker 0 step 47: ACCEPTED random_displacement E=-152.095862 Ha dipole=1.5342 D
+[2026-03-11 15:15:36] [INFO    ] Worker 0 step 48: ACCEPTED random_displacement E=-152.095684 Ha dipole=1.5305 D
+[2026-03-11 15:15:36] [INFO    ] Worker 0 step 49: ACCEPTED small_principal_axis_rotation E=-152.095574 Ha dipole=1.5354 D
+[2026-03-11 15:15:36] [INFO    ] Worker 0: 50/100 — accepted=41, rate=82.0%
+[2026-03-11 15:15:36] [INFO    ] Worker 0 step 50: ACCEPTED random_displacement E=-152.095950 Ha dipole=1.5440 D
+[2026-03-11 15:15:37] [INFO    ] Worker 0 step 51: ACCEPTED correlated_displacement E=-152.095950 Ha dipole=1.5440 D
+[2026-03-11 15:15:37] [INFO    ] Worker 0 step 52: ACCEPTED random_rotation E=-152.096066 Ha dipole=1.5555 D
+[2026-03-11 15:15:37] [INFO    ] Worker 0 step 53: ACCEPTED random_displacement E=-152.096008 Ha dipole=1.5545 D
+[2026-03-11 15:15:38] [INFO    ] Worker 0 step 54: ACCEPTED small_principal_axis_rotation E=-152.096137 Ha dipole=1.5743 D
+[2026-03-11 15:15:38] [INFO    ] Worker 0 step 55: ACCEPTED random_displacement E=-152.096090 Ha dipole=1.5733 D
+[2026-03-11 15:15:39] [INFO    ] Worker 0 step 56: ACCEPTED correlated_displacement E=-152.096090 Ha dipole=1.5733 D
+[2026-03-11 15:15:39] [INFO    ] Worker 0 step 58: ACCEPTED small_principal_axis_rotation E=-152.096596 Ha dipole=1.5161 D
+[2026-03-11 15:15:40] [INFO    ] Worker 0 step 59: ACCEPTED random_displacement E=-152.095712 Ha dipole=1.5008 D
+[2026-03-11 15:15:40] [INFO    ] Worker 0: 60/100 — accepted=50, rate=83.3%
+[2026-03-11 15:15:40] [INFO    ] Worker 0 step 60: ACCEPTED local_twist E=-152.095681 Ha dipole=1.5097 D
+[2026-03-11 15:15:41] [INFO    ] Worker 0 step 61: ACCEPTED random_rotation E=-152.095490 Ha dipole=1.5429 D
+[2026-03-11 15:15:41] [INFO    ] Worker 0 step 62: ACCEPTED random_rotation E=-152.096493 Ha dipole=1.3781 D
+[2026-03-11 15:15:41] [INFO    ] Worker 0 step 63: ACCEPTED local_twist E=-152.096472 Ha dipole=1.3834 D
+[2026-03-11 15:15:42] [INFO    ] Worker 0 step 64: ACCEPTED random_displacement E=-152.097205 Ha dipole=1.3971 D
+[2026-03-11 15:15:42] [INFO    ] Worker 0 step 65: ACCEPTED small_principal_axis_rotation E=-152.097179 Ha dipole=1.3973 D
+[2026-03-11 15:15:43] [INFO    ] Worker 0 step 66: ACCEPTED random_rotation E=-152.097250 Ha dipole=1.2469 D
+[2026-03-11 15:15:43] [INFO    ] Worker 0 step 67: ACCEPTED random_displacement E=-152.097341 Ha dipole=1.2480 D
+[2026-03-11 15:15:43] [INFO    ] Worker 0 step 68: ACCEPTED local_twist E=-152.097334 Ha dipole=1.2543 D
+[2026-03-11 15:15:44] [INFO    ] Worker 0 step 69: ACCEPTED correlated_displacement E=-152.097334 Ha dipole=1.2543 D
+[2026-03-11 15:15:44] [INFO    ] Worker 0: 70/100 — accepted=60, rate=85.7%
+[2026-03-11 15:15:44] [INFO    ] Worker 0 step 70: ACCEPTED correlated_displacement E=-152.097334 Ha dipole=1.2543 D
+[2026-03-11 15:15:45] [INFO    ] Worker 0 step 73: ACCEPTED correlated_displacement E=-152.097334 Ha dipole=1.2543 D
+[2026-03-11 15:15:46] [INFO    ] Worker 0 step 74: ACCEPTED random_displacement E=-152.097335 Ha dipole=1.2543 D
+[2026-03-11 15:15:46] [INFO    ] Worker 0 step 75: ACCEPTED random_displacement E=-152.097228 Ha dipole=1.2529 D
+[2026-03-11 15:15:46] [INFO    ] Worker 0 step 76: ACCEPTED local_twist E=-152.097247 Ha dipole=1.2347 D
+[2026-03-11 15:15:47] [INFO    ] Worker 0 step 77: ACCEPTED correlated_displacement E=-152.097247 Ha dipole=1.2347 D
+[2026-03-11 15:15:47] [INFO    ] Worker 0 step 78: ACCEPTED correlated_displacement E=-152.097247 Ha dipole=1.2347 D
+[2026-03-11 15:15:48] [INFO    ] Worker 0 step 79: ACCEPTED random_rotation E=-152.097247 Ha dipole=1.2346 D
+[2026-03-11 15:15:48] [INFO    ] Worker 0: 80/100 — accepted=68, rate=85.0%
+[2026-03-11 15:15:48] [INFO    ] Worker 0 step 80: ACCEPTED random_displacement E=-152.097560 Ha dipole=1.2399 D
+[2026-03-11 15:15:49] [INFO    ] Worker 0 step 82: ACCEPTED local_twist E=-152.097508 Ha dipole=1.2726 D
+[2026-03-11 15:15:49] [INFO    ] Worker 0 step 83: ACCEPTED correlated_displacement E=-152.097508 Ha dipole=1.2726 D
+[2026-03-11 15:15:50] [INFO    ] Worker 0 step 85: ACCEPTED random_displacement E=-152.097626 Ha dipole=1.2746 D
+[2026-03-11 15:15:51] [INFO    ] Worker 0 step 88: ACCEPTED random_displacement E=-152.097925 Ha dipole=1.2806 D
+[2026-03-11 15:15:52] [INFO    ] Worker 0 step 89: ACCEPTED random_displacement E=-152.097590 Ha dipole=1.2750 D
+[2026-03-11 15:15:52] [INFO    ] Worker 0: 90/100 — accepted=74, rate=82.2%
+[2026-03-11 15:15:52] [INFO    ] Worker 0 step 90: ACCEPTED correlated_displacement E=-152.097590 Ha dipole=1.2750 D
+[2026-03-11 15:15:52] [INFO    ] Worker 0 step 91: ACCEPTED random_displacement E=-152.098608 Ha dipole=1.2936 D
+[2026-03-11 15:15:53] [INFO    ] Worker 0 step 92: ACCEPTED correlated_displacement E=-152.098608 Ha dipole=1.2936 D
+[2026-03-11 15:15:54] [INFO    ] Worker 0 step 95: ACCEPTED correlated_displacement E=-152.098608 Ha dipole=1.2936 D
+[2026-03-11 15:15:54] [INFO    ] Worker 0 step 96: ACCEPTED small_principal_axis_rotation E=-152.098666 Ha dipole=1.2947 D
+[2026-03-11 15:15:55] [INFO    ] Worker 0 step 98: ACCEPTED correlated_displacement E=-152.098666 Ha dipole=1.2947 D
+[2026-03-11 15:15:55] [INFO    ] Worker 0: 100/100 — accepted=80, rate=80.0%
+[2026-03-11 15:15:55] [INFO    ] Worker 0: DONE — 80/100 accepted (80.0%)
+[2026-03-11 15:17:24] [INFO    ] Worker 0: Starting energy = -152.095832 Hartree
+[2026-03-11 15:17:24] [INFO    ] Worker 0 step 0: ACCEPTED correlated_displacement E=-152.095832 Ha dipole=1.5655 D
+[2026-03-11 15:17:25] [INFO    ] Worker 0 step 1: ACCEPTED local_twist E=-152.095906 Ha dipole=1.5758 D
+[2026-03-11 15:17:25] [INFO    ] Worker 0 step 2: ACCEPTED correlated_displacement E=-152.095906 Ha dipole=1.5758 D
+[2026-03-11 15:17:25] [INFO    ] Worker 0 step 3: ACCEPTED random_displacement E=-152.095931 Ha dipole=1.5762 D
+[2026-03-11 15:17:26] [INFO    ] Worker 0 step 5: ACCEPTED random_rotation E=-152.096798 Ha dipole=1.3307 D
+[2026-03-11 15:17:27] [INFO    ] Worker 0 step 7: ACCEPTED local_twist E=-152.096836 Ha dipole=1.3138 D
+[2026-03-11 15:17:27] [INFO    ] Worker 0 step 8: ACCEPTED correlated_displacement E=-152.096836 Ha dipole=1.3138 D
+[2026-03-11 15:17:28] [INFO    ] Worker 0: 10/300 — accepted=7, rate=70.0%
+[2026-03-11 15:17:28] [INFO    ] Worker 0 step 10: ACCEPTED random_rotation E=-152.096819 Ha dipole=1.3320 D
+[2026-03-11 15:17:29] [INFO    ] Worker 0 step 11: ACCEPTED random_displacement E=-152.096978 Ha dipole=1.3348 D
+[2026-03-11 15:17:29] [INFO    ] Worker 0 step 13: ACCEPTED random_displacement E=-152.097432 Ha dipole=1.3428 D
+[2026-03-11 15:17:30] [INFO    ] Worker 0 step 14: ACCEPTED random_rotation E=-152.097289 Ha dipole=1.2761 D
+[2026-03-11 15:17:31] [INFO    ] Worker 0 step 18: ACCEPTED random_displacement E=-152.097409 Ha dipole=1.2775 D
+[2026-03-11 15:17:32] [INFO    ] Worker 0 step 19: ACCEPTED small_principal_axis_rotation E=-152.097218 Ha dipole=1.3909 D
+[2026-03-11 15:17:32] [INFO    ] Worker 0: 20/300 — accepted=13, rate=65.0%
+[2026-03-11 15:17:32] [INFO    ] Worker 0 step 20: ACCEPTED random_displacement E=-152.098340 Ha dipole=1.4079 D
+[2026-03-11 15:17:33] [INFO    ] Worker 0 step 21: ACCEPTED local_twist E=-152.098419 Ha dipole=1.3931 D
+[2026-03-11 15:17:33] [INFO    ] Worker 0 step 22: ACCEPTED random_displacement E=-152.098352 Ha dipole=1.3917 D
+[2026-03-11 15:17:33] [INFO    ] Worker 0 step 23: ACCEPTED local_twist E=-152.098496 Ha dipole=1.3547 D
+[2026-03-11 15:17:34] [INFO    ] Worker 0 step 24: ACCEPTED random_displacement E=-152.100109 Ha dipole=1.3889 D
+[2026-03-11 15:17:34] [INFO    ] Worker 0 step 25: ACCEPTED random_displacement E=-152.100118 Ha dipole=1.3910 D
+[2026-03-11 15:17:35] [INFO    ] Worker 0 step 26: ACCEPTED random_rotation E=-152.100417 Ha dipole=1.4385 D
+[2026-03-11 15:17:35] [INFO    ] Worker 0 step 28: ACCEPTED correlated_displacement E=-152.100417 Ha dipole=1.4385 D
+[2026-03-11 15:17:36] [INFO    ] Worker 0: 30/300 — accepted=21, rate=70.0%
+[2026-03-11 15:17:36] [INFO    ] Worker 0 step 30: ACCEPTED correlated_displacement E=-152.100417 Ha dipole=1.4385 D
+[2026-03-11 15:17:37] [INFO    ] Worker 0 step 32: ACCEPTED random_displacement E=-152.099704 Ha dipole=1.4221 D
+[2026-03-11 15:17:37] [INFO    ] Worker 0 step 33: ACCEPTED small_principal_axis_rotation E=-152.099469 Ha dipole=1.3865 D
+[2026-03-11 15:17:38] [INFO    ] Worker 0 step 34: ACCEPTED random_rotation E=-152.099954 Ha dipole=1.4414 D
+[2026-03-11 15:17:38] [INFO    ] Worker 0 step 35: ACCEPTED random_rotation E=-152.099913 Ha dipole=1.4491 D
+[2026-03-11 15:17:39] [INFO    ] Worker 0 step 37: ACCEPTED correlated_displacement E=-152.099913 Ha dipole=1.4491 D
+[2026-03-11 15:17:39] [INFO    ] Worker 0 step 38: ACCEPTED local_twist E=-152.099975 Ha dipole=1.4166 D
+[2026-03-11 15:17:40] [INFO    ] Worker 0 step 39: ACCEPTED local_twist E=-152.099975 Ha dipole=1.4163 D
+[2026-03-11 15:17:40] [INFO    ] Worker 0: 40/300 — accepted=29, rate=72.5%
+[2026-03-11 15:17:40] [INFO    ] Worker 0 step 40: ACCEPTED correlated_displacement E=-152.099975 Ha dipole=1.4163 D
+[2026-03-11 15:17:40] [INFO    ] Worker 0 step 41: ACCEPTED random_rotation E=-152.099981 Ha dipole=1.4130 D
+[2026-03-11 15:17:41] [INFO    ] Worker 0 step 43: ACCEPTED small_principal_axis_rotation E=-152.099962 Ha dipole=1.4081 D
+[2026-03-11 15:17:42] [INFO    ] Worker 0 step 45: ACCEPTED correlated_displacement E=-152.099962 Ha dipole=1.4081 D
+[2026-03-11 15:17:43] [INFO    ] Worker 0 step 48: ACCEPTED local_twist E=-152.099894 Ha dipole=1.4470 D
+[2026-03-11 15:17:44] [INFO    ] Worker 0 step 49: ACCEPTED correlated_displacement E=-152.099894 Ha dipole=1.4470 D
+[2026-03-11 15:17:44] [INFO    ] Worker 0: 50/300 — accepted=35, rate=70.0%
+[2026-03-11 15:17:44] [INFO    ] Worker 0 step 50: ACCEPTED correlated_displacement E=-152.099894 Ha dipole=1.4470 D
+[2026-03-11 15:17:45] [INFO    ] Worker 0 step 53: ACCEPTED small_principal_axis_rotation E=-152.099780 Ha dipole=1.4453 D
+[2026-03-11 15:17:46] [INFO    ] Worker 0 step 55: ACCEPTED random_rotation E=-152.100014 Ha dipole=1.5273 D
+[2026-03-11 15:17:46] [INFO    ] Worker 0 step 56: ACCEPTED random_displacement E=-152.100239 Ha dipole=1.5320 D
+[2026-03-11 15:17:47] [INFO    ] Worker 0 step 57: ACCEPTED random_displacement E=-152.099877 Ha dipole=1.5230 D
+[2026-03-11 15:17:47] [INFO    ] Worker 0 step 58: ACCEPTED small_principal_axis_rotation E=-152.100022 Ha dipole=1.5548 D
+[2026-03-11 15:17:47] [INFO    ] Worker 0: 60/300 — accepted=41, rate=68.3%
+[2026-03-11 15:17:48] [INFO    ] Worker 0 step 60: ACCEPTED random_rotation E=-152.099989 Ha dipole=1.2669 D
+[2026-03-11 15:17:49] [INFO    ] Worker 0 step 62: ACCEPTED correlated_displacement E=-152.099989 Ha dipole=1.2669 D
+[2026-03-11 15:17:49] [INFO    ] Worker 0 step 63: ACCEPTED correlated_displacement E=-152.099989 Ha dipole=1.2669 D
+[2026-03-11 15:17:49] [INFO    ] Worker 0 step 64: ACCEPTED correlated_displacement E=-152.099989 Ha dipole=1.2669 D
+[2026-03-11 15:17:51] [INFO    ] Worker 0 step 67: ACCEPTED local_twist E=-152.099879 Ha dipole=1.2891 D
+[2026-03-11 15:17:51] [INFO    ] Worker 0 step 69: ACCEPTED random_rotation E=-152.099411 Ha dipole=1.4978 D
+[2026-03-11 15:17:51] [INFO    ] Worker 0: 70/300 — accepted=47, rate=67.1%
+[2026-03-11 15:17:52] [INFO    ] Worker 0 step 70: ACCEPTED local_twist E=-152.099361 Ha dipole=1.5207 D
+[2026-03-11 15:17:52] [INFO    ] Worker 0 step 71: ACCEPTED local_twist E=-152.099219 Ha dipole=1.5498 D
+[2026-03-11 15:17:53] [INFO    ] Worker 0 step 72: ACCEPTED correlated_displacement E=-152.099219 Ha dipole=1.5498 D
+[2026-03-11 15:17:53] [INFO    ] Worker 0 step 73: ACCEPTED correlated_displacement E=-152.099219 Ha dipole=1.5498 D
+[2026-03-11 15:17:53] [INFO    ] Worker 0 step 74: ACCEPTED random_displacement E=-152.099276 Ha dipole=1.5505 D
+[2026-03-11 15:17:54] [INFO    ] Worker 0 step 75: ACCEPTED correlated_displacement E=-152.099276 Ha dipole=1.5505 D
+[2026-03-11 15:17:54] [INFO    ] Worker 0 step 76: ACCEPTED correlated_displacement E=-152.099276 Ha dipole=1.5505 D
+[2026-03-11 15:17:55] [INFO    ] Worker 0 step 78: ACCEPTED correlated_displacement E=-152.099276 Ha dipole=1.5505 D
+[2026-03-11 15:17:55] [INFO    ] Worker 0 step 79: ACCEPTED local_twist E=-152.099385 Ha dipole=1.5300 D
+[2026-03-11 15:17:55] [INFO    ] Worker 0: 80/300 — accepted=56, rate=70.0%
+[2026-03-11 15:17:56] [INFO    ] Worker 0 step 80: ACCEPTED random_rotation E=-152.098968 Ha dipole=1.4888 D
+[2026-03-11 15:17:57] [INFO    ] Worker 0 step 83: ACCEPTED small_principal_axis_rotation E=-152.098869 Ha dipole=1.4918 D
+[2026-03-11 15:17:58] [INFO    ] Worker 0 step 85: ACCEPTED random_displacement E=-152.098344 Ha dipole=1.4808 D
+[2026-03-11 15:17:58] [INFO    ] Worker 0 step 86: ACCEPTED small_principal_axis_rotation E=-152.098279 Ha dipole=1.4722 D
+[2026-03-11 15:17:59] [INFO    ] Worker 0 step 87: ACCEPTED random_displacement E=-152.098101 Ha dipole=1.4693 D
+[2026-03-11 15:17:59] [INFO    ] Worker 0 step 88: ACCEPTED random_displacement E=-152.098097 Ha dipole=1.4692 D
+[2026-03-11 15:17:59] [INFO    ] Worker 0: 90/300 — accepted=62, rate=68.9%
+[2026-03-11 15:18:00] [INFO    ] Worker 0 step 91: ACCEPTED random_displacement E=-152.099900 Ha dipole=1.5072 D
+[2026-03-11 15:18:01] [INFO    ] Worker 0 step 92: ACCEPTED small_principal_axis_rotation E=-152.099872 Ha dipole=1.5122 D
+[2026-03-11 15:18:01] [INFO    ] Worker 0 step 93: ACCEPTED correlated_displacement E=-152.099872 Ha dipole=1.5122 D
+[2026-03-11 15:18:02] [INFO    ] Worker 0 step 94: ACCEPTED local_twist E=-152.100086 Ha dipole=1.4785 D
+[2026-03-11 15:18:02] [INFO    ] Worker 0 step 95: ACCEPTED correlated_displacement E=-152.100086 Ha dipole=1.4785 D
+[2026-03-11 15:18:02] [INFO    ] Worker 0 step 96: ACCEPTED correlated_displacement E=-152.100086 Ha dipole=1.4785 D
+[2026-03-11 15:18:03] [INFO    ] Worker 0 step 97: ACCEPTED correlated_displacement E=-152.100086 Ha dipole=1.4785 D
+[2026-03-11 15:18:03] [INFO    ] Worker 0 step 98: ACCEPTED correlated_displacement E=-152.100086 Ha dipole=1.4785 D
+[2026-03-11 15:18:04] [INFO    ] Worker 0 step 99: ACCEPTED correlated_displacement E=-152.100086 Ha dipole=1.4785 D
+[2026-03-11 15:18:04] [INFO    ] Worker 0: 100/300 — accepted=71, rate=71.0%
+[2026-03-11 15:18:05] [INFO    ] Worker 0 step 103: ACCEPTED local_twist E=-152.100088 Ha dipole=1.4782 D
+[2026-03-11 15:18:06] [INFO    ] Worker 0 step 104: ACCEPTED random_rotation E=-152.100052 Ha dipole=1.4591 D
+[2026-03-11 15:18:06] [INFO    ] Worker 0 step 105: ACCEPTED local_twist E=-152.100053 Ha dipole=1.4587 D
+[2026-03-11 15:18:07] [INFO    ] Worker 0 step 107: ACCEPTED local_twist E=-152.100030 Ha dipole=1.4647 D
+[2026-03-11 15:18:07] [INFO    ] Worker 0 step 108: ACCEPTED local_twist E=-152.099983 Ha dipole=1.4744 D
+[2026-03-11 15:18:08] [INFO    ] Worker 0: 110/300 — accepted=76, rate=69.1%
+[2026-03-11 15:18:09] [INFO    ] Worker 0 step 111: ACCEPTED local_twist E=-152.099808 Ha dipole=1.5014 D
+[2026-03-11 15:18:09] [INFO    ] Worker 0 step 112: ACCEPTED local_twist E=-152.100023 Ha dipole=1.4663 D
+[2026-03-11 15:18:09] [INFO    ] Worker 0 step 113: ACCEPTED random_displacement E=-152.099655 Ha dipole=1.4570 D
+[2026-03-11 15:18:10] [INFO    ] Worker 0 step 114: ACCEPTED correlated_displacement E=-152.099655 Ha dipole=1.4570 D
+[2026-03-11 15:18:10] [INFO    ] Worker 0 step 115: ACCEPTED random_displacement E=-152.099143 Ha dipole=1.4443 D
+[2026-03-11 15:18:11] [INFO    ] Worker 0 step 116: ACCEPTED local_twist E=-152.099164 Ha dipole=1.4186 D
+[2026-03-11 15:18:11] [INFO    ] Worker 0 step 117: ACCEPTED correlated_displacement E=-152.099164 Ha dipole=1.4186 D
+[2026-03-11 15:18:11] [INFO    ] Worker 0 step 118: ACCEPTED random_rotation E=-152.099083 Ha dipole=1.2943 D
+[2026-03-11 15:18:12] [INFO    ] Worker 0: 120/300 — accepted=84, rate=70.0%
+[2026-03-11 15:18:12] [INFO    ] Worker 0 step 120: ACCEPTED small_principal_axis_rotation E=-152.099725 Ha dipole=1.3038 D
+[2026-03-11 15:18:13] [INFO    ] Worker 0 step 121: ACCEPTED random_rotation E=-152.099805 Ha dipole=1.3935 D
+[2026-03-11 15:18:13] [INFO    ] Worker 0 step 122: ACCEPTED local_twist E=-152.099862 Ha dipole=1.4110 D
+[2026-03-11 15:18:13] [INFO    ] Worker 0 step 123: ACCEPTED random_displacement E=-152.100557 Ha dipole=1.4731 D
+[2026-03-11 15:18:14] [INFO    ] Worker 0 step 124: ACCEPTED small_principal_axis_rotation E=-152.100827 Ha dipole=1.4235 D
+[2026-03-11 15:18:14] [INFO    ] Worker 0 step 125: ACCEPTED random_rotation E=-152.100945 Ha dipole=1.4188 D
+[2026-03-11 15:18:15] [INFO    ] Worker 0 step 128: ACCEPTED correlated_displacement E=-152.100945 Ha dipole=1.4188 D
+[2026-03-11 15:18:16] [INFO    ] Worker 0 step 129: ACCEPTED random_displacement E=-152.101024 Ha dipole=1.3872 D
+[2026-03-11 15:18:16] [INFO    ] Worker 0: 130/300 — accepted=92, rate=70.8%
+[2026-03-11 15:18:16] [INFO    ] Worker 0 step 130: ACCEPTED random_displacement E=-152.101157 Ha dipole=1.3873 D
+[2026-03-11 15:18:17] [INFO    ] Worker 0 step 132: ACCEPTED random_displacement E=-152.101112 Ha dipole=1.4035 D
+[2026-03-11 15:18:17] [INFO    ] Worker 0 step 133: ACCEPTED local_twist E=-152.101085 Ha dipole=1.4142 D
+[2026-03-11 15:18:18] [INFO    ] Worker 0 step 134: ACCEPTED local_twist E=-152.101111 Ha dipole=1.4057 D
+[2026-03-11 15:18:18] [INFO    ] Worker 0 step 135: ACCEPTED small_principal_axis_rotation E=-152.101101 Ha dipole=1.4053 D
+[2026-03-11 15:18:20] [INFO    ] Worker 0 step 138: ACCEPTED local_twist E=-152.101097 Ha dipole=1.4006 D
+[2026-03-11 15:18:20] [INFO    ] Worker 0 step 139: ACCEPTED small_principal_axis_rotation E=-152.101030 Ha dipole=1.2722 D
+[2026-03-11 15:18:20] [INFO    ] Worker 0: 140/300 — accepted=99, rate=70.7%
+[2026-03-11 15:18:20] [INFO    ] Worker 0 step 140: ACCEPTED small_principal_axis_rotation E=-152.101368 Ha dipole=1.1492 D
+[2026-03-11 15:18:21] [INFO    ] Worker 0 step 141: ACCEPTED random_displacement E=-152.101539 Ha dipole=1.1462 D
+[2026-03-11 15:18:21] [INFO    ] Worker 0 step 142: ACCEPTED small_principal_axis_rotation E=-152.101322 Ha dipole=1.1394 D
+[2026-03-11 15:18:22] [INFO    ] Worker 0 step 145: ACCEPTED correlated_displacement E=-152.101322 Ha dipole=1.1394 D
+[2026-03-11 15:18:23] [INFO    ] Worker 0 step 147: ACCEPTED correlated_displacement E=-152.101322 Ha dipole=1.1394 D
+[2026-03-11 15:18:24] [INFO    ] Worker 0 step 148: ACCEPTED local_twist E=-152.101284 Ha dipole=1.1304 D
+[2026-03-11 15:18:24] [INFO    ] Worker 0 step 149: ACCEPTED small_principal_axis_rotation E=-152.101272 Ha dipole=1.1037 D
+[2026-03-11 15:18:24] [INFO    ] Worker 0: 150/300 — accepted=106, rate=70.7%
+[2026-03-11 15:18:24] [INFO    ] Worker 0 step 150: ACCEPTED random_displacement E=-152.100806 Ha dipole=1.1334 D
+[2026-03-11 15:18:25] [INFO    ] Worker 0 step 151: ACCEPTED random_displacement E=-152.100178 Ha dipole=1.1424 D
+[2026-03-11 15:18:26] [INFO    ] Worker 0 step 154: ACCEPTED correlated_displacement E=-152.100178 Ha dipole=1.1424 D
+[2026-03-11 15:18:27] [INFO    ] Worker 0 step 157: ACCEPTED correlated_displacement E=-152.100178 Ha dipole=1.1424 D
+[2026-03-11 15:18:28] [INFO    ] Worker 0 step 158: ACCEPTED local_twist E=-152.100139 Ha dipole=1.1415 D
+[2026-03-11 15:18:28] [INFO    ] Worker 0 step 159: ACCEPTED correlated_displacement E=-152.100139 Ha dipole=1.1415 D
+[2026-03-11 15:18:28] [INFO    ] Worker 0: 160/300 — accepted=112, rate=70.0%
+[2026-03-11 15:18:28] [INFO    ] Worker 0 step 160: ACCEPTED small_principal_axis_rotation E=-152.100141 Ha dipole=1.1347 D
+[2026-03-11 15:18:29] [INFO    ] Worker 0 step 161: ACCEPTED correlated_displacement E=-152.100141 Ha dipole=1.1347 D
+[2026-03-11 15:18:30] [INFO    ] Worker 0 step 165: ACCEPTED random_rotation E=-152.100057 Ha dipole=1.2584 D
+[2026-03-11 15:18:31] [INFO    ] Worker 0 step 166: ACCEPTED local_twist E=-152.100080 Ha dipole=1.2645 D
+[2026-03-11 15:18:31] [INFO    ] Worker 0 step 167: ACCEPTED random_displacement E=-152.100589 Ha dipole=1.2438 D
+[2026-03-11 15:18:32] [INFO    ] Worker 0 step 168: ACCEPTED random_rotation E=-152.100630 Ha dipole=1.2254 D
+[2026-03-11 15:18:32] [INFO    ] Worker 0: 170/300 — accepted=118, rate=69.4%
+[2026-03-11 15:18:33] [INFO    ] Worker 0 step 170: ACCEPTED random_rotation E=-152.100643 Ha dipole=1.2234 D
+[2026-03-11 15:18:33] [INFO    ] Worker 0 step 172: ACCEPTED correlated_displacement E=-152.100643 Ha dipole=1.2234 D
+[2026-03-11 15:18:34] [INFO    ] Worker 0 step 173: ACCEPTED correlated_displacement E=-152.100643 Ha dipole=1.2234 D
+[2026-03-11 15:18:35] [INFO    ] Worker 0 step 177: ACCEPTED random_displacement E=-152.100716 Ha dipole=1.1731 D
+[2026-03-11 15:18:36] [INFO    ] Worker 0: 180/300 — accepted=122, rate=67.8%
+[2026-03-11 15:18:37] [INFO    ] Worker 0 step 180: ACCEPTED random_displacement E=-152.101002 Ha dipole=1.2246 D
+[2026-03-11 15:18:38] [INFO    ] Worker 0 step 182: ACCEPTED local_twist E=-152.101024 Ha dipole=1.2283 D
+[2026-03-11 15:18:38] [INFO    ] Worker 0 step 183: ACCEPTED small_principal_axis_rotation E=-152.100989 Ha dipole=1.1648 D
+[2026-03-11 15:18:38] [INFO    ] Worker 0 step 184: ACCEPTED local_twist E=-152.101035 Ha dipole=1.1688 D
+[2026-03-11 15:18:39] [INFO    ] Worker 0 step 185: ACCEPTED local_twist E=-152.101048 Ha dipole=1.1783 D
+[2026-03-11 15:18:40] [INFO    ] Worker 0 step 188: ACCEPTED correlated_displacement E=-152.101048 Ha dipole=1.1783 D
+[2026-03-11 15:18:40] [INFO    ] Worker 0 step 189: ACCEPTED small_principal_axis_rotation E=-152.101074 Ha dipole=1.2056 D
+[2026-03-11 15:18:40] [INFO    ] Worker 0: 190/300 — accepted=129, rate=67.9%
+[2026-03-11 15:18:41] [INFO    ] Worker 0 step 190: ACCEPTED random_displacement E=-152.101132 Ha dipole=1.1947 D
+[2026-03-11 15:18:41] [INFO    ] Worker 0 step 191: ACCEPTED small_principal_axis_rotation E=-152.101097 Ha dipole=1.1252 D
+[2026-03-11 15:18:42] [INFO    ] Worker 0 step 192: ACCEPTED correlated_displacement E=-152.101097 Ha dipole=1.1252 D
+[2026-03-11 15:18:42] [INFO    ] Worker 0 step 193: ACCEPTED random_displacement E=-152.101027 Ha dipole=1.1284 D
+[2026-03-11 15:18:43] [INFO    ] Worker 0 step 194: ACCEPTED correlated_displacement E=-152.101027 Ha dipole=1.1284 D
+[2026-03-11 15:18:43] [INFO    ] Worker 0 step 195: ACCEPTED small_principal_axis_rotation E=-152.100936 Ha dipole=1.2004 D
+[2026-03-11 15:18:44] [INFO    ] Worker 0 step 197: ACCEPTED correlated_displacement E=-152.100936 Ha dipole=1.2004 D
+[2026-03-11 15:18:44] [INFO    ] Worker 0 step 198: ACCEPTED local_twist E=-152.100932 Ha dipole=1.2011 D
+[2026-03-11 15:18:45] [INFO    ] Worker 0 step 199: ACCEPTED local_twist E=-152.101062 Ha dipole=1.1736 D
+[2026-03-11 15:18:45] [INFO    ] Worker 0: 200/300 — accepted=138, rate=69.0%
+[2026-03-11 15:18:45] [INFO    ] Worker 0 step 200: ACCEPTED random_rotation E=-152.100703 Ha dipole=0.8644 D
+[2026-03-11 15:18:46] [INFO    ] Worker 0 step 201: ACCEPTED correlated_displacement E=-152.100703 Ha dipole=0.8644 D
+[2026-03-11 15:18:46] [INFO    ] Worker 0 step 202: ACCEPTED correlated_displacement E=-152.100703 Ha dipole=0.8644 D
+[2026-03-11 15:18:46] [INFO    ] Worker 0 step 203: ACCEPTED correlated_displacement E=-152.100703 Ha dipole=0.8644 D
+[2026-03-11 15:18:47] [INFO    ] Worker 0 step 204: ACCEPTED small_principal_axis_rotation E=-152.100919 Ha dipole=0.9005 D
+[2026-03-11 15:18:47] [INFO    ] Worker 0 step 205: ACCEPTED correlated_displacement E=-152.100918 Ha dipole=0.9005 D
+[2026-03-11 15:18:48] [INFO    ] Worker 0 step 206: ACCEPTED correlated_displacement E=-152.100919 Ha dipole=0.9005 D
+[2026-03-11 15:18:49] [INFO    ] Worker 0 step 209: ACCEPTED correlated_displacement E=-152.100918 Ha dipole=0.9005 D
+[2026-03-11 15:18:49] [INFO    ] Worker 0: 210/300 — accepted=146, rate=69.5%
+[2026-03-11 15:18:49] [INFO    ] Worker 0 step 210: ACCEPTED random_displacement E=-152.101295 Ha dipole=0.8765 D
+[2026-03-11 15:18:50] [INFO    ] Worker 0 step 212: ACCEPTED random_rotation E=-152.101267 Ha dipole=0.7384 D
+[2026-03-11 15:18:50] [INFO    ] Worker 0 step 213: ACCEPTED correlated_displacement E=-152.101267 Ha dipole=0.7384 D
+[2026-03-11 15:18:51] [INFO    ] Worker 0 step 214: ACCEPTED local_twist E=-152.101066 Ha dipole=0.7979 D
+[2026-03-11 15:18:51] [INFO    ] Worker 0 step 215: ACCEPTED small_principal_axis_rotation E=-152.100464 Ha dipole=0.7766 D
+[2026-03-11 15:18:52] [INFO    ] Worker 0 step 216: ACCEPTED correlated_displacement E=-152.100464 Ha dipole=0.7766 D
+[2026-03-11 15:18:52] [INFO    ] Worker 0 step 217: ACCEPTED local_twist E=-152.100458 Ha dipole=0.7786 D
+[2026-03-11 15:18:52] [INFO    ] Worker 0 step 218: ACCEPTED local_twist E=-152.100417 Ha dipole=0.7904 D
+[2026-03-11 15:18:53] [INFO    ] Worker 0 step 219: ACCEPTED random_displacement E=-152.100063 Ha dipole=0.7979 D
+[2026-03-11 15:18:53] [INFO    ] Worker 0: 220/300 — accepted=155, rate=70.5%
+[2026-03-11 15:18:54] [INFO    ] Worker 0 step 221: ACCEPTED random_rotation E=-152.100043 Ha dipole=0.6871 D
+[2026-03-11 15:18:54] [INFO    ] Worker 0 step 222: ACCEPTED small_principal_axis_rotation E=-152.100501 Ha dipole=0.4859 D
+[2026-03-11 15:18:54] [INFO    ] Worker 0 step 223: ACCEPTED random_displacement E=-152.100264 Ha dipole=0.4692 D
+[2026-03-11 15:18:55] [INFO    ] Worker 0 step 224: ACCEPTED random_displacement E=-152.100675 Ha dipole=0.4903 D
+[2026-03-11 15:18:55] [INFO    ] Worker 0 step 225: ACCEPTED correlated_displacement E=-152.100675 Ha dipole=0.4903 D
+[2026-03-11 15:18:56] [INFO    ] Worker 0 step 226: ACCEPTED random_displacement E=-152.100679 Ha dipole=0.4903 D
+[2026-03-11 15:18:56] [INFO    ] Worker 0 step 227: ACCEPTED correlated_displacement E=-152.100679 Ha dipole=0.4903 D
+[2026-03-11 15:18:56] [INFO    ] Worker 0 step 228: ACCEPTED local_twist E=-152.100414 Ha dipole=0.6088 D
+[2026-03-11 15:18:57] [INFO    ] Worker 0 step 229: ACCEPTED random_displacement E=-152.100383 Ha dipole=0.6090 D
+[2026-03-11 15:18:57] [INFO    ] Worker 0: 230/300 — accepted=164, rate=71.3%
+[2026-03-11 15:18:57] [INFO    ] Worker 0 step 230: ACCEPTED correlated_displacement E=-152.100383 Ha dipole=0.6090 D
+[2026-03-11 15:18:58] [INFO    ] Worker 0 step 231: ACCEPTED random_displacement E=-152.100237 Ha dipole=0.5926 D
+[2026-03-11 15:18:59] [INFO    ] Worker 0 step 233: ACCEPTED correlated_displacement E=-152.100237 Ha dipole=0.5926 D
+[2026-03-11 15:18:59] [INFO    ] Worker 0 step 234: ACCEPTED random_displacement E=-152.100008 Ha dipole=0.5874 D
+[2026-03-11 15:18:59] [INFO    ] Worker 0 step 235: ACCEPTED correlated_displacement E=-152.100008 Ha dipole=0.5874 D
+[2026-03-11 15:19:00] [INFO    ] Worker 0 step 236: ACCEPTED correlated_displacement E=-152.100008 Ha dipole=0.5874 D
+[2026-03-11 15:19:00] [INFO    ] Worker 0 step 237: ACCEPTED random_rotation E=-152.099727 Ha dipole=0.4858 D
+[2026-03-11 15:19:01] [INFO    ] Worker 0: 240/300 — accepted=171, rate=71.2%
+[2026-03-11 15:19:02] [INFO    ] Worker 0 step 241: ACCEPTED random_displacement E=-152.098896 Ha dipole=0.4929 D
+[2026-03-11 15:19:03] [INFO    ] Worker 0 step 243: ACCEPTED random_displacement E=-152.099788 Ha dipole=0.4770 D
+[2026-03-11 15:19:04] [INFO    ] Worker 0 step 246: ACCEPTED local_twist E=-152.099883 Ha dipole=0.3969 D
+[2026-03-11 15:19:05] [INFO    ] Worker 0 step 247: ACCEPTED small_principal_axis_rotation E=-152.099970 Ha dipole=0.4228 D
+[2026-03-11 15:19:05] [INFO    ] Worker 0 step 248: ACCEPTED random_displacement E=-152.099747 Ha dipole=0.4217 D
+[2026-03-11 15:19:05] [INFO    ] Worker 0 step 249: ACCEPTED small_principal_axis_rotation E=-152.099787 Ha dipole=0.3956 D
+[2026-03-11 15:19:05] [INFO    ] Worker 0: 250/300 — accepted=177, rate=70.8%
+[2026-03-11 15:19:06] [INFO    ] Worker 0 step 251: ACCEPTED random_displacement E=-152.100122 Ha dipole=0.3812 D
+[2026-03-11 15:19:07] [INFO    ] Worker 0 step 253: ACCEPTED random_displacement E=-152.100126 Ha dipole=0.3812 D
+[2026-03-11 15:19:09] [INFO    ] Worker 0 step 257: ACCEPTED random_displacement E=-152.100096 Ha dipole=0.3907 D
+[2026-03-11 15:19:09] [INFO    ] Worker 0 step 258: ACCEPTED local_twist E=-152.100312 Ha dipole=0.2803 D
+[2026-03-11 15:19:10] [INFO    ] Worker 0 step 259: ACCEPTED random_displacement E=-152.100441 Ha dipole=0.2795 D
+[2026-03-11 15:19:10] [INFO    ] Worker 0: 260/300 — accepted=182, rate=70.0%
+[2026-03-11 15:19:11] [INFO    ] Worker 0 step 262: ACCEPTED random_displacement E=-152.100289 Ha dipole=0.2763 D
+[2026-03-11 15:19:11] [INFO    ] Worker 0 step 263: ACCEPTED random_rotation E=-152.100235 Ha dipole=0.3173 D
+[2026-03-11 15:19:12] [INFO    ] Worker 0 step 264: ACCEPTED random_displacement E=-152.100056 Ha dipole=0.3303 D
+[2026-03-11 15:19:13] [INFO    ] Worker 0 step 267: ACCEPTED random_displacement E=-152.100085 Ha dipole=0.3304 D
+[2026-03-11 15:19:13] [INFO    ] Worker 0 step 268: ACCEPTED random_rotation E=-152.099401 Ha dipole=0.4565 D
+[2026-03-11 15:19:14] [INFO    ] Worker 0 step 269: ACCEPTED random_displacement E=-152.099568 Ha dipole=0.4578 D
+[2026-03-11 15:19:14] [INFO    ] Worker 0: 270/300 — accepted=188, rate=69.6%
+[2026-03-11 15:19:14] [INFO    ] Worker 0 step 270: ACCEPTED random_displacement E=-152.099794 Ha dipole=0.4556 D
+[2026-03-11 15:19:15] [INFO    ] Worker 0 step 271: ACCEPTED local_twist E=-152.099763 Ha dipole=0.2776 D
+[2026-03-11 15:19:15] [INFO    ] Worker 0 step 272: ACCEPTED random_displacement E=-152.099314 Ha dipole=0.2774 D
+[2026-03-11 15:19:15] [INFO    ] Worker 0 step 273: ACCEPTED small_principal_axis_rotation E=-152.099310 Ha dipole=0.3271 D
+[2026-03-11 15:19:16] [INFO    ] Worker 0 step 274: ACCEPTED local_twist E=-152.099277 Ha dipole=0.4853 D
+[2026-03-11 15:19:16] [INFO    ] Worker 0 step 275: ACCEPTED random_rotation E=-152.099308 Ha dipole=0.4424 D
+[2026-03-11 15:19:17] [INFO    ] Worker 0 step 276: ACCEPTED random_rotation E=-152.099156 Ha dipole=0.4902 D
+[2026-03-11 15:19:17] [INFO    ] Worker 0 step 277: ACCEPTED small_principal_axis_rotation E=-152.099015 Ha dipole=0.4945 D
+[2026-03-11 15:19:17] [INFO    ] Worker 0 step 278: ACCEPTED random_displacement E=-152.099004 Ha dipole=0.4959 D
+[2026-03-11 15:19:18] [INFO    ] Worker 0: 280/300 — accepted=197, rate=70.4%
+[2026-03-11 15:19:18] [INFO    ] Worker 0 step 280: ACCEPTED correlated_displacement E=-152.099004 Ha dipole=0.4959 D
+[2026-03-11 15:19:19] [INFO    ] Worker 0 step 281: ACCEPTED small_principal_axis_rotation E=-152.099173 Ha dipole=0.3650 D
+[2026-03-11 15:19:19] [INFO    ] Worker 0 step 283: ACCEPTED local_twist E=-152.099086 Ha dipole=0.2524 D
+[2026-03-11 15:19:20] [INFO    ] Worker 0 step 284: ACCEPTED random_displacement E=-152.099381 Ha dipole=0.2554 D
+[2026-03-11 15:19:20] [INFO    ] Worker 0 step 285: ACCEPTED local_twist E=-152.099439 Ha dipole=0.2914 D
+[2026-03-11 15:19:21] [INFO    ] Worker 0 step 286: ACCEPTED random_displacement E=-152.099666 Ha dipole=0.2836 D
+[2026-03-11 15:19:21] [INFO    ] Worker 0 step 287: ACCEPTED local_twist E=-152.099396 Ha dipole=0.0990 D
+[2026-03-11 15:19:21] [INFO    ] Worker 0 step 288: ACCEPTED small_principal_axis_rotation E=-152.099042 Ha dipole=0.0767 D
+[2026-03-11 15:19:22] [INFO    ] Worker 0 step 289: ACCEPTED random_displacement E=-152.099055 Ha dipole=0.0935 D
+[2026-03-11 15:19:22] [INFO    ] Worker 0: 290/300 — accepted=206, rate=71.0%
+[2026-03-11 15:19:23] [INFO    ] Worker 0 step 291: ACCEPTED random_displacement E=-152.099149 Ha dipole=0.0973 D
+[2026-03-11 15:19:23] [INFO    ] Worker 0 step 293: ACCEPTED local_twist E=-152.099244 Ha dipole=0.2124 D
+[2026-03-11 15:19:24] [INFO    ] Worker 0 step 295: ACCEPTED random_rotation E=-152.099714 Ha dipole=0.4209 D
+[2026-03-11 15:19:25] [INFO    ] Worker 0 step 296: ACCEPTED random_displacement E=-152.100772 Ha dipole=0.4119 D
+[2026-03-11 15:19:25] [INFO    ] Worker 0 step 297: ACCEPTED random_displacement E=-152.100376 Ha dipole=0.3923 D
+[2026-03-11 15:19:25] [INFO    ] Worker 0 step 298: ACCEPTED random_displacement E=-152.100718 Ha dipole=0.3969 D
+[2026-03-11 15:19:26] [INFO    ] Worker 0 step 299: ACCEPTED local_twist E=-152.100741 Ha dipole=0.3889 D
+[2026-03-11 15:19:26] [INFO    ] Worker 0: 300/300 — accepted=213, rate=71.0%
+[2026-03-11 15:19:26] [INFO    ] Worker 0: DONE — 213/300 accepted (71.0%)

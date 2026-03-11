@@ -710,6 +710,13 @@ class Molecule:
         for label, coord in zip(self.atom_labels, self.coordinates):
             lines.append(f"{self._remove_digits_from_label(label)} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}")
         return "\n".join(lines)
+    
+    def write_xyz(self, filename: str) -> None:
+        """Write molecule to XYZ file"""
+        with open(filename, "w") as f:
+            f.write(self.to_xyz_string())
+        
+
 
     def get_average_covalent_radii(self) -> List[float]:
         """   

@@ -24,12 +24,7 @@ if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
 
-
-    N_WORKERS = 8 
-
-    
-
-
+    N_WORKERS = 40
 
     # Parse the Arguments
     args = get_args()
@@ -39,7 +34,7 @@ if __name__ == "__main__":
     
     # ── Main summary logger (cluster_gen.out) ───────────────────
     logger = Logger(name="main", log_file="cluster_gen.out", file_mode="w")
-    logger.write_program_header()  # Don't reassign — returns None
+    logger.write_program_header()
 
     molecule = Molecule.from_xyz(xyz_content)
 
@@ -51,14 +46,13 @@ if __name__ == "__main__":
                 results = calc.determine_method_and_basis_set_combinations(molecule=molecule)
 
     # ── Initialization ──────────────────────────────────────────
-    # Appends to same summary log
     init_logger = Logger(name="init", log_file="cluster_gen.out", file_mode="a")
 
     init_config = InitializationConfig(
         method="hf",
         basis="cc-pvdz",
         box_type="sphere",
-        box_scale_factor=3,
+        box_scale_factor=2.5,
         min_distance=1.5,
         optimize_submolecules=True,
         verbose=False
@@ -69,9 +63,7 @@ if __name__ == "__main__":
         n_configurations=N_WORKERS
     )
 
-    # ── BHMC Phase A ────────────────────────────────────────────
-    # Summary logger → cluster_gen.out
-    # Worker detail  → bhmc_workers.log (separate file)
+    # ── BHMC Phase A: Global Exploration ────────────────────────
     bhmc_logger = Logger(name="bhmc", log_file="cluster_gen.out", file_mode="a")
 
     bhmc_config = BHMCConfig(
@@ -86,35 +78,61 @@ if __name__ == "__main__":
         config=bhmc_config,
         simulation_box=simulation_box,
         logger=bhmc_logger,
-        worker_log_file="bhmc_workers.log"  # Worker detail goes here
+        worker_log_file="bhmc_workers.log"
     )
 
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=200,
+        n_structures_per_worker=20,
         n_processes=N_WORKERS
     )
 
-    # Structure of phase a candidates
-    # (molecule, energy, [dx,dy,dz] 'dipole vector', float - magnitude)
+    
 
-
-    # Obtain all structures
-    phase_a_structures = [candidate[0] for candidate in phase_a_candidates]
-
-
-    # ── Analysis ────────────────────────────────────────────────
+    # ── Analysis & Clustering ───────────────────────────────────
     logger_analysis = Logger(name="analysis", log_file="cluster_gen.out", file_mode="a")
     representatives = bhmc_sampler.analyse_phase_a_results(
         phase_a_candidates,
         submolecule_indices=submol_indices,
-        n_clusters=5,
+        n_clusters=10,
         simulation_box=simulation_box, 
-        logger = logger_analysis
+        logger=logger_analysis
     )
-    # extract molecule from each representative
-    representatives = [rep.molecule for rep in representatives]
+
+    # Kabsch Interpolation
+    interpolated_candidates = bhmc_sampler.generate_interpolated_candidates(
+        representatives=representatives,
+        n_interpolations= 2  
+        )
+
+    # Extract molecules from interpolated candidates for Phase B
+    interpolated_molecules = [candidate.molecule for candidate in interpolated_candidates]
+    logger_analysis.write_xyz_trajectory(
+        molecules=interpolated_molecules,
+        filepath="trajectories/interpolated_candidates.xyz",
+        energies=None
+    )
+
+    # ── BHMC Phase B: Local Refinement ──────────────────────────
+    # Switch to lower temperature and disable adaptive scaling
+    bhmc_sampler.config.temperature = 150
+    bhmc_sampler.config.adaptive_operators = False
+
+    phase_b_results = bhmc_sampler.run_phase_b(
+        representatives=interpolated_candidates,
+        submolecule_indices=submol_indices,
+        n_steps_per_worker=50,
+    )
+
+    # Extract best structures from Phase B (rather than raw representatives)
+    phase_b_molecules = []
+    phase_b_energies = []
+    for result in phase_b_results:
+        best = result["best_structure"]
+        if best is not None:
+            phase_b_molecules.append(best[0])
+            phase_b_energies.append(best[1])
 
     # ── Local Optimization ──────────────────────────────────────
     logger_opt = Logger(name="optimization", log_file="cluster_gen.out", file_mode="a")
@@ -122,15 +140,16 @@ if __name__ == "__main__":
 
     config = Config(method="mp2", basis="cc-pvdz")
     calc = Psi4Calculator(config=config, verbose=False)
-    optimization_results = calc.batch_optimize_parallel_unordered(representatives, n_processes=20)
+    optimization_results = calc.batch_optimize_parallel_unordered(phase_b_molecules, n_processes=20)
     optimized_mols = [result.molecule for result in optimization_results if result.success]
     optimized_energies = [result.energy for result in optimization_results if result.success]
 
-    logger_opt.info(f"Optimized {len(optimized_mols)}/{len(representatives)} structures successfully")
+    logger_opt.info(f"Optimized {len(optimized_mols)}/{len(phase_b_molecules)} structures successfully")
 
-    # --- Write Trajectories
-    # Phase A candidates
+    # ── Write Trajectories ──────────────────────────────────────
+    phase_a_structures = [candidate[0] for candidate in phase_a_candidates]
     phase_a_energies = [candidate[1] for candidate in phase_a_candidates] 
+
     logger_opt.write_xyz_trajectory(
         molecules=phase_a_structures,
         filepath="trajectories/phase_a_candidates.xyz",
@@ -138,21 +157,24 @@ if __name__ == "__main__":
     )
 
     logger_opt.write_xyz_trajectory(
-        molecules=representatives,
+        molecules=[rep.molecule for rep in representatives],
         filepath="trajectories/representatives.xyz",
         energies=None
     )    
 
+    
 
-    # Write optimizes representatives
+    logger_opt.write_xyz_trajectory(
+        molecules=phase_b_molecules,
+        filepath="trajectories/phase_b_best.xyz",
+        energies=phase_b_energies
+    )
+
     logger_opt.write_xyz_trajectory(
         molecules=optimized_mols,
         filepath="trajectories/optimized_representatives.xyz",
         energies=optimized_energies
     )
-
-    
-
 
     # ── Timing ──────────────────────────────────────────────────
     elapsed = time.time() - time_start

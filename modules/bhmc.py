@@ -299,7 +299,7 @@ def _phase_b_worker(args: Tuple) -> Dict:
     weights = []
     for op_name, weight in operator_list:
         if op_name in op_map:
-            operators.append({"name": op_name, "func": op_map[op_map]})
+            operators.append({"name": op_name, "func": op_map[op_name]})
             weights.append(weight)
 
     if not operators:
@@ -433,6 +433,14 @@ class MultiPhaseBHMC:
         ('exchange', 0.7),
         ('random_so3', 0.5),
         ('principal_axis_rotation', 0.8),
+    ]
+
+    DEFAULT_LOCAL_OPERATORS = [
+        ("random_displacement", 1.8),
+        ("random_rotation", 1.0),
+        ("local_twist", 0.8),
+        ("correlated_displacement", 0.8),
+        ("small_principal_axis_rotation", 0.8)   
     ]
     
     def __init__(self, 
@@ -574,6 +582,125 @@ class MultiPhaseBHMC:
         
         return self.phase_a_structures
     
+    def run_phase_b(self,
+                    representatives: List["StructureData"],
+                    submolecule_indices: List[List[int]],
+                    n_steps_per_worker = 200,
+                    local_operators: Optional[List[Tuple[str, float]]] = None,
+                    n_processes: Optional[int] = None
+                    ) -> List[Dict]:
+        """ 
+        Run Phase B: Local Refinement around representative structures from Phase A
+
+        Each representative is assigned to one worker that applies local operators
+        to refine the structure within one basin of attraction.
+
+        Args:
+            representatives: List of representative structures from Phase A
+            submolecule_indices: Submolecule indices for local operators
+            n_steps_per_worker: Number of BHMC steps for each local refinement worker
+            local_operators: Optional list of (operator_name, weight) tuples for local refinement.
+                            If None, defaults to MultiPhaseBHMC.DEFAULT_LOCAL_OPERATORS
+            n_processes: Number of parallel processes to use. If None, defaults to len(representatives)
+
+        Returns:
+            List of worker results dicts with keys:
+                'best_structure': (Molecule, energy, dipole_vec, dipole_mag) tuple of the best structure found
+                'accepted_structures': List of (Molecule, energy, dipole_vec, dipole_mag) tuples
+                'energy_trajectory': List of (step, current_energy) for every step
+        """
+        if local_operators is None:
+            local_operators = self.DEFAULT_LOCAL_OPERATORS
+        
+        n_workers = len(representatives)
+        if n_processes is None:
+            n_processes = n_workers
+        if self.logger:
+            self.logger.header("Phase B: Local Refinement")
+        
+        self._log(f"Configuration:")
+        self._log(f" Representatives: {n_workers}")
+        self._log(f" Steps per worker: {n_steps_per_worker}")
+        self._log(f" Total Steps: {n_workers * n_steps_per_worker}")
+        self._log(f" Method/Basis: {self.config.method}/{self.config.basis}")
+        self._log(f" Temperature: {self.config.temperature} K")
+        self._log(f" Adaptive operators: {self.config.adaptive_operators}")
+        self._log(f" Local Operators: {', '.join(op[0] for op in local_operators)}")
+        if self.simulation_box:
+            self._log(f" Simulation Box: {self.simulation_box}")
+        if self.worker_log_file:
+            self._log(f" Worker log: {self.worker_log_file}")
+        config_dict = {
+            "method": self.config.method,
+            "basis": self.config.basis,
+            "temperature": self.config.temperature,
+            "verbose": self.config.verbose,
+            "adaptive_operators": self.config.adaptive_operators,
+        }
+        
+        sim_box_dict = self.simulation_box.to_dict() if self.simulation_box else None
+
+        args_list = [
+            (
+                rep.molecule,
+                rep.energy,
+                submolecule_indices,
+                n_steps_per_worker,
+                local_operators,
+                config_dict,
+                worker_id,
+                sim_box_dict,
+                self.worker_log_file
+            )
+            for worker_id, rep in enumerate(representatives)
+        ]
+        self._log("Starting parallel local refinement workers...")
+        with Pool(processes=n_processes) as pool:
+            results = pool.map(_phase_b_worker, args_list)
+
+        # Collect results and trajectories
+        self.phase_b_trajectories = {}
+        self.phase_b_results = results
+
+        for worker_result in results:
+            wid = worker_result["worker_id"]
+            accepted = worker_result["accepted_structures"]
+            trajectory = worker_result["energy_trajectory"]
+            best = worker_result["best_structure"]
+
+            self.phase_b_trajectories[wid] = trajectory
+            best_e_str = f"{best[1]:.6f} Ha" if best else "N/A"
+            self._log(f" Worker {wid}: Best energy = {best_e_str}, accepted structures = {len(accepted)}, trajectory points = {len(trajectory)}")
+
+        if self.logger:
+            self.logger.section("Phase B Results")
+        
+        best_structures = [r["best_structure"] for r in results if r["best_structure"] is not None]
+        total_accepted = sum(len(r["accepted_structures"]) for r in results)
+        total_steps = n_workers * n_steps_per_worker
+
+        self._log(f" Total steps: {total_steps}")
+        self._log(f" Total accepted: {total_accepted}")
+        if total_steps > 0:
+            self._log(f" Overall acceptance rate: {total_accepted/total_steps*100:.2f}%")
+        
+        if best_structures:
+            energies = [bs[1] for bs in best_structures]
+            self._log(f"Best energies across workers (Hartree):")
+            self._log(f" Min:  {min(energies):.6f}")
+            self._log(f" Max:  {max(energies):.6f}")
+            self._log(f" Mean: {np.mean(energies):.6f}")
+            self._log(f" Std:  {np.std(energies):.6f}")
+
+
+        self.plot_worker_trajectories(
+            save_path="figures/phase_b_worker_energy_trajectories.png",
+            trajectories=self.phase_b_trajectories,
+            title="Phase B Worker Energy Trajectories"
+        )
+
+        return results
+
     def analyse_phase_a_results(
             self,
             phase_a_structures: List[Tuple[Molecule, float]], 
@@ -624,7 +751,7 @@ class MultiPhaseBHMC:
         )
 
         analyzer.rmsd_filtering()
-        analyzer.plot_rmsd_heatmap()
+        #analyzer.plot_rmsd_heatmap()
         
         # Precompute the feature matrix
         analyzer.feature_matrix(normalize=True)  # Normalized features for clustering
@@ -641,9 +768,9 @@ class MultiPhaseBHMC:
         labels = analyzer.cluster(method="kmeans", n_clusters=n_clusters)
 
 
-        analyzer.plot_pca_clustered(n_cluster=n_clusters)
-        analyzer.plot_tsne_clustered(n_cluster=n_clusters)
-        analyzer.plot_umap_clustered(n_cluster=n_clusters)
+        analyzer.plot_pca_clustered(n_clusters=n_clusters)
+        analyzer.plot_tsne_clustered(n_clusters=n_clusters)
+        analyzer.plot_umap_clustered(n_clusters=n_clusters)
 
         representatives = analyzer.get_cluster_representatives()
         analyzer.log_representative_features(representatives,labels=labels) 
@@ -653,30 +780,34 @@ class MultiPhaseBHMC:
     
     # Additional plotting utilities for worker trajectories
     def plot_worker_trajectories(self,
-                                 save_path: str = "figures/worker_energy_trajectories.png") -> None:
+                                 save_path: str = "figures/worker_energy_trajectories.png",
+                                 trajectories: Optional[Dict] = None,
+                                 title: str = "Worker Energy Trajectories"):
         """  
         Plot energy vs step for each BHMC worker
         """
         import matplotlib.pyplot as plt
         from pathlib import Path
 
-        if not hasattr(self, 'worker_trajectories') or not self.worker_trajectories:
+        if trajectories is None:
+            trajectories = self.worker_trajectories
+
+        if not trajectories:
             self._log("No worker trajectories to plot.", level="warning")
             return
         
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-        n_workers = len(self.worker_trajectories)
-
-        cmap = plt.get_cmap('tab20', n_workers)
+        n_workers = len(trajectories)
+        cmap = plt.get_cmap('tab20', max(n_workers, 1))
 
         plt.figure(figsize=(12, 6))
-        for worker_id, trajectory in self.worker_trajectories.items():
+        for worker_id, trajectory in trajectories.items():
             steps, energies = zip(*trajectory)
             plt.plot(steps, energies, label=f"Worker {worker_id}", color=cmap(worker_id))
 
         plt.xlabel("Step")
         plt.ylabel("Energy (Hartree)")
-        plt.title("Energy Trajectories of BHMC Workers")
+        plt.title(title)
         plt.legend(
             ncols = 4,
             loc = "upper right",
@@ -686,6 +817,57 @@ class MultiPhaseBHMC:
         plt.tight_layout()
         plt.savefig(save_path, dpi=300)
         plt.close()
+
+    # ========================= Interpolation ====
+
+    def generate_interpolated_candidates(
+            self,
+            representatives: List["StructureData"],
+            n_interpolations: int = 3,
+            lambdas: Optional[List[float]] = None
+        ) -> List["StructureData"]:
+        """
+        Generate interpolated candidate structures between all pairs of representative structures.
+        This uses the Kabsch algorithm
+        
+        Args:
+            representatives: List of representative structures to interpolate between
+            n_interpolations: Number of interpolated structures to generate between each pair
+            lambdas: Optional list of interpolation parameters (0 to 1). If None, uses equally spaced.
+        
+        Returns:
+        List of StructureData objects for the interpolated candidates, with energy and dipole set to None.
+        """
+        from transformations import Transformation
+        from cluster import StructureData
+
+        transformer = Transformation()
+        interpolated_candidates = []
+        n_reps = len(representatives)
+
+        self._log(f"Generating interpolated candidates between {n_reps} representatives")
+        self._log(f" Pairs: {n_reps * (n_reps - 1) // 2} ")
+        self._log(f" Interpolations per pair: {n_interpolations}")
+        for i in range(n_reps):
+            for j in range(i + 1, n_reps):
+                mol_a = representatives[i].molecule
+                mol_b = representatives[j].molecule
+
+                interpolated_mols = transformer.kabsch_interpolate(
+                    mol_a, mol_b,
+                    lambdas = lambdas,
+                    n_points= n_interpolations
+                )
+                for mol in interpolated_mols:
+                    candidate = StructureData(
+                        molecule = mol,
+                        energy = 0.0,
+                        phase= "interpolated",
+                        metadata={"parent i": i, "parent j": j}
+                    )
+                    interpolated_candidates.append(candidate)
+        self._log(f"Generated {len(interpolated_candidates)} interpolated candidates")
+        return interpolated_candidates
 
 
 
@@ -896,5 +1078,123 @@ def benchmark_temperature_acceptance(
         _log(f"Recommended temperature: {best_temp} K (acceptance: {best_acc:.1f}%)")
     
     return results
+
+
+if __name__ == "__main__":
+    
+    # Module Import just for testing
+    import multiprocessing as mp
+    import sys
+    from pathlib import Path 
+    import matplotlib.pyplot as plt
+    import numpy as np 
+
+    module_dir = Path(__file__).parent / "modules"
+    sys.path.insert(0, str(module_dir))
+
+    from molecule_class import Molecule
+    from cluster import StructureData
+    from transformations import LocalOperators
+    from box import SimulationBox
+    from bhmc import MultiPhaseBHMC, BHMCConfig
+    from logger import Logger 
+
+
+
+    mp.set_start_method('spawn', force=True)
+    
+
+    xyz = """
+    6
+    H2O Nonopt
+    O     -4.651077    1.267697   -0.000000
+    H     -5.057317    1.928988   -0.547872
+    H     -4.969101    1.355490    0.890872
+    O     -6.998837    4.503183    0.000001
+    H     -7.632732    4.320290   -0.683540
+    H     -7.009572    5.431464    0.201689
+    """
+    molecule = Molecule.from_xyz(xyz)
+    submolecule_indices = [[0, 1, 2], [3, 4, 5]]
+    covalent_radii = [r for r in molecule.covalent_radii]
+    
+    # Center molecule
+    centroid = np.mean(molecule.coordinates, axis=0)
+    molecule.coordinates -= centroid
+
+    
+    
+    sim_box = SimulationBox.from_covalent_radii(
+        covalent_radii=covalent_radii,
+        n_atoms=len(molecule.atom_labels),
+        box_type="sphere",
+        scale_factor=5.0
+    )
+
+    # Benchmark Displacements of local operators
+    local_ops = LocalOperators(simulation_box=sim_box)
+    diag = local_ops.diagnose_perturbations(
+        molecule, submolecule_indices, n_samples=200, adaptive=True
+    )
+    diag_noadapt = local_ops.diagnose_perturbations(
+        molecule,submolecule_indices, n_samples=200, adaptive=False
+    )
+
+
+    # We need to wrap the molecule as structure data for phase b
+    representative = StructureData(
+        molecule=molecule,
+        energy=0.0,
+        phase="test"
+    )
+    config = BHMCConfig(
+        temperature=150,
+        method="hf",
+        basis="6-311g(d,p)",
+        adaptive_operators=False
+    )
+
+    sampler = MultiPhaseBHMC(
+        config=config,
+        simulation_box=sim_box,
+    )
+    results = sampler.run_phase_b(
+        representatives=[representative],
+        submolecule_indices=submolecule_indices,
+        n_steps_per_worker=300,
+        n_processes=1
+    )
+    worker_result = results[0]
+    trajectory = worker_result["energy_trajectory"]
+    accepted = worker_result["accepted_structures"]
+    best = worker_result["best_structure"]
+    steps, energies = zip(*trajectory)
+    energies_ha = np.array(energies)
+
+    print(f"Best energy: {best[1]:.6f} Ha")
+    print(f"Accepted structures: {len(accepted)}")
+    print(f"Energy trajectory points: {len(trajectory)}")
+    print(f"Acceptance rate: {len(accepted)/len(trajectory)*100:.1f}%")
+    print(f"Initial energy: {trajectory[0][1]:.6f} Ha")
+
+    print(f"Energy change: {(best[1] - trajectory[0][1])} Ha")
+
+
+    # Plot convergence of energy
+    plt.figure(figsize=(8, 5))
+    plt.plot(steps, energies_ha, marker='o', color='steelblue')
+    plt.xlabel("Step")
+    plt.ylabel("Energy (Hartree)")
+    plt.title("Phase B Energy Trajectory")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show() 
+    # Save the energy trajectory
+    # Save the best structure as XYZ
+    best_structure = best[0]
+    best_energy = best[1]
+    best_dipole_vec = best[2]
+    best_dipole_mag = best[3]
+    best_structure.write_xyz("best_structure_phase_b.xyz")
 
 

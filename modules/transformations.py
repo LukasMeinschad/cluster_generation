@@ -156,7 +156,7 @@ class Quaternion:
         z = (self.w * other.z + self.x * other.y - self.y * other.x + self.z * other.w)
         return Quaternion(w, x, y, z)
 
-
+    @staticmethod
     def from_rotation_matrix(R: np.ndarray) -> "Quaternion":
         """  
         Converts a rotation matrix to quaternion
@@ -166,17 +166,17 @@ class Quaternion:
 
         Step 1: Compute the magnitude of each quaternion component. This leaves the sign of each component undetermined
         Step 2: Find the largest component, assume its sign is positive,
-                then compute t he ramaining components from the of diagonal elements
+                then compute the remaining components from the off diagonal elements
                 Taking the largest magnitude avoids division by small numbers
         """
         # Step 1 compute the magnitude from diagonal elements
         q0_sq = (1 + R[0,0] + R[1,1] + R[2,2]) / 4.0
         q1_sq = (1 + R[0,0] - R[1,1] - R[2,2]) / 4.0
         q2_sq = (1 - R[0,0] + R[1,1] - R[2,2]) / 4.0 
-        s3_sq = (1 - R[0,0] - R[1,1] + R[2,2]) / 4.0
+        q3_sq = (1 - R[0,0] - R[1,1] + R[2,2]) / 4.0
 
         # Pick largest to avoid division by small numbers
-        idx = np.argmax([q0_sq, q1_sq, q2_sq, s3_sq])
+        idx = np.argmax([q0_sq, q1_sq, q2_sq, q3_sq])
         if idx == 0:
             q0 = np.sqrt(max(q0_sq, 0))
             q1 = (R[2,1] - R[1,2]) / (4 * q0)
@@ -186,20 +186,65 @@ class Quaternion:
             q1 = np.sqrt(max(q1_sq, 0))
             q0 = (R[2,1] - R[1,2]) / (4 * q1)
             q2 = (R[0,1] + R[1,0]) / (4 * q1)
-            q3 = (R[1,2] + R[2,1]) / (4 * q1)
+            q3 = (R[0,2] + R[2,0]) / (4 * q1)
         elif idx == 2:
             q2 = np.sqrt(max(q2_sq, 0))
             q0 = (R[0,2] - R[2,0]) / (4 * q2)
             q1 = (R[0,1] + R[1,0]) / (4 * q2)
             q3 = (R[1,2] + R[2,1]) / (4 * q2)
         else:
-            q3 = np.sqrt(max(s3_sq, 0))
+            q3 = np.sqrt(max(q3_sq, 0))
             q0 = (R[1,0] - R[0,1]) / (4 * q3)
             q1 = (R[0,2] + R[2,0]) / (4 * q3)
             q2 = (R[1,2] + R[2,1]) / (4 * q3)
-        return Quaternion(q0, q1, q2, q3)
-    
+        return Quaternion(q0, q1, q2, q3).normalize()
 
+    def slerp(q1: "Quaternion", q2: "Quaternion", t: float) -> "Quaternion":
+        """ 
+        Spherical Linear Interpolation (SLERP) between two quaternions.
+
+        Given two unit quaternions q1 and q2 and a parameter t in [0,1]:
+            slerp(q_1,q_2,t) = sin((1-t)*theta) / sin(theta) * q_1 + sin(t*theta) / sin(theta) * q_2
+
+        Properties:
+            - slerp(q1, q2, 0) = q1
+            - slerp(q1, q2, 1) = q2
+            - Constant angular velocity along shortest arc on S3
+
+        Args:
+            q1: Starting quaternion (unit)
+            q2: Ending quaternion (unit)
+            t: Interpolation parameter in [0,1]
+        """
+        # Dot product of quaternion components
+        dot = q1.w * q2.w + q1.x * q2.x + q1.y * q2.y + q1.z * q2.z
+
+        # Ensure shortest path: if dot < 0, negate q2
+        if dot < 0.0:
+            q2 = Quaternion(-q2.w, -q2.x, -q2.y, -q2.z)
+            dot = -dot
+
+        # If quaternions are very close, fall back to normalized linear interpolation
+        if dot > 0.9995:
+            return Quaternion(
+                q1.w + t * (q2.w - q1.w),
+                q1.x + t * (q2.x - q1.x),
+                q1.y + t * (q2.y - q1.y),
+                q1.z + t * (q2.z - q1.z),
+            ).normalize()
+
+        theta = np.arccos(np.clip(dot, -1.0, 1.0))
+        sin_theta = np.sin(theta)
+
+        a = np.sin((1 - t) * theta) / sin_theta
+        b = np.sin(t * theta) / sin_theta
+
+        return Quaternion(
+            a * q1.w + b * q2.w,
+            a * q1.x + b * q2.x,
+            a * q1.y + b * q2.y,
+            a * q1.z + b * q2.z,
+        ).normalize()
     
     def to_rotation_matrix(self) -> np.ndarray:
         """  
@@ -870,49 +915,102 @@ class Transformation:
             self,
             mol_a: "Molecule",
             mol_b: "Molecule",
+            submolecule_indices: Optional[List[List[int]]] = None,
             lambdas: Optional[List[float]] = None,
             n_points: int = 3
         ) -> List["Molecule"]:
         """
-        Generate interpolated structures between two molecules using Kabsch alignment
+        Generate interpolated structures between two molecules using rigid-body interpolation per submolecule:
+        The com is interpolated linearly, orientation via quaternion slerp. This preserves all intramolecular bond lengths exactly.
 
-        1. Center both structures at the origin
-        2. Compute optimal rotation R (Kabsch) to align B onto A
-        3. For each lambda in [0,1]: r_new = (1-lambda) * r_A + lambda * (R @ r_B)
+        Algorithm
+            1. Center both structures, global Kabsch to algin B onto A
+            2. for each submolecule:
+                a. Compute COMs in A and aligned-B
+                b. Compute local Kabsch rotation (residual orientation difference)
+                c Convert to quaternion for slerp
+            3. For each lambda in [0,1]
+                - COM_t = (1-lam) * COM_A + lam * COM_B (linear)
+                - R_t = slerp(I,R_local, lam) (spherical)
+                - Place atoms using structure A's local geometry rotated by R_t
 
         Args:
-            mol_a: First Molecule object
-            mol_b: Second Molecule object (must have same number of atoms)
-            lambdas: Optional list of interpolation parameters between 0 and 1
-            n_points: Number of interpolated points to generate if lambdas not provided
+            mol_a: Starting molecule (reference)
+            mol_b: Ending molecule (target)
+            lambdas: Optional list of interpolation parameters in [0,1]. If None, will generate n_points evenly spaced between 0 and 1.
+            n_points: Number of interpolated structures to generate (ignored if lambdas is provided)
+        Returns:
+            List of interpolated Molecule objects between mol_a and mol_b
         """
         if len(mol_a.coordinates) != len(mol_b.coordinates):
             raise ValueError("Molecules must have the same number of atoms for interpolation")
         if lambdas is None:
             lambdas = np.linspace(0, 1, n_points + 2)[1:-1]
-
-        # Center both structures 
+        if submolecule_indices is None:
+            submolecule_indices = [list(range(len(mol_a.coordinates)))]  # Treat whole molecule as one submolecule
+        
+        n_atoms = len(mol_a.coordinates)
         coords_a = mol_a.coordinates.copy()
         coords_b = mol_b.coordinates.copy()
+        
+        #  Center both molecules
         centroid_a = np.mean(coords_a, axis=0)
         centroid_b = np.mean(coords_b, axis=0)
         P = coords_a - centroid_a
         Q = coords_b - centroid_b
-        # Kabsch Rotation
-        R = GeometryOps.kabsch_rotation(P,Q)
-        Q_aligned = (R @ Q.T).T
 
+        # Global Kabsch Alginment of B onto A
+        R_global = GeometryOps.kabsch_rotation(P, Q)
+        Q_aligned = (R_global @ Q.T).T
+
+        q_identity = Quaternion(1.0, 0.0, 0.0, 0.0)
+        submol_data = []
+
+        for submol_idx in submolecule_indices:
+            idx = np.array(submol_idx)
+            submol_masses = mol_a.masses[idx]
+            mass_col = submol_masses[:, np.newaxis] if submol_masses.ndim == 1 else submol_masses
+            com_a = np.sum(mass_col * P[idx], axis=0) / np.sum(submol_masses)
+            com_b = np.sum(mass_col * Q_aligned[idx], axis=0) / np.sum(submol_masses)
+
+            # Local coordinates relative to submolecule com
+            local_a = P[idx] - com_a
+            local_b = Q_aligned[idx] - com_b
+
+            # Local kabsch rotation vom A-orientation to to B-orientation
+            R_local =  GeometryOps.kabsch_rotation(local_b, local_a)
+            q_local = Quaternion.from_rotation_matrix(R_local)
+            submol_data.append({
+                "idx": idx,
+                "com_a": com_a,
+                "com_b": com_b,
+                "local_a": local_a,
+                "q_local": q_local
+            })
+        
+        # Interpolate
         interpolated = []
         for lam in lambdas:
-            coords_new = (1- lam) * P + lam * Q_aligned
-            # Shift back to centroid of A
+            coords_new = np.zeros((n_atoms, 3))
+
+            for sd in submol_data:
+                # Linear COM Interpolate
+                com_t = (1 - lam) * sd["com_a"] + lam * sd["com_b"]
+
+                # Slerp local rotation
+                q_t = Quaternion.slerp(q_identity, sd["q_local"], lam)
+                R_t = q_t.to_rotation_matrix()
+
+                # Place Atoms: roate A's local geometry by R_t and translate to com_t
+                coords_new[sd["idx"]] = (R_t @ sd["local_a"].T).T + com_t
+
+            # Shift back to original centroid
             coords_new += centroid_a
             new_mol = mol_a.copy()
             new_mol.coordinates = coords_new
             interpolated.append(new_mol)
 
         return interpolated
-
 
 class MolecularOperators:
     """   

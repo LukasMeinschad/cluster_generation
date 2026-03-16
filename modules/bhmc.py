@@ -83,7 +83,7 @@ def _get_worker_logger(log_file: Optional[str] = None, worker_id: int = 0) -> Op
 
 # ================================ Multiprocessing Worker ================================
 
-def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], float]]:
+def _phase_a_worker(args: Tuple) -> Dict:
     """Worker function for parallel BHMC Phase A exploration.
     
     Args:
@@ -115,7 +115,16 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
     
     # Setup simulation box and operators
     sim_box = SimulationBox.from_dict(sim_box_dict) if sim_box_dict else None
-    
+
+
+    def _current_box_size(box: Optional[SimulationBox]) -> Optional[float]:
+        if box is None:
+            return None
+        if box.box_type == "sphere":
+            return float(box.radius)
+        if box.box_type == "cube":
+            return float(np.max(box.box_dimensions))
+        return None
     
     # Adaptive box_settings (worker-local)
     adaptive_box = bool(config_dict.get('adaptive_box', False)) and (sim_box is not None)
@@ -126,7 +135,10 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
     box_growth_max = float(config_dict.get('box_growth_max', 1.15)) 
     box_max_scale = float(config_dict.get('box_max_scale', 4.0))
     box_stable_windows = int(config_dict.get('box_stable_windows', 3))
-    
+
+    # Trajectory of adaptive box updates for plotting
+    box_updates = []
+
     if adaptive_box:
         if sim_box.box_type == "sphere":
             initial_box_size = sim_box.radius
@@ -136,12 +148,21 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
             initial_box_size = 1.0
     else:
         initial_box_size = 1.0
-    
+
     # Iterators for adaptive box_control
     stable_windows = 0
     last_update_step = 0
     accepted_since_update = 0
     rejected_since_update = 0
+
+    if adaptive_box:
+        box_updates.append({
+            "step": 0,
+            "box_size": _current_box_size(sim_box),
+            "window_acceptance": None,
+            "grew": False,
+            "stable_windows": stable_windows
+        })
 
     # Operator setup
     nonlocal_ops = NonLocalOperators(simulation_box=sim_box)
@@ -176,7 +197,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
     
     if not operators:
         _log(f"Worker {worker_id}: No valid operators found!", level="error")
-        return {'accepted_structures': [], 'energy_trajectory': [], 'worker_id': worker_id}
+        return {'accepted_structures': [], 'energy_trajectory': [], 'box_updates': box_updates, 'worker_id': worker_id}
     
     
     weights = np.array(weights)
@@ -192,13 +213,13 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
     
     if eval_result is None:
         _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
-        return {'accepted_structures': [], 'energy_trajectory': [], 'worker_id': worker_id}
+        return {'accepted_structures': [], 'energy_trajectory': [], 'box_updates': box_updates, 'worker_id': worker_id}
     
     current_energy, current_dipole_vec, current_dipole_mag = eval_result
     
     if current_energy is None:
         _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
-        return {'accepted_structures': [], 'energy_trajectory': [], 'worker_id': worker_id}
+        return {'accepted_structures': [], 'energy_trajectory': [], 'box_updates': box_updates, 'worker_id': worker_id}
     
     _log(f"Worker {worker_id}: Starting energy = {current_energy:.6f} Hartree")
 
@@ -226,6 +247,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
             if np.allclose(new_structure.coordinates, current_structure.coordinates):
                 _log(f"Worker {worker_id} step {step}: {operator['name']} — no coordinate change (box rejection?)", level="warning")
                 n_rejected += 1
+                rejected_since_update += 1
                 energy_trajectory.append((step+1, current_energy))
                 continue
             
@@ -234,6 +256,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
             if new_eval is None:
                 _log(f"Worker {worker_id} step {step}: Energy eval failed after {operator['name']}", level="warning")
                 n_rejected += 1
+                rejected_since_update += 1
                 energy_trajectory.append((step+1, current_energy))
                 continue
             
@@ -242,6 +265,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
             if new_energy is None:
                 _log(f"Worker {worker_id} step {step}: Energy eval returned None after {operator['name']}", level="warning")
                 n_rejected += 1
+                rejected_since_update += 1
                 energy_trajectory.append((step+1, current_energy))
                 continue
             
@@ -278,6 +302,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
         except Exception as e:
             _log(f"Worker {worker_id} step {step}: Exception in {operator['name']}: {e}", level="error")
             n_rejected += 1
+            rejected_since_update += 1
             energy_trajectory.append((step+1, current_energy))
             continue
 
@@ -325,6 +350,14 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
                 else:
                     stable_windows = 0
 
+            box_updates.append({
+                "step": step + 1,
+                "box_size": _current_box_size(sim_box),
+                "window_acceptance": window_acc,
+                "grew": grew,
+                "stable_windows": stable_windows
+            })
+
             # Reset the window counters
             accepted_since_update = 0
             rejected_since_update = 0
@@ -346,6 +379,7 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
     return {
         'accepted_structures': accepted_structures,
         'energy_trajectory': energy_trajectory,
+        'box_updates': box_updates,
         'worker_id': worker_id} 
 
 
@@ -565,6 +599,7 @@ class MultiPhaseBHMC:
         self.logger = logger
         self.worker_log_file = worker_log_file
         self.worker_trajectories = {}  # Store energy trajectories for each worker
+        self.worker_box_updates = {}   # Store adaptive box updates for each worker
         
         # Storage for Phase A results
         self.phase_a_structures: List[Tuple[Molecule, float, List[float], float]] = []
@@ -651,15 +686,21 @@ class MultiPhaseBHMC:
         # Collect results and trajectories
         all_accepted_structures = []
         self.worker_trajectories = {}  # Store for plotting
+        self.worker_box_updates = {}   # Store adaptive box updates for plotting
         
         for worker_result in results:
             wid = worker_result['worker_id']
             accepted = worker_result['accepted_structures']
             trajectory = worker_result['energy_trajectory']
+            box_updates = worker_result.get('box_updates', [])
             
             all_accepted_structures.extend(accepted)
             self.worker_trajectories[wid] = trajectory
-            self._log(f"  Worker {wid}: {len(accepted)} structures accepted, {len(trajectory)} trajectory points")
+            self.worker_box_updates[wid] = box_updates
+            self._log(
+                f"  Worker {wid}: {len(accepted)} structures accepted, "
+                f"{len(trajectory)} trajectory points, {len(box_updates)} box updates"
+            )
         
         self.phase_a_structures = all_accepted_structures
         
@@ -690,6 +731,7 @@ class MultiPhaseBHMC:
         
         # Plot worker trajectories
         self.plot_worker_trajectories()
+        self.plot_adaptive_box_updates()
         
         return self.phase_a_structures
     
@@ -946,6 +988,67 @@ class MultiPhaseBHMC:
             columnspacing = 0.5,
         )
         plt.grid(True)
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300)
+        plt.close()
+
+    def plot_adaptive_box_updates(
+            self,
+            save_path: str = "figures/adaptive_box_trajectories.png",
+            box_updates_by_worker: Optional[Dict[int, List[Dict]]] = None,
+            title: str = "Adaptive Box Control"):
+        """Plot adaptive box size and window acceptance per worker."""
+        import matplotlib.pyplot as plt
+        from pathlib import Path
+
+        if box_updates_by_worker is None:
+            box_updates_by_worker = self.worker_box_updates
+
+        if not box_updates_by_worker:
+            self._log("No adaptive box updates to plot.", level="warning")
+            return
+
+        valid_updates = {wid: updates for wid, updates in box_updates_by_worker.items() if updates}
+        if not valid_updates:
+            self._log("Adaptive box updates are empty for all workers.", level="warning")
+            return
+
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+
+        fig, (ax_size, ax_acc) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+        cmap = plt.get_cmap('tab20', max(len(valid_updates), 1))
+
+        for i, (worker_id, updates) in enumerate(sorted(valid_updates.items(), key=lambda x: x[0])):
+            color = cmap(i)
+
+            steps = [u["step"] for u in updates]
+            sizes = [u["box_size"] for u in updates]
+            ax_size.plot(steps, sizes, marker='o', linewidth=1.8, markersize=4,
+                         label=f"Worker {worker_id}", color=color)
+
+            acc_steps = [u["step"] for u in updates if u["window_acceptance"] is not None]
+            acc_vals = [u["window_acceptance"] for u in updates if u["window_acceptance"] is not None]
+            if acc_vals:
+                ax_acc.plot(acc_steps, acc_vals, marker='o', linewidth=1.5, markersize=4,
+                            label=f"Worker {worker_id}", color=color)
+
+        target = self.config.box_target_acceptance
+        window = self.config.box_acceptance_window
+        ax_acc.axhline(target, linestyle='--', linewidth=1.2, color='black', alpha=0.8, label='Target')
+        ax_acc.axhline(target - window, linestyle=':', linewidth=1.0, color='gray', alpha=0.8, label='Target window')
+        ax_acc.axhline(target + window, linestyle=':', linewidth=1.0, color='gray', alpha=0.8)
+
+        ax_size.set_ylabel("Box size (A)")
+        ax_size.set_title(title)
+        ax_size.grid(True, alpha=0.3)
+        ax_size.legend(ncols=4, loc='best')
+
+        ax_acc.set_xlabel("Step")
+        ax_acc.set_ylabel("Window acceptance")
+        ax_acc.set_ylim(0.0, 1.0)
+        ax_acc.grid(True, alpha=0.3)
+        ax_acc.legend(ncols=4, loc='best')
+
         plt.tight_layout()
         plt.savefig(save_path, dpi=300)
         plt.close()

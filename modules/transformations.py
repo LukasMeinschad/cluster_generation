@@ -1591,11 +1591,18 @@ class NonLocalOperators(MolecularOperators):
 
         ref_submol, mir_submol = self._select_two_submolecules(submolecule_indices)
 
-        # Construct reference frame from the submolecule to mirror
-        ref_frame = self.transformer.set_reference_frame_from_indices(
-            mol_copy,
-            atom_indices=ref_submol,
-        )
+        
+        ref_coords = mol_copy.coordinates[ref_submol].copy()
+        ref_masses = mol_copy.masses[ref_submol].copy()
+        ref_center = GeometryOps.center_of_mass(ref_coords, ref_masses)
+        ref_frame = self.transformer.compute_reference_frame(ref_coords, 
+                                                             ref_masses, 
+                                                             center=ref_center)
+        
+
+
+
+
         plane = np.random.choice(['XY', 'YZ', 'XZ'])
         if plane == 'XY':
             normal_vector = ref_frame.z_axis
@@ -1704,10 +1711,17 @@ class NonLocalOperators(MolecularOperators):
         """
         mol_copy = molecule.copy()
         ref_submol, rot_ref_submol = self._select_two_submolecules(submolecule_indices)
-        ref_frame = self.transformer.set_reference_frame_from_indices(
-            mol_copy,
-            atom_indices=ref_submol,
-        )
+        
+        ref_coords = mol_copy.coordinates[ref_submol].copy()
+        ref_masses = mol_copy.masses[ref_submol].copy()
+        ref_center = GeometryOps.center_of_mass(ref_coords, ref_masses)
+        ref_frame = self.transformer.compute_reference_frame(ref_coords,
+                                                                ref_masses, 
+                                                                center=ref_center)
+    
+
+
+
         plane = np.random.choice(['XY', 'YZ', 'XZ'])
         if plane == 'XY':
             normal_vector = ref_frame.z_axis

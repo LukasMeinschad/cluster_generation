@@ -91,7 +91,7 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=20,
+        n_structures_per_worker=300,
         n_processes=N_WORKERS
     )
 

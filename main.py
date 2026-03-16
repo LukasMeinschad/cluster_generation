@@ -52,7 +52,7 @@ if __name__ == "__main__":
         method="hf",
         basis="cc-pvdz",
         box_type="sphere",
-        box_scale_factor=2.5,
+        box_scale_factor=2.0,
         min_distance=1.5,
         optimize_submolecules=True,
         verbose=False
@@ -71,7 +71,14 @@ if __name__ == "__main__":
         method="hf",
         basis="cc-pvdz",
         verbose=False,
-        adaptive_operators=True
+        adaptive_operators=True,
+        adaptive_box = True,
+        box_update_interval=5, # Update box every 5 steps
+        box_target_acceptance =0.6,
+        box_acceptance_window = 0.05,
+        box_growth_max = 1.15,
+        box_max_scale = 4.0,
+        box_stable_windows = 3
     )
 
     bhmc_sampler = MultiPhaseBHMC(
@@ -95,7 +102,9 @@ if __name__ == "__main__":
     representatives = bhmc_sampler.analyse_phase_a_results(
         phase_a_candidates,
         submolecule_indices=submol_indices,
-        n_clusters=10,
+        cluster_method ="dbscan",
+        eps=1.8,
+        min_samples=5,
         simulation_box=simulation_box, 
         logger=logger_analysis
     )
@@ -103,6 +112,7 @@ if __name__ == "__main__":
     # Kabsch Interpolation
     interpolated_candidates = bhmc_sampler.generate_interpolated_candidates(
         representatives=representatives,
+        submolecule_indices=submol_indices,
         n_interpolations= 2  
         )
 

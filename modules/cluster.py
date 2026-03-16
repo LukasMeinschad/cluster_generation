@@ -1071,7 +1071,7 @@ class BHMCAnalyzer:
 
     def cluster(self,
                 method: str = "agglomerative",
-                n_clusters: int = 5,
+                n_clusters: Optional[int] = None,
                 phase: Optional[str] = None,
                 **kwargs) -> np.ndarray:
         """  
@@ -1090,8 +1090,12 @@ class BHMCAnalyzer:
             Cluster labels array
         """
         if method == "agglomerative":
+            if n_clusters is None:
+                raise ValueError("n_clusters must be specified for agglomerative clustering")
             return self.agglomerative_clustering(n_clusters=n_clusters, phase=phase, **kwargs)
         elif method == "kmeans":
+            if n_clusters is None:
+                raise ValueError("n_clusters must be specified for kmeans clustering")
             return self.kmeans_clustering(n_clusters=n_clusters, phase=phase, **kwargs)
         elif method == "dbscan":
             return self.dbscan_clustering(**kwargs, phase=phase)
@@ -1385,7 +1389,7 @@ class BHMCAnalyzer:
 
 
     def plot_pca_clustered(self, 
-                           n_clusters: int = 5, 
+                           n_clusters: Optional[int] = None,
                            phase: Optional[str] = None, 
                            cluster_method: str = "agglomerative",
                            **cluster_kwargs):
@@ -1399,22 +1403,32 @@ class BHMCAnalyzer:
             **cluster_kwargs: Passed to the clustering method
         """
         pca_result, explained_variance = self.pca(phase=phase)
-        if self.labels is None or len(np.unique(self.labels)) != n_clusters:
-            labels = self.cluster(method=cluster_method, n_clusters=n_clusters, phase=phase, **cluster_kwargs)
+
+
+        if cluster_method in ["dbscan", "hdbscan"]:
+            labels = self.cluster(method=cluster_method, phase=phase, **cluster_kwargs)
+            title_suffix = f"clusters={len(set(labels) - {-1})}, noise={np.sum(labels == -1)}"
         else:
-            labels = self.labels
+            if n_clusters is None:
+                raise ValueError("n_clusters must be specified for agglomerative or kmeans clustering")
+            labels = self.cluster(method=cluster_method, n_clusters=n_clusters, phase=phase, **cluster_kwargs)
+            title_suffix = f"k={n_clusters}"
+
+
+
+
         plt.figure(figsize=(10, 6))
         scatter = plt.scatter(pca_result[:, 0], pca_result[:, 1], c=labels, cmap='tab10', alpha=0.7)
         plt.xlabel(f'PC1 ({explained_variance[0]*100:.1f}%)')
         plt.ylabel(f'PC2 ({explained_variance[1]*100:.1f}%)')
-        plt.title(f'PCA + {cluster_method.capitalize()} (k={n_clusters}) - Phase: {phase if phase else "All"}')
+        plt.title(f'PCA + {cluster_method.capitalize()} ({title_suffix}) - Phase: {phase if phase else "All"}')
         plt.colorbar(scatter, label='Cluster Label')
         plt.grid(True, alpha=0.3)
         plt.savefig(f"figures/pca_{cluster_method}_{phase if phase else 'all'}.png", dpi=200, bbox_inches='tight')
         plt.close()
 
     def plot_tsne_clustered(self,
-                            n_clusters: int = 5,
+                            n_clusters: Optional[int] = None,
                             phase: Optional[str] = None,
                             cluster_method: str = "agglomerative",
                             n_iter: int = 1000,
@@ -1425,10 +1439,14 @@ class BHMCAnalyzer:
         Plots t-SNE projection colored by cluster labels or energy.
         4 subplots with perplexities [20, 40, 60, 80].
         """
-        if self.labels is None or len(np.unique(self.labels)) != n_clusters:
-            labels = self.cluster(method=cluster_method, n_clusters=n_clusters, phase=phase, **cluster_kwargs)
+        if cluster_method in ["dbscan", "hdbscan"]:
+            labels = self.cluster(method=cluster_method, phase=phase, **cluster_kwargs)
+            title_suffix = f"clusters={len(set(labels) - {-1})}, noise={np.sum(labels == -1)}"
         else:
-            labels = self.labels
+            if n_clusters is None:
+                raise ValueError("n_clusters must be specified for agglomerative or kmeans clustering")
+            labels = self.cluster(method=cluster_method, n_clusters=n_clusters, phase=phase, **cluster_kwargs)
+            title_suffix = f"k={n_clusters}"
 
         perplexities = [20, 40, 60, 80]
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
@@ -1445,13 +1463,13 @@ class BHMCAnalyzer:
             ax.set_xlabel('t-SNE Dim 1')
             ax.set_ylabel('t-SNE Dim 2')
             ax.grid(True, alpha=0.3)
-        plt.suptitle(f't-SNE + {cluster_method.capitalize()} (k={n_clusters}) - Phase: {phase if phase else "All"}', fontsize=14, fontweight='bold')
+        plt.suptitle(f"t-SNE + {cluster_method.capitalize()} ({title_suffix}) - Phase: {phase if phase else 'All'}", fontsize=14, fontweight='bold')
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         plt.savefig(f"figures/tsne_{cluster_method}_{phase if phase else 'all'}_{colored_by}.png", dpi=200, bbox_inches='tight')
         plt.close()
 
     def plot_umap_clustered(self, 
-                            n_clusters: int = 5,
+                            n_clusters: Optional[int] = None,
                             phase: Optional[str] = None,
                             cluster_method: str = "agglomerative",
                             random_state: int = 42,
@@ -1464,11 +1482,17 @@ class BHMCAnalyzer:
         if UMAP is None:
             raise ImportError("UMAP is not installed.")
         
-        if self.labels is None or len(np.unique(self.labels)) != n_clusters:
-            labels = self.cluster(method=cluster_method, n_clusters=n_clusters, phase=phase, **cluster_kwargs)
+        if cluster_method in ["dbscan", "hdbscan"]:
+            labels = self.cluster(method=cluster_method, phase=phase, **cluster_kwargs)
+            title_suffix = f"clusters={len(set(labels) - {-1})}, noise={np.sum(labels == -1)}"
         else:
-            labels = self.labels
-        
+            if n_clusters is None:
+                raise ValueError("n_clusters must be specified for agglomerative or kmeans clustering")
+            labels = self.cluster(method=cluster_method, n_clusters=n_clusters, phase=phase, **cluster_kwargs)
+            title_suffix = f"k={n_clusters}"
+         
+
+     
         n_neighbors_list = [10, 15, 30, 50]
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         for ax, n_neighbors in zip(axes.flatten(), n_neighbors_list):
@@ -1484,7 +1508,7 @@ class BHMCAnalyzer:
             ax.set_xlabel('UMAP Dim 1')
             ax.set_ylabel('UMAP Dim 2')
             ax.grid(True, alpha=0.3)
-        plt.suptitle(f'UMAP + {cluster_method.capitalize()} (k={n_clusters}) - Phase: {phase if phase else "All"}', fontsize=14, fontweight='bold')
+        plt.suptitle(f"UMAP + {cluster_method.capitalize()} ({title_suffix}) - Phase: {phase if phase else 'All'}", fontsize=14, fontweight='bold')
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         plt.savefig(f"figures/umap_{cluster_method}_{phase if phase else 'all'}_{colored_by}.png", dpi=200, bbox_inches='tight')
         plt.close()

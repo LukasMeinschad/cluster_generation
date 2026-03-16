@@ -16,7 +16,9 @@ class Logger:
         name: str = "cluster_gen",
         log_file: Optional[str] = "cluster_gen.log",
         level: int = logging.INFO,
-        file_mode: str = "a"
+        file_mode: str = "a",
+        include_timestamp: bool = False,
+        include_level: bool = False,
         ):
         """   
         Args:
@@ -28,11 +30,18 @@ class Logger:
         self._logger = logging.getLogger(name) 
         self._logger.setLevel(level)
         self._logger.handlers.clear() # Clear existing handlers
+        self._logger.propagate = False
 
-        formatter = logging.Formatter(
-            fmt="[%(asctime)s] [%(levelname)-8s] %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
+        if include_timestamp and include_level:
+            fmt = "[%(asctime)s] [%(levelname)-8s] %(message)s"
+        elif include_timestamp:
+            fmt = "[%(asctime)s] %(message)s"
+        elif include_level:
+            fmt = "[%(levelname)-8s] %(message)s"
+        else:
+            fmt = "%(message)s"
+
+        formatter = logging.Formatter(fmt=fmt, datefmt="%Y-%m-%d %H:%M:%S")
 
         # File Handler 
         if log_file:
@@ -145,7 +154,7 @@ class Logger:
                 if energies and idx < len(energies):
                     comment_parts.append(f"Energy: {energies[idx]:.6f} Hartree")
                 comment_line = " | ".join(comment_parts)
-                f.write(f"{n_atoms}\n)")
+                f.write(f"{n_atoms}\n")
                 f.write(f"{comment_line}\n")
                 for i in range(n_atoms):
                     x,y,z = coords[i]

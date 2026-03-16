@@ -33,6 +33,16 @@ class BHMCConfig:
     adaptive_operators: bool = True  # Use adaptive scaling for operators
 
 
+    # In-worker adaptive box control (Phase) A
+    adaptive_box: bool = True
+    box_update_interval: int = 10  # Update every N steps
+    box_target_acceptance: float = 0.6 # Desired acceptance rate 
+    box_acceptance_window: float = 0.05 # no update of box rate inside [box_target_acceptance - window, box_target_acceptance + window]
+    box_growth_kp: float = 0.6 # propotional gain
+    box_growth_max: float = 1.15 # cap per update
+    box_max_scale: float = 4.0 # Relative to initial box size
+    box_stable_windows: int = 3 # stop growing after this many stable windows
+
 class EnergyEvaluator:
     """Energy evaluator for molecular structures using Psi4."""
     
@@ -105,12 +115,44 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
     
     # Setup simulation box and operators
     sim_box = SimulationBox.from_dict(sim_box_dict) if sim_box_dict else None
+    
+    
+    # Adaptive box_settings (worker-local)
+    adaptive_box = bool(config_dict.get('adaptive_box', False)) and (sim_box is not None)
+    box_update_interval = int(config_dict.get('box_update_interval', 10))
+    box_target = float(config_dict.get('box_target_acceptance', 0.6))
+    box_acceptance_window = float(config_dict.get('box_acceptance_window', 0.05))
+    box_kp = float(config_dict.get('box_growth_kp', 0.6))  
+    box_growth_max = float(config_dict.get('box_growth_max', 1.15)) 
+    box_max_scale = float(config_dict.get('box_max_scale', 4.0))
+    box_stable_windows = int(config_dict.get('box_stable_windows', 3))
+    
+    if adaptive_box:
+        if sim_box.box_type == "sphere":
+            initial_box_size = sim_box.radius
+        elif sim_box.box_type == "cube":
+            initial_box_size = float(np.max(sim_box.box_dimensions))
+        else:
+            initial_box_size = 1.0
+    else:
+        initial_box_size = 1.0
+    
+    # Iterators for adaptive box_control
+    stable_windows = 0
+    last_update_step = 0
+    accepted_since_update = 0
+    rejected_since_update = 0
+
+    # Operator setup
     nonlocal_ops = NonLocalOperators(simulation_box=sim_box)
     
     adaptive = config_dict.get('adaptive_operators', True)
     
     adaptive_operators = {'twist', 'large_displacement', 'roto_reflection'}
     
+
+
+
     op_map = {
         'twist': nonlocal_ops.twist_operator,
         'large_displacement': nonlocal_ops.large_displacement,
@@ -222,10 +264,14 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
                     current_dipole_mag
                 ))
                 n_accepted += 1
+                accepted_since_update += 1
                 _log(f"Worker {worker_id} step {step}: ACCEPTED {operator['name']} E={current_energy:.6f} Ha dipole={current_dipole_mag:.4f} D")
             else:
                 n_rejected += 1
+                rejected_since_update += 1
             
+
+
             # Record energy trajectory for every step, accepted or not
             energy_trajectory.append((step+1, current_energy))
                 
@@ -234,6 +280,60 @@ def _phase_a_worker(args: Tuple) -> List[Tuple[Molecule, float, List[float], flo
             n_rejected += 1
             energy_trajectory.append((step+1, current_energy))
             continue
+
+        # Worker-local adaptive box control
+        if adaptive_box and (step + 1) % box_update_interval == 0:
+            window_total = accepted_since_update + rejected_since_update
+            if window_total > 0:
+                window_acc = accepted_since_update / window_total
+            else:
+                window_acc = 0.0
+            
+            lower = box_target - box_acceptance_window
+            upper = box_target + box_acceptance_window
+            
+            grew = False
+            if window_acc < lower:
+                # proportional growth with cap
+                error = lower - window_acc
+                growth = min(box_growth_max, 1.0 + box_kp * error)
+
+                if sim_box.box_type == "sphere":
+                    current_scale = sim_box.radius / max(initial_box_size, 1e-12)
+                    if current_scale < box_max_scale:
+                        new_radius = min(sim_box.radius * growth, initial_box_size * box_max_scale)
+                        if new_radius > sim_box.radius:
+                            sim_box.radius = new_radius
+                            grew = True
+                elif sim_box.box_type == "cube":
+                    current_scale = max(sim_box.box_dimensions) / max(initial_box_size, 1e-12)
+                    if current_scale < box_max_scale:
+                        new_dimensions = np.minimum(sim_box.box_dimensions * growth, initial_box_size * box_max_scale)
+                        if np.any(new_dimensions > sim_box.box_dimensions):
+                            sim_box.box_dimensions = new_dimensions
+                            grew = True
+            if grew:
+                stable_windows = 0
+                if sim_box.box_type == "sphere":
+                    _log(f"Worker {worker_id} step {step}: Adaptive box growth — new radius = {sim_box.radius:.2f} Å (acc={window_acc:.2%}) ")
+                else:
+                    _log(f"Worker {worker_id} step {step}: Adaptive box growth — new dimensions = {sim_box.box_dimensions} Å (acc={window_acc:.2%}) ")
+            else:
+                if lower <= window_acc <= upper:
+                    stable_windows += 1
+                    _log(f"Worker {worker_id} step {step}: Box stable window {stable_windows}/{box_stable_windows} (acc={window_acc:.2%})")
+                else:
+                    stable_windows = 0
+
+            # Reset the window counters
+            accepted_since_update = 0
+            rejected_since_update = 0
+            last_update_step = step + 1
+
+            if stable_windows >= box_stable_windows:
+                _log(f"Worker {worker_id} step {step}: Box growth stabilized after {stable_windows} windows. Stopping growth.", level="info")
+                adaptive_box = False  # Stop further growth
+        
         
         if (step + 1) % 10 == 0:
             rate = n_accepted / (n_accepted + n_rejected) * 100 if (n_accepted + n_rejected) > 0 else 0.0
@@ -514,7 +614,18 @@ class MultiPhaseBHMC:
             'temperature': self.config.temperature,
             'verbose': self.config.verbose,
             'adaptive_operators': self.config.adaptive_operators,
+
+            # Adaptive Box scaling
+            'adaptive_box': self.config.adaptive_box,
+            'box_update_interval': self.config.box_update_interval,
+            'box_target_acceptance': self.config.box_target_acceptance,
+            'box_acceptance_window': self.config.box_acceptance_window,
+            'box_growth_kp': self.config.box_growth_kp,
+            'box_growth_max': self.config.box_growth_max,
+            'box_max_scale': self.config.box_max_scale,
+            'box_stable_windows': self.config.box_stable_windows
         }
+
         
         sim_box_dict = self.simulation_box.to_dict() if self.simulation_box else None
         
@@ -679,6 +790,7 @@ class MultiPhaseBHMC:
         total_accepted = sum(len(r["accepted_structures"]) for r in results)
         total_steps = n_workers * n_steps_per_worker
 
+
         self._log(f" Total steps: {total_steps}")
         self._log(f" Total accepted: {total_accepted}")
         if total_steps > 0:
@@ -705,18 +817,21 @@ class MultiPhaseBHMC:
             self,
             phase_a_structures: List[Tuple[Molecule, float]], 
             submolecule_indices: Optional[List[List[int]]] = None,
-            n_clusters: int = 10,
+            cluster_method: str = "kmeans",
+            n_clusters = None,
             simulation_box: Optional[SimulationBox] = None,
-            logger: Optional[Logger] = None
+            logger: Optional[Logger] = None,
+            **cluster_kwargs
             ) -> List[Molecule]:
         """Analyze Phase A results and extract representative structures.
         
         Args:
             phase_a_structures: List of (Molecule, energy) tuples from Phase A
             submolecule_indices: Optional submolecule indices for clustering
+            cluster_method: Clustering method to use ("kmeans", "dbscan", etc.)
             n_clusters: Number of clusters to identify
             simulation_box: Optional simulation box for trajectory plots
-        
+            cluster_kwargs: Additional kwargs for clustering method (e.g. eps for DBSCAN) 
         Returns:
             List of representative Molecule structures from each cluster
         """
@@ -765,12 +880,29 @@ class MultiPhaseBHMC:
          
         
 
-        labels = analyzer.cluster(method="kmeans", n_clusters=n_clusters)
+        if cluster_method in {"kmeans", "agglomerative"}:
+            if n_clusters is None:
+                raise ValueError(f"{cluster_method} clustering requires n_clusters to be specified")
+            labels = analyzer.cluster(
+                method=cluster_method,
+                n_clusters=n_clusters,
+                **cluster_kwargs
+            )
+        else:
+            labels = analyzer.cluster(
+                method=cluster_method,
+                **cluster_kwargs,
+            )
 
 
-        analyzer.plot_pca_clustered(n_clusters=n_clusters)
-        analyzer.plot_tsne_clustered(n_clusters=n_clusters)
-        analyzer.plot_umap_clustered(n_clusters=n_clusters)
+
+
+        analyzer.plot_pca_clustered(n_clusters=n_clusters,
+                                    cluster_method=cluster_method,**cluster_kwargs)
+        analyzer.plot_tsne_clustered(n_clusters=n_clusters,
+                                     cluster_method=cluster_method,**cluster_kwargs)
+        analyzer.plot_umap_clustered(n_clusters=n_clusters,
+                                     cluster_method=cluster_method,**cluster_kwargs)
 
         representatives = analyzer.get_cluster_representatives()
         analyzer.log_representative_features(representatives,labels=labels) 
@@ -823,7 +955,8 @@ class MultiPhaseBHMC:
     def generate_interpolated_candidates(
             self,
             representatives: List["StructureData"],
-            n_interpolations: int = 3,
+            submolecule_indices: Optional[List[List[int]]] = None,
+            n_interpolations: int = 2,
             lambdas: Optional[List[float]] = None
         ) -> List["StructureData"]:
         """
@@ -855,6 +988,7 @@ class MultiPhaseBHMC:
 
                 interpolated_mols = transformer.kabsch_interpolate(
                     mol_a, mol_b,
+                    submolecule_indices=submolecule_indices,
                     lambdas = lambdas,
                     n_points= n_interpolations
                 )

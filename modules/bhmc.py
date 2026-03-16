@@ -42,6 +42,8 @@ class BHMCConfig:
     box_growth_max: float = 1.15 # cap per update
     box_max_scale: float = 4.0 # Relative to initial box size
     box_stable_windows: int = 3 # stop growing after this many stable windows
+    
+
 
 class EnergyEvaluator:
     """Energy evaluator for molecular structures using Psi4."""
@@ -273,9 +275,16 @@ def _phase_a_worker(args: Tuple) -> Dict:
                 accept = True
             else:
                 delta_e_ev = (new_energy - current_energy) * HARTREE_TO_EV
+                
                 prob = np.exp(-beta * delta_e_ev)
-                accept = random.random() < prob
-            
+                random_val = random.random()
+                accept = random_val < prob
+
+                # log probabilities every 10 steps
+                if (step + 1) % 10 == 0:
+                    _log(f"Worker {worker_id} step {step}: {operator['name']} — ΔE={delta_e_ev:.4f} eV, prob={prob:.4e}, rand={random_val:.4e}")
+
+
             if accept:
                 current_structure = copy.deepcopy(new_structure)
                 current_energy = new_energy

@@ -50,6 +50,8 @@ class Config:
     memory: str = "2GB"
     max_iter: int = 50
     reference: str = "rhf"
+    scf_max_iter: int = 50
+    sp_timeout: int = 60 # Timeout for single point calculations
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for passing to worker processes"""
@@ -60,7 +62,9 @@ class Config:
             'multiplicity': self.multiplicity,
             'memory': self.memory,
             'max_iter': self.max_iter,
-            'reference': self.reference
+            'reference': self.reference, 
+            'scf_max_iter': self.scf_max_iter,
+            'sp_timeout': self.sp_timeout
         }
 
 
@@ -166,13 +170,16 @@ def _single_point_worker(molecule: Molecule, config_dict: Dict) -> Dict:
         
         # Import psi4 here to ensure clean import in subprocess
         import psi4
+        psi4.core.clean()
+        psi4.core.clean_options()
         psi4.core.set_output_file(os.devnull, False)
         psi4.set_memory(config_dict['memory'])
         psi4.set_num_threads(1)
         
         psi4.set_options({
             'reference': config_dict['reference'],
-            'scf_type': 'df'
+            'scf_type': 'df',
+            'maxiter': config_dict.get('scf_max_iter', 50)
         })
         
         # Build geometry
@@ -199,7 +206,8 @@ def _single_point_worker(molecule: Molecule, config_dict: Dict) -> Dict:
         result['success'] = True
         result['energy'] = float(energy)
         result['wall_time'] = time.time() - start_time
-        
+
+         
     except Exception as e:
         result['error'] = str(e)
         result['wall_time'] = time.time() - start_time
@@ -336,7 +344,9 @@ def direct_energy(molecule: Molecule,
                   method: str = "hf", 
                   basis: str = "sto-3g",
                   charge: int = 0,
-                  multiplicity: int = 1) -> Optional[float]:
+                  multiplicity: int = 1,
+                  timeout: int = 60,
+                  scf_max_iter: int = 100) -> Optional[float]:
     """
     Calculate energy directly WITHOUT spawning a subprocess.
     
@@ -348,7 +358,9 @@ def direct_energy(molecule: Molecule,
         basis: Basis set
         charge: Molecular charge
         multiplicity: Spin multiplicity
-        
+        timeout: Maximum time in seconds
+        scf_max_iter: Maximum SCF iterations
+
     Returns:
         Tuple of (energy in Hartree, dipole vector [dx,dy,dz], dipole magnitude) or None if failed
     """
@@ -358,7 +370,8 @@ def direct_energy(molecule: Molecule,
         'charge': charge,
         'multiplicity': multiplicity,
         'memory': '2GB',
-        'reference': 'rhf'
+        'reference': 'rhf',
+        'scf_max_iter': scf_max_iter,
     }
     
     try:
@@ -377,7 +390,7 @@ def direct_energy(molecule: Molecule,
             return None
             
     except Exception as e:
-        print(f"direct_energy exception: {type(e).__name__}: {e}")
+        # No printout here to avoid cluttering
         return None
 
 

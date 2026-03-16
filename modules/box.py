@@ -76,19 +76,23 @@ class SimulationBox:
         
     def is_inside(self, coordinates: np.ndarray) -> bool:
         """   
-        Checks if all coordinates are inside the box
+        Checks if the centroid of the coordinates is inside the box
         
         Args:
             coordinates: Array of shape (N, 3) representing atomic coordinates
         """
         coords = np.atleast_2d(coordinates)
+
+        # Calcualte the centroid of the th coords
+        centroid = np.mean(coords, axis=0)
+
         if self.box_type == "sphere":
-            dist = np.linalg.norm(coords - self.center, axis=1)
+            dist = np.linalg.norm(centroid - self.center)
             return np.all(dist <= self.radius)
         
         elif self.box_type == "cube":
             half_dims = self.box_dimensions / 2.0
-            rel_coords = coords - self.center
+            rel_coords = centroid  - self.center
             return np.all(np.abs(rel_coords) <= half_dims, axis=1)
         
         return False

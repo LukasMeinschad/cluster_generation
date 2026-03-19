@@ -584,7 +584,20 @@ class Molecule:
     def geometric_center(self) -> np.ndarray:
         """Calculate geometric center of the molecule"""
         return np.mean(self.coordinates, axis=0)
-    
+
+    def compute_rmsd(self, other: 'Molecule') -> float:
+        """ 
+        Computes the RMSD between this molecule and another
+        """
+        if len(self.coordinates) != len(other.coordinates):
+            raise ValueError("Molecules must have the same number of atoms for RMSD calculation")
+        
+        diff = self.coordinates - other.coordinates
+        rmsd = np.sqrt(np.mean(np.sum(diff**2, axis=1)))
+        return rmsd
+
+
+
     # Fragmentation
     def fragment_by_connectivity(self) -> List["SubMolecule"]:
         """Fragment molecule into connected components"""

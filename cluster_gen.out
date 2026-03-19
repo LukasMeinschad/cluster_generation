@@ -1,7 +1,7 @@
 ================================================================================
                                   CLUSTER GEN                                   
 ================================================================================
-Start Time: 2026-03-16 23:15:44
+Start Time: 2026-03-19 18:08:07
 Python Version: 3.9.23
 Working Directory: /media/storage_6/lme/master_thesis/cluster_generation
 Log File: /media/storage_6/lme/master_thesis/cluster_generation/cluster_gen.out
@@ -51,7 +51,7 @@ Workers: 2
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
+  Submolecule 2 placed successfully after 1 attempts
   Configuration 3 generated successfully
 
 [5/5] Generating random initial configuration
@@ -111,7 +111,7 @@ Workers: 2
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
+  Submolecule 2 placed successfully after 1 attempts
   Configuration 15 generated successfully
 
 [5/5] Generating random initial configuration
@@ -166,7 +166,7 @@ Workers: 2
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
   Configuration 26 generated successfully
 
 [5/5] Generating random initial configuration
@@ -196,7 +196,7 @@ Workers: 2
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
+  Submolecule 2 placed successfully after 1 attempts
   Configuration 32 generated successfully
 
 [5/5] Generating random initial configuration
@@ -221,7 +221,7 @@ Workers: 2
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
+  Submolecule 2 placed successfully after 1 attempts
   Configuration 37 generated successfully
 
 [5/5] Generating random initial configuration
@@ -257,6 +257,180 @@ Configuration:
   Adaptive operators: True
   Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation
   Independent initial configs: 40
-  Simulation Box: <box.SimulationBox object at 0x155108d5dc70>
+  Simulation Box: <box.SimulationBox object at 0x147de3789e20>
   Worker log: bhmc_workers.log
+Estimated single point time: 0.80 seconds (Energy: -152.054005 Hartree)
+Estimated Phase A time: 53.38 minutes
 Starting parallel BHMC chains...
+  Worker 0: 94 structures accepted, 101 trajectory points, 21 box updates
+  Worker 1: 100 structures accepted, 101 trajectory points, 21 box updates
+  Worker 2: 99 structures accepted, 101 trajectory points, 21 box updates
+  Worker 3: 99 structures accepted, 101 trajectory points, 21 box updates
+  Worker 4: 99 structures accepted, 101 trajectory points, 21 box updates
+  Worker 5: 100 structures accepted, 101 trajectory points, 21 box updates
+  Worker 6: 93 structures accepted, 101 trajectory points, 21 box updates
+  Worker 7: 94 structures accepted, 101 trajectory points, 21 box updates
+  Worker 8: 99 structures accepted, 101 trajectory points, 21 box updates
+  Worker 9: 100 structures accepted, 101 trajectory points, 21 box updates
+  Worker 10: 83 structures accepted, 101 trajectory points, 21 box updates
+  Worker 11: 83 structures accepted, 101 trajectory points, 21 box updates
+  Worker 12: 100 structures accepted, 101 trajectory points, 21 box updates
+  Worker 13: 100 structures accepted, 101 trajectory points, 21 box updates
+  Worker 14: 94 structures accepted, 101 trajectory points, 21 box updates
+  Worker 15: 92 structures accepted, 101 trajectory points, 21 box updates
+  Worker 16: 81 structures accepted, 101 trajectory points, 21 box updates
+  Worker 17: 99 structures accepted, 101 trajectory points, 21 box updates
+  Worker 18: 99 structures accepted, 101 trajectory points, 21 box updates
+  Worker 19: 86 structures accepted, 101 trajectory points, 21 box updates
+  Worker 20: 93 structures accepted, 101 trajectory points, 21 box updates
+  Worker 21: 98 structures accepted, 101 trajectory points, 21 box updates
+  Worker 22: 99 structures accepted, 101 trajectory points, 21 box updates
+  Worker 23: 100 structures accepted, 101 trajectory points, 21 box updates
+  Worker 24: 98 structures accepted, 101 trajectory points, 21 box updates
+  Worker 25: 96 structures accepted, 101 trajectory points, 21 box updates
+  Worker 26: 89 structures accepted, 101 trajectory points, 21 box updates
+  Worker 27: 98 structures accepted, 101 trajectory points, 21 box updates
+  Worker 28: 92 structures accepted, 101 trajectory points, 21 box updates
+  Worker 29: 92 structures accepted, 101 trajectory points, 21 box updates
+  Worker 30: 100 structures accepted, 101 trajectory points, 21 box updates
+  Worker 31: 94 structures accepted, 101 trajectory points, 21 box updates
+  Worker 32: 96 structures accepted, 101 trajectory points, 21 box updates
+  Worker 33: 99 structures accepted, 101 trajectory points, 21 box updates
+  Worker 34: 81 structures accepted, 101 trajectory points, 21 box updates
+  Worker 35: 98 structures accepted, 101 trajectory points, 21 box updates
+  Worker 36: 100 structures accepted, 101 trajectory points, 21 box updates
+  Worker 37: 100 structures accepted, 101 trajectory points, 21 box updates
+  Worker 38: 100 structures accepted, 101 trajectory points, 21 box updates
+  Worker 39: 91 structures accepted, 101 trajectory points, 21 box updates
+------------------------------------------------------------------------
+Phase A Results
+------------------------------------------------------------------------
+Total steps: 4000
+Total accepted: 3808
+Overall acceptance rate: 95.20%
+Energy Statistics (Hartree):
+  Min:  -152.062234
+  Max:  -151.989364
+  Mean: -152.053746
+  Std:  0.004669
+Dipole Statistics (Debye):
+  Min:  0.0622
+  Max:  1.7959
+  Mean: 1.0881
+========================================================================
+                            Phase A Analysis                            
+========================================================================
+Total structures: 3808
+Target clusters: None
+Added batch of 3808 structures to phase: unknown. Total structures in this phase: 3808
+Energy Statistics (phase: all):
+  N Structures: 3808
+  Min: -152.062234
+  Max: -151.989364
+  Mean: -152.053746
+  Median: -152.054086
+  Std: 0.004669
+  Q25: -152.054491
+  Q75: -152.053834
+  IQR: 0.000657
+Dipole Magnitude Statistics (Debye):
+  Min:  0.0622
+  Max:  1.7959
+  Mean: 1.0881
+  Std:  0.3749
+RMSD filtering (threshold=0.200 Å) - Phase: all - Starting with 3808 structures
+RMSD filtering completed - Phase: all - 3543 structures remaining (removed 265)
+Computing and caching feature matrix...
+Computing H-bond features for 3543 (angle_threshold=150.0°) - Phase: all
+Using 42 parallel processes for H-bond computation
+Starting multiprocessing pool for H-bond feature computation...
+Structures with H-bonds: 18/3543
+Total H-bond configs: 18
+Avg H-bonds per struct (with H-bonds): 1.00
+Avg H-bond angle: 163.06° (std: 8.43°)
+Min/Max H-bond angle: 150.80° / 173.69°
+Avg D-A distance: 2.82 Å (std: 0.16 Å)
+Computing gyration tensor based shape descriptors for 3543 structures - Phase: all
+Gyration tensor features computed - Asphericity range: 1.074 to 54.122, Acylindricity range: 0.000 to 0.061, Kappa^2 range: 0.802 to 0.998
+Feature matrix shape: (3543, 28)
+Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude']
+Feature matrix computed and cached.
+Performing DBSCAN Clustering (eps=1.8, min_samples=5) for phase: all - n_structures: 3543
+DBSCAN found 3 clusters and 105 noise points
+Performing DBSCAN Clustering (eps=1.8, min_samples=5) for phase: all - n_structures: 3543
+DBSCAN found 3 clusters and 105 noise points
+Performing DBSCAN Clustering (eps=1.8, min_samples=5) for phase: all - n_structures: 3543
+DBSCAN found 3 clusters and 105 noise points
+Performing DBSCAN Clustering (eps=1.8, min_samples=5) for phase: all - n_structures: 3543
+DBSCAN found 3 clusters and 105 noise points
+Cluster 0: representative index 3490, distance to centroid: 1.098, E=-152.054173 Ha
+Cluster 1: representative index 3035, distance to centroid: 0.612, E=-152.041559 Ha
+Cluster 2: representative index 3367, distance to centroid: 0.932, E=-152.054039 Ha
+Total clusters (excluding noise): 3. Representatives obtained: 3
+------------------------------------------------------------------------
+Representative Structures (Raw)
+------------------------------------------------------------------------
+           Delta_E      RMSD         Rg           Rot_A        Rot_B        Rot_C        N_Hbond      Avg_HB_Ang   Avg_DA_Dist  IAD_0        IAD_1        IAD_2        IAD_3        IAD_4        IAD_5        IAD_6        IAD_7        IAD_8        IAD_9        IAD_10       IAD_11       IAD_12       IAD_13       IAD_14       Asphericity  Acylindricit Kappa^2      Dipole_Mag  
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Cluster 0        0.0080       5.2529       3.1083       0.0000       0.0000       0.0000       0.9469       0.9466       6.2224       6.6257       5.9573       1.4968       5.3069       5.6906       5.0367       6.5276       6.8609       6.3783       0.9462       0.9462       1.4906       0.0000       0.0000       0.0000       9.5642       0.0281       0.9799       1.1289
+Cluster 1        0.0206       7.6513       1.2562       0.0000       0.0000       0.0000       0.9469       0.9466       2.4936       2.7205       2.6604       1.4968       2.1063       2.0397       2.4688       2.0632       2.5303       1.9799       0.9462       0.9462       1.4906       0.0000       0.0000       0.0000       1.4575       0.0440       0.8536       1.3474
+Cluster 2        0.0081       8.2034       7.1246       0.0000       0.0000       0.0000       0.9469       0.9466      14.2488      15.1197      13.8170       1.4968      14.5442      15.4086      14.0634      13.3395      14.2038      12.9021       0.9462       0.9462       1.4906       0.0000       0.0000       0.0000      50.6922       0.0324       0.9974       1.5759
+======================================================================================================================================================================================================================================================================================================================================================================================
+------------------------------------------------------------------------
+Representative Structures (Normalized)
+------------------------------------------------------------------------
+           Delta_E      RMSD         Rg           Rot_A        Rot_B        Rot_C        N_Hbond      Avg_HB_Ang   Avg_DA_Dist  IAD_0        IAD_1        IAD_2        IAD_3        IAD_4        IAD_5        IAD_6        IAD_7        IAD_8        IAD_9        IAD_10       IAD_11       IAD_12       IAD_13       IAD_14       Asphericity  Acylindricit Kappa^2      Dipole_Mag  
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Cluster 0       -0.0860      -0.2363       0.0194      -0.2322      -0.5041      -0.5039      -0.0000      -0.0000       0.0353       0.1582      -0.0852       0.0000      -0.3254      -0.2053      -0.4475       0.1336       0.2279       0.0583      -0.0000       0.0000       0.0000      -0.0715      -0.0714      -0.0713      -0.1691       0.2392       0.4709       0.1187
+Cluster 1        2.7610       1.4135      -1.3810      -1.1992       2.9233       2.8575      -0.0000      -0.0000      -1.3663      -1.2880      -1.3207       0.0000      -1.5232      -1.5516      -1.4057      -1.5087      -1.3481      -1.5592      -0.0000       0.0000       0.0000      -0.0715      -0.0714      -0.0713      -1.0302       1.5585      -3.5662       0.7020
+Cluster 2       -0.0557       1.7933       3.0560       2.0421      -1.0240      -1.0292      -0.0000      -0.0000       3.0522       3.3039       2.8601       0.0000       3.1317       3.3782       2.9208       2.6395       2.9002       2.4573      -0.0000       0.0000       0.0000      -0.0715      -0.0714      -0.0713       4.1997       0.5963       1.0278       1.3117
+======================================================================================================================================================================================================================================================================================================================================================================================
+Generating interpolated candidates between 3 representatives
+ Pairs: 3 
+ Interpolations per pair: 2
+Generated 6 interpolated candidates
+Wrote 6 structures to trajectories/interpolated_candidates.xyz
+========================================================================
+                       Phase B: Local Refinement                        
+========================================================================
+Configuration:
+ Representatives: 6
+ Steps per worker: 50
+ Total Steps: 300
+ Method/Basis: hf/cc-pvdz
+ Temperature: 150 K
+ Adaptive operators: False
+ Local Operators: random_displacement, random_rotation, local_twist, correlated_displacement, small_principal_axis_rotation
+ Simulation Box: <box.SimulationBox object at 0x147de3789e20>
+ Worker log: bhmc_workers.log
+Estimated single point time: 0.47 seconds (Energy: -152.054640 Hartree)
+Estimated Phase B time: 2.33 minutes
+Starting parallel local refinement workers...
+ Worker 0: Best energy = -152.054661 Ha, accepted structures = 47, trajectory points = 51
+ Worker 1: Best energy = -152.061387 Ha, accepted structures = 42, trajectory points = 51
+ Worker 2: Best energy = -152.054229 Ha, accepted structures = 50, trajectory points = 51
+ Worker 3: Best energy = -152.054067 Ha, accepted structures = 50, trajectory points = 51
+ Worker 4: Best energy = -152.054251 Ha, accepted structures = 47, trajectory points = 51
+ Worker 5: Best energy = -152.054058 Ha, accepted structures = 49, trajectory points = 51
+------------------------------------------------------------------------
+Phase B Results
+------------------------------------------------------------------------
+ Total steps: 300
+ Total accepted: 285
+ Overall acceptance rate: 95.00%
+Best energies across workers (Hartree):
+ Min:  -152.061387
+ Max:  -152.054058
+ Mean: -152.055442
+ Std:  0.002666
+========================================================================
+                           Local Optimization                           
+========================================================================
+Optimized 5/6 structures successfully
+Wrote 3808 structures to trajectories/phase_a_candidates.xyz
+Wrote 3 structures to trajectories/representatives.xyz
+Wrote 6 structures to trajectories/phase_b_best.xyz
+Wrote 5 structures to trajectories/optimized_representatives.xyz
+========================================================================
+Total runtime: 428.3s (7.1 min)
+========================================================================

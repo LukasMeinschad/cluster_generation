@@ -14,7 +14,7 @@ from molecule_class import Molecule
 from transformations import Transformation
 from psi4_interface import Psi4Calculator, Config
 from cluster import BHMCAnalyzer
-from bhmc import MultiPhaseBHMC, BHMCConfig, benchmark_temperature_acceptance
+from bhmc import MultiPhaseBHMC, BHMCConfig
 from init import ClusterInitializer, InitializationConfig
 from args import get_args
 from logger import Logger

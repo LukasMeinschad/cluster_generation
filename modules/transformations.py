@@ -5,6 +5,10 @@ from dataclasses import dataclass
 import time
 import random
 import copy
+from scipy.optimize import linear_sum_assignment
+
+# Numba Functions
+
 
 
 @dataclass 
@@ -354,6 +358,21 @@ class GeometryOps:
         sign_matrix = np.diag([1, 1, np.sign(d)])
         R = U @ sign_matrix @ Vt
         return R
+
+    def find_optimal_correspondence(P: np.ndarray, Q: np.ndarray):
+        """ 
+        Finds the optimal correspondence between two sets of coordinates P and Q using the
+        Hungarian algorithm to solve the linear assignment problem.
+
+        Args:
+            P: Target coordinates (Nx3)
+            Q: Source coordinates (Nx3)  
+        """
+        # Compute cost matrix as squared distances
+        cost_matrix = np.linalg.norm(P[:, np.newaxis] - Q[np.newaxis, :], axis=2)**2
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+        return Q[col_ind]
+
     
 
 
@@ -1176,7 +1195,7 @@ class LocalOperators(MolecularOperators):
             self,
             molecule: "Molecule",
             submolecule_indices: List[List[int]],
-            angle_range: Tuple[float, float] = (-40, 40),
+            angle_range: Tuple[float, float] = (-10, 10),
             adaptive: bool = True) -> "Molecule":
         """  
         Randomly rotate a submolecule around its center of mass using a random axis and a small angle.
@@ -1771,8 +1790,6 @@ class NonLocalOperators(MolecularOperators):
         return self._apply_box_constraints(mol_copy, molecule)
 
 
-# ========================= Testing Utilities for Operators =========================
-
 
 # ========================= Testing Utilities for Operators =========================
 
@@ -1780,9 +1797,12 @@ if __name__ == "__main__":
 
     from molecule_class import Molecule
     from box import SimulationBox
+    from scipy.optimize import linear_sum_assignment
+    import matplotlib.pyplot as plt
+    import time
 
     # ===================== Setup: H2O Dimer =====================
-    xyz = """
+    xyz_1 = """
     6
     Coordinates from ORCA-job h2o_2 E -152.102897751726
     O           0.20131422818946     -0.13419863189991     -0.38118207664628
@@ -1792,150 +1812,246 @@ if __name__ == "__main__":
     H           3.25817767296947      1.29105665797100     -0.44996761253291
     H           3.66908154229119     -0.14039999871364     -0.23001884806303
     """
-    molecule = Molecule.from_xyz(xyz)
+    # Second molecule with one atom permutated to test the symmetry effect
+    # of the rmsd calculation and the operators
+    xyz_2 = """
+6
+    Coordinates from ORCA-job h2o_2 E -152.102897751726
+    O           0.20131422818946     -0.13419863189991     -0.38118207664628
+    H          -0.26386315635905     -0.06924940339370      0.43390806815981
+    H           1.10826926774619      0.03054527004232     -0.16898516572928
+    O           3.06513444516272      0.52224610599392      0.05902763481169
+    H           3.25817767296947      1.29105665797100     -0.44996761253291
+    H           3.66908154229119     -0.14039999871364     -0.23001884806303
+    """
+
+    # Make n test points to calculate the speed of the operators and the RMSD calculation
+
+
+
+
+    molecule_1 = Molecule.from_xyz(xyz_1)
+    molecule_2 = Molecule.from_xyz(xyz_2)
     submol_indices = [[0, 1, 2], [3, 4, 5]]
 
+    # Compute Rotation matrix for alignment
+    R = GeometryOps.kabsch_rotation(molecule_1.coordinates, molecule_2.coordinates)
+    print("Rotation matrix to align molecule 2 to molecule 1:")
+    # Compute RMSD after alignment
+    aligned_coords_2 = molecule_2.coordinates @ R.T
 
-    def animate_operator(molecule,submolecule_indices, operator_func, operator_name,
-                         n_frames=60, n_applications=3, save_path=None, adaptive=None):
-        
-        """  
-        Animate a nonlocal operator by interpolation between original and transformed coordinates
+    def rmsd(coords1, coords2):
+        return np.sqrt(np.mean(np.sum((coords1 - coords2)**2, axis=1)))
+    print(f"RMSD after alignment: {rmsd(molecule_1.coordinates, aligned_coords_2):.4f} Å") 
 
-        Args:
-            molecule: Input Molecule object
-            submolecule_indices: List of lists of atom indices defining submolecules
-            operator_func: Non-local operator function to apply
-            operator_name: Name of the operator (for title)
-            n_frames: Number of frames in the animation
-            n_applications: Number of times to apply the operator for animation
-            save_path: Optional path to save the animation as a GIF
-            adaptive: Whether to use adaptive scaling for the operator
+    def cost_matrix(coords1, coords2):
         """
-        import matplotlib.animation as animation
-        from pathlib import Path
+        Computes a cost matrix where each element (i,j)
+        is the squared norm of the positional vectors a_i, b_j
+        """
+        cost_matrix = np.zeros((len(coords1), len(coords2)))
+        for i in range(len(coords1)):
+            for j in range(len(coords2)):
+                cost_matrix[i, j] = np.linalg.norm(coords1[i] - coords2[j])**2
+        return cost_matrix
+    
+    def find_optimal_correspondence(coords1,coords2):
+        """
+        Find the optimal one-to-one correspondence between atoms
+        using the Hungarian algorithm on the cost matrix
+        """
+        cost_mat= cost_matrix(coords1, coords2)
+        row_ind, col_ind = linear_sum_assignment(cost_mat)
+        # Reorder coords2 to match the optimal correspondence with coords1
+        reordered_coords2 = coords2[col_ind]
+        return reordered_coords2
 
-        # Collect keyframes: original + each operator application
-        keyframes = [molecule.copy()]
-        current = molecule.copy()
-        for _ in range(n_applications):
-            if adaptive is not None:
-                new = operator_func(current, submolecule_indices, adaptive=adaptive)
-            else:
-                new = operator_func(current, submolecule_indices)
-            keyframes.append(new)
-            current = new.copy()
+    # Test the optimal correspondence function
+    reordered_coords_2 = find_optimal_correspondence(molecule_1.coordinates, molecule_2.coordinates)
+    print(f"RMSD after optimal correspondence: {rmsd(molecule_1.coordinates, reordered_coords_2):.4f} Å")
 
-        # Build interpolated frames between each pair of keyframes
-        all_frames = []
-        for k in range(len(keyframes) - 1):
-            start_coords = keyframes[k].coordinates
-            end_coords = keyframes[k + 1].coordinates
-            for t in range(n_frames):
-                frac = t / n_frames
-                interp = start_coords + frac * (end_coords - start_coords)
-                all_frames.append((interp.copy(), k+1))
-            
-            # Hold on final position
-            for _ in range(n_frames // 3):
-                all_frames.append((end_coords.copy(), k+1))
-        
-        # Precompute colors and sizes per submolecule
-        sub_edge_colors = plt.cm.Set2(np.linspace(0, 1, max(len(submolecule_indices), 1)))
-        atom_colors = molecule.get_atom_colors()
-        atom_sizes = molecule.get_atom_sizes()
+    times_kabsch = []
+    times_opt = [] 
+    dims = [5,10,20,50,100,200,500,1000, 2000,5000]
 
-        # Compute fixed axis limits for all keyframes
-        all_kf_coords = np.vstack([kf.coordinates for kf in keyframes])
-        center = all_kf_coords.mean(axis=0)
-        max_range = np.ptp(all_kf_coords, axis=0).max() / 2 + 1.5
-
-        fig = plt.figure(figsize=(9, 7))
-        ax = fig.add_subplot(111, projection='3d')
-
-        def update(frame_idx):
-            coords, app_num = all_frames[frame_idx]
-            ax.cla()
-
-            for sub_i, indices in enumerate(submolecule_indices):
-                sub_coords = coords[indices]
-                colors = [atom_colors[i] for i in indices]
-                sizes = [atom_sizes[i] for i in indices]
-
-                ax.scatter(
-                    sub_coords[:, 0], sub_coords[:, 1], sub_coords[:, 2],
-                    c=colors, s=sizes, edgecolors=sub_edge_colors[sub_i],
-                    linewidths=2, alpha=0.9, depthshade=True
-                )
-                # Draw covalent bonds within submolecule
-                for i in range(len(indices)):
-                    for j in range(i + 1, len(indices)):
-                        dist = np.linalg.norm(sub_coords[i] - sub_coords[j])
-                        if dist < 1.3:
-                            ax.plot(
-                                [sub_coords[i, 0], sub_coords[j, 0]],
-                                [sub_coords[i, 1], sub_coords[j, 1]],
-                                [sub_coords[i, 2], sub_coords[j, 2]],
-                                color='dimgray', linewidth=2, alpha=0.7
-                            )
-
-            ax.set_title(f"{operator_name}  (step {app_num}/{n_applications})",
-                     fontsize=13, fontweight='bold')
-            ax.set_xlabel('X (Å)')
-            ax.set_ylabel('Y (Å)')
-            ax.set_zlabel('Z (Å)')
-            ax.set_xlim(center[0] - max_range, center[0] + max_range)
-            ax.set_ylim(center[1] - max_range, center[1] + max_range)
-            ax.set_zlim(center[2] - max_range, center[2] + max_range)
-            ax.view_init(elev=20, azim=30 + frame_idx * 0.3)
-            return []
-
-        ani = animation.FuncAnimation(
-            fig, update, frames=len(all_frames), interval=33, blit=False
-        )
-
-        if save_path:
-            Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-            if save_path.endswith('.gif'):
-                ani.save(save_path, writer='pillow', fps=30, dpi=150)
-            else:
-                ani.save(save_path, writer='ffmpeg', fps=30, dpi=150)
-            print(f"Saved: {save_path}")
-            plt.close()
-        else:
-            plt.show()
+    for dim in dims:
+        # Speed test the RMSD with Kabsch and with optimal correspondence
+        coords1 = np.random.rand(dim, 3)
+        coords2 = np.random.rand(dim, 3)
+        start = time.time()
+        R = GeometryOps.kabsch_rotation(coords1, coords2)
+        aligned_coords2 = coords2 @ R.T
+        rmsd_kabsch = rmsd(coords1, aligned_coords2)
+        end = time.time()
+        times_kabsch.append(end - start)
+        start = time.time()
+        reordered_coords2 = find_optimal_correspondence(coords1, coords2)
+        rmsd_opt = rmsd(coords1, reordered_coords2)
+        end = time.time()
+        times_opt.append(end - start)
+    
+    plt.figure(figsize=(8,5))
+    plt.plot(dims, times_kabsch, label="Kabsch RMSD", marker='o')
+    plt.plot(dims, times_opt, label="Optimal Correspondence RMSD", marker='o')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel("Number of atoms (log scale)")
+    plt.ylabel("Time (seconds, log scale)")
+    plt.title("RMSD Calculation Time: Kabsch vs Optimal Correspondence")
+    plt.legend()
+    plt.grid(True, which="both", ls="--")
+    plt.tight_layout()
+    plt.savefig("rmsd_timing.png", dpi=150)
+    plt.close()
+                                                        
+                                                    
 
 
 
 
 
-    covalent_radii = [0.66, 0.31, 0.31, 0.66, 0.31, 0.31]
-    box = SimulationBox.from_covalent_radii(covalent_radii, 6, scale_factor=5.0)
-    nonlocal_ops = NonLocalOperators(simulation_box=box)
 
-    # ===================== Generate Animations =====================
-    # (operator_name, function, adaptive_kwarg)
-    #   adaptive=None means the operator doesn't take an adaptive parameter
-    operators_to_animate = [
-        ("Twist",                    nonlocal_ops.twist_operator,                      True),
-        ("Large Displacement",       nonlocal_ops.large_displacement,                  True),
-        ("Mirror",                   nonlocal_ops.mirror_operator,                     None),
-        ("Random SO(3)",             nonlocal_ops.random_so3_operator,                 None),
-        ("Principal Axis Rotation",  nonlocal_ops.principal_axis_rotation_operator,    True),
-        ("Roto-Reflection",          nonlocal_ops.roto_reflection_operator,            True),
-        ("Exchange",                 nonlocal_ops.exchange_operator,                   None),
-    ]
 
-    for op_name, op_func, adaptive in operators_to_animate:
-        safe_name = op_name.lower().replace(" ", "_").replace("(", "").replace(")", "")
-        save_path = f"figures/operator_{safe_name}.gif"
-        print(f"Animating: {op_name} -> {save_path}")
-        animate_operator(
-            molecule, submol_indices, op_func, op_name,
-            n_frames=100, n_applications=5,
-            save_path=save_path,
-            adaptive=adaptive,
-        )
-
-    print("All animations done.")
+#    def animate_operator(molecule,submolecule_indices, operator_func, operator_name,
+#                         n_frames=60, n_applications=3, save_path=None, adaptive=None):
+#        
+#        """  
+#        Animate a nonlocal operator by interpolation between original and transformed coordinates
+#
+#        Args:
+#            molecule: Input Molecule object
+#            submolecule_indices: List of lists of atom indices defining submolecules
+#            operator_func: Non-local operator function to apply
+#            operator_name: Name of the operator (for title)
+#            n_frames: Number of frames in the animation
+#            n_applications: Number of times to apply the operator for animation
+#            save_path: Optional path to save the animation as a GIF
+#            adaptive: Whether to use adaptive scaling for the operator
+#        """
+#        import matplotlib.animation as animation
+#        from pathlib import Path
+#
+#        # Collect keyframes: original + each operator application
+#        keyframes = [molecule.copy()]
+#        current = molecule.copy()
+#        for _ in range(n_applications):
+#            if adaptive is not None:
+#                new = operator_func(current, submolecule_indices, adaptive=adaptive)
+#            else:
+#                new = operator_func(current, submolecule_indices)
+#            keyframes.append(new)
+#            current = new.copy()
+#
+#        # Build interpolated frames between each pair of keyframes
+#        all_frames = []
+#        for k in range(len(keyframes) - 1):
+#            start_coords = keyframes[k].coordinates
+#            end_coords = keyframes[k + 1].coordinates
+#            for t in range(n_frames):
+#                frac = t / n_frames
+#                interp = start_coords + frac * (end_coords - start_coords)
+#                all_frames.append((interp.copy(), k+1))
+#            
+#            # Hold on final position
+#            for _ in range(n_frames // 3):
+#                all_frames.append((end_coords.copy(), k+1))
+#        
+#        # Precompute colors and sizes per submolecule
+#        sub_edge_colors = plt.cm.Set2(np.linspace(0, 1, max(len(submolecule_indices), 1)))
+#        atom_colors = molecule.get_atom_colors()
+#        atom_sizes = molecule.get_atom_sizes()
+#
+#        # Compute fixed axis limits for all keyframes
+#        all_kf_coords = np.vstack([kf.coordinates for kf in keyframes])
+#        center = all_kf_coords.mean(axis=0)
+#        max_range = np.ptp(all_kf_coords, axis=0).max() / 2 + 1.5
+#
+#        fig = plt.figure(figsize=(9, 7))
+#        ax = fig.add_subplot(111, projection='3d')
+#
+#        def update(frame_idx):
+#            coords, app_num = all_frames[frame_idx]
+#            ax.cla()
+#
+#            for sub_i, indices in enumerate(submolecule_indices):
+#                sub_coords = coords[indices]
+#                colors = [atom_colors[i] for i in indices]
+#                sizes = [atom_sizes[i] for i in indices]
+#
+#                ax.scatter(
+#                    sub_coords[:, 0], sub_coords[:, 1], sub_coords[:, 2],
+#                    c=colors, s=sizes, edgecolors=sub_edge_colors[sub_i],
+#                    linewidths=2, alpha=0.9, depthshade=True
+#                )
+#                # Draw covalent bonds within submolecule
+#                for i in range(len(indices)):
+#                    for j in range(i + 1, len(indices)):
+#                        dist = np.linalg.norm(sub_coords[i] - sub_coords[j])
+#                        if dist < 1.3:
+#                            ax.plot(
+#                                [sub_coords[i, 0], sub_coords[j, 0]],
+#                                [sub_coords[i, 1], sub_coords[j, 1]],
+#                                [sub_coords[i, 2], sub_coords[j, 2]],
+#                                color='dimgray', linewidth=2, alpha=0.7
+#                            )
+#
+#            ax.set_title(f"{operator_name}  (step {app_num}/{n_applications})",
+#                     fontsize=13, fontweight='bold')
+#            ax.set_xlabel('X (Å)')
+#            ax.set_ylabel('Y (Å)')
+#            ax.set_zlabel('Z (Å)')
+#            ax.set_xlim(center[0] - max_range, center[0] + max_range)
+#            ax.set_ylim(center[1] - max_range, center[1] + max_range)
+#            ax.set_zlim(center[2] - max_range, center[2] + max_range)
+#            ax.view_init(elev=20, azim=30 + frame_idx * 0.3)
+#            return []
+#
+#        ani = animation.FuncAnimation(
+#            fig, update, frames=len(all_frames), interval=33, blit=False
+#        )
+#
+#        if save_path:
+#            Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+#            if save_path.endswith('.gif'):
+#                ani.save(save_path, writer='pillow', fps=30, dpi=150)
+#            else:
+#                ani.save(save_path, writer='ffmpeg', fps=30, dpi=150)
+#            print(f"Saved: {save_path}")
+#            plt.close()
+#        else:
+#            plt.show()
+#
+#
+#
+#
+#
+#    covalent_radii = [0.66, 0.31, 0.31, 0.66, 0.31, 0.31]
+#    box = SimulationBox.from_covalent_radii(covalent_radii, 6, scale_factor=5.0)
+#    nonlocal_ops = NonLocalOperators(simulation_box=box)
+#
+#    # ===================== Generate Animations =====================
+#    # (operator_name, function, adaptive_kwarg)
+#    #   adaptive=None means the operator doesn't take an adaptive parameter
+#    operators_to_animate = [
+#        ("Twist",                    nonlocal_ops.twist_operator,                      True),
+#        ("Large Displacement",       nonlocal_ops.large_displacement,                  True),
+#        ("Mirror",                   nonlocal_ops.mirror_operator,                     None),
+#        ("Random SO(3)",             nonlocal_ops.random_so3_operator,                 None),
+#        ("Principal Axis Rotation",  nonlocal_ops.principal_axis_rotation_operator,    True),
+#        ("Roto-Reflection",          nonlocal_ops.roto_reflection_operator,            True),
+#        ("Exchange",                 nonlocal_ops.exchange_operator,                   None),
+#    ]
+#
+#    for op_name, op_func, adaptive in operators_to_animate:
+#        safe_name = op_name.lower().replace(" ", "_").replace("(", "").replace(")", "")
+#        save_path = f"figures/operator_{safe_name}.gif"
+#        print(f"Animating: {op_name} -> {save_path}")
+#        animate_operator(
+#            molecule, submol_indices, op_func, op_name,
+#            n_frames=100, n_applications=5,
+#            save_path=save_path,
+#            adaptive=adaptive,
+#        )
+#
+#    print("All animations done.")
 

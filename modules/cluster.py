@@ -308,29 +308,13 @@ class BHMCAnalyzer:
     @staticmethod 
     def _calculate_rmsd(coords1: np.ndarray, coords2: np.ndarray) -> float:
         """   
-        Calculate RMSD between two sets of coordinates
-
-        Employs the Kabsch Algorithm to find the Optimal Rotation and then Computes the RMSD
-
-        Steps:
-        1. Center the Coordinates at the Centroid
-        2. Compute the Matrix H = P^T * Q where P and Q are the centered coordinates
-        3. Compute the SVD of H = U * S * V^T 
-        4. See if Orthogonal Matrix have Reflections d = det(U * V^T) = det(U) * det(V^T)
-        5. Calculate the Rotationam Matrix
-
-        R = U (1 1 d) V^T
+        Calculate optimal RMSD between two sets of coordinate points.
+        For this we use the respective function of Geometry Ops
+        No centering is required because we use the optimal correspondence function
         """
-        # Center the coordinates
-        coords1_centered = coords1 - np.mean(coords1, axis=0)
-        coords2_centered = coords2 - np.mean(coords2, axis=0)
-        # Covariance Matrix
-        H = coords1_centered.T @ coords2_centered
-        U, S, Vt = np.linalg.svd(H)
-        d = np.linalg.det(U) * np.linalg.det(Vt)
-        R = U @ np.diag([1, 1, d]) @ Vt
-        coords1_rotated = coords1_centered @ R
-        rmsd = np.sqrt(np.mean(np.sum((coords1_rotated - coords2_centered)**2, axis=1)))
+        coords_2_opt = GeometryOps.find_optimal_correspondence(coords1, coords2)
+        diff = coords1 - coords_2_opt
+        rmsd = np.sqrt(np.mean(np.sum(diff**2, axis=1)))
         return rmsd
 
     def plot_rmsd_matrix(self, phase: Optional[str] = None):

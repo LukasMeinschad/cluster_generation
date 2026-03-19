@@ -12,6 +12,8 @@ from typing import List, Optional, Tuple, Dict
 from dataclasses import dataclass
 from multiprocessing import Pool
 import copy
+from tqdm import tqdm
+import time
 
 # Module imports
 from molecule_class import Molecule
@@ -43,6 +45,9 @@ class BHMCConfig:
     box_max_scale: float = 4.0 # Relative to initial box size
     box_stable_windows: int = 3 # stop growing after this many stable windows
     
+    # Adaptive Temperature Control in Phase B
+    max_temperature: float = 50 
+
 
 
 class EnergyEvaluator:
@@ -462,7 +467,7 @@ def _phase_b_worker(args: Tuple) -> Dict:
 
     current_structure = copy.deepcopy(initial_molecule)
 
-    # TODO this can be improved
+    # TODO this can be impoved 
     eval_result = evaluator.evaluate(current_structure)
     if eval_result is None or eval_result[0] is None:
         _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
@@ -485,12 +490,21 @@ def _phase_b_worker(args: Tuple) -> Dict:
     energy_trajectory = [(0, current_energy)] # Track energy at each step
     n_accepted = 0
     n_rejected = 0
-    temperature = config_dict['temperature']
-    beta = 1.0 / (k_B * temperature)
+
+    start_temperature = config_dict['temperature']
+    end_temperature = config_dict.get('max_temperature', start_temperature)
 
     for step in range(n_steps):
         op_idx = np.random.choice(len(operators), p=weights)
         operator = operators[op_idx]
+
+        # Calculate the current temperature for adaptive control
+        temperature = config_dict['temperature']
+        fraction = step / max(1, n_steps - 1)
+        # Raising the Fraction will smooth out this curve
+        p = 2
+        current_temperatur = start_temperature + (fraction**p) * (end_temperature - start_temperature)  
+        beta = 1.0 / (k_B * current_temperatur)
 
         try:
             new_structure = operator['func'](
@@ -548,7 +562,7 @@ def _phase_b_worker(args: Tuple) -> Dict:
 
         if (step + 1) % 10 == 0:
             rate = n_accepted / (n_accepted + n_rejected) * 100 if (n_accepted + n_rejected) > 0 else 0.0
-            _log(f"Worker {worker_id}: {step+1}/{n_steps} — accepted={n_accepted}, rate={rate:.1f}%")
+            _log(f"Worker {worker_id}: {step+1}/{n_steps} (T={current_temperatur:.0f}K) — accepted={n_accepted}, rate={rate:.1f}%")
 
     total = n_accepted + n_rejected
     rate = n_accepted / total * 100 if total > 0 else 0.0
@@ -613,12 +627,37 @@ class MultiPhaseBHMC:
         # Storage for Phase A results
         self.phase_a_structures: List[Tuple[Molecule, float, List[float], float]] = []
 
+        # Storage for Phase B results
+        self.phase_b_structures: List[Tuple[Molecule, float, List[float], float]] = []
+
+
     def _log(self, msg: str, level: str = "info") -> None:
         """Log a summary message to the main log file."""
         if self.config.verbose:
             print(msg)
         if self.logger:
             getattr(self.logger, level)(msg)
+
+    def estimate_single_point_time(self, molecule: Molecule) -> Optional[float]:
+        """ 
+        Helper function that estimates the time of a SP calculation
+        This can then be used to estimate the total time of a Phase
+        """
+        evaluator = EnergyEvaluator(
+            method=self.config.method,
+            basis=self.config.basis
+        )
+        start_time = time.time()
+        result = evaluator.evaluate(molecule)
+        end_time = time.time()
+        if result is None or result[0] is None:
+            self._log("Warning: Single point energy evaluation failed during timing estimation.", level="warning")
+            return None
+        energy, _, _ = result
+        elapsed = end_time - start_time
+        self._log(f"Estimated single point time: {elapsed:.2f} seconds (Energy: {energy:.6f} Hartree)")
+        return elapsed
+    
 
     def run_phase_a(self, 
                     initial_molecules: List[Molecule],
@@ -670,6 +709,15 @@ class MultiPhaseBHMC:
             'box_stable_windows': self.config.box_stable_windows
         }
 
+        # Run initial sp calculation to estimate time
+        sp_molecule = initial_molecules[0]
+        sp_time = self.estimate_single_point_time(sp_molecule)
+        if sp_time is not None:
+            est_time = sp_time * n_structures_per_worker * n_processes
+            self._log(f"Estimated Phase A time: {est_time/60:.2f} minutes")
+            print(f"Estimated Phase A time: {est_time/60:.2f} minutes")
+
+
         
         sim_box_dict = self.simulation_box.to_dict() if self.simulation_box else None
         
@@ -690,7 +738,10 @@ class MultiPhaseBHMC:
         self._log("Starting parallel BHMC chains...")
         
         with Pool(processes=n_processes) as pool:
-            results = pool.map(_phase_a_worker, args_list)
+            
+            results_generator = pool.imap(_phase_a_worker, args_list)
+            results = list(tqdm(results_generator, total=n_processes, desc="Phase A Workers"))
+
         
         # Collect results and trajectories
         all_accepted_structures = []
@@ -796,10 +847,20 @@ class MultiPhaseBHMC:
             "method": self.config.method,
             "basis": self.config.basis,
             "temperature": self.config.temperature,
+            "max_temperature": self.config.max_temperature,
             "verbose": self.config.verbose,
             "adaptive_operators": self.config.adaptive_operators,
         }
+
+        # Estimate time for a single local refinement step
+        sp_molecule = representatives[0].molecule
+        sp_time = self.estimate_single_point_time(sp_molecule)
+        if sp_time is not None:
+            est_time = sp_time * n_steps_per_worker * n_workers
+            self._log(f"Estimated Phase B time: {est_time/60:.2f} minutes")
+            print(f"Estimated Phase B time: {est_time/60:.2f} minutes")
         
+
         sim_box_dict = self.simulation_box.to_dict() if self.simulation_box else None
 
         args_list = [
@@ -818,17 +879,21 @@ class MultiPhaseBHMC:
         ]
         self._log("Starting parallel local refinement workers...")
         with Pool(processes=n_processes) as pool:
-            results = pool.map(_phase_b_worker, args_list)
+            results_generator = pool.imap(_phase_b_worker, args_list)
+            results = list(tqdm(results_generator, total=n_workers, desc="Phase B Workers"))
 
         # Collect results and trajectories
         self.phase_b_trajectories = {}
         self.phase_b_results = results
+        all_accepted_structures = []
+
 
         for worker_result in results:
             wid = worker_result["worker_id"]
             accepted = worker_result["accepted_structures"]
             trajectory = worker_result["energy_trajectory"]
             best = worker_result["best_structure"]
+            all_accepted_structures.extend(accepted)
 
             self.phase_b_trajectories[wid] = trajectory
             best_e_str = f"{best[1]:.6f} Ha" if best else "N/A"
@@ -861,6 +926,13 @@ class MultiPhaseBHMC:
             trajectories=self.phase_b_trajectories,
             title="Phase B Worker Energy Trajectories"
         )
+
+        
+
+        self.phase_b_structures = all_accepted_structures
+
+        # Plot local basin exploration for each worker
+        self.plot_phase_b_basin_exploration(results)
 
         return results
 
@@ -907,7 +979,7 @@ class MultiPhaseBHMC:
             self._log(f"  Mean: {np.mean(dipoles):.4f}")
             self._log(f"  Std:  {np.std(dipoles):.4f}")
         
-     
+
 
 
         analyzer.plot_com_trajectory_2d_projection(
@@ -960,7 +1032,70 @@ class MultiPhaseBHMC:
     
         
         return representatives
-    
+
+    def analyse_phase_b_results(self, 
+                                phase_b_results: List[Dict],
+                                submolecule_indices: Optional[List[List[int]]] = None,
+                                logger: Optional[Logger] = None
+                                ) -> List[Tuple[Molecule, float, List[float], float]]:
+        """  
+        Analyzes the Results of the Phase B local refinement and extracts the best structures found by each worker, along with their energies and dipole moments.
+        
+        Args:
+            phase_b_results: List of dictionaries returned by each Phase B worker, containing keys 'best_structure', 'accepted_structures', 'energy_trajectory', and 'worker_id'.
+        """
+        if self.logger:
+            self.logger.header("Phase B Analysis")
+
+        # Initialize an analyzer
+        
+       
+        
+    # Plot Exploration of local funnels of phase b
+    def plot_phase_b_basin_exploration(self,
+                                       phase_b_results: List[Dict],):
+        """  
+        Plots Energy vs RMSD to the best structure for each worker in Phase B to visualize the local exploration of a given funnel
+        """
+        import matplotlib.pyplot as plt
+        from pathlib import Path
+
+        Path("figures").mkdir(parents=True, exist_ok=True)
+        
+        # Compute RMSD to best structure for each accepted structure
+        rmsd_data = []
+        for result in phase_b_results:
+            worker_id = result["worker_id"]
+            accepted = result["accepted_structures"]
+            best_structure = result["best_structure"][0] if result["best_structure"] else None
+            if best_structure is None:
+                continue
+            for mol, energy, _ , _ in accepted:
+                rmsd = best_structure.compute_rmsd(mol)
+                rmsd_data.append((worker_id, energy, rmsd))
+        
+        # Make suplots with 4 cols depending on number of workers
+        n_workers = len(phase_b_results)
+        n_cols = min(4, n_workers)
+        n_rows = (n_workers + n_cols - 1) // n_cols
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(5*n_cols, 4*n_rows), sharex=True, sharey=True)
+        axes = axes.flatten() if n_workers > 1 else [axes]
+        for worker_id, energy, rmsd in rmsd_data:
+            ax = axes[worker_id]
+            ax.scatter(rmsd, energy, alpha=0.6)
+            ax.set_title(f"Worker {worker_id}")
+            ax.set_xlabel("RMSD to best structure (A)")
+            ax.set_ylabel("Energy (Hartree)")
+            ax.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig("figures/phase_b_basin_exploration.png", dpi=300)
+        plt.close()
+
+            
+            
+
+
+
     # Additional plotting utilities for worker trajectories
     def plot_worker_trajectories(self,
                                  save_path: str = "figures/worker_energy_trajectories.png",
@@ -1117,214 +1252,7 @@ class MultiPhaseBHMC:
 
 
 
-# =================================== Benchmarking =========================================
-
-def benchmark_temperature_acceptance(
-    initial_molecule: Molecule,
-    submolecule_indices: List[List[int]],
-    simulation_box: Optional[SimulationBox] = None,
-    temperatures: Optional[List[float]] = None,
-    method: str = "hf",
-    basis: str = "sto-3g",
-    n_steps: int = 100,
-    n_trials: int = 5,
-    operators: Optional[List[Tuple[str, float]]] = None,
-    save_plot: bool = True,
-    plot_filename: str = "acceptance_vs_temperature.png",
-    logger: Optional[Logger] = None,
-    verbose: bool = True
-) -> Dict[float, Dict[str, float]]:
-    """Benchmark acceptance rates across different temperatures.
-    
-    Args:
-        initial_molecule: Starting molecular structure
-        submolecule_indices: List of submolecule atom indices
-        simulation_box: Optional simulation box
-        temperatures: List of temperatures to test (K).
-        method: QM method for energy evaluation
-        basis: Basis set
-        n_steps: Number of BHMC steps per trial
-        n_trials: Number of independent trials per temperature
-        operators: Optional operator list.
-        save_plot: Whether to save the plot
-        plot_filename: Output filename for plot
-        logger: Optional Logger for summary output.
-        verbose: Whether to print to stdout.
-        
-    Returns:
-        Dictionary mapping temperature to acceptance/energy statistics.
-    """
-    import matplotlib.pyplot as plt
-    
-    def _log(msg: str, level: str = "info") -> None:
-        if verbose:
-            print(msg)
-        if logger:
-            getattr(logger, level)(msg)
-    
-    if temperatures is None:
-        temperatures = [50, 100, 200, 300, 400, 500, 750, 1000, 1500]
-    
-    if operators is None:
-        operators = MultiPhaseBHMC.DEFAULT_OPERATORS
-    
-    if logger:
-        logger.header("Temperature Benchmark")
-    
-    _log(f"Testing {len(temperatures)} temperatures with {n_trials} trials each")
-    _log(f"Steps per trial: {n_steps}")
-    _log(f"Method/Basis: {method}/{basis}")
-    
-    k_B = 8.617333262145e-5
-    HARTREE_TO_EV = 27.2114
-    
-    sim_box = simulation_box
-    nonlocal_ops = NonLocalOperators(simulation_box=sim_box)
-    
-    op_map = {
-        'twist': nonlocal_ops.twist_operator,
-        'large_displacement': nonlocal_ops.large_displacement,
-        'mirror': nonlocal_ops.mirror_operator,
-        'roto_reflection': nonlocal_ops.roto_reflection_operator,
-        'exchange': nonlocal_ops.exchange_operator,
-        'random_so3': nonlocal_ops.random_so3_operator,
-    }
-    
-    operator_funcs = []
-    weights = []
-    for op_name, weight in operators:
-        if op_name in op_map:
-            operator_funcs.append({'name': op_name, 'func': op_map[op_name]})
-            weights.append(weight)
-    
-    weights = np.array(weights)
-    weights /= weights.sum()
-    
-    evaluator = EnergyEvaluator(method=method, basis=basis)
-    results = {}
-    
-    for temp in temperatures:
-        _log(f"\nT = {temp} K:")
-        beta = 1.0 / (k_B * temp)
-        
-        trial_acceptance_rates = []
-        trial_energy_changes = []
-        
-        for trial in range(n_trials):
-            current_structure = initial_molecule.copy()
-            current_energy = evaluator.evaluate(current_structure)
-            
-            if current_energy is None:
-                _log(f"  Trial {trial+1}: Initial energy failed", level="warning")
-                continue
-            
-            n_accepted = 0
-            energy_changes = []
-            
-            for step in range(n_steps):
-                op_idx = np.random.choice(len(operator_funcs), p=weights)
-                operator = operator_funcs[op_idx]
-                
-                try:
-                    new_structure = operator['func'](current_structure, submolecule_indices)
-                    new_energy = evaluator.evaluate(new_structure)
-                    
-                    if new_energy is None:
-                        continue
-                    
-                    delta_e = new_energy - current_energy
-                    delta_e_ev = delta_e * HARTREE_TO_EV
-                    
-                    if delta_e < 0:
-                        accept = True
-                    else:
-                        prob = np.exp(-beta * delta_e_ev)
-                        accept = random.random() < prob
-                    
-                    if accept:
-                        energy_changes.append(abs(delta_e))
-                        current_structure = new_structure
-                        current_energy = new_energy
-                        n_accepted += 1
-                        
-                except Exception:
-                    continue
-            
-            acceptance_rate = n_accepted / n_steps
-            avg_energy_change = np.mean(energy_changes) if energy_changes else 0.0
-            
-            trial_acceptance_rates.append(acceptance_rate)
-            trial_energy_changes.append(avg_energy_change)
-            
-            _log(f"  Trial {trial+1}/{n_trials}: {acceptance_rate*100:.1f}%")
-        
-        if trial_acceptance_rates:
-            results[temp] = {
-                'mean_acceptance': np.mean(trial_acceptance_rates),
-                'std_acceptance': np.std(trial_acceptance_rates),
-                'mean_energy_change': np.mean(trial_energy_changes),
-                'std_energy_change': np.std(trial_energy_changes)
-            }
-            _log(f"  Average: {results[temp]['mean_acceptance']*100:.1f}% "
-                 f"± {results[temp]['std_acceptance']*100:.1f}%")
-        else:
-            _log(f"  All trials failed for T = {temp} K", level="warning")
-    
-    # Plot
-    if save_plot and results:
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-        
-        temps = sorted(results.keys())
-        mean_acc = [results[t]['mean_acceptance'] * 100 for t in temps]
-        std_acc = [results[t]['std_acceptance'] * 100 for t in temps]
-        mean_energy = [results[t]['mean_energy_change'] * HARTREE_TO_EV * 1000 for t in temps]
-        std_energy = [results[t]['std_energy_change'] * HARTREE_TO_EV * 1000 for t in temps]
-        
-        ax1.errorbar(temps, mean_acc, yerr=std_acc, marker='o', capsize=5, 
-                    linewidth=2, markersize=8, color='steelblue')
-        ax1.axhline(y=50, color='red', linestyle='--', alpha=0.5, label='50% target')
-        ax1.axhline(y=30, color='orange', linestyle='--', alpha=0.5, label='30% minimum')
-        ax1.set_xlabel('Temperature (K)', fontsize=12)
-        ax1.set_ylabel('Acceptance Rate (%)', fontsize=12)
-        ax1.set_title('BHMC Acceptance Rate vs Temperature', fontsize=14, fontweight='bold')
-        ax1.grid(True, alpha=0.3)
-        ax1.legend()
-        ax1.set_ylim(0, 100)
-        
-        ax2.errorbar(temps, mean_energy, yerr=std_energy, marker='s', capsize=5,
-                    linewidth=2, markersize=8, color='darkorange')
-        ax2.set_xlabel('Temperature (K)', fontsize=12)
-        ax2.set_ylabel('Average Energy Change (meV)', fontsize=12)
-        ax2.set_title('Average Accepted Energy Change', fontsize=14, fontweight='bold')
-        ax2.grid(True, alpha=0.3)
-        
-        plt.tight_layout()
-        plt.savefig(plot_filename, dpi=300, bbox_inches='tight')
-        _log(f"Plot saved to {plot_filename}")
-        plt.close()
-    
-    # Summary
-    if logger:
-        logger.section("Benchmark Summary")
-    
-    _log(f"{'Temp (K)':<12} {'Acceptance (%)':<22} {'Avg ΔE (meV)':<20}")
-    _log(f"{'-'*54}")
-    for temp in sorted(results.keys()):
-        ma = results[temp]['mean_acceptance'] * 100
-        sa = results[temp]['std_acceptance'] * 100
-        me = results[temp]['mean_energy_change'] * HARTREE_TO_EV * 1000
-        se = results[temp]['std_energy_change'] * HARTREE_TO_EV * 1000
-        _log(f"{temp:<12.0f} {ma:>6.1f} ± {sa:<5.1f}        {me:>6.2f} ± {se:<6.2f}")
-    
-    if results:
-        target = 0.45
-        best_temp = min(sorted(results.keys()), 
-                       key=lambda t: abs(results[t]['mean_acceptance'] - target))
-        best_acc = results[best_temp]['mean_acceptance'] * 100
-        _log(f"Recommended temperature: {best_temp} K (acceptance: {best_acc:.1f}%)")
-    
-    return results
-
+# Testing
 
 if __name__ == "__main__":
     
@@ -1342,6 +1270,7 @@ if __name__ == "__main__":
     from cluster import StructureData
     from transformations import LocalOperators
     from box import SimulationBox
+    from init import ClusterInitializer, InitializationConfig
     from bhmc import MultiPhaseBHMC, BHMCConfig
     from logger import Logger 
 
@@ -1350,97 +1279,73 @@ if __name__ == "__main__":
     mp.set_start_method('spawn', force=True)
     
 
-    xyz = """
-    6
-    H2O Nonopt
-    O     -4.651077    1.267697   -0.000000
-    H     -5.057317    1.928988   -0.547872
-    H     -4.969101    1.355490    0.890872
-    O     -6.998837    4.503183    0.000001
-    H     -7.632732    4.320290   -0.683540
-    H     -7.009572    5.431464    0.201689
-    """
-    molecule = Molecule.from_xyz(xyz)
-    submolecule_indices = [[0, 1, 2], [3, 4, 5]]
-    covalent_radii = [r for r in molecule.covalent_radii]
-    
-    # Center molecule
-    centroid = np.mean(molecule.coordinates, axis=0)
-    molecule.coordinates -= centroid
+    xyz_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_2_nonopt.xyz"
 
-    
-    
-    sim_box = SimulationBox.from_covalent_radii(
-        covalent_radii=covalent_radii,
-        n_atoms=len(molecule.atom_labels),
-        box_type="sphere",
-        scale_factor=5.0
-    )
-
-    # Benchmark Displacements of local operators
-    local_ops = LocalOperators(simulation_box=sim_box)
-    diag = local_ops.diagnose_perturbations(
-        molecule, submolecule_indices, n_samples=200, adaptive=True
-    )
-    diag_noadapt = local_ops.diagnose_perturbations(
-        molecule,submolecule_indices, n_samples=200, adaptive=False
-    )
-
-
-    # We need to wrap the molecule as structure data for phase b
-    representative = StructureData(
-        molecule=molecule,
-        energy=0.0,
-        phase="test"
-    )
-    config = BHMCConfig(
-        temperature=150,
+    init_config = InitializationConfig(
         method="hf",
-        basis="6-311g(d,p)",
-        adaptive_operators=False
+        basis="cc-pvdz",
+        box_type="sphere",
+        box_scale_factor=3,
+        min_distance=1.5,
+        optimize_submolecules=True,
+        verbose=False
+    )
+    initializer = ClusterInitializer(config=init_config)
+    initial_molecules, submol_indices, simulation_box = initializer.initialize_from_xyz(
+        xyz_path, n_configurations=1
+    )
+    bhmc_config = BHMCConfig(
+        temperature=1,
+        method="hf",
+        basis="6-311G(d,p)",
+        verbose=False,
+        adaptive_operators=True,
+        adaptive_box = True,
+        box_update_interval=5, # Update box every 5 steps
+        box_target_acceptance =0.6,
+        box_acceptance_window = 0.05,
+        box_growth_max = 1.15,
+        box_max_scale = 4.0,
+        box_stable_windows = 3
     )
 
-    sampler = MultiPhaseBHMC(
-        config=config,
-        simulation_box=sim_box,
+    bhmc_sampler = MultiPhaseBHMC(
+        config=bhmc_config,
+        simulation_box=simulation_box,
+        worker_log_file="bhmc_workers.log"
     )
-    results = sampler.run_phase_b(
-        representatives=[representative],
+    # Initialize StuctureData with one molecule
+    initial_structure = StructureData(
+        molecule=initial_molecules[0],
+        energy=0.0,
+        dipole_magnitude=0.0,
+        phase="initial" 
+    )
+    representatives = [initial_structure]
+    submolecule_indices = submol_indices
+    phase_b_results = bhmc_sampler.run_phase_b(
+        representatives=representatives,
         submolecule_indices=submolecule_indices,
         n_steps_per_worker=300,
+        local_operators=None,
         n_processes=1
     )
-    worker_result = results[0]
-    trajectory = worker_result["energy_trajectory"]
-    accepted = worker_result["accepted_structures"]
-    best = worker_result["best_structure"]
-    steps, energies = zip(*trajectory)
-    energies_ha = np.array(energies)
+    # Get best structures from results
+    best_structures = [r["best_structure"] for r in phase_b_results if r["best_structure"] is not None]
+    # write best structures to xyz
 
-    print(f"Best energy: {best[1]:.6f} Ha")
-    print(f"Accepted structures: {len(accepted)}")
-    print(f"Energy trajectory points: {len(trajectory)}")
-    print(f"Acceptance rate: {len(accepted)/len(trajectory)*100:.1f}%")
-    print(f"Initial energy: {trajectory[0][1]:.6f} Ha")
+    # Get the trajectory
+    trajectory = bhmc_sampler.phase_b_structures
 
-    print(f"Energy change: {(best[1] - trajectory[0][1])} Ha")
-
-
-    # Plot convergence of energy
-    plt.figure(figsize=(8, 5))
-    plt.plot(steps, energies_ha, marker='o', color='steelblue')
-    plt.xlabel("Step")
-    plt.ylabel("Energy (Hartree)")
-    plt.title("Phase B Energy Trajectory")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show() 
-    # Save the energy trajectory
-    # Save the best structure as XYZ
-    best_structure = best[0]
-    best_energy = best[1]
-    best_dipole_vec = best[2]
-    best_dipole_mag = best[3]
-    best_structure.write_xyz("best_structure_phase_b.xyz")
+    # 
+    
+    for i, best in enumerate(best_structures):
+        mol = best[0]
+        energy = best[1]
+        dipole = best[3]
+        mol.write_xyz(f"best_structure_worker_{i}.xyz")
+        print(f"Worker {i}: Best energy = {energy:.6f} Ha, Dipole = {dipole:.4f} D")
+    
+    
 
 

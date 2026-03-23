@@ -17,7 +17,7 @@ import time
 
 # Module imports
 from molecule_class import Molecule
-from transformations import NonLocalOperators, LocalOperators
+from operators import NonLocalOperators, LocalOperators
 from cluster import BHMCAnalyzer
 from box import SimulationBox
 from psi4_interface import direct_energy

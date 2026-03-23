@@ -7,7 +7,7 @@ import random
 
 from cluster_generation.modules.archive.plotting import Plotting
 from molecule_class import Molecule 
-from symmetry import SymmetryAnalyzer   
+from cluster_generation.modules.archive.symmetry import SymmetryAnalyzer   
 from transformations import Transformation, ReferenceFrame, Quaternion, GeometryOps
 from scipy.spatial.distance import cdist
 

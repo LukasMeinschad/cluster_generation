@@ -441,11 +441,7 @@ class MultiPhaseBHMC:
 
 
 
-        analyzer.plot_com_trajectory_2d_projection(
-            simulation_box=simulation_box,
-            save_path="figures/phase_a_com_trajectory.png",
-            separate_submolecules=True
-        )
+        
 
         analyzer.rmsd_filtering()
         #analyzer.plot_rmsd_heatmap()
@@ -456,7 +452,6 @@ class MultiPhaseBHMC:
 
         analyzer.plot_energy_distribution()
         analyzer.plot_energy_vs_rmsd()
-        analyzer.plot_rg_vs_energy()
         analyzer.plot_int_d_vs_e()
         analyzer.plot_pca_explained_variance()
          

@@ -3,10 +3,13 @@ Module for various clustering methods and analysis of the sampled molecular conf
 """
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
+
 from typing import List, Tuple, Optional, Dict, Any, Union
 from dataclasses import dataclass, field
 from collections import defaultdict
-import seaborn as sns
+
+
 from sklearn.cluster import AgglomerativeClustering as SklearnAgglomerativeClustering
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans, DBSCAN
@@ -14,6 +17,7 @@ from scipy.spatial.distance import cdist, pdist
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from multiprocessing import Pool, cpu_count
+
 import time
 
 
@@ -22,21 +26,16 @@ try:
     from umap import UMAP
 except ImportError:
     UMAP = None
-    print("UMAP is not installed. Install with `pip install umap-learn` to use UMAP dimensionality reduction.")
 try:
     from hdbscan import HDBSCAN
 except ImportError:
-    print("HDBSCAN is not installed.")
     HDBSCAN = None
 
-
-
-
-
 from molecule_class import Molecule
-from transformations import GeometryOps
+from geometry import GeometryOps
 from box import SimulationBox
 from logger import Logger
+from descriptors import FeatureExtractor
 
 def _compute_hbond_single(args: Tuple) -> Tuple[int,float]:
     """  
@@ -255,34 +254,6 @@ class BHMCAnalyzer:
         plt.close()
 
 
-
-
-    # TODO: Restructure this function  
-    def intermolecular_distance(self, phase: Optional[str] = None) -> np.ndarray:
-        """   
-        Computes the intermolecular distance for each structure in the specified phase
-        For this we use the submolecule indices and compute the distance between the respective
-        geometric means
-        TODO: Maybe add com distance as well
-        """
-        if phase:
-            structures = self.phases[phase]
-        else:
-            structures = self.structures
-
-        distances = []
-
-        for structure in structures:
-            coords = structure.molecule.coordinates
-            submolecule_coords = [coords[indices] for indices in self.submolecule_indices]
-            submolecule_means = [np.mean(sub_coords, axis=0) for sub_coords in submolecule_coords]
-            if len(submolecule_means) == 2:
-                distance = np.linalg.norm(submolecule_means[0] - submolecule_means[1])
-                distances.append(distance)
-            else:
-                distances.append(0.0)  # TODO this has to be a matrix with 3 submolecules?
-        
-        return np.array(distances)
         
     def plot_int_d_vs_e(self, phase: Optional[str] = None):
         """   
@@ -489,22 +460,6 @@ class BHMCAnalyzer:
         return A, B, C
     
 
-
-    @staticmethod
-    def radius_of_gyration(coords: np.ndarray, masses: np.ndarray) -> float:
-        """   
-        Computes the radius of gyration (R_g) for a given set of coordinates and masses
-
-        R_g = sqrt( (1/N) * sum((r_i - r_cm)^2) )
-
-        where r_i is the position vector of atom i, r_cm is the center of mass position vector, and N is the number of atoms.
-        """
-        com = GeometryOps.center_of_mass(coords, masses)
-        N = coords.shape[0]
-        diff = coords - com
-        rg = np.sqrt(np.sum(masses * np.sum(diff**2, axis=1)) / np.sum(masses))
-        return rg
-
     # ====================== Data Cleanup ========================
 
     """ 
@@ -561,253 +516,6 @@ class BHMCAnalyzer:
 
 
 
-
-    def plot_com_trajectory_2d_projection(self,
-                                          phase: Optional[str] = None,
-                                          save_path: Optional[str] = None,
-                                          simulation_box: Optional[SimulationBox] = None,
-                                          show_box: bool = True,
-                                          plot_type: str = "density",
-                                          cmap: str = "viridis",
-                                          gridsize: int = 10,
-                                          show_trajectory: bool = False,
-                                          alpha_trajectory: float = 0.1,
-                                          separate_submolecules: bool = True) -> None:
-        """   
-        Plots 2D projections of submolecule center trajectories
-
-        Args:
-            phase: Which phase to plot ("A", "B", "all")
-            save_path: Path to save the figure
-            show_box: Whether to show the simulation box boundaries
-            plot_type: "density" for hexbin density plot, "scatter" for scatter plot
-                        "contour" for contour plot "kde" for kernel density estimate
-            cmap: Colormap for density plot
-            gridsize: Grid size for hexbin plot
-            show_trajectory: Whether to show the trajectory lines between points
-            alpha_trajectory: Alpha value for trajectory lines
-            separate_submolecules: If True, plot each submolecule in separate row
-        """
-        if phase:
-            structures = self.phases[phase]
-        else:
-            structures = self.structures
-        if not structures:
-            print(f"No structures found for phase: {phase}")
-            return
-        
-        n_submols = len(self.submolecule_indices)
-        
-        # Collect all COM positions per submolecules
-        com_trajectories = [[] for _ in range(n_submols)]
-        for mol in structures:
-            for i, indices in enumerate(self.submolecule_indices):
-                coords = mol.molecule.coordinates[indices]
-                com = np.mean(coords, axis=0)
-                com_trajectories[i].append(com)
-
-        for i in range(n_submols):
-            com_trajectories[i] = np.array(com_trajectories[i])
-        
-        projections = [
-            ("X", "Y", 0, 1),
-            ("X", "Z", 0, 2),
-            ("Y", "Z", 1, 2)
-        ]
-        
-        # Get box limits for consistent scaling
-        if simulation_box is not None:
-            if simulation_box.box_type == "sphere":
-                lim = simulation_box.radius * 1.1
-            else:
-                lim = np.max(simulation_box.box_dimensions) / 2 * 1.1
-        else:
-            all_coords = np.vstack(com_trajectories)
-            lim = np.max(np.abs(all_coords)) * 1.1
-
-        # Different colormaps for each submolecule
-        submol_cmaps = ['Blues', 'Oranges', 'Greens', 'Reds', 'Purples'][:n_submols]
-        submol_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'][:n_submols]
-        start_markers = ['o', 's', '^', 'D', 'v'][:n_submols]
-        end_markers = ['*', 'P', 'X', 'h', '8'][:n_submols]
-
-        if separate_submolecules and n_submols > 1:
-            # Create grid: n_submols rows x 3 columns
-            fig, axes = plt.subplots(n_submols, 3, figsize=(16, 5 * n_submols))
-            if n_submols == 1:
-                axes = axes.reshape(1, -1)
-            
-            hb_list = []  # Store hexbin objects for colorbars
-            
-            for submol_i in range(n_submols):
-                traj = com_trajectories[submol_i]
-                
-                for col, (xlabel, ylabel, xi, yi) in enumerate(projections):
-                    ax = axes[submol_i, col]
-                    
-                    ax.set_xlabel(f'{xlabel} (Å)', fontsize=11)
-                    ax.set_ylabel(f'{ylabel} (Å)', fontsize=11)
-                    ax.set_title(f"Submolecule {submol_i + 1} | {xlabel}-{ylabel}", 
-                                fontsize=12, fontweight='bold')
-                    ax.set_xlim(-lim, lim)
-                    ax.set_ylim(-lim, lim)
-                    ax.set_aspect('equal')
-                    ax.grid(True, alpha=0.3, linestyle='--')
-
-                    # Draw simulation box
-                    if show_box and simulation_box is not None:
-                        if simulation_box.box_type == "sphere":
-                            circle = plt.Circle(
-                                (simulation_box.center[xi], simulation_box.center[yi]),
-                                simulation_box.radius,
-                                fill=False, color="gray", linestyle='--', linewidth=1.5, alpha=0.7
-                            )
-                            ax.add_patch(circle)
-                        elif simulation_box.box_type == "cube":
-                            half = simulation_box.box_dimensions / 2
-                            rec = plt.Rectangle(
-                                (simulation_box.center[xi] - half[xi],
-                                 simulation_box.center[yi] - half[yi]),
-                                2 * half[xi], 2 * half[yi],
-                                fill=False, color="gray", linestyle='--', linewidth=1.5, alpha=0.7
-                            )
-                            ax.add_patch(rec)
-                    
-                    x = traj[:, xi]
-                    y = traj[:, yi]
-                    
-                    if plot_type == "density":
-                        hb = ax.hexbin(x, y, gridsize=gridsize, cmap=submol_cmaps[submol_i], 
-                                      mincnt=1, alpha=0.9, edgecolors='none')
-                        if col == 2:  # Store last column hexbin for colorbar
-                            hb_list.append(hb)
-                    
-                    elif plot_type == "scatter":
-                        ax.scatter(x, y, color=submol_colors[submol_i], alpha=0.5, 
-                                  s=20, edgecolors='none')
-                    
-                    elif plot_type == "contour":
-                        H, xedges, yedges = np.histogram2d(x, y, bins=gridsize,
-                                                          range=[[-lim, lim], [-lim, lim]])
-                        X, Y = np.meshgrid((xedges[:-1] + xedges[1:]) / 2,
-                                          (yedges[:-1] + yedges[1:]) / 2)
-                        ax.contourf(X, Y, H.T, levels=10, cmap=submol_cmaps[submol_i], alpha=0.7)
-                        ax.contour(X, Y, H.T, levels=5, colors='black', alpha=0.3, linewidths=0.5)
-                    
-                    if show_trajectory:
-                        ax.plot(x, y, color=submol_colors[submol_i], alpha=alpha_trajectory, linewidth=0.5)
-                    
-                    # Mark start and end points
-                    ax.scatter(x[0], y[0], color=submol_colors[submol_i], marker=start_markers[submol_i], 
-                              s=150, edgecolors='black', linewidths=2, zorder=10, label='Start')
-                    ax.scatter(x[-1], y[-1], color=submol_colors[submol_i], marker=end_markers[submol_i], 
-                              s=200, edgecolors='black', linewidths=2, zorder=10, label='End')
-                    
-                    # Add legend only to last column
-                    if col == 2:
-                        ax.legend(loc='upper left', fontsize=9)
-            
-            # Add colorbars for each submolecule row
-            plt.tight_layout()
-            fig.subplots_adjust(right=0.92)
-            
-            if plot_type == "density" and hb_list:
-                for i, hb in enumerate(hb_list):
-                    # Position colorbar on the right side of each row
-                    cbar_ax = fig.add_axes([0.94, 0.1 + (n_submols - 1 - i) * (0.8 / n_submols), 
-                                           0.02, 0.7 / n_submols])
-                    cbar = fig.colorbar(hb, cax=cbar_ax)
-                    cbar.set_label(f'Submol {i+1} Visits', fontsize=10)
-        
-        else:
-            # Original combined plot with overlay
-            fig, axes = plt.subplots(1, 3, figsize=(16, 6))
-            
-            hb = None
-            
-            for ax, (xlabel, ylabel, xi, yi) in zip(axes, projections):
-                ax.set_xlabel(f'{xlabel} (Å)', fontsize=11)
-                ax.set_ylabel(f'{ylabel} (Å)', fontsize=11)
-                ax.set_title(f"{xlabel}-{ylabel} Projection", fontsize=12, fontweight='bold')
-                ax.set_xlim(-lim, lim)
-                ax.set_ylim(-lim, lim)
-                ax.set_aspect('equal')
-                ax.grid(True, alpha=0.3, linestyle='--')
-
-                # Draw simulation box
-                if show_box and simulation_box is not None:
-                    if simulation_box.box_type == "sphere":
-                        circle = plt.Circle(
-                            (simulation_box.center[xi], simulation_box.center[yi]),
-                            simulation_box.radius,
-                            fill=False, color="gray", linestyle='--', linewidth=1.5, alpha=0.7
-                        )
-                        ax.add_patch(circle)
-                    elif simulation_box.box_type == "cube":
-                        half = simulation_box.box_dimensions / 2
-                        rec = plt.Rectangle(
-                            (simulation_box.center[xi] - half[xi],
-                             simulation_box.center[yi] - half[yi]),
-                            2 * half[xi], 2 * half[yi],
-                            fill=False, color="gray", linestyle='--', linewidth=1.5, alpha=0.7
-                        )
-                        ax.add_patch(rec)
-                
-                # Plot each submolecule with different appearance
-                for i, traj in enumerate(com_trajectories):
-                    x = traj[:, xi]
-                    y = traj[:, yi]
-                    
-                    if plot_type == "density":
-                        hb = ax.hexbin(x, y, gridsize=gridsize, cmap=submol_cmaps[i], 
-                                      mincnt=1, alpha=0.6, edgecolors='none')
-                    
-                    elif plot_type == "scatter":
-                        ax.scatter(x, y, color=submol_colors[i], alpha=0.5, 
-                                  s=20, edgecolors='none', label=f'Submol {i+1}')
-                    
-                    if show_trajectory:
-                        ax.plot(x, y, color=submol_colors[i], alpha=alpha_trajectory, linewidth=0.5)
-                    
-                    # Mark start and end points with different markers per submolecule
-                    ax.scatter(x[0], y[0], color=submol_colors[i], marker=start_markers[i], 
-                              s=150, edgecolors='black', linewidths=2, zorder=10)
-                    ax.scatter(x[-1], y[-1], color=submol_colors[i], marker=end_markers[i], 
-                              s=200, edgecolors='black', linewidths=2, zorder=10)
-
-            # Create legend
-            legend_elements = []
-            for i in range(n_submols):
-                legend_elements.append(plt.scatter([], [], c=submol_colors[i], s=100, 
-                                                  marker=start_markers[i], edgecolors='black',
-                                                  label=f'Start {i+1}'))
-                legend_elements.append(plt.scatter([], [], c=submol_colors[i], s=120, 
-                                                  marker=end_markers[i], edgecolors='black',
-                                                  label=f'End {i+1}'))
-            
-            axes[2].legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.05, 1), 
-                          borderaxespad=0., title="Submolecules", fontsize=9)
-
-            plt.tight_layout()
-            
-            # Add combined colorbar at bottom (note: only shows last submolecule's scale)
-            if plot_type == "density" and hb is not None:
-                fig.subplots_adjust(bottom=0.18)
-                cbar_ax = fig.add_axes([0.25, 0.05, 0.5, 0.025])
-                cbar = fig.colorbar(hb, cax=cbar_ax, orientation='horizontal')
-                cbar.set_label('Visit Count', fontsize=11)
-
-        # Title
-        fig.suptitle(f'Submolecule Center of Mass Distribution\n'
-                     f'Phase: {phase.upper() if phase else "All"} | {len(structures)} structures | '
-                     f'{n_submols} submolecules',
-                     fontsize=13, fontweight='bold', y=1.02)
-    
-        if save_path:
-            plt.savefig(save_path, dpi=150, bbox_inches='tight', facecolor='white')
-            print(f"Saved trajectory density plot to {save_path}")
-    
-        plt.close()
                    
 
     def _compute_com_trajectories(self, structures: List[StructureData]) -> List[np.ndarray]:
@@ -858,57 +566,8 @@ class BHMCAnalyzer:
         """
         return ''.join(filter(lambda x: not x.isdigit(), s))
 
-    def compute_gyration_tensor_features(self, phase: Optional[str] = None) -> np.ndarray:
-        """  
-        Computes shape descriptors based on the eigenvalues of the gyration tensor for each structure
-
-        + Asphericity: Measures the deviation of the molecule's shape from a perfect spherical symmetry. Values near zero indicate a perfectly spherical distribution
-        + Acylindrity: Measures the deviation of the molecule's shape from cylindrical symmetry (rod-like). Values near zero indicate a perfect cylindrical distribution
-        + Relative Shape Anisotropy: kappa^2 = 0 is spherically symmetric, kappa^2 = 1 is perfect rod shaped
-        
-        Args:
-            phase: Specified phase to compute for. If None, computes for all structures.
-        """ 
-        if phase:
-            structures = self.phases[phase]
-        else:
-            structures = self.structures
-        
-        self._log(f"Computing gyration tensor based shape descriptors for {len(structures)} structures - Phase: {phase if phase else 'all'}")
-        features = np.zeros((len(structures), 3))  # Columns: [asphericity, acylindricity, kappa^2]
-        for i, s in enumerate(structures):
-            coords = s.molecule.coordinates
-            masses = s.molecule.masses
-            com = GeometryOps.center_of_mass(coords, masses)
-            centered = coords - com 
-
-            # Gyration Tensor S_alpha,beta = 1/sum(m_i) * sum(m_i * r_i,alpha * r_i,beta)
-            total_mass = np.sum(masses)
-            S = np.zeros((3, 3))
-            for j in range(len(masses)):
-                S += masses[j] * np.outer(centered[j], centered[j])
-            S /= total_mass
-            eigenvalues = np.sort(np.linalg.eigvalsh(S))  # Sort eigenvalues in ascending order: lambda_1 <= lambda_2 <= lambda_3
-            l1,l2,l3 = eigenvalues
-
-            asphericity = l3 - 0.5 * (l1 + l2)
-            acylindricity = l2 - l1
-            trace = l1 + l2 + l3
-            if trace > 1e-12:
-                kappa_squared = (3/2) * (l1**2 + l2**2 + l3**2) / (trace**2) - 0.5
-            else:
-                kappa_squared = 0.0
-
-            features[i] = [asphericity, acylindricity, kappa_squared]
-        
-        self._log(f"Gyration tensor features computed - Asphericity range: {features[:,0].min():.3f} to {features[:,0].max():.3f}, "
-                    f"Acylindricity range: {features[:,1].min():.3f} to {features[:,1].max():.3f}, "
-                    f"Kappa^2 range: {features[:,2].min():.3f} to {features[:,2].max():.3f}")
-        return features
-
 
     # =========================== Hydrogen Bond Analysis ===========================
-
 
 
     def compute_hbond_features(self,
@@ -1001,28 +660,42 @@ class BHMCAnalyzer:
         if self._feature_matrix_raw is not None:
             return 
         self._log("Computing and caching feature matrix...")
-        delta_e = np.array([s.energy - self.get_lowest_energy_structure().energy for s in self.structures])
+
+        # Base Energy and Dipoles
+        lowest_energy = self.get_lowest_energy_structure()
+        delta_e = np.array([s.energy - lowest_energy.energy for s in self.structures]).reshape(-1, 1)
+        dipole_mags = np.array([s.dipole_magnitude for s in self.structures]).reshape(-1, 1)
+        
+        # H-Bond Features
+        hbond_features = self.compute_hbond_features()
+
+        # Extractor for Geometric Features
+        extractor = FeatureExtractor()
+        geom_features = extractor.extract_fast_features(self.structures, self.submolecule_indices)
+
         rmsd_values = np.array([self._calculate_rmsd(s.molecule.coordinates, self.get_lowest_energy_structure().molecule.coordinates) for s in self.structures])
-        rg_values = np.array([self.radius_of_gyration(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
         rotational_constants = np.array([self.determine_rotational_constants(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
         intermolecular_distances = np.array(self.compute_interatomic_distance_matrix())
-        hbond_features = self.compute_hbond_features()
-        gyration_tensor_features = self.compute_gyration_tensor_features()
-        dipole_magnitudes = np.array([s.dipole_magnitude for s in self.structures])
 
 
 
-        self._feature_matrix_raw = np.hstack((delta_e.reshape(-1, 1),
-                                            rmsd_values.reshape(-1, 1), 
-                                            rg_values.reshape(-1, 1), 
-                                            rotational_constants, 
-                                            intermolecular_distances,
-                                            hbond_features,
-                                            gyration_tensor_features,
-                                            dipole_magnitudes.reshape(-1, 1)))
+        self._feature_matrix_raw = np.hstack((
+            delta_e, 
+            rmsd_values.reshape(-1, 1), 
+            geom_features[:, :1],  # Rg
+            rotational_constants, 
+            hbond_features, 
+            intermolecular_distances,
+            geom_features[:, 1:4],  # Asphericity, Acylindricity, Kappa^2
+            dipole_mags
+        )
+
+        )
         self._log(f"Feature matrix shape: {self._feature_matrix_raw.shape}")
         self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude']")
+        
         scaler = StandardScaler()
+        
         self._feature_matrix_normalized = scaler.fit_transform(self._feature_matrix_raw)
         self._log("Feature matrix computed and cached.")
 

@@ -1,7 +1,7 @@
 ================================================================================
                                   CLUSTER GEN                                   
 ================================================================================
-Start Time: 2026-03-26 13:43:59
+Start Time: 2026-03-26 14:31:56
 Python Version: 3.9.23
 Working Directory: /media/storage_6/lme/master_thesis/cluster_generation
 Log File: /media/storage_6/lme/master_thesis/cluster_generation/cluster_gen.out
@@ -136,7 +136,7 @@ Workers: 2
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
   Configuration 20 generated successfully
 
 [5/5] Generating random initial configuration
@@ -181,7 +181,7 @@ Workers: 2
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
+  Submolecule 2 placed successfully after 1 attempts
   Configuration 29 generated successfully
 
 [5/5] Generating random initial configuration
@@ -207,97 +207,89 @@ Configuration:
   Adaptive operators: True
   Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation
   Independent initial configs: 30
-  Simulation Box: <box.SimulationBox object at 0x7f70e6202e50>
+  Simulation Box: <box.SimulationBox object at 0x7f06e58db340>
   Worker log: bhmc_workers.log
-Estimated single point time: 0.01 seconds (Energy: -10.141684 Hartree)
-Estimated Phase A time: 5.41 minutes
+Estimated single point time: 0.01 seconds (Energy: -10.139942 Hartree)
+Estimated Phase A time: 4.43 minutes
 Starting parallel BHMC chains...
-  Worker 0: 904 structures accepted, 1001 trajectory points, 184 box updates
-  Worker 1: 927 structures accepted, 1001 trajectory points, 185 box updates
-  Worker 2: 914 structures accepted, 1001 trajectory points, 185 box updates
-  Worker 3: 917 structures accepted, 1001 trajectory points, 186 box updates
-  Worker 4: 916 structures accepted, 1001 trajectory points, 188 box updates
-  Worker 5: 917 structures accepted, 1001 trajectory points, 189 box updates
-  Worker 6: 926 structures accepted, 1001 trajectory points, 188 box updates
-  Worker 7: 887 structures accepted, 1001 trajectory points, 182 box updates
-  Worker 8: 899 structures accepted, 1001 trajectory points, 185 box updates
-  Worker 9: 934 structures accepted, 1001 trajectory points, 186 box updates
-  Worker 10: 896 structures accepted, 1001 trajectory points, 189 box updates
-  Worker 11: 923 structures accepted, 1001 trajectory points, 190 box updates
-  Worker 12: 919 structures accepted, 1001 trajectory points, 187 box updates
-  Worker 13: 912 structures accepted, 1001 trajectory points, 181 box updates
-  Worker 14: 925 structures accepted, 1001 trajectory points, 190 box updates
-  Worker 15: 917 structures accepted, 1001 trajectory points, 185 box updates
-  Worker 16: 921 structures accepted, 1001 trajectory points, 185 box updates
-  Worker 17: 917 structures accepted, 1001 trajectory points, 182 box updates
-  Worker 18: 897 structures accepted, 1001 trajectory points, 177 box updates
-  Worker 19: 908 structures accepted, 1001 trajectory points, 185 box updates
-  Worker 20: 917 structures accepted, 1001 trajectory points, 186 box updates
-  Worker 21: 922 structures accepted, 1001 trajectory points, 182 box updates
-  Worker 22: 913 structures accepted, 1001 trajectory points, 191 box updates
-  Worker 23: 920 structures accepted, 1001 trajectory points, 181 box updates
-  Worker 24: 921 structures accepted, 1001 trajectory points, 189 box updates
-  Worker 25: 893 structures accepted, 1001 trajectory points, 183 box updates
-  Worker 26: 913 structures accepted, 1001 trajectory points, 184 box updates
-  Worker 27: 921 structures accepted, 1001 trajectory points, 182 box updates
-  Worker 28: 876 structures accepted, 1001 trajectory points, 185 box updates
-  Worker 29: 928 structures accepted, 1001 trajectory points, 191 box updates
+  Worker 0: 912 structures accepted, 1001 trajectory points, 185 box updates
+  Worker 1: 911 structures accepted, 1001 trajectory points, 184 box updates
+  Worker 2: 922 structures accepted, 1001 trajectory points, 189 box updates
+  Worker 3: 912 structures accepted, 1001 trajectory points, 186 box updates
+  Worker 4: 917 structures accepted, 1001 trajectory points, 190 box updates
+  Worker 5: 911 structures accepted, 1001 trajectory points, 181 box updates
+  Worker 6: 924 structures accepted, 1001 trajectory points, 183 box updates
+  Worker 7: 932 structures accepted, 1001 trajectory points, 190 box updates
+  Worker 8: 920 structures accepted, 1001 trajectory points, 184 box updates
+  Worker 9: 919 structures accepted, 1001 trajectory points, 184 box updates
+  Worker 10: 920 structures accepted, 1001 trajectory points, 191 box updates
+  Worker 11: 891 structures accepted, 1001 trajectory points, 184 box updates
+  Worker 12: 902 structures accepted, 1001 trajectory points, 182 box updates
+  Worker 13: 856 structures accepted, 1001 trajectory points, 184 box updates
+  Worker 14: 911 structures accepted, 1001 trajectory points, 190 box updates
+  Worker 15: 922 structures accepted, 1001 trajectory points, 188 box updates
+  Worker 16: 922 structures accepted, 1001 trajectory points, 187 box updates
+  Worker 17: 918 structures accepted, 1001 trajectory points, 190 box updates
+  Worker 18: 917 structures accepted, 1001 trajectory points, 184 box updates
+  Worker 19: 910 structures accepted, 1001 trajectory points, 192 box updates
+  Worker 20: 922 structures accepted, 1001 trajectory points, 189 box updates
+  Worker 21: 905 structures accepted, 1001 trajectory points, 182 box updates
+  Worker 22: 919 structures accepted, 1001 trajectory points, 183 box updates
+  Worker 23: 930 structures accepted, 1001 trajectory points, 186 box updates
+  Worker 24: 934 structures accepted, 1001 trajectory points, 187 box updates
+  Worker 25: 914 structures accepted, 1001 trajectory points, 180 box updates
+  Worker 26: 912 structures accepted, 1001 trajectory points, 187 box updates
+  Worker 27: 913 structures accepted, 1001 trajectory points, 190 box updates
+  Worker 28: 925 structures accepted, 1001 trajectory points, 186 box updates
+  Worker 29: 917 structures accepted, 1001 trajectory points, 189 box updates
 ------------------------------------------------------------------------
 Phase A Results
 ------------------------------------------------------------------------
 Total steps: 30000
-Total accepted: 27400
-Overall acceptance rate: 91.33%
+Total accepted: 27440
+Overall acceptance rate: 91.47%
 Energy Statistics (Hartree):
-  Min:  -10.147232
-  Max:  -10.099749
-  Mean: -10.140018
-  Std:  0.001053
+  Min:  -10.147272
+  Max:  -10.092718
+  Mean: -10.139998
+  Std:  0.001107
 Dipole Statistics (Debye):
-  Min:  0.0042
-  Max:  1.0117
-  Mean: 0.6270
+  Min:  0.0072
+  Max:  0.9776
+  Mean: 0.6319
 ========================================================================
                             Phase A Analysis                            
 ========================================================================
-Total structures: 27400
+Total structures: 27440
 Target clusters: None
-Added batch of 27400 structures to phase: unknown. Total structures in this phase: 27400
+Added batch of 27440 structures to phase: unknown. Total structures in this phase: 27440
 Energy Statistics (phase: all):
-  N Structures: 27400
-  Min: -10.147232
-  Max: -10.099749
-  Mean: -10.140018
-  Median: -10.139965
-  Std: 0.001053
-  Q25: -10.140018
-  Q75: -10.139945
-  IQR: 0.000073
+  N Structures: 27440
+  Min: -10.147272
+  Max: -10.092718
+  Mean: -10.139998
+  Median: -10.139963
+  Std: 0.001107
+  Q25: -10.139999
+  Q75: -10.139946
+  IQR: 0.000053
 Dipole Magnitude Statistics (Debye):
-  Min:  0.0042
-  Max:  1.0117
-  Mean: 0.6270
-  Std:  0.2243
-RMSD filtering (threshold=0.200 Å) - Phase: all - Starting with 27400 structures
-RMSD filtering completed - Phase: all - 25953 structures remaining (removed 1447)
+  Min:  0.0072
+  Max:  0.9776
+  Mean: 0.6319
+  Std:  0.2214
+RMSD filtering (threshold=0.200 Å) - Phase: all - Starting with 27440 structures
+RMSD filtering completed - Phase: all - 26040 structures remaining (removed 1400)
 Computing and caching feature matrix...
-Computing H-bond features for 25953 (angle_threshold=150.0°) - Phase: all
+Computing H-bond features for 26040 (angle_threshold=150.0°) - Phase: all
 Using 42 parallel processes for H-bond computation
 Starting multiprocessing pool for H-bond feature computation...
-Structures with H-bonds: 54/25953
-Total H-bond configs: 54
+Structures with H-bonds: 32/26040
+Total H-bond configs: 32
 Avg H-bonds per struct (with H-bonds): 1.00
-Avg H-bond angle: 160.61° (std: 8.56°)
-Min/Max H-bond angle: 150.23° / 178.18°
-Avg D-A distance: 2.78 Å (std: 0.18 Å)
-Computing gyration tensor based shape descriptors for 25953 structures - Phase: all
-Gyration tensor features computed - Asphericity range: 1.051 to 397.685, Acylindricity range: 0.000 to 0.060, Kappa^2 range: 0.827 to 1.000
-Feature matrix shape: (25953, 28)
+Avg H-bond angle: 163.03° (std: 7.24°)
+Min/Max H-bond angle: 150.80° / 175.23°
+Avg D-A distance: 2.69 Å (std: 0.14 Å)
+Feature matrix shape: (26040, 28)
 Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude']
 Feature matrix computed and cached.
-Performing DBSCAN Clustering (eps=1.8, min_samples=5) for phase: all - n_structures: 25953
-DBSCAN found 2 clusters and 109 noise points
-Performing DBSCAN Clustering (eps=1.8, min_samples=5) for phase: all - n_structures: 25953
-DBSCAN found 2 clusters and 109 noise points
-Performing DBSCAN Clustering (eps=1.8, min_samples=5) for phase: all - n_structures: 25953
-DBSCAN found 2 clusters and 109 noise points

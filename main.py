@@ -24,7 +24,7 @@ if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
 
-    N_WORKERS = 40
+    N_WORKERS = 30
 
     # Parse the Arguments
     args = get_args()
@@ -70,6 +70,7 @@ if __name__ == "__main__":
         temperature=5000,
         method="hf",
         basis="cc-pvdz",
+        backend="xtb",
         verbose=False,
         adaptive_operators=True,
         adaptive_box = True,
@@ -91,7 +92,7 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=100,
+        n_structures_per_worker=1000,
         n_processes=N_WORKERS
     )
 

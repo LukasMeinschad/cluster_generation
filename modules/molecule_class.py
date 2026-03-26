@@ -750,7 +750,12 @@ class Molecule:
         for label in self.atom_labels:
             element = self._remove_digits_from_label(label)
             average_radii_list.append(average_radii[element])
-        return average_radii_list        
+        return average_radii_list    
+
+    def get_symbols(self) -> List[str]:
+        """Get list of element symbols for each atom"""
+        return [self._remove_digits_from_label(label) for label in self.atom_labels]   
+
 
 
 class SubMolecule(Molecule):

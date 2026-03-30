@@ -2,7 +2,7 @@ import numpy as np
 from dataclasses import dataclass
 from typing import Optional, List, Tuple 
 from scipy.optimize import linear_sum_assignment
-
+import random
 from numba import njit, prange
 
 @dataclass 
@@ -390,7 +390,23 @@ class GeometryOps:
         return Q[col_ind]
 
     
-
+    @staticmethod 
+    def pairwise_distance_matrix(coords: np.ndarray) -> np.ndarray:
+        """  
+        Computes the pairwise distance matrix for a set of coordinates
+        D_ij = || r_i - r_j ||
+        """
+        n = coords.shape[0]
+        dist_matrix = np.zeros((n,n), dtype=np.float64)
+        for i in range(n):
+            for j in range(i+1, n):
+                dx = coords[i,0] - coords[j,0]
+                dy = coords[i,1] - coords[j,1]
+                dz = coords[i,2] - coords[j,2]
+                dist = np.sqrt(dx*dx + dy*dy + dz*dz)
+                dist_matrix[i,j] = dist
+                dist_matrix[j,i] = dist
+        return dist_matrix
 
 
     @staticmethod 
@@ -487,3 +503,12 @@ class GeometryOps:
         """
         q = Quaternion.from_two_vectors(a, b)
         return q.to_rotation_matrix()
+
+    @staticmethod
+    def distance(coords1: np.ndarray, coords2: np.ndarray) -> float:
+        """  
+        Computes the Euclidean distance between two points
+        """
+        return np.linalg.norm(coords1 - coords2)
+    
+  

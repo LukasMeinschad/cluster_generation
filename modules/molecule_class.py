@@ -728,7 +728,13 @@ class Molecule:
         """Write molecule to XYZ file"""
         with open(filename, "w") as f:
             f.write(self.to_xyz_string())
-        
+
+    def get_index_by_label(self, atom_label: str) -> int:
+        """Get index of atom by label"""
+        indices = np.where(self.atom_labels == atom_label)[0]
+        if indices.size == 0:
+            raise ValueError(f"Atom label {atom_label} not found")
+        return int(indices[0]) 
 
 
     def get_average_covalent_radii(self) -> List[float]:

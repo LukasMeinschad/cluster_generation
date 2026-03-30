@@ -436,3 +436,70 @@ def _phase_b_worker(args: Tuple) -> Dict:
         "energy_trajectory": energy_trajectory,
         "worker_id": worker_id
     }
+
+
+if __name__ == "__main__":
+    # Basic test for local optimization  phase b
+    h2o_nonopt = """ 
+    6
+    H2O Nonopt
+    O     -2.429551    2.071454   -0.000000
+    H     -2.835791    2.732744   -0.547872
+    H     -2.747575    2.159247    0.890872
+    O      0.269950    0.440735    0.000000
+    H      1.078961    0.704535    0.422388
+    H     -0.176739   -0.198484    0.542557
+    """
+    mol = Molecule.from_xyz(h2o_nonopt)
+    print("Molecule initialized", mol)
+    submolecule_indices = [[0, 1, 2], [3, 4, 5]]
+
+    config_dict = {
+        'method': 'xtb',
+        'backend': 'xtb',
+        'xtb_method': 'GFN2-xTB',
+        'temperature': 300.0,
+        'max_temperature': 5,
+        'adaptive_operators': False,
+        'verbose': False
+    }
+
+    
+    operator_list = [
+        ("random_displacement", 1.0),
+        ("random_rotation", 1.0),
+        ("local_twist", 0.5)
+    ]
+
+    
+    args = (
+        mol,                    
+        0.0,                    
+        submolecule_indices,    
+        300,                     
+        operator_list,          
+        config_dict,            
+        0,                      
+        None,                   
+        None                    
+    )
+
+    print("\n--- Starte Phase B Worker Test ---")
+    result = _phase_b_worker(args)
+
+    print("\n--- Testergebnisse ---")
+    print(f"Worker ID: {result['worker_id']}")
+    
+    best_struct_info = result.get('best_structure')
+    if best_struct_info:
+        best_mol, best_energy, best_dipole_vec, best_dipole_mag = best_struct_info
+        print(f"Beste gefundene Energie: {best_energy:.6f} Hartree")
+        print(f"Anzahl akzeptierter Strukturen: {len(result['accepted_structures'])}")
+        print(f"Länge der Energietrajektorie: {len(result['energy_trajectory'])}")
+    
+    # write xyz of best structure for visualization
+
+    best_mol.write_xyz("best_structure_phase_b.xyz")
+
+
+

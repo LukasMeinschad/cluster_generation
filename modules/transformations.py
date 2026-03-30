@@ -481,107 +481,6 @@ class Transformation:
             return vector
     
 
-    def kabsch_interpolate(
-            self,
-            mol_a: "Molecule",
-            mol_b: "Molecule",
-            submolecule_indices: Optional[List[List[int]]] = None,
-            lambdas: Optional[List[float]] = None,
-            n_points: int = 3
-        ) -> List["Molecule"]:
-        """
-        Generate interpolated structures between two molecules using rigid-body interpolation per submolecule:
-        The com is interpolated linearly, orientation via quaternion slerp. This preserves all intramolecular bond lengths exactly.
-
-        Algorithm
-            1. Center both structures, global Kabsch to algin B onto A
-            2. for each submolecule:
-                a. Compute COMs in A and aligned-B
-                b. Compute local Kabsch rotation (residual orientation difference)
-                c Convert to quaternion for slerp
-            3. For each lambda in [0,1]
-                - COM_t = (1-lam) * COM_A + lam * COM_B (linear)
-                - R_t = slerp(I,R_local, lam) (spherical)
-                - Place atoms using structure A's local geometry rotated by R_t
-
-        Args:
-            mol_a: Starting molecule (reference)
-            mol_b: Ending molecule (target)
-            lambdas: Optional list of interpolation parameters in [0,1]. If None, will generate n_points evenly spaced between 0 and 1.
-            n_points: Number of interpolated structures to generate (ignored if lambdas is provided)
-        Returns:
-            List of interpolated Molecule objects between mol_a and mol_b
-        """
-        if len(mol_a.coordinates) != len(mol_b.coordinates):
-            raise ValueError("Molecules must have the same number of atoms for interpolation")
-        if lambdas is None:
-            lambdas = np.linspace(0, 1, n_points + 2)[1:-1]
-        if submolecule_indices is None:
-            submolecule_indices = [list(range(len(mol_a.coordinates)))]  # Treat whole molecule as one submolecule
-        
-        n_atoms = len(mol_a.coordinates)
-        coords_a = mol_a.coordinates.copy()
-        coords_b = mol_b.coordinates.copy()
-        
-        #  Center both molecules
-        centroid_a = np.mean(coords_a, axis=0)
-        centroid_b = np.mean(coords_b, axis=0)
-        P = coords_a - centroid_a
-        Q = coords_b - centroid_b
-
-        # Global Kabsch Alginment of B onto A
-        R_global = GeometryOps.kabsch_rotation(P, Q)
-        Q_aligned = (R_global @ Q.T).T
-
-        q_identity = Quaternion(1.0, 0.0, 0.0, 0.0)
-        submol_data = []
-
-        for submol_idx in submolecule_indices:
-            idx = np.array(submol_idx)
-            submol_masses = mol_a.masses[idx]
-            mass_col = submol_masses[:, np.newaxis] if submol_masses.ndim == 1 else submol_masses
-            com_a = np.sum(mass_col * P[idx], axis=0) / np.sum(submol_masses)
-            com_b = np.sum(mass_col * Q_aligned[idx], axis=0) / np.sum(submol_masses)
-
-            # Local coordinates relative to submolecule com
-            local_a = P[idx] - com_a
-            local_b = Q_aligned[idx] - com_b
-
-            # Local kabsch rotation vom A-orientation to to B-orientation
-            R_local =  GeometryOps.kabsch_rotation(local_b, local_a)
-            q_local = Quaternion.from_rotation_matrix(R_local)
-            submol_data.append({
-                "idx": idx,
-                "com_a": com_a,
-                "com_b": com_b,
-                "local_a": local_a,
-                "q_local": q_local
-            })
-        
-        # Interpolate
-        interpolated = []
-        for lam in lambdas:
-            coords_new = np.zeros((n_atoms, 3))
-
-            for sd in submol_data:
-                # Linear COM Interpolate
-                com_t = (1 - lam) * sd["com_a"] + lam * sd["com_b"]
-
-                # Slerp local rotation
-                q_t = Quaternion.slerp(q_identity, sd["q_local"], lam)
-                R_t = q_t.to_rotation_matrix()
-
-                # Place Atoms: roate A's local geometry by R_t and translate to com_t
-                coords_new[sd["idx"]] = (R_t @ sd["local_a"].T).T + com_t
-
-            # Shift back to original centroid
-            coords_new += centroid_a
-            new_mol = mol_a.copy()
-            new_mol.coordinates = coords_new
-            interpolated.append(new_mol)
-
-        return interpolated
-
 
 
 # ========================= Testing Utilities for Operators =========================
@@ -593,112 +492,115 @@ if __name__ == "__main__":
     from scipy.optimize import linear_sum_assignment
     import matplotlib.pyplot as plt
     import time
-
-    # ===================== Setup: H2O Dimer =====================
-    xyz_1 = """
-    6
-    Coordinates from ORCA-job h2o_2 E -152.102897751726
-    O           0.20131422818946     -0.13419863189991     -0.38118207664628
-    H           1.10826926774619      0.03054527004232     -0.16898516572928
-    H          -0.26386315635905     -0.06924940339370      0.43390806815981
-    O           3.06513444516272      0.52224610599392      0.05902763481169
-    H           3.25817767296947      1.29105665797100     -0.44996761253291
-    H           3.66908154229119     -0.14039999871364     -0.23001884806303
-    """
-    # Second molecule with one atom permutated to test the symmetry effect
-    # of the rmsd calculation and the operators
-    xyz_2 = """
-6
-    Coordinates from ORCA-job h2o_2 E -152.102897751726
-    O           0.20131422818946     -0.13419863189991     -0.38118207664628
-    H          -0.26386315635905     -0.06924940339370      0.43390806815981
-    H           1.10826926774619      0.03054527004232     -0.16898516572928
-    O           3.06513444516272      0.52224610599392      0.05902763481169
-    H           3.25817767296947      1.29105665797100     -0.44996761253291
-    H           3.66908154229119     -0.14039999871364     -0.23001884806303
-    """
-
-    # Make n test points to calculate the speed of the operators and the RMSD calculation
-
-
-
-
-    molecule_1 = Molecule.from_xyz(xyz_1)
-    molecule_2 = Molecule.from_xyz(xyz_2)
-    submol_indices = [[0, 1, 2], [3, 4, 5]]
-
-    # Compute Rotation matrix for alignment
-    R = GeometryOps.kabsch_rotation(molecule_1.coordinates, molecule_2.coordinates)
-    print("Rotation matrix to align molecule 2 to molecule 1:")
-    # Compute RMSD after alignment
-    aligned_coords_2 = molecule_2.coordinates @ R.T
-
-    def rmsd(coords1, coords2):
-        return np.sqrt(np.mean(np.sum((coords1 - coords2)**2, axis=1)))
-    print(f"RMSD after alignment: {rmsd(molecule_1.coordinates, aligned_coords_2):.4f} Å") 
-
-    def cost_matrix(coords1, coords2):
-        """
-        Computes a cost matrix where each element (i,j)
-        is the squared norm of the positional vectors a_i, b_j
-        """
-        cost_matrix = np.zeros((len(coords1), len(coords2)))
-        for i in range(len(coords1)):
-            for j in range(len(coords2)):
-                cost_matrix[i, j] = np.linalg.norm(coords1[i] - coords2[j])**2
-        return cost_matrix
     
-    def find_optimal_correspondence(coords1,coords2):
-        """
-        Find the optimal one-to-one correspondence between atoms
-        using the Hungarian algorithm on the cost matrix
-        """
-        cost_mat= cost_matrix(coords1, coords2)
-        row_ind, col_ind = linear_sum_assignment(cost_mat)
-        # Reorder coords2 to match the optimal correspondence with coords1
-        reordered_coords2 = coords2[col_ind]
-        return reordered_coords2
 
-    # Test the optimal correspondence function
-    reordered_coords_2 = find_optimal_correspondence(molecule_1.coordinates, molecule_2.coordinates)
-    print(f"RMSD after optimal correspondence: {rmsd(molecule_1.coordinates, reordered_coords_2):.4f} Å")
 
-    times_kabsch = []
-    times_opt = [] 
-    dims = [5,10,20,50,100,200,500,1000, 2000,5000]
 
-    for dim in dims:
-        # Speed test the RMSD with Kabsch and with optimal correspondence
-        coords1 = np.random.rand(dim, 3)
-        coords2 = np.random.rand(dim, 3)
-        start = time.time()
-        R = GeometryOps.kabsch_rotation(coords1, coords2)
-        aligned_coords2 = coords2 @ R.T
-        rmsd_kabsch = rmsd(coords1, aligned_coords2)
-        end = time.time()
-        times_kabsch.append(end - start)
-        start = time.time()
-        reordered_coords2 = find_optimal_correspondence(coords1, coords2)
-        rmsd_opt = rmsd(coords1, reordered_coords2)
-        end = time.time()
-        times_opt.append(end - start)
-    
-    plt.figure(figsize=(8,5))
-    plt.plot(dims, times_kabsch, label="Kabsch RMSD", marker='o')
-    plt.plot(dims, times_opt, label="Optimal Correspondence RMSD", marker='o')
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.xlabel("Number of atoms (log scale)")
-    plt.ylabel("Time (seconds, log scale)")
-    plt.title("RMSD Calculation Time: Kabsch vs Optimal Correspondence")
-    plt.legend()
-    plt.grid(True, which="both", ls="--")
-    plt.tight_layout()
-    plt.savefig("rmsd_timing.png", dpi=150)
-    plt.close()
-                                                        
-                                                    
-
+#    # ===================== Setup: H2O Dimer =====================
+#    xyz_1 = """
+#    6
+#    Coordinates from ORCA-job h2o_2 E -152.102897751726
+#    O           0.20131422818946     -0.13419863189991     -0.38118207664628
+#    H           1.10826926774619      0.03054527004232     -0.16898516572928
+#    H          -0.26386315635905     -0.06924940339370      0.43390806815981
+#    O           3.06513444516272      0.52224610599392      0.05902763481169
+#    H           3.25817767296947      1.29105665797100     -0.44996761253291
+#    H           3.66908154229119     -0.14039999871364     -0.23001884806303
+#    """
+#    # Second molecule with one atom permutated to test the symmetry effect
+#    # of the rmsd calculation and the operators
+#    xyz_2 = """
+#6
+#    Coordinates from ORCA-job h2o_2 E -152.102897751726
+#    O           0.20131422818946     -0.13419863189991     -0.38118207664628
+#    H          -0.26386315635905     -0.06924940339370      0.43390806815981
+#    H           1.10826926774619      0.03054527004232     -0.16898516572928
+#    O           3.06513444516272      0.52224610599392      0.05902763481169
+#    H           3.25817767296947      1.29105665797100     -0.44996761253291
+#    H           3.66908154229119     -0.14039999871364     -0.23001884806303
+#    """
+#
+#    # Make n test points to calculate the speed of the operators and the RMSD calculation
+#
+#
+#
+#
+#    molecule_1 = Molecule.from_xyz(xyz_1)
+#    molecule_2 = Molecule.from_xyz(xyz_2)
+#    submol_indices = [[0, 1, 2], [3, 4, 5]]
+#
+#    # Compute Rotation matrix for alignment
+#    R = GeometryOps.kabsch_rotation(molecule_1.coordinates, molecule_2.coordinates)
+#    print("Rotation matrix to align molecule 2 to molecule 1:")
+#    # Compute RMSD after alignment
+#    aligned_coords_2 = molecule_2.coordinates @ R.T
+#
+#    def rmsd(coords1, coords2):
+#        return np.sqrt(np.mean(np.sum((coords1 - coords2)**2, axis=1)))
+#    print(f"RMSD after alignment: {rmsd(molecule_1.coordinates, aligned_coords_2):.4f} Å") 
+#
+#    def cost_matrix(coords1, coords2):
+#        """
+#        Computes a cost matrix where each element (i,j)
+#        is the squared norm of the positional vectors a_i, b_j
+#        """
+#        cost_matrix = np.zeros((len(coords1), len(coords2)))
+#        for i in range(len(coords1)):
+#            for j in range(len(coords2)):
+#                cost_matrix[i, j] = np.linalg.norm(coords1[i] - coords2[j])**2
+#        return cost_matrix
+#    
+#    def find_optimal_correspondence(coords1,coords2):
+#        """
+#        Find the optimal one-to-one correspondence between atoms
+#        using the Hungarian algorithm on the cost matrix
+#        """
+#        cost_mat= cost_matrix(coords1, coords2)
+#        row_ind, col_ind = linear_sum_assignment(cost_mat)
+#        # Reorder coords2 to match the optimal correspondence with coords1
+#        reordered_coords2 = coords2[col_ind]
+#        return reordered_coords2
+#
+#    # Test the optimal correspondence function
+#    reordered_coords_2 = find_optimal_correspondence(molecule_1.coordinates, molecule_2.coordinates)
+#    print(f"RMSD after optimal correspondence: {rmsd(molecule_1.coordinates, reordered_coords_2):.4f} Å")
+#
+#    times_kabsch = []
+#    times_opt = [] 
+#    dims = [5,10,20,50,100,200,500,1000, 2000,5000]
+#
+#    for dim in dims:
+#        # Speed test the RMSD with Kabsch and with optimal correspondence
+#        coords1 = np.random.rand(dim, 3)
+#        coords2 = np.random.rand(dim, 3)
+#        start = time.time()
+#        R = GeometryOps.kabsch_rotation(coords1, coords2)
+#        aligned_coords2 = coords2 @ R.T
+#        rmsd_kabsch = rmsd(coords1, aligned_coords2)
+#        end = time.time()
+#        times_kabsch.append(end - start)
+#        start = time.time()
+#        reordered_coords2 = find_optimal_correspondence(coords1, coords2)
+#        rmsd_opt = rmsd(coords1, reordered_coords2)
+#        end = time.time()
+#        times_opt.append(end - start)
+#    
+#    plt.figure(figsize=(8,5))
+#    plt.plot(dims, times_kabsch, label="Kabsch RMSD", marker='o')
+#    plt.plot(dims, times_opt, label="Optimal Correspondence RMSD", marker='o')
+#    plt.xscale('log')
+#    plt.yscale('log')
+#    plt.xlabel("Number of atoms (log scale)")
+#    plt.ylabel("Time (seconds, log scale)")
+#    plt.title("RMSD Calculation Time: Kabsch vs Optimal Correspondence")
+#    plt.legend()
+#    plt.grid(True, which="both", ls="--")
+#    plt.tight_layout()
+#    plt.savefig("rmsd_timing.png", dpi=150)
+#    plt.close()
+#                                                        
+#                                                    
+#
 
 
 

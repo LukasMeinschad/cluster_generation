@@ -1,7 +1,7 @@
 ================================================================================
                                   CLUSTER GEN                                   
 ================================================================================
-Start Time: 2026-03-26 14:31:56
+Start Time: 2026-03-30 21:37:52
 Python Version: 3.9.23
 Working Directory: /media/storage_6/lme/master_thesis/cluster_generation
 Log File: /media/storage_6/lme/master_thesis/cluster_generation/cluster_gen.out
@@ -29,8 +29,8 @@ Configuration:
 
 [3/5] Optimizing Submolecules (parallelized)
 Workers: 2
-  Submolecule 2 optimized successfully
   Submolecule 1 optimized successfully
+  Submolecule 2 optimized successfully
 
 [4/5] Creating simulation box
  Box type:  sphere
@@ -66,7 +66,7 @@ Workers: 2
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
   Configuration 6 generated successfully
 
 [5/5] Generating random initial configuration
@@ -106,7 +106,7 @@ Workers: 2
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
   Configuration 14 generated successfully
 
 [5/5] Generating random initial configuration
@@ -131,12 +131,12 @@ Workers: 2
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
   Configuration 19 generated successfully
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
+  Submolecule 2 placed successfully after 1 attempts
   Configuration 20 generated successfully
 
 [5/5] Generating random initial configuration
@@ -200,96 +200,201 @@ Box volume: 552.45 Angstrom^3
 ========================================================================
 Configuration:
   Workers: 30
-  Steps per worker: 1000
-  Total steps: 30000
+  Steps per worker: 800
+  Total steps: 24000
   Method/Basis: hf/cc-pvdz
   Temperature: 5000 K
   Adaptive operators: True
   Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation
   Independent initial configs: 30
-  Simulation Box: <box.SimulationBox object at 0x7f06e58db340>
+  Simulation Box: <box.SimulationBox object at 0x14a265158520>
   Worker log: bhmc_workers.log
-Estimated single point time: 0.01 seconds (Energy: -10.139942 Hartree)
-Estimated Phase A time: 4.43 minutes
+Estimated single point time: 0.01 seconds (Energy: -10.142084 Hartree)
+Estimated Phase A time: 4.67 minutes
 Starting parallel BHMC chains...
-  Worker 0: 912 structures accepted, 1001 trajectory points, 185 box updates
-  Worker 1: 911 structures accepted, 1001 trajectory points, 184 box updates
-  Worker 2: 922 structures accepted, 1001 trajectory points, 189 box updates
-  Worker 3: 912 structures accepted, 1001 trajectory points, 186 box updates
-  Worker 4: 917 structures accepted, 1001 trajectory points, 190 box updates
-  Worker 5: 911 structures accepted, 1001 trajectory points, 181 box updates
-  Worker 6: 924 structures accepted, 1001 trajectory points, 183 box updates
-  Worker 7: 932 structures accepted, 1001 trajectory points, 190 box updates
-  Worker 8: 920 structures accepted, 1001 trajectory points, 184 box updates
-  Worker 9: 919 structures accepted, 1001 trajectory points, 184 box updates
-  Worker 10: 920 structures accepted, 1001 trajectory points, 191 box updates
-  Worker 11: 891 structures accepted, 1001 trajectory points, 184 box updates
-  Worker 12: 902 structures accepted, 1001 trajectory points, 182 box updates
-  Worker 13: 856 structures accepted, 1001 trajectory points, 184 box updates
-  Worker 14: 911 structures accepted, 1001 trajectory points, 190 box updates
-  Worker 15: 922 structures accepted, 1001 trajectory points, 188 box updates
-  Worker 16: 922 structures accepted, 1001 trajectory points, 187 box updates
-  Worker 17: 918 structures accepted, 1001 trajectory points, 190 box updates
-  Worker 18: 917 structures accepted, 1001 trajectory points, 184 box updates
-  Worker 19: 910 structures accepted, 1001 trajectory points, 192 box updates
-  Worker 20: 922 structures accepted, 1001 trajectory points, 189 box updates
-  Worker 21: 905 structures accepted, 1001 trajectory points, 182 box updates
-  Worker 22: 919 structures accepted, 1001 trajectory points, 183 box updates
-  Worker 23: 930 structures accepted, 1001 trajectory points, 186 box updates
-  Worker 24: 934 structures accepted, 1001 trajectory points, 187 box updates
-  Worker 25: 914 structures accepted, 1001 trajectory points, 180 box updates
-  Worker 26: 912 structures accepted, 1001 trajectory points, 187 box updates
-  Worker 27: 913 structures accepted, 1001 trajectory points, 190 box updates
-  Worker 28: 925 structures accepted, 1001 trajectory points, 186 box updates
-  Worker 29: 917 structures accepted, 1001 trajectory points, 189 box updates
+  Worker 0: 790 structures accepted, 801 trajectory points, 161 box updates
+  Worker 1: 800 structures accepted, 801 trajectory points, 161 box updates
+  Worker 2: 800 structures accepted, 801 trajectory points, 161 box updates
+  Worker 3: 793 structures accepted, 801 trajectory points, 161 box updates
+  Worker 4: 784 structures accepted, 801 trajectory points, 161 box updates
+  Worker 5: 799 structures accepted, 801 trajectory points, 161 box updates
+  Worker 6: 790 structures accepted, 801 trajectory points, 161 box updates
+  Worker 7: 796 structures accepted, 801 trajectory points, 161 box updates
+  Worker 8: 776 structures accepted, 801 trajectory points, 161 box updates
+  Worker 9: 788 structures accepted, 801 trajectory points, 161 box updates
+  Worker 10: 797 structures accepted, 801 trajectory points, 161 box updates
+  Worker 11: 776 structures accepted, 801 trajectory points, 161 box updates
+  Worker 12: 776 structures accepted, 801 trajectory points, 161 box updates
+  Worker 13: 793 structures accepted, 801 trajectory points, 161 box updates
+  Worker 14: 798 structures accepted, 801 trajectory points, 161 box updates
+  Worker 15: 774 structures accepted, 801 trajectory points, 161 box updates
+  Worker 16: 800 structures accepted, 801 trajectory points, 161 box updates
+  Worker 17: 796 structures accepted, 801 trajectory points, 161 box updates
+  Worker 18: 768 structures accepted, 801 trajectory points, 161 box updates
+  Worker 19: 790 structures accepted, 801 trajectory points, 161 box updates
+  Worker 20: 793 structures accepted, 801 trajectory points, 161 box updates
+  Worker 21: 799 structures accepted, 801 trajectory points, 161 box updates
+  Worker 22: 799 structures accepted, 801 trajectory points, 161 box updates
+  Worker 23: 799 structures accepted, 801 trajectory points, 161 box updates
+  Worker 24: 778 structures accepted, 801 trajectory points, 161 box updates
+  Worker 25: 797 structures accepted, 801 trajectory points, 161 box updates
+  Worker 26: 795 structures accepted, 801 trajectory points, 161 box updates
+  Worker 27: 774 structures accepted, 801 trajectory points, 161 box updates
+  Worker 28: 799 structures accepted, 801 trajectory points, 161 box updates
+  Worker 29: 798 structures accepted, 801 trajectory points, 161 box updates
 ------------------------------------------------------------------------
 Phase A Results
 ------------------------------------------------------------------------
-Total steps: 30000
-Total accepted: 27440
-Overall acceptance rate: 91.47%
+Total steps: 24000
+Total accepted: 23715
+Overall acceptance rate: 98.81%
 Energy Statistics (Hartree):
-  Min:  -10.147272
-  Max:  -10.092718
-  Mean: -10.139998
-  Std:  0.001107
+  Min:  -10.146791
+  Max:  -10.019586
+  Mean: -10.139987
+  Std:  0.002223
 Dipole Statistics (Debye):
-  Min:  0.0072
-  Max:  0.9776
-  Mean: 0.6319
+  Min:  0.0041
+  Max:  1.0189
+  Mean: 0.6292
 ========================================================================
                             Phase A Analysis                            
 ========================================================================
-Total structures: 27440
+Total structures: 23715
 Target clusters: None
-Added batch of 27440 structures to phase: unknown. Total structures in this phase: 27440
+Added batch of 23715 structures to phase: unknown. Total structures in this phase: 23715
 Energy Statistics (phase: all):
-  N Structures: 27440
-  Min: -10.147272
-  Max: -10.092718
-  Mean: -10.139998
-  Median: -10.139963
-  Std: 0.001107
-  Q25: -10.139999
-  Q75: -10.139946
-  IQR: 0.000053
+  N Structures: 23715
+  Min: -10.146791
+  Max: -10.019586
+  Mean: -10.139987
+  Median: -10.139968
+  Std: 0.002223
+  Q25: -10.140046
+  Q75: -10.139935
+  IQR: 0.000111
 Dipole Magnitude Statistics (Debye):
-  Min:  0.0072
-  Max:  0.9776
-  Mean: 0.6319
-  Std:  0.2214
-RMSD filtering (threshold=0.200 Å) - Phase: all - Starting with 27440 structures
-RMSD filtering completed - Phase: all - 26040 structures remaining (removed 1400)
+  Min:  0.0041
+  Max:  1.0189
+  Mean: 0.6292
+  Std:  0.2242
+RMSD filtering (threshold=0.200 Å) - Phase: all - Starting with 23715 structures
+RMSD filtering completed - Phase: all - 22446 structures remaining (removed 1269)
 Computing and caching feature matrix...
-Computing H-bond features for 26040 (angle_threshold=150.0°) - Phase: all
+Computing H-bond features for 22446 (angle_threshold=150.0°) - Phase: all
 Using 42 parallel processes for H-bond computation
 Starting multiprocessing pool for H-bond feature computation...
-Structures with H-bonds: 32/26040
-Total H-bond configs: 32
+Structures with H-bonds: 41/22446
+Total H-bond configs: 41
 Avg H-bonds per struct (with H-bonds): 1.00
-Avg H-bond angle: 163.03° (std: 7.24°)
-Min/Max H-bond angle: 150.80° / 175.23°
-Avg D-A distance: 2.69 Å (std: 0.14 Å)
-Feature matrix shape: (26040, 28)
+Avg H-bond angle: 163.57° (std: 6.90°)
+Min/Max H-bond angle: 150.83° / 178.64°
+Avg D-A distance: 2.83 Å (std: 0.18 Å)
+Feature matrix shape: (22446, 28)
 Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude']
 Feature matrix computed and cached.
+Performing DBSCAN Clustering (eps=1.2, min_samples=5) for phase: all - n_structures: 22446
+DBSCAN found 9 clusters and 261 noise points
+Performing DBSCAN Clustering (eps=1.2, min_samples=5) for phase: all - n_structures: 22446
+DBSCAN found 9 clusters and 261 noise points
+Performing DBSCAN Clustering (eps=1.2, min_samples=5) for phase: all - n_structures: 22446
+DBSCAN found 9 clusters and 261 noise points
+Cluster 0: representative index 21299, distance to centroid: 0.708, E=-10.139948 Ha
+Cluster 1: representative index 74, distance to centroid: 0.152, E=-10.135284 Ha
+Cluster 2: representative index 3117, distance to centroid: 0.367, E=-10.138352 Ha
+Cluster 3: representative index 1990, distance to centroid: 0.359, E=-10.139963 Ha
+Cluster 4: representative index 2128, distance to centroid: 0.609, E=-10.139964 Ha
+Cluster 5: representative index 2187, distance to centroid: 0.516, E=-10.139961 Ha
+Cluster 6: representative index 2295, distance to centroid: 0.608, E=-10.139959 Ha
+Cluster 7: representative index 3114, distance to centroid: 0.281, E=-10.146467 Ha
+Cluster 8: representative index 15080, distance to centroid: 0.382, E=-10.134840 Ha
+Total clusters (excluding noise): 9. Representatives obtained: 9
+------------------------------------------------------------------------
+Representative Structures (Raw)
+------------------------------------------------------------------------
+           Delta_E      RMSD         Rg           Rot_A        Rot_B        Rot_C        N_Hbond      Avg_HB_Ang   Avg_DA_Dist  IAD_0        IAD_1        IAD_2        IAD_3        IAD_4        IAD_5        IAD_6        IAD_7        IAD_8        IAD_9        IAD_10       IAD_11       IAD_12       IAD_13       IAD_14       Asphericity  Acylindricit Kappa^2      Dipole_Mag  
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Cluster 0        0.0068       7.2848       5.9158       0.0000       0.0000       0.0000       0.0000       0.0000       0.0000       0.9469       0.9466      11.7441      12.3959      11.3244       1.4968      12.5253      13.2048      12.1069      12.0956      12.6989      11.6911       0.9462       0.9462       1.4906      11.8153      34.9038       0.0239       0.6155
+Cluster 1        0.0115       3.8583       1.2513       0.0000       0.0000       0.0000       0.0000       0.0000       0.0000       0.9469       0.9466       2.4130       2.6317       2.9699       1.4968       2.5579       2.7383       2.8342       2.3382       2.8700       2.8419       0.9462       0.9462       1.4906       2.4248       1.4314       0.0063       0.6987
+Cluster 2        0.0084       3.9500       1.2357       0.0000       0.0000       0.0000       0.0000       0.0000       0.0000       0.9469       0.9466       2.3850       2.5597       3.2696       1.4968       2.3054       2.7507       3.1435       2.0661       2.3125       2.8045       0.9462       0.9462       1.4906       2.3924       1.4229       0.0171       0.7022
+Cluster 3        0.0068      15.3352      15.0309       0.0000       0.0000       0.0000       0.0000       0.0000       0.0000       0.9469       0.9466      30.1142      29.2838      30.4641       1.4968      29.1911      28.3609      29.5475      30.4933      29.6738      30.8609       0.9462       0.9462       1.4906      30.0555     225.8591       0.0260       0.0813
+Cluster 4        0.0068      17.5300      17.6094       0.0000       0.0000       0.0000       0.0000       0.0000       0.0000       0.9469       0.9466      35.1981      35.8855      34.4798       1.4968      34.8288      35.5265      34.1263      35.8943      36.5908      35.1774       0.9462       0.9462       1.4906      35.2133     310.0141       0.0196       0.1590
+Cluster 5        0.0068      17.4667      17.8190       0.0000       0.0000       0.0000       0.0000       0.0000       0.0000       0.9469       0.9466      35.6226      34.7478      36.0851       1.4968      35.3216      34.4391      35.7810      36.5389      35.6623      36.9957       0.9462       0.9462       1.4906      35.6327     317.4531       0.0085       0.8625
+Cluster 6        0.0068      19.4483      20.6521       0.0000       0.0000       0.0000       0.0000       0.0000       0.0000       0.9469       0.9466      41.3922      41.5100      40.5085       1.4968      41.3626      41.4879      40.4714      40.5571      40.6654      39.6759       0.9462       0.9462       1.4906      41.2996     426.4253       0.0241       0.5674
+Cluster 7        0.0003       3.5666       1.4964       0.0000       0.0000       0.0000       1.0000     165.0696       2.9128       0.9469       0.9466       2.9128       3.3707       1.9884       1.4968       3.1224       3.7269       2.3270       3.7284       4.0472       2.7997       0.9462       0.9462       1.4906       2.9279       2.1591       0.0368       0.7666
+Cluster 8        0.0120       6.1279       1.6642       0.0000       0.0000       0.0000       0.0000       0.0000       0.0000       0.9469       0.9466       3.3685       3.6650       2.4291       1.4968       3.3769       3.5979       2.5228       2.5211       2.8593       1.5793       0.9462       0.9462       1.4906       3.2702       2.6934       0.0143       0.5073
+======================================================================================================================================================================================================================================================================================================================================================================================
+------------------------------------------------------------------------
+Representative Structures (Normalized)
+------------------------------------------------------------------------
+           Delta_E      RMSD         Rg           Rot_A        Rot_B        Rot_C        N_Hbond      Avg_HB_Ang   Avg_DA_Dist  IAD_0        IAD_1        IAD_2        IAD_3        IAD_4        IAD_5        IAD_6        IAD_7        IAD_8        IAD_9        IAD_10       IAD_11       IAD_12       IAD_13       IAD_14       Asphericity  Acylindricit Kappa^2      Dipole_Mag  
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Cluster 0        0.0146       0.1314      -0.0458       0.0100      -0.4625      -0.4638      -0.0428      -0.0427      -0.0427       0.0000      -0.0000      -0.0553       0.0347      -0.1193       0.0000       0.0529       0.1467      -0.0112      -0.0081       0.0749      -0.0700       0.0000       0.0000      -0.0000      -0.0448      -0.2495      -0.1226      -0.0622
+Cluster 1        2.1038      -1.0716      -1.4007      -1.5918       5.2263       5.2677      -0.0428      -0.0427      -0.0427       0.0000      -0.0000      -1.4082      -1.3806      -1.3291       0.0000      -1.3920      -1.3703      -1.3538      -1.4221      -1.3493      -1.3511       0.0000       0.0000      -0.0000      -1.4063      -0.8573      -1.5857       0.3087
+Cluster 2        0.7294      -1.0395      -1.4053      -0.5559       5.3634       5.3613      -0.0428      -0.0427      -0.0427       0.0000      -0.0000      -1.4123      -1.3910      -1.2857       0.0000      -1.4286      -1.3685      -1.3091      -1.4616      -1.4300      -1.3565       0.0000       0.0000      -0.0000      -1.4110      -0.8575      -0.6898       0.3241
+Cluster 3        0.0079       2.9580       2.6020       1.6794      -0.6808      -0.6845      -0.0428      -0.0427      -0.0427       0.0000      -0.0000       2.6083       2.4826       2.6522       0.0000       2.4687       2.3434       2.5142       2.6583       2.5344       2.7052       0.0000       0.0000      -0.0000       2.5998       3.2182       0.0502      -2.4436
+Cluster 4        0.0075       3.7287       3.3510       1.0690      -0.6916      -0.6955      -0.0428      -0.0427      -0.0427       0.0000      -0.0000       3.3454       3.4396       3.2337       0.0000       3.2860       3.3820       3.1772       3.4410       3.5366       3.3301       0.0000       0.0000      -0.0000       3.3476       4.7464      -0.4800      -2.0972
+Cluster 5        0.0088       3.7064       3.4119       2.1669      -0.6923      -0.6962      -0.0428      -0.0427      -0.0427       0.0000      -0.0000       3.4070       3.2747       3.4661       0.0000       3.3574       3.2244       3.4168       3.5344       3.4021       3.5933       0.0000       0.0000      -0.0000       3.4084       4.8815      -1.4017       1.0385
+Cluster 6        0.0097       4.4022       4.2349       0.5107      -0.6996      -0.7035      -0.0428      -0.0427      -0.0427       0.0000      -0.0000       4.2435       4.2548       4.1066       0.0000       4.2331       4.2460       4.0959       4.1168       4.1270       3.9813       0.0000       0.0000      -0.0000       4.2300       6.8603      -0.1074      -0.2768
+Cluster 7       -2.9059      -1.1741      -1.3296       0.8112       3.3935       3.3694      23.3766      23.5708      24.0519       0.0000      -0.0000      -1.3358      -1.2735      -1.4712       0.0000      -1.3101      -1.2270      -1.4273      -1.2207      -1.1787      -1.3572       0.0000       0.0000      -0.0000      -1.3334      -0.8441       0.9458       0.6114
+Cluster 8        2.3030      -0.2747      -1.2808       1.1160       2.5773       2.5948      -0.0428      -0.0427      -0.0427       0.0000      -0.0000      -1.2697      -1.2308      -1.4074       0.0000      -1.2733      -1.2457      -1.3989      -1.3956      -1.3508      -1.5339       0.0000       0.0000      -0.0000      -1.2837      -0.8344      -0.9173      -0.5448
+======================================================================================================================================================================================================================================================================================================================================================================================
+========================================================================
+                       Phase B: Local Refinement                        
+========================================================================
+Configuration:
+ Representatives: 9
+ Steps per worker: 50
+ Total Steps: 450
+ Method/Basis: hf/cc-pvdz
+ Temperature: 150 K
+ Adaptive operators: False
+ Local Operators: random_displacement, random_rotation, local_twist, correlated_displacement, small_principal_axis_rotation
+ Simulation Box: <box.SimulationBox object at 0x14a265158520>
+ Worker log: bhmc_workers.log
+Estimated single point time: 0.00 seconds (Energy: -10.139948 Hartree)
+Estimated Phase B time: 0.03 minutes
+Starting parallel local refinement workers...
+ Worker 0: Best energy = -10.139968 Ha, accepted structures = 50, trajectory points = 51
+ Worker 1: Best energy = -10.144705 Ha, accepted structures = 37, trajectory points = 51
+ Worker 2: Best energy = -10.144926 Ha, accepted structures = 40, trajectory points = 51
+ Worker 3: Best energy = -10.139964 Ha, accepted structures = 50, trajectory points = 51
+ Worker 4: Best energy = -10.139964 Ha, accepted structures = 50, trajectory points = 51
+ Worker 5: Best energy = -10.139961 Ha, accepted structures = 50, trajectory points = 51
+ Worker 6: Best energy = -10.139960 Ha, accepted structures = 50, trajectory points = 51
+ Worker 7: Best energy = -10.146563 Ha, accepted structures = 38, trajectory points = 51
+ Worker 8: Best energy = -10.139069 Ha, accepted structures = 44, trajectory points = 51
+------------------------------------------------------------------------
+Phase B Results
+------------------------------------------------------------------------
+ Total steps: 450
+ Total accepted: 409
+ Overall acceptance rate: 90.89%
+Best energies across workers (Hartree):
+ Min:  -10.146563
+ Max:  -10.139069
+ Mean: -10.141676
+ Std:  0.002689
+========================================================================
+                           Local Optimization                           
+========================================================================
+Optimized 8/9 structures successfully
+Wrote 23715 structures to trajectories/phase_a_candidates.xyz
+Wrote 9 structures to trajectories/representatives.xyz
+Wrote 9 structures to trajectories/phase_b_best.xyz
+Wrote 8 structures to trajectories/optimized_representatives.xyz
+========================================================================
+              Rigid-Body Interpolation between Opt. Minima              
+========================================================================
+Interpolating path from Global Min (0) to Local Min (1)...
+Wrote 20 structures to trajectories/interpolated_path_0_to_1.xyz
+Saved energy profile plot for path 0 to 1
+Interpolating path from Global Min (0) to Local Min (2)...
+Wrote 20 structures to trajectories/interpolated_path_0_to_2.xyz
+Saved energy profile plot for path 0 to 2
+Interpolating path from Global Min (0) to Local Min (3)...
+Wrote 20 structures to trajectories/interpolated_path_0_to_3.xyz
+Saved energy profile plot for path 0 to 3
+========================================================================
+Total runtime: 503.4s (8.4 min)
+========================================================================

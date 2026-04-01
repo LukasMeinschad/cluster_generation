@@ -1,5 +1,7 @@
 import numpy as np
 from typing import List, Tuple, Optional, Union
+import itertools
+
 
 from geometry import GeometryOps, Quaternion
 from molecule_class import Molecule
@@ -94,6 +96,89 @@ class Interpolator:
             return interpolated, energies
 
         return interpolated
+
+    @staticmethod
+    def crossover_interpolate(
+            mol_a: "Molecule",
+            mol_b: "Molecule",
+            submolecule_indices: Optional[List[List[int]]] = None,
+            n_permutations: int = -1,
+        ) -> Union[List["Molecule"], Tuple[List["Molecule"], List[float]]]:
+        """
+        Generates Crossovers between different Minimum Structures
+
+        Algorithm:
+        + Take two minima A and B with submolecules [[0,1,2], [3,4,5]]
+        + Pick [[0,1,2]] from A and [[3,4,5]] from B combine this to a new structure
+        + Do a similar permutation with [[3,4,5]] from A and [[0,1,2]] from B
+        + Automate this
+
+        Args:
+            mol_a: First molecule (minimum structure)
+            mol_b: Second molecule (minimum structure)
+            submolecule_indices: List of lists, where each inner list contains the atom indices for a submolecule. If None, the entire molecule is treated as one submolecule.
+            n_permutations: Number of random crossover permutations to generate. If -1, generates all
+        """ 
+        if len(mol_a.coordinates) != len(mol_b.coordinates):
+            raise ValueError("Molecules must have the same number of atoms for interpolation")
+        if submolecule_indices is None:
+            submolecule_indices = [list(range(len(mol_a.coordinates)))] # default: whole molecule as one submolecule
+
+
+        n_atoms = len(mol_a.coordinates)
+        coords_a = mol_a.coordinates.copy()
+        coords_b = mol_b.coordinates.copy()
+        crossover_structures = []
+
+        # 0 means to take from mol_a, 1 means to take from mol_b
+        n_submols = len(submolecule_indices)
+        all_combinations = list(itertools.product([0,1], repeat=n_submols))
+
+
+        # Filter out all (0) or all (1)
+        crossover_combinations = [comb for comb in all_combinations if 0 in comb and 1 in comb]
+
+        # Deterministic Case
+        if n_permutations >= len(crossover_combinations) or n_permutations == -1:
+            for comb in crossover_combinations:
+                new_coords = np.zeros((n_atoms, 3)) 
+                # Map the submolecules based on current combinations
+                for sub_idx, source_is_b in zip(submolecule_indices, comb):
+                    idx_array = np.array(sub_idx)
+                    if source_is_b:
+                        new_coords[idx_array] = coords_b[idx_array]
+                    else:
+                        new_coords[idx_array] = coords_a[idx_array]
+                
+                # Create the new crossover molecule
+                new_mol = mol_a.copy()
+                new_mol.coordinates = new_coords
+                crossover_structures.append(new_mol)
+        else:
+            # Make a Random choice of n_permutations from the possible combinations
+            selected_combinations = np.random.choice(len(crossover_combinations), size=n_permutations, replace=False)
+            for idx in selected_combinations:
+                comb = crossover_combinations[idx]
+                new_coords = np.zeros((n_atoms, 3)) 
+                # Map the submolecules based on current combinations
+                for sub_idx, source_is_b in zip(submolecule_indices, comb):
+                    idx_array = np.array(sub_idx)
+                    if source_is_b:
+                        new_coords[idx_array] = coords_b[idx_array]
+                    else:
+                        new_coords[idx_array] = coords_a[idx_array]
+                
+                # Create the new crossover molecule
+                new_mol = mol_a.copy()
+                new_mol.coordinates = new_coords
+                crossover_structures.append(new_mol)
+    
+
+
+        return crossover_structures  
+
+
+            
     
 
 if __name__ == "__main__":
@@ -127,7 +212,21 @@ if __name__ == "__main__":
     
     interpolator = Interpolator()
     n_interpolation_points = 20
+
+    # Try out crossinterpolation
     
+    crossover_mols = interpolator.crossover_interpolate(mol1, mol2, submolecule_indices=submolecule_indices, n_permutations=2)
+    xyz_lines = []
+    for idx, mol in enumerate(crossover_mols):
+        mol.name = f"Crossover_Structure_{idx}"
+        xyz_lines.append(mol.to_xyz_string())
+    with open("crossover_structures.xyz", "w") as f:
+        f.write("\n".join(xyz_lines))
+    print("Saved -> crossover_structures.xyz")
+
+
+
+
     interpolated_mols, path_energies = interpolator.slerp_interpolate(
         mol1, mol2, 
         submolecule_indices=submolecule_indices, 

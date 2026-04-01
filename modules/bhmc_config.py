@@ -24,7 +24,7 @@ class BHMCConfig:
     box_acceptance_window: float = 0.05 # no update of box rate inside [box_target_acceptance - window, box_target_acceptance + window]
     box_growth_kp: float = 0.6 # propotional gain
     box_growth_max: float = 1.15 # cap per update
-    box_max_scale: float = 4.0 # Relative to initial box size
+    box_max_scale: float = 2 # Relative to initial box size
     box_stable_windows: int = 3 # stop growing after this many stable windows
     
     # Adaptive Temperature Control in Phase B

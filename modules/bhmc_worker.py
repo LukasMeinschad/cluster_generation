@@ -227,7 +227,7 @@ def _phase_a_worker(args: Tuple) -> Dict:
 
     
     current_structure = copy.deepcopy(initial_molecule)
-    current_energy, current_dipole_vec, current_dipole_mag = evaluator.evaluate(current_structure)
+    current_energy, current_dipole_vec, current_dipole_mag, current_mulliken_charge = evaluator.evaluate(current_structure)
 
     if current_energy is None:
         _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
@@ -258,7 +258,7 @@ def _phase_a_worker(args: Tuple) -> Dict:
                 energy_trajectory.append((step+1, current_energy))
                 continue
             
-            new_energy, new_dipole_vec, new_dipole_mag = evaluator.evaluate(new_structure)
+            new_energy, new_dipole_vec, new_dipole_mag, new_mulliken_charge = evaluator.evaluate(new_structure)
             
             if new_energy is None:
                 _log(f"Worker {worker_id}: Energy evaluation failed for proposed structure. Rejecting.", level="warning")
@@ -282,12 +282,13 @@ def _phase_a_worker(args: Tuple) -> Dict:
                 # Set new values
                 current_structure, current_energy = copy.deepcopy(new_structure), new_energy
                 current_dipole_vec, current_dipole_mag = new_dipole_vec, new_dipole_mag
-                accepted_structures.append((copy.deepcopy(current_structure), current_energy, current_dipole_vec, current_dipole_mag))
+                current_mulliken_charge = new_mulliken_charge 
+                accepted_structures.append((copy.deepcopy(current_structure), current_energy, current_dipole_vec, current_dipole_mag, current_mulliken_charge))
                 n_accepted += 1
                 _log(f"Worker {worker_id}: Accepted new structure at step {step+1} with energy {current_energy:.6f} Hartree")
             else:
                 n_rejected += 1
-            
+ 
             box_controller.record_step(accept)
             energy_trajectory.append((step+1, current_energy))
 
@@ -368,7 +369,7 @@ def _phase_b_worker(args: Tuple) -> Dict:
     )
 
     current_structure = copy.deepcopy(initial_molecule)
-    current_energy, current_dipole_vec, current_dipole_mag = evaluator.evaluate(current_structure)
+    current_energy, current_dipole_vec, current_dipole_mag, current_mulliken_charge = evaluator.evaluate(current_structure)
     
     if current_energy is None:
         return {"best_structure": None, "accepted_structures": [], "energy_trajectory": [], "worker_id": worker_id}
@@ -376,7 +377,8 @@ def _phase_b_worker(args: Tuple) -> Dict:
     best_energy = current_energy
     best_structure = copy.deepcopy(current_structure)
     best_dipole_vec, best_dipole_mag = current_dipole_vec, current_dipole_mag
-    
+    best_mulliken_charge = current_mulliken_charge
+
     accepted_structures = []
     energy_trajectory = [(0, current_energy)]
     n_accepted = n_rejected = 0
@@ -398,7 +400,7 @@ def _phase_b_worker(args: Tuple) -> Dict:
             if np.allclose(new_structure.coordinates, current_structure.coordinates):
                 raise ValueError("No coordinate change")
                 
-            new_energy, new_dipole_vec, new_dipole_mag = evaluator.evaluate(new_structure)
+            new_energy, new_dipole_vec, new_dipole_mag, new_mulliken_charge = evaluator.evaluate(new_structure)
             if new_energy is None:
                 raise ValueError("Energy invalid")
 
@@ -413,7 +415,7 @@ def _phase_b_worker(args: Tuple) -> Dict:
 
             if accept:
                 current_structure, current_energy = copy.deepcopy(new_structure), new_energy
-                accepted_structures.append((copy.deepcopy(current_structure), current_energy, new_dipole_vec, new_dipole_mag))
+                accepted_structures.append((copy.deepcopy(current_structure), current_energy, new_dipole_vec, new_dipole_mag, new_mulliken_charge))
                 n_accepted += 1
                 
                 # Check for absolute best
@@ -421,6 +423,7 @@ def _phase_b_worker(args: Tuple) -> Dict:
                     best_energy = current_energy
                     best_structure = copy.deepcopy(current_structure)
                     best_dipole_vec, best_dipole_mag = new_dipole_vec, new_dipole_mag
+                    best_mulliken_charge = new_mulliken_charge
             else:
                 n_rejected += 1
                 
@@ -431,7 +434,7 @@ def _phase_b_worker(args: Tuple) -> Dict:
             energy_trajectory.append((step+1, current_energy))
 
     return {
-        "best_structure": (best_structure, best_energy, best_dipole_vec, best_dipole_mag),
+        "best_structure": (best_structure, best_energy, best_dipole_vec, best_dipole_mag, best_mulliken_charge),
         "accepted_structures": accepted_structures,
         "energy_trajectory": energy_trajectory,
         "worker_id": worker_id

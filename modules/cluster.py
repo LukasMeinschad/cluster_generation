@@ -79,6 +79,7 @@ class StructureData:
     accepted: bool = True
     dipole_vector: Optional[List[float]] = None 
     dipole_magnitude: float = 0.0
+    mulliken_charges: Optional[List[float]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 class BHMCAnalyzer:
@@ -116,6 +117,7 @@ class BHMCAnalyzer:
                       phase: str = "unknown",
                       dipole_vector: Optional[List[float]] = None,
                       dipole_magnitude: float = 0.0,
+                      mulliken_charges: Optional[List[float]] = None,
                       **kwargs):
         """   
         Add a structure to the analysis
@@ -134,6 +136,7 @@ class BHMCAnalyzer:
             phase=phase,
             dipole_vector = dipole_vector,
             dipole_magnitude=dipole_magnitude,
+            mulliken_charges=mulliken_charges,
             metadata=kwargs
         )
         self.structures.append(structure_data)
@@ -158,11 +161,22 @@ class BHMCAnalyzer:
                                    dipole_vector=dipole_vec,
                                    dipole_magnitude=dipole_mag) 
                 
+            elif len(item) == 5:
+                mol, energy, dipole_vec, dipole_mag, mulliken_charges = item 
+                self.add_structure(molecule=mol,
+                                   energy=energy,
+                                   phase=phase,
+                                   dipole_vector=dipole_vec,
+                                   dipole_magnitude=dipole_mag,
+                                   mulliken_charges=mulliken_charges)
+            
             elif len(item) == 2:
                 mol, energy = item
                 self.add_structure(molecule=mol,
                                       energy=energy,
                                       phase=phase)
+                
+
             else:
                 raise ValueError(f"Invalid structure tuple length: {len(item)}. Expected 2 or 4.")
         self._log(f"Added batch of {len(structures)} structures to phase: {phase}. Total structures in this phase: {len(self.phases[phase])}")
@@ -650,6 +664,38 @@ class BHMCAnalyzer:
         return features
 
 
+    def compute_mulliken_charge_features(self, phase: Optional[str] = None) -> np.ndarray:
+        """  
+        Small helper function to compute Mulliken charge features for all structures.
+        The Mulliken charges are defined for each atom so we flatten it into a single vector for each structure.
+        Also compute important statistics
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        n_structures = len(structures)
+        self._log(f"Computing Mulliken charge features for {n_structures} - Phase: {phase if phase else 'all'}")
+
+        if n_structures == 0:
+            return np.zeros((0, 1))
+
+        max_atoms = max(len(s.mulliken_charges) for s in structures if s.mulliken_charges is not None)
+        features = np.zeros((n_structures, max_atoms))
+        for i, s in enumerate(structures):
+            if s.mulliken_charges is not None:
+                charges = np.array(s.mulliken_charges)
+                features[i, :len(charges)] = charges
+        # Log statistics
+        all_charges = features[features != 0]
+        self._log(f"Mulliken Charge Statistics (non-zero values):")
+        self._log(f"  Count: {len(all_charges)}")
+        self._log(f"  Mean: {np.mean(all_charges):.4f}")
+        self._log(f"  Std: {np.std(all_charges):.4f}")
+        self._log(f"  Min: {np.min(all_charges):.4f}")
+        self._log(f"  Max: {np.max(all_charges):.4f}")
+        return features
+
 
     # ====================== Clustering Methods =======================
 
@@ -665,7 +711,12 @@ class BHMCAnalyzer:
         lowest_energy = self.get_lowest_energy_structure()
         delta_e = np.array([s.energy - lowest_energy.energy for s in self.structures]).reshape(-1, 1)
         dipole_mags = np.array([s.dipole_magnitude for s in self.structures]).reshape(-1, 1)
+
+        # Get Mulliken charge features
+        mulliken_features = self.compute_mulliken_charge_features()
         
+
+
         # H-Bond Features
         hbond_features = self.compute_hbond_features()
 
@@ -687,12 +738,13 @@ class BHMCAnalyzer:
             hbond_features, 
             intermolecular_distances,
             geom_features[:, 1:4],  # Asphericity, Acylindricity, Kappa^2
-            dipole_mags
+            dipole_mags, 
+            mulliken_features
         )
 
         )
         self._log(f"Feature matrix shape: {self._feature_matrix_raw.shape}")
-        self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude']")
+        self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude', 'Mulliken Charges...']")
         
         scaler = StandardScaler()
         
@@ -716,6 +768,7 @@ class BHMCAnalyzer:
         8. Average D-A distance
         9. Gyration Tensor Shape Descriptors (Asphericity, Acylindricity, Kappa^2)
         10. Dipole Magnitude (Debye)
+        11. Mulliken Charges (flattened)
         """
         self._ensure_feature_matrix()
         if normalize:
@@ -900,8 +953,9 @@ class BHMCAnalyzer:
         """  
         Get the representative structures for each cluster
 
-        Method == "centroid": For each cluster computes the centroid in the normalized feature space and selects the structure closest to the centroid (Euclidean distance)
-
+        
+            +   Method == "centroid": For each cluster computes the centroid in the normalized feature space and selects the structure closest to the centroid (Euclidean distance)
+            +   Method == 'lowest_energy': Selects the lowest energy structure in each cluster as the representative
         Args:
             labels: Cluster^er labels array. If None, uses cached labels from the last clustering run. If no cached labels, raises  ValueError
         
@@ -916,22 +970,40 @@ class BHMCAnalyzer:
         feature_mat = self.feature_matrix(normalize=True)
         unique_labels = np.unique(labels)
         representatives = []
-        for label in unique_labels:
-            if label == -1:
-                # Skip noise points form DBSCAN/HDBSCAN
-                continue
-            mask = labels == label
-            cluster_features  = feature_mat[mask]
-            cluster_indices = np.where(mask)[0]
 
-            centroid = cluster_features.mean(axis=0)
-            distances = np.linalg.norm(cluster_features - centroid, axis=1)
-            closest_idx = cluster_indices[np.argmin(distances)]
-            rep = self.structures[closest_idx]
-            self._log(f"Cluster {label}: representative index {closest_idx}, distance to centroid: {distances.min():.3f}, E={rep.energy:.6f} Ha")
-            representatives.append(rep)
+        if method == 'centroid':
+            for label in unique_labels:
+                if label == -1:
+                    # Skip noise points form DBSCAN/HDBSCAN
+                    continue
+                mask = labels == label
+                cluster_features  = feature_mat[mask]
+                cluster_indices = np.where(mask)[0]
+
+                centroid = cluster_features.mean(axis=0)
+                distances = np.linalg.norm(cluster_features - centroid, axis=1)
+                closest_idx = cluster_indices[np.argmin(distances)]
+                rep = self.structures[closest_idx]
+                self._log(f"Cluster {label}: representative index {closest_idx}, distance to centroid: {distances.min():.3f}, E={rep.energy:.6f} Ha")
+                representatives.append(rep)
         
-        self._log(f"Total clusters (excluding noise): {len(unique_labels) - (1 if -1 in unique_labels else 0)}. Representatives obtained: {len(representatives)}")
+            self._log(f"Total clusters (excluding noise): {len(unique_labels) - (1 if -1 in unique_labels else 0)}. Representatives obtained: {len(representatives)}")
+        
+        elif method == 'lowest_energy':
+            for label in unique_labels:
+                if label == -1:
+                    # Skip noise points form DBSCAN/HDBSCAN
+                    continue
+                mask = labels == label
+                cluster_structures = [self.structures[i] for i in np.where(mask)[0]]
+                lowest_energy_struct = min(cluster_structures, key=lambda s: s.energy)
+                representatives.append(lowest_energy_struct)
+                self._log(f"Cluster {label}: representative index {self.structures.index(lowest_energy_struct)}, E={lowest_energy_struct.energy:.6f} Ha")
+            self._log(f"Total clusters (excluding noise): {len(unique_labels) - (1 if -1 in unique_labels else 0)}. Representatives obtained: {len(representatives)}")
+        else:
+            raise ValueError(f"Unsupported method for selecting cluster representatives: {method}. Supported methods: 'centroid', 'lowest_energy'")
+        
+        
         return representatives
 
     
@@ -1131,10 +1203,12 @@ class BHMCAnalyzer:
                             cluster_method: str = "agglomerative",
                             random_state: int = 42,
                             colored_by: str = "cluster",
+                            n_neighbors: int = 15,
                             **cluster_kwargs) -> None:
         """
         Plots UMAP projection colored by cluster labels or energy.
-        4 subplots with n_neighbors [10, 15, 30, 50].
+        Uses a single plot with a specified n_neighbors.
+        Noise Points (if present with label -1) are plottet in light gray with low opacitc
         """
         if UMAP is None:
             raise ImportError("UMAP is not installed.")
@@ -1147,28 +1221,36 @@ class BHMCAnalyzer:
                 raise ValueError("n_clusters must be specified for agglomerative or kmeans clustering")
             labels = self.cluster(method=cluster_method, n_clusters=n_clusters, phase=phase, **cluster_kwargs)
             title_suffix = f"k={n_clusters}"
-         
+        
+        plt.figure(figsize=(10, 6))
+        umap_result = self.umap(n_components=2, n_neighbors=n_neighbors, random_state=random_state, phase=phase)
+        
+        if colored_by == "cluster": 
+            # Mask noise points and core points
+            noise_mask = labels == -1
+            core_mask = ~noise_mask
 
-     
-        n_neighbors_list = [10, 15, 30, 50]
-        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-        for ax, n_neighbors in zip(axes.flatten(), n_neighbors_list):
-            umap_result = self.umap(n_components=2, n_neighbors=n_neighbors, random_state=random_state, phase=phase)
-            if colored_by == "cluster":
-                scatter = ax.scatter(umap_result[:, 0], umap_result[:, 1], c=labels, cmap='tab10', alpha=0.7)
-                plt.colorbar(scatter, ax=ax, label='Cluster Label')
-            elif colored_by == "energy":
-                energies = np.array([s.energy for s in (self.phases[phase] if phase else self.structures)])
-                scatter = ax.scatter(umap_result[:, 0], umap_result[:, 1], c=energies, cmap='viridis', alpha=0.7)
-                plt.colorbar(scatter, ax=ax, label='Energy')
-            ax.set_title(f'UMAP (n_neighbors={n_neighbors}) - {colored_by}', fontsize=12)
-            ax.set_xlabel('UMAP Dim 1')
-            ax.set_ylabel('UMAP Dim 2')
-            ax.grid(True, alpha=0.3)
-        plt.suptitle(f"UMAP + {cluster_method.capitalize()} ({title_suffix}) - Phase: {phase if phase else 'All'}", fontsize=14, fontweight='bold')
-        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+            # Plot noise points first 
+            if np.any(noise_mask):
+                plt.scatter(umap_result[noise_mask, 0], umap_result[noise_mask, 1], c='lightgray',
+                            alpha=0.8, label='Noise', edgecolor='none')
+            if np.any(core_mask):
+                scatter = plt.scatter(umap_result[core_mask, 0], umap_result[core_mask, 1], c=labels[core_mask],
+                                      cmap='tab10', alpha=0.7, edgecolor='k', linewidth=0.5)
+                plt.colorbar(scatter, label='Cluster Label')
+        
+        elif colored_by == "energy":
+            energies = np.array([s.energy for s in (self.phases[phase] if phase else self.structures)])
+            scatter = plt.scatter(umap_result[:, 0], umap_result[:, 1], c=energies, cmap='viridis', alpha=0.7)
+            plt.colorbar(scatter, label='Energy')
+        
+        plt.title(f'UMAP + {cluster_method.capitalize()} ({title_suffix}) - Phase: {phase if phase else "All"}', fontsize=12)
+        plt.xlabel('UMAP Dim 1')
+        plt.ylabel('UMAP Dim 2')
+        plt.grid(True, alpha=0.3)
         plt.savefig(f"figures/umap_{cluster_method}_{phase if phase else 'all'}_{colored_by}.png", dpi=200, bbox_inches='tight')
         plt.close()
+
 
     def log_representative_features(
             self,
@@ -1215,6 +1297,10 @@ class BHMCAnalyzer:
         n_interatomic = raw.shape[1] - 13
         col_labels += [f"IAD_{j}" for j in range(n_interatomic)]
         col_labels += ["Asphericity", "Acylindricity", "Kappa^2", "Dipole_Mag"]
+        n_mulliken = raw.shape[1] - 13 - n_interatomic
+        col_labels += [f"Mulliken_{k}" for k in range(n_mulliken)]
+
+
 
         rep_matrix_raw = raw[rep_indices]
         rep_matrix_norm = normalized[rep_indices]

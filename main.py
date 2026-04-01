@@ -25,7 +25,7 @@ if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
 
-    N_WORKERS = 30
+    N_WORKERS = 20
 
     # Parse the Arguments
     args = get_args()
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         method="hf",
         basis="cc-pvdz",
         box_type="sphere",
-        box_scale_factor=3,
+        box_scale_factor=1.8,
         min_distance=1.5,
         optimize_submolecules=True,
         verbose=False
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         box_target_acceptance =0.6,
         box_acceptance_window = 0.05,
         box_growth_max = 1.15,
-        box_max_scale = 4.0,
+        box_max_scale = 2,
         box_stable_windows = 3
     )
 
@@ -93,8 +93,15 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=800,
+        n_structures_per_worker=1000,
         n_processes=N_WORKERS
+    )
+
+    # write phase a trajectory
+    bhmc_logger.write_xyz_trajectory(
+        molecules=[candidate[0] for candidate in phase_a_candidates],
+        filepath="trajectories/phase_a_candidates.xyz",
+        energies=[candidate[1] for candidate in phase_a_candidates] 
     )
 
     
@@ -104,12 +111,37 @@ if __name__ == "__main__":
     representatives = bhmc_sampler.analyse_phase_a_results(
         phase_a_candidates,
         submolecule_indices=submol_indices,
-        cluster_method ="dbscan",
-        eps=1.2,
-        min_samples=5,
+        cluster_method ="hdbscan",
+        min_cluster_size=30,
+        min_samples=10,
         simulation_box=simulation_box, 
         logger=logger_analysis
     )
+    if len(representatives) >= 2:
+        logger_analysis.header("Crossover Interpolation of Phase A Representatives")
+        interpolator = Interpolator()
+        all_crossover_mols = []
+
+        rep_mols = [rep.molecule for rep in representatives]
+        for i in range(len(rep_mols)):
+            for j in range(i + 1, len(rep_mols)):
+                logger_analysis.info(f"Interpolating between Representative {i} and {j}...")
+                crossover_mols = interpolator.crossover_interpolate(
+                    mol_a=rep_mols[i],
+                    mol_b=rep_mols[j],
+                    submolecule_indices=submol_indices,
+                    n_permutations=2
+                )
+                all_crossover_mols.extend(crossover_mols)
+        
+        logger_analysis.info(f"Generated {len(all_crossover_mols)} crossover structures from {len(representatives)} representatives")
+
+        logger_analysis.write_xyz_trajectory(
+            molecules=all_crossover_mols,
+            filepath="trajectories/phase_a_crossover_structures.xyz",
+            energies=None
+        )
+
 
     # ── BHMC Phase B: Local Refinement ──────────────────────────
     # Switch to lower temperature and disable adaptive scaling
@@ -117,7 +149,7 @@ if __name__ == "__main__":
     bhmc_sampler.config.adaptive_operators = False
 
     phase_b_results = bhmc_sampler.run_phase_b(
-        representatives=representatives,  # <--- Jetzt direkt die Representatives!
+        representatives=representatives,
         submolecule_indices=submol_indices,
         n_steps_per_worker=50,
     )

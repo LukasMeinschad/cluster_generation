@@ -83,19 +83,9 @@ class SimulationBox:
         """
         coords = np.atleast_2d(coordinates)
 
-        # Calcualte the centroid of the th coords
-        centroid = np.mean(coords, axis=0)
-
-        if self.box_type == "sphere":
-            dist = np.linalg.norm(centroid - self.center)
-            return np.all(dist <= self.radius)
+        inside_mask = self.check_atoms_inside(coords)
         
-        elif self.box_type == "cube":
-            half_dims = self.box_dimensions / 2.0
-            rel_coords = centroid  - self.center
-            return np.all(np.abs(rel_coords) <= half_dims, axis=1)
-        
-        return False
+        return bool(np.all(inside_mask))
     
     def check_atoms_inside(self, coordinates: np.ndarray) -> np.ndarray:
         """   

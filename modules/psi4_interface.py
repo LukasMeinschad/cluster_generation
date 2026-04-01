@@ -158,6 +158,7 @@ def _single_point_worker(molecule: Molecule, config_dict: Dict) -> Dict:
         'energy': None,
         'dipole_vec': None,
         'dipole_magnitude': None,
+        'mulliken_charges': None,
         'error': '',
         'wall_time': 0.0,
         'coordinates': None
@@ -196,12 +197,17 @@ def _single_point_worker(molecule: Molecule, config_dict: Dict) -> Dict:
         
         # Compute dipole moment
         psi4.oeprop(wfn, 'DIPOLE')
-        vec = psi4.variable('SCF DIPOLE')
+        vec = wfn.variable('CURRENT DIPOLE')
         vec = np.array(vec)
         magnitude = np.linalg.norm(vec)
 
+        # Calculate Mulliken Atomic Charges 
+        psi4.oeprop(wfn, 'MULLIKEN_CHARGES')
+        mulliken = wfn.variable('MULLIKEN CHARGES')
+        
         result['dipole_vec'] = vec.tolist()
         result['dipole_magnitude'] = magnitude
+        result['mulliken_charges'] = mulliken
 
         result['success'] = True
         result['energy'] = float(energy)
@@ -362,7 +368,7 @@ def direct_energy(molecule: Molecule,
         scf_max_iter: Maximum SCF iterations
 
     Returns:
-        Tuple of (energy in Hartree, dipole vector [dx,dy,dz], dipole magnitude) or None if failed
+        Tuple of (energy in Hartree, dipole vector [dx,dy,dz], dipole magnitude) and or None if failed
     """
     config_dict = {
         'method': method,
@@ -382,7 +388,7 @@ def direct_energy(molecule: Molecule,
             return None
             
         if result.get('success'):
-            return result.get('energy'), result.get('dipole_vec'), result.get('dipole_magnitude')
+            return result.get('energy'), result.get('dipole_vec'), result.get('dipole_magnitude'), result.get('mulliken_charges')
         else:
             # Zeige Fehler an für Debugging
             error = result.get('error', 'Unknown error')

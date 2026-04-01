@@ -108,7 +108,7 @@ class MultiPhaseBHMC:
         if result is None or result[0] is None:
             self._log("Warning: Single point energy evaluation failed during timing estimation.", level="warning")
             return None
-        energy, _, _ = result
+        energy, _, _, _ = result
         elapsed = end_time - start_time
         self._log(f"Estimated single point time: {elapsed:.2f} seconds (Energy: {energy:.6f} Hartree)")
         return elapsed
@@ -207,7 +207,7 @@ class MultiPhaseBHMC:
         
         for worker_result in results:
             wid = worker_result['worker_id']
-            accepted = worker_result['accepted_structures']
+            accepted = worker_result['accepted_structures'] 
             trajectory = worker_result['energy_trajectory']
             box_updates = worker_result.get('box_updates', [])
             
@@ -234,8 +234,9 @@ class MultiPhaseBHMC:
             self._log(f"Overall acceptance rate: {total_accepted/total_generated*100:.2f}%")
         
         if all_accepted_structures:
-            energies = [e for _, e, _, _ in all_accepted_structures]
-            dipoles = [d for _, _, _, d in all_accepted_structures]
+            energies = [e for _, e, _, _, _ in all_accepted_structures]
+            dipoles = [d for _, _, _, d, _ in all_accepted_structures]
+            mulliken_charges = [m for _, _, _, _, m in all_accepted_structures]
             self._log(f"Energy Statistics (Hartree):")
             self._log(f"  Min:  {min(energies):.6f}")
             self._log(f"  Max:  {max(energies):.6f}")
@@ -245,6 +246,8 @@ class MultiPhaseBHMC:
             self._log(f"  Min:  {min(dipoles):.4f}")
             self._log(f"  Max:  {max(dipoles):.4f}")
             self._log(f"  Mean: {np.mean(dipoles):.4f}")
+            self._log(f"  Std:  {np.std(dipoles):.4f}") 
+
         
         # Plot worker trajectories
         self.plot_worker_trajectories()
@@ -425,7 +428,7 @@ class MultiPhaseBHMC:
         
         analyzer = BHMCAnalyzer(submolecule_indices=submolecule_indices, logger=logger)
         analyzer.add_structures_batch(phase_a_structures)
-        
+
         # Get energy statistics for analysis log
         energy_stats = analyzer.get_energy_statistics()
         
@@ -443,7 +446,7 @@ class MultiPhaseBHMC:
 
         
 
-        analyzer.rmsd_filtering()
+        #analyzer.rmsd_filtering()
         #analyzer.plot_rmsd_heatmap()
         
         # Precompute the feature matrix
@@ -483,7 +486,7 @@ class MultiPhaseBHMC:
         analyzer.plot_umap_clustered(n_clusters=n_clusters,
                                      cluster_method=cluster_method,**cluster_kwargs)
 
-        representatives = analyzer.get_cluster_representatives()
+        representatives = analyzer.get_cluster_representatives(method="lowest_energy")
         analyzer.log_representative_features(representatives,labels=labels) 
     
         
@@ -526,7 +529,7 @@ class MultiPhaseBHMC:
             best_structure = result["best_structure"][0] if result["best_structure"] else None
             if best_structure is None:
                 continue
-            for mol, energy, _ , _ in accepted:
+            for mol, energy, _ , _, _ in accepted:
                 rmsd = best_structure.compute_rmsd(mol)
                 rmsd_data.append((worker_id, energy, rmsd))
         

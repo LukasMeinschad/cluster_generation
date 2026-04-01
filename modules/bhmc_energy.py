@@ -55,7 +55,7 @@ class EnergyEvaluator:
 
         Returns:
             Tuple of (energy in Hartree, dipole vector [dx,dy,dz] in Debye, dipole magnitude in Debye)
-            or (None, None, None) if evaluation fails.
+            or (None, None, None, None) if evaluation fails.
         """
         if self.backend == "psi4":
             return self._evaluate_psi4(molecule)
@@ -63,7 +63,7 @@ class EnergyEvaluator:
             return self._evaluate_ase(molecule)
         else:
             print(f"Unknown backend requested: {self.backend}")
-            return None, None, None 
+            return None, None, None, None 
 
     def _evaluate_psi4(self, molecule: Molecule) -> Tuple[Optional[float], Optional[List[float]], Optional[float]]:
         """  
@@ -73,7 +73,7 @@ class EnergyEvaluator:
             return direct_energy(molecule, method=self.method, basis=self.basis)
         except Exception as e:
             print(f"Psi4 energy evaluation failed: {e}")
-            return None, None, None
+            return None, None, None, None
         
     def _evaluate_ase(self, molecule: Molecule) -> Tuple[Optional[float], Optional[List[float]], Optional[float]]:
         """ 
@@ -83,7 +83,7 @@ class EnergyEvaluator:
             symbols = molecule.get_symbols()
             if symbols is None:
                 print("Failed to extract symbols from molecule for ASE evaluation.")
-                return None, None, None
+                return None, None, None, None
             
             atoms = Atoms(symbols=symbols, positions=molecule.coordinates)
             atoms.calc = self._calculator
@@ -98,17 +98,29 @@ class EnergyEvaluator:
                 # Convert from eÅ to Debye
                 dipole_moments_debye = [d * self.E_ANG_TO_DEBYE for d in dipole_moments]
                 dipole_magnitude = np.linalg.norm(dipole_moments)
-                
+
+                            
+
             except Exception as e:
                 print(f"ASE dipole moment evaluation failed: {e}")
                 dipole_moments = None
                 dipole_magnitude = None 
 
-            return energy_hartree, dipole_moments_debye, dipole_magnitude
+            # Try to obtain partial charges --> Not the same thing as mulliken!
+            try:
+                mulliken_charges = atoms.get_charges()
+
+            except Exception as e:
+                print(f"ASE Mulliken charge evaluation failed: {e}")
+                mulliken_charges = None
+
+
+           
+            return energy_hartree, dipole_moments_debye, dipole_magnitude, mulliken_charges
 
 
         except Exception as e:
             print(f"ASE energy evaluation failed: {e}")
-            return None, None, None
+            return None, None, None, None
 
     

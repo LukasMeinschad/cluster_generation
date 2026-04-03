@@ -457,7 +457,8 @@ class MultiPhaseBHMC:
         analyzer.plot_energy_vs_rmsd()
         #analyzer.plot_int_d_vs_e()
         #analyzer.plot_pca_explained_variance()
-         
+        analyzer.plot_pca_loadings(pc_index=0)
+
         
 
         if cluster_method in {"kmeans", "agglomerative"}:

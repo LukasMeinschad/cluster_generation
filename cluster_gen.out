@@ -1,7 +1,7 @@
 ================================================================================
                                   CLUSTER GEN                                   
 ================================================================================
-Start Time: 2026-04-01 16:52:52
+Start Time: 2026-04-03 17:52:03
 Python Version: 3.9.23
 Working Directory: /media/storage_6/lme/master_thesis/cluster_generation
 Log File: /media/storage_6/lme/master_thesis/cluster_generation/cluster_gen.out
@@ -16,7 +16,7 @@ Configuration:
   Box scale factor: 1.8
   Minimum distance: 1.5 Angstrom
   Optimize submolecules: True
-  Initial configurations: 20
+  Initial configurations: 30
 
 
 [1/5] Loading molecule from test_molecules/h2o_2.xyz
@@ -29,3 +29,363 @@ Configuration:
 
 [3/5] Optimizing Submolecules (parallelized)
 Workers: 2
+  Submolecule 2 optimized successfully
+  Submolecule 1 optimized successfully
+
+[4/5] Creating simulation box
+ Box type:  sphere
+ Radius: 3.05 Angstrom
+ Volume: 119.33 Angstrom^3
+
+[5/5] Generating 30 random initial configurations
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 1 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 2 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 3 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 4 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 5 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
+  Configuration 6 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 7 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 3 attempts
+  Configuration 8 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 9 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 5 attempts
+  Configuration 10 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
+  Configuration 11 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
+  Configuration 12 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 13 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 14 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 15 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 16 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 17 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 18 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 19 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 20 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
+  Configuration 21 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 22 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 23 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 24 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
+  Configuration 25 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
+  Configuration 26 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
+  Configuration 27 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 2 attempts
+  Configuration 28 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 29 generated successfully
+
+[5/5] Generating random initial configuration
+  Submolecule 1 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 1 attempts
+  Configuration 30 generated successfully
+============================================================
+Initialization Complete!
+Total atoms: 6
+Submolecules: 2
+Simulation box type: sphere
+Box radius: 3.05 Angstrom
+Box volume: 119.33 Angstrom^3
+========================================================================
+                    Phase A: Global PES Exploration                     
+========================================================================
+Configuration:
+  Workers: 30
+  Steps per worker: 3000
+  Total steps: 90000
+  Method/Basis: hf/cc-pvdz
+  Temperature: 5000 K
+  Adaptive operators: True
+  Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation
+  Independent initial configs: 30
+  Simulation Box: <box.SimulationBox object at 0x7fa2abe1b4f0>
+  Worker log: bhmc_workers.log
+Estimated single point time: 0.01 seconds (Energy: -10.139944 Hartree)
+Estimated Phase A time: 15.54 minutes
+Starting parallel BHMC chains...
+  Worker 0: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 1: 1541 structures accepted, 3001 trajectory points, 329 box updates
+  Worker 2: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 3: 1697 structures accepted, 3001 trajectory points, 346 box updates
+  Worker 4: 1743 structures accepted, 3001 trajectory points, 377 box updates
+  Worker 5: 1323 structures accepted, 3001 trajectory points, 274 box updates
+  Worker 6: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 7: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 8: 1232 structures accepted, 3001 trajectory points, 279 box updates
+  Worker 9: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 10: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 11: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 12: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 13: 1716 structures accepted, 3001 trajectory points, 377 box updates
+  Worker 14: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 15: 1699 structures accepted, 3001 trajectory points, 359 box updates
+  Worker 16: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 17: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 18: 1321 structures accepted, 3001 trajectory points, 285 box updates
+  Worker 19: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 20: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 21: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 22: 1844 structures accepted, 3001 trajectory points, 386 box updates
+  Worker 23: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 24: 1732 structures accepted, 3001 trajectory points, 354 box updates
+  Worker 25: 1721 structures accepted, 3001 trajectory points, 356 box updates
+  Worker 26: 1896 structures accepted, 3001 trajectory points, 411 box updates
+  Worker 27: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 28: 0 structures accepted, 3001 trajectory points, 1 box updates
+  Worker 29: 0 structures accepted, 3001 trajectory points, 1 box updates
+------------------------------------------------------------------------
+Phase A Results
+------------------------------------------------------------------------
+Total steps: 90000
+Total accepted: 19465
+Overall acceptance rate: 21.63%
+Energy Statistics (Hartree):
+  Min:  -10.147461
+  Max:  -10.061760
+  Mean: -10.139762
+  Std:  0.004439
+Dipole Statistics (Debye):
+  Min:  0.0054
+  Max:  1.0362
+  Mean: 0.6396
+  Std:  0.2226
+Wrote 19465 structures to trajectories/phase_a_candidates.xyz
+========================================================================
+                            Phase A Analysis                            
+========================================================================
+Total structures: 19465
+Target clusters: 5
+Added batch of 19465 structures to phase: unknown. Total structures in this phase: 19465
+Energy Statistics (phase: all):
+  N Structures: 19465
+  Min: -10.147461
+  Max: -10.061760
+  Mean: -10.139762
+  Median: -10.140265
+  Std: 0.004439
+  Q25: -10.141447
+  Q75: -10.139283
+  IQR: 0.002164
+Dipole Magnitude Statistics (Debye):
+  Min:  0.0054
+  Max:  1.0362
+  Mean: 0.6396
+  Std:  0.2226
+Computing and caching feature matrix...
+Computing Mulliken charge features for 19465 - Phase: all
+Mulliken Charge Statistics (non-zero values):
+  Count: 116790
+  Mean: -0.0000
+  Std: 0.4021
+  Min: -0.7145
+  Max: 0.3737
+Computing H-bond features for 19465 (angle_threshold=150.0°) - Phase: all
+Using 42 parallel processes for H-bond computation
+Starting multiprocessing pool for H-bond feature computation...
+Structures with H-bonds: 454/19465
+Total H-bond configs: 458
+Avg H-bonds per struct (with H-bonds): 1.01
+Avg H-bond angle: 160.64° (std: 6.95°)
+Min/Max H-bond angle: 150.11° / 178.42°
+Avg D-A distance: 2.74 Å (std: 0.17 Å)
+Feature matrix shape: (19465, 34)
+Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude', 'Mulliken Charges...']
+Feature 0 variance: 0.000020
+Feature 1 variance: 0.976973
+Feature 2 variance: 0.359367
+Feature 3 variance: 0.000000
+Feature 4 variance: 0.000000
+Feature 5 variance: 0.000000
+Feature 6 variance: 0.023387
+Feature 7 variance: 588.970659
+Feature 8 variance: 0.171752
+Feature 9 variance: 0.000000
+Feature 10 variance: 0.000000
+Feature 11 variance: 1.480878
+Feature 12 variance: 1.662049
+Feature 13 variance: 1.676651
+Feature 14 variance: 0.000000
+Feature 15 variance: 1.661316
+Feature 16 variance: 1.816319
+Feature 17 variance: 1.827581
+Feature 18 variance: 1.633936
+Feature 19 variance: 1.778331
+Feature 20 variance: 1.769398
+Feature 21 variance: 0.000000
+Feature 22 variance: 0.000000
+Feature 23 variance: 0.000000
+Feature 24 variance: 1.470141
+Feature 25 variance: 7.602232
+Feature 26 variance: 0.000146
+Feature 27 variance: 0.049533
+Feature 28 variance: 0.000081
+Feature 29 variance: 0.000040
+Feature 30 variance: 0.000039
+Feature 31 variance: 0.000069
+Feature 32 variance: 0.000037
+Feature 33 variance: 0.000041
+Removed 9 zero-variance features. New shape: (19465, 25)
+Feature 0 stats: mean=0.0077, std=0.0044, min=0.0000, max=0.0857
+Feature 1 stats: mean=3.7119, std=0.9884, min=0.0000, max=6.8091
+Feature 2 stats: mean=2.0630, std=0.5995, min=1.0225, max=4.1400
+Feature 3 stats: mean=0.0235, std=0.1529, min=0.0000, max=2.0000
+Feature 4 stats: mean=3.7468, std=24.2687, min=0.0000, max=178.4164
+Feature 5 stats: mean=0.0639, std=0.4144, min=0.0000, max=3.0215
+Feature 6 stats: mean=4.0832, std=1.2169, min=1.8804, max=8.3498
+Feature 7 stats: mean=4.1331, std=1.2892, min=1.2877, max=9.0965
+Feature 8 stats: mean=4.1217, std=1.2949, min=1.3683, max=8.9474
+Feature 9 stats: mean=4.1227, std=1.2889, min=1.2716, max=9.0098
+Feature 10 stats: mean=4.1758, std=1.3477, min=0.8872, max=9.1331
+Feature 11 stats: mean=4.1631, std=1.3519, min=0.8890, max=9.4207
+Feature 12 stats: mean=4.1218, std=1.2783, min=1.2535, max=9.0478
+Feature 13 stats: mean=4.1752, std=1.3335, min=0.9901, max=9.6052
+Feature 14 stats: mean=4.1637, std=1.3302, min=0.9280, max=9.6423
+Feature 15 stats: mean=4.0752, std=1.2125, min=1.9488, max=8.2569
+Feature 16 stats: mean=4.5183, std=2.7572, min=0.9462, max=17.0403
+Feature 17 stats: mean=0.0255, std=0.0121, min=0.0001, max=0.0611
+Feature 18 stats: mean=0.6396, std=0.2226, min=0.0054, max=1.0362
+Feature 19 stats: mean=-0.5686, std=0.0090, min=-0.7145, max=-0.5332
+Feature 20 stats: mean=0.2842, std=0.0063, min=0.2433, max=0.3642
+Feature 21 stats: mean=0.2843, std=0.0063, min=0.2435, max=0.3565
+Feature 22 stats: mean=-0.5684, std=0.0083, min=-0.7064, max=-0.5232
+Feature 23 stats: mean=0.2842, std=0.0061, min=0.2557, max=0.3423
+Feature 24 stats: mean=0.2843, std=0.0064, min=0.2496, max=0.3737
+Feature matrix computed and cached.
+Top 25 features for PC1:
+ Asphericity          : 0.2920
+ Rg                   : 0.2919
+ Dist_2               : 0.2896
+ Acylindricity        : 0.2872
+ Dist_4               : 0.2751
+ Dist_6               : 0.2749
+ Dist_3               : 0.2748
+ Dist_9               : 0.2736
+ Dist_11              : 0.2647
+ Dist_8               : 0.2636
+ Dist_7               : 0.2635
+ Dist_10              : 0.2624
+ Mulliken_0           : 0.1205
+ Mulliken_3           : 0.1157
+ Mulliken_5           : -0.0877
+ Avg H-bond Angle     : -0.0860
+ Num H-bonds          : -0.0860
+ Avg D-A Distance     : -0.0854
+ Mulliken_2           : -0.0814
+ Mulliken_1           : -0.0783
+ Mulliken_4           : -0.0781
+ Delta E              : -0.0640
+ RMSD                 : 0.0553
+ Dipole Magnitude     : -0.0038
+ Kappa^2              : 0.0038
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 19465
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 19465
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 19465

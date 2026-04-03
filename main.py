@@ -25,7 +25,7 @@ if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
 
-    N_WORKERS = 20
+    N_WORKERS = 30
 
     # Parse the Arguments
     args = get_args()
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=1000,
+        n_structures_per_worker=3000,
         n_processes=N_WORKERS
     )
 
@@ -111,9 +111,8 @@ if __name__ == "__main__":
     representatives = bhmc_sampler.analyse_phase_a_results(
         phase_a_candidates,
         submolecule_indices=submol_indices,
-        cluster_method ="hdbscan",
-        min_cluster_size=30,
-        min_samples=10,
+        cluster_method ="kmeans",
+        n_clusters=5,
         simulation_box=simulation_box, 
         logger=logger_analysis
     )

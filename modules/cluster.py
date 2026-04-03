@@ -97,8 +97,8 @@ class BHMCAnalyzer:
         # Storage of feature matrix
         self._feature_matrix_raw: Optional[np.ndarray] = None 
         self._feature_matrix_normalized: Optional[np.ndarray] = None 
-
-
+        self._non_zero_var_indices: Optional[List[int]] = None  # Track which features are kept after filtering
+        self.used_features: Optional[List[str]] = None  # To keep track of which features are used
 
 
     def _log(self, msg: str, level: str = "info"):
@@ -699,9 +699,11 @@ class BHMCAnalyzer:
 
     # ====================== Clustering Methods =======================
 
-    def _ensure_feature_matrix(self):
+    def _ensure_feature_matrix(self, remove_zero_variance: bool = True):
         """   
         Compute and cache the feature matrix if not already done.
+
+        Further removes zero variance features to avoid issues in clustering algorithms and to reduce dimensionality.
         """
         if self._feature_matrix_raw is not None:
             return 
@@ -728,7 +730,7 @@ class BHMCAnalyzer:
         rotational_constants = np.array([self.determine_rotational_constants(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
         intermolecular_distances = np.array(self.compute_interatomic_distance_matrix())
 
-
+        
 
         self._feature_matrix_raw = np.hstack((
             delta_e, 
@@ -742,9 +744,28 @@ class BHMCAnalyzer:
             mulliken_features
         )
 
+
         )
         self._log(f"Feature matrix shape: {self._feature_matrix_raw.shape}")
         self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude', 'Mulliken Charges...']")
+        
+
+        feature_variances = []
+        for i in range(self._feature_matrix_raw.shape[1]):
+            var = np.var(self._feature_matrix_raw[:, i])
+            feature_variances.append(var)
+            self._log(f"Feature {i} variance: {var:.6f}")
+        if remove_zero_variance:
+            non_zero_var_indices = [i for i, var in enumerate(feature_variances) if var > 1e-6]
+            self._non_zero_var_indices = non_zero_var_indices  # Store which features are kept
+            self._feature_matrix_raw = self._feature_matrix_raw[:, non_zero_var_indices]
+            self._log(f"Removed {len(feature_variances) - len(non_zero_var_indices)} zero-variance features. New shape: {self._feature_matrix_raw.shape}")
+         
+        # Log Statistics of remaining features
+        for i in range(self._feature_matrix_raw.shape[1]):
+            col = self._feature_matrix_raw[:, i]
+            self._log(f"Feature {i} stats: mean={np.mean(col):.4f}, std={np.std(col):.4f}, min={np.min(col):.4f}, max={np.max(col):.4f}")
+        
         
         scaler = StandardScaler()
         
@@ -1094,6 +1115,103 @@ class BHMCAnalyzer:
         umap_result = umap_model.fit_transform(feature_mat)
         return umap_result
 
+    def get_feature_names(self) -> List[str]:
+        """ 
+        Helper Method that returns a list of feature names corresponding to the columns of the feature matrix.
+        Handles both filtered and unfiltered feature matrices.
+        """
+        self._ensure_feature_matrix()
+        
+        # Build complete list of all possible feature names (before filtering)
+        all_feature_names = ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 
+                             'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance']
+        
+        # Add intermolecular distance names
+        n_atoms = len(self.structures[0].molecule.coordinates) if self.structures else 0
+        n_distances = n_atoms * (n_atoms - 1) // 2
+        all_feature_names.extend([f'Dist_{i}' for i in range(n_distances)])
+        
+        # Add shape descriptor names
+        all_feature_names.extend(['Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude'])
+        
+        # Determine where mulliken charges start in the original feature list
+        mulliken_start_idx = len(all_feature_names)
+        
+        # If we have filtered features, count how many mulliken features were kept
+        if self._non_zero_var_indices is not None:
+            # Count kept indices that are >= mulliken_start_idx
+            n_mulliken_kept = sum(1 for idx in self._non_zero_var_indices if idx >= mulliken_start_idx)
+            all_feature_names.extend([f'Mulliken_{i}' for i in range(n_mulliken_kept)])
+            # Return only the names for kept indices
+            return [all_feature_names[i] for i in self._non_zero_var_indices if i < len(all_feature_names)]
+        else:
+            # No filtering, calculate mulliken from matrix shape
+            n_mulliken = self._feature_matrix_raw.shape[1] - len(all_feature_names)
+            if n_mulliken > 0:
+                all_feature_names.extend([f'Mulliken_{i}' for i in range(n_mulliken)])
+            return all_feature_names
+    
+    def plot_pca_loadings(self, phase: Optional[str] = None, pc_index: int= 0, top_n_features: int = -1):
+        """  
+        Plots the PCA loadings to show which original features contribute most to a specific principal component
+
+        Higher absolute loading values indicate that the feature has a stronger influence on that principal component.
+
+        Args:
+            phase: Specified phase to analyze. If None, analyzes all structures.
+            pc_index: Index of the principal component to analyze (0-based)
+            top_n_features: Number of top features to display based on absolute loading values, -1 is all features
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        if not structures:
+            self._log(f"No structures found for phase: {phase}", level="warning")
+            return
+
+        feature_matrix = self.feature_matrix()
+        feature_names = self.get_feature_names()
+
+        if top_n_features == -1 or top_n_features > len(feature_names):
+            top_n_features = len(feature_names)
+
+        n_comps = min(feature_matrix.shape[1], 20)  # Limit to 20 components for loading analysis
+        pca_model = PCA(n_components=n_comps)
+        pca_model.fit(feature_matrix)
+
+        if pc_index >= n_comps:
+            self._log(f"Requested PC index {pc_index} exceeds number of computed components {n_comps}. Adjusting to {n_comps - 1}", level="warning")
+            return 
+        
+        # Get the loadings for the specified principal component
+        loadings = pca_model.components_[pc_index]
+
+        # Sort features by their absolute contribution
+        sorted_indices = np.argsort(np.abs(loadings))[::-1][:top_n_features]
+        sorted_loadings = loadings[sorted_indices]
+        sorted_names = [feature_names[i] for i in sorted_indices]
+
+        plt.figure(figsize=(12, 6))
+
+        # Positive Correlations in blue, negative in red
+        colors = ["red" if l < 0 else "blue" for l in sorted_loadings]
+        bars = plt.bar(range(top_n_features), sorted_loadings, color=colors, alpha=0.7, edgecolor='black')
+        plt.xticks(range(top_n_features), sorted_names, rotation=45, ha='right',fontsize=9)
+        explained_var = pca_model.explained_variance_ratio_[pc_index] * 100
+        plt.title(f'PCA Loadings for PC{pc_index + 1} ({explained_var:.1f}% variance) - Phase: {phase if phase else "All"}', fontsize=12)
+        plt.ylabel('Loading Value')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(f"figures/pca_loadings_pc{pc_index + 1}_{phase if phase else 'all'}.png", dpi=200)
+        plt.close()
+        self._log(f"Top {top_n_features} features for PC{pc_index + 1}:")
+        for name, loading in zip(sorted_names, sorted_loadings):
+            self._log(f" {name:<20} : {loading:.4f}")
+
+
+
+
     def plot_pca_explained_variance(self, n_components: int = 20, phase: Optional[str] = None):
         """  
         Plots the explained variance ratio for PCA components
@@ -1255,7 +1373,8 @@ class BHMCAnalyzer:
     def log_representative_features(
             self,
             representatives: List[StructureData],
-            labels: Optional[np.ndarray] = None
+            labels: Optional[np.ndarray] = None,
+            output_file: str = "cluster_features.log"
         ) -> None:
         """ 
         Log the feature matrix rows for the given representative structures
@@ -1264,61 +1383,83 @@ class BHMCAnalyzer:
             representatives: List of StructureData objects representing the cluster centers
             labels: Cluster labels array to identify which representative belongs to which cluster. If None, uses cached labels.
         """
-        if not self.logger:
-            return
         self._ensure_feature_matrix()
         raw = self._feature_matrix_raw
         normalized = self._feature_matrix_normalized
 
-        # Find the indices of the representatives
         rep_indices = []
         for rep in representatives:
             try:
                 idx = self.structures.index(rep)
                 rep_indices.append(idx)
             except ValueError:
-                self._log(f"Representative structure not found in structures list: {rep}", level="warning")
+                if self.logger:
+                    self._log(f"Representative structure not found in structures list: {rep}", level="warning")
                 continue
+        
         if not rep_indices:
-            self._log("No valid representative indices found for logging features.", level="warning")
+            if self.logger:
+                self._log("No valid representative indices found. Skipping logging.", level="warning")
             return
-    
+        
         if labels is not None:
-            unique_non_noise = [l for l in np.unique(labels) if l != -1]
             row_labels = [f"Cluster {labels[idx]}" for idx in rep_indices]
         else:
             row_labels = [f"Rep {i}" for i in range(len(rep_indices))]
-        
+
+        # Build column labels
         col_labels = [
             "Delta_E", "RMSD", "Rg",
             "Rot_A", "Rot_B", "Rot_C",
-            "N_Hbond", "Avg_HB_Ang", "Avg_DA_Dist",
+            "N_Hbond", "Avg_HB_Ang", "Avg_DA_Dist"
         ]
-        n_interatomic = raw.shape[1] - 13
-        col_labels += [f"IAD_{j}" for j in range(n_interatomic)]
+        # Obtain the n_interatomics since this is an n x n matrix and we take the
+        # upper triangle we have n*(n-1)/2 elements
+        n_atoms = len(self.structures[0].molecule.coordinates) if self.structures else 0
+        n_interatomics = n_atoms * (n_atoms - 1) // 2
+        for j in range(n_interatomics):
+            col_labels.append(f"IAD_{j}")
+        
+        # Geometric and Dipole features
         col_labels += ["Asphericity", "Acylindricity", "Kappa^2", "Dipole_Mag"]
-        n_mulliken = raw.shape[1] - 13 - n_interatomic
-        col_labels += [f"Mulliken_{k}" for k in range(n_mulliken)]
 
-
-
+        # Mulliken Charges is the rest
+        n_mulliken = raw.shape[1] - len(col_labels)
+        for j in range(n_mulliken):
+            col_labels.append(f"Mulliken_{j}")
+        
         rep_matrix_raw = raw[rep_indices]
         rep_matrix_norm = normalized[rep_indices]
 
-        self.logger.log_matrix(
-            matrix=rep_matrix_raw,
-            row_labels=row_labels,
-            col_labels=col_labels,
-            title="Representative Structures (Raw)",
-            fmt=".4f",
-            max_col_width=12
-        )
-        self.logger.log_matrix(
-            matrix=rep_matrix_norm,
-            row_labels=row_labels,
-            col_labels=col_labels,
-            title="Representative Structures (Normalized)",
-            fmt=".4f",
-            max_col_width=12
-        )
+        # Compute maximum variane
+        variances = np.var(rep_matrix_raw, axis=0)
+        max_var_idx = np.argmax(variances)
+        most_changed_feature = col_labels[max_var_idx]
+        max_variance_val = variances[max_var_idx]
 
+        if self.logger:
+            self._log(f"Writing representative features to {output_file}")
+            self._log(f"Most varied feature among representatives: {most_changed_feature} (variance: {max_variance_val:.4f})")
+
+        with open(output_file, "w") as f:
+            f.write("=== Cluster Representatives Feature Matrix ===\n")
+            f.write(f"Most prominent discriminator: {most_changed_feature} (variance: {max_variance_val:.4f})\n")
+            
+            header = f"{'Cluster':<15} | " + " | ".join([f"{col:<15}" for col in col_labels])
+
+            f.write("--- Raw Feature Matrix ---\n")
+            f.write(header + "\n")
+            f.write("-" * len(header) + "\n")
+            for row_label, row_data in zip(row_labels, rep_matrix_raw):
+                row_str = f"{row_label:<15} | " + " | ".join([f"{val:<15.4f}" for val in row_data])
+                f.write(row_str + "\n")
+            
+            f.write("\n--- Normalized Feature Matrix ---\n")
+            f.write(header + "\n")
+            f.write("-" * len(header) + "\n")
+            for row_label, row_data in zip(row_labels, rep_matrix_norm):
+                row_str = f"{row_label:<15} | " + " | ".join([f"{val:<15.4f}" for val in row_data])
+                f.write(row_str + "\n")
+            
+
+        

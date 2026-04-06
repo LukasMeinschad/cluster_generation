@@ -21,6 +21,10 @@ from args import get_args
 from logger import Logger
 from interpolate import Interpolator
 
+# Random visualization delete sometimes
+from visualizations import plot_contour_vdw_radii, plot_pairwise_distance_heatmap
+
+
 if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
@@ -38,6 +42,12 @@ if __name__ == "__main__":
     logger.write_program_header()
 
     molecule = Molecule.from_xyz(xyz_content)
+
+    # Plot contour
+    plot_contour_vdw_radii(molecule, save_path="figures/contour_vdw_radii.png")
+    plot_pairwise_distance_heatmap(molecule, save_path="figures/pairwise_distance_heatmap.png")
+
+
 
     if args.test:
         for test in args.test:

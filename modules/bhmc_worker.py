@@ -196,6 +196,8 @@ def _phase_a_worker(args: Tuple) -> Dict:
         'exchange': nonlocal_ops.exchange_operator,
         'random_so3': nonlocal_ops.random_so3_operator,
         'principal_axis_rotation': nonlocal_ops.principal_axis_rotation_operator,
+        'com_com_approach': nonlocal_ops.com_com_approach_operator,
+        'com_com_separation': nonlocal_ops.com_com_separation_operator
     }
     
     operators, weights = [], []

@@ -4,7 +4,7 @@ import random
 
 from transformations import Transformation
 from geometry import GeometryOps, Quaternion, ReferenceFrame
-
+from scipy.spatial.distance import pdist, squareform
 
 
 class MolecularOperators:
@@ -38,6 +38,43 @@ class MolecularOperators:
                 return original.copy()  
             molecule.coordinates = new_coords
         return molecule
+    
+    def _has_inter_submolecule_clashes(self,
+                                       molecule: "Molecule",
+                                       submolecule_indices: List[List[int]],
+                                       scale=0.5) -> bool:
+        """  
+        Compute wether any inter-submolecule atom pairs are closer than the clash threshold
+
+        Algorithm:
+        1. Get the VDW radii of all atoms and apply scaling factor to find clash threshold
+        """ 
+        coords = molecule.coordinates
+        radii = molecule.vdw_radii
+        n_atoms = len(coords)
+        if n_atoms < 2:
+            return False  # No clashes possible with 1 or 0 atoms
+        radii = getattr(molecule, "vdw_radii", None)
+        if radii is None or len(radii) != n_atoms:
+            # Fallback
+            radii = molecule.covalent_radii * 1.5
+        
+        # Map atom -> fragment id
+        frag_id = np.full(n_atoms, -1, dtype=int)
+        for frag, idxs in enumerate(submolecule_indices):
+            frag_id[np.asarray(idxs, dtype=int)] = frag
+        
+        dists = squareform(pdist(coords))
+        for i in range(n_atoms):
+            for j in range(i + 1, n_atoms):
+                if frag_id[i] != frag_id[j]:  # Only check inter-fragment pairs
+                    threshold = scale * (radii[i] + radii[j])
+                    if dists[i, j] < threshold:
+                        return True
+        return False
+        
+
+
 
     def _compute_scaling_factor(
             self,
@@ -528,6 +565,8 @@ class NonLocalOperators(MolecularOperators):
         coords_centered = mol_copy.coordinates[rot_submol] - ref_center
         coords_rotated = coords_centered @ R.T
         mol_copy.coordinates[rot_submol] = coords_rotated + ref_center
+
+
         return self._apply_box_constraints(mol_copy, molecule)
     
     def large_displacement(self,
@@ -562,7 +601,121 @@ class NonLocalOperators(MolecularOperators):
 
         mol_copy.coordinates[submol_idx] += displacement
         return self._apply_box_constraints(mol_copy, molecule)
+
+    def com_com_approach_operator(self,
+                                  molecule: "Molecule",
+                                  submolecule_indices: List[List[int]],
+                                  approach_distance_range: Tuple[float, float] = (0.1, 0.8),
+                                  adaptive: bool = True) -> "Molecule":
+        """   
+        Implement a com_com_approach operator:
+
+        This moves the com_com distance between two submolecules closer by a random amount within the specified range, while keeping the direction fixed.
+
+        Algorithm:
+        1. Select two submolecules
+        2. Compute their centers of mass and the vector between them
+        3. Compute the current distance and the desired approach distance
+        4. Move the second submolecule towards the first along the com_com vector by the difference between current and desired distance
+
+        Args:
+            molecule: Input Molecule object
+            submolecule_indices: List of lists of atom indices defining submolecules
+            approach_distance_range: Range for random approach distance in Angstrom (default is (0.1, 0.8))
+            adaptive: If True, scale range by box/molecule size ratio
+        """
+        mol_copy = molecule.copy()
+        submol_1, submol_2 = self._select_two_submolecules(submolecule_indices)
+
+        # Compute com of submol1
+        coords_1 = mol_copy.coordinates[submol_1]
+        masses_1 = mol_copy.masses[submol_1]
+        center_1 = GeometryOps.center_of_mass(coords_1, masses_1)
+
+        # compute com of submol2
+        coords_2 = mol_copy.coordinates[submol_2]
+        masses_2 = mol_copy.masses[submol_2]
+        center_2 = GeometryOps.center_of_mass(coords_2, masses_2)
+
+        com_vector = center_2 - center_1
+        current_distance = np.linalg.norm(com_vector)
+        if current_distance < 1e-8:
+            return mol_copy  # Cannot define approach because submolecules overlap
+        
+        # Find direction vector
+        direction = com_vector / current_distance
+        if adaptive:
+            scale = self._compute_scaling_factor(molecule, operator_type="nonlocal")
+            effective_range = (approach_distance_range[0] * scale, approach_distance_range[1] * scale)
+        else:
+            effective_range = approach_distance_range
+        
+        desired_distance = random.uniform(*effective_range)
+        displacement_magnitude = current_distance - desired_distance
+        displacement_vector = direction * displacement_magnitude
+
+        # Move submol2 towards submol1
+        mol_copy.coordinates[submol_2] -= displacement_vector
+        return self._apply_box_constraints(mol_copy, molecule)
     
+    def com_com_separation_operator(self,
+                                      molecule: "Molecule",
+                                      submolecule_indices: List[List[int]],
+                                      separation_distance_range: Tuple[float, float] = (0.1, 0.8),
+                                      adaptive: bool = True) -> "Molecule":
+          """   
+          Implement a com_com_separation operator:
+    
+          This moves the com_com distance between two submolecules farther by a random amount within the specified range, while keeping the direction fixed.
+    
+          Algorithm:
+          1. Select two submolecules
+          2. Compute their centers of mass and the vector between them
+          3. Compute the current distance and the desired separation distance
+          4. Move the second submolecule away from the first along the com_com vector by the difference between desired and current distance
+    
+          Args:
+                molecule: Input Molecule object
+                submolecule_indices: List of lists of atom indices defining submolecules
+                separation_distance_range: Range for random separation distance in Angstrom (default is (0.1, 0.8))
+                adaptive: If True, scale range by box/molecule size ratio
+          """
+          mol_copy = molecule.copy()
+          submol_1, submol_2 = self._select_two_submolecules(submolecule_indices)
+    
+          # Compute com of submol1
+          coords_1 = mol_copy.coordinates[submol_1]
+          masses_1 = mol_copy.masses[submol_1]
+          center_1 = GeometryOps.center_of_mass(coords_1, masses_1)
+    
+          # compute com of submol2
+          coords_2 = mol_copy.coordinates[submol_2]
+          masses_2 = mol_copy.masses[submol_2]
+          center_2 = GeometryOps.center_of_mass(coords_2, masses_2)
+    
+          com_vector = center_2 - center_1
+          current_distance = np.linalg.norm(com_vector)
+          if current_distance < 1e-8:
+                return mol_copy  # Cannot define separation because submolecules overlap
+          
+          # Find direction vector
+          direction = com_vector / current_distance
+          if adaptive:
+                scale = self._compute_scaling_factor(molecule, operator_type="nonlocal")
+                effective_range = (separation_distance_range[0] * scale, separation_distance_range[1] * scale)
+          else:
+                effective_range = separation_distance_range
+          
+          desired_distance = random.uniform(*effective_range)
+          displacement_magnitude = desired_distance - current_distance
+          displacement_vector = direction * displacement_magnitude
+
+          # Move submol2 away from submol1
+          mol_copy.coordinates[submol_2] += displacement_vector
+          return self._apply_box_constraints(mol_copy, molecule)
+          
+
+
     def mirror_operator(self,
                         molecule: "Molecule",
                         submolecule_indices: List[List[int]]) -> "Molecule":
@@ -764,3 +917,23 @@ class NonLocalOperators(MolecularOperators):
         mol_copy.coordinates[submol_1] += translation_1
         mol_copy.coordinates[submol_2] += translation_2
         return self._apply_box_constraints(mol_copy, molecule)
+
+if __name__ == "__main__":
+
+    from molecule_class import Molecule
+
+    h2o_2 = """ 
+    6
+    Coordinates from ORCA-job h2o_2 E -152.102897751726
+    O           0.20131422818946     -0.13419863189991     -0.38118207664628
+    H           1.10826926774619      0.03054527004232     -0.16898516572928
+    H          -0.26386315635905     -0.06924940339370      0.43390806815981
+    O           3.06513444516272      0.52224610599392      0.05902763481169
+    H           3.25817767296947      1.29105665797100     -0.44996761253291
+    H           3.66908154229119     -0.14039999871364     -0.23001884806303
+    """
+    mol = Molecule.from_xyz(h2o_2)
+    submolecule_indices = [[0,1,2], [3,4,5]]
+    # Check the clash function
+    operators = NonLocalOperators()
+    print(operators._has_inter_submolecule_clashes(mol, submolecule_indices))

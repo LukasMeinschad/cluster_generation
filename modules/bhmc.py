@@ -43,6 +43,9 @@ class MultiPhaseBHMC:
         ('exchange', 0.7),
         ('random_so3', 0.5),
         ('principal_axis_rotation', 0.8),
+        ('com_com_approach', 0.8),
+        ('com_com_separation', 0.3)
+    
     ]
 
     DEFAULT_LOCAL_OPERATORS = [
@@ -145,6 +148,15 @@ class MultiPhaseBHMC:
             self._log(f"  Simulation Box: {self.simulation_box}")
         if self.worker_log_file:
             self._log(f"  Worker log: {self.worker_log_file}")
+            # Clear worker log file at the start of Phase A
+            with open(self.worker_log_file, 'w') as f:
+                f.write(f"BHMC Phase A Worker Log\n")
+                f.write(f"Configuration: {n_processes} workers, {n_structures_per_worker} steps each\n")
+                f.write(f"Method: {self.config.method}, Basis: {self.config.basis}, Temperature: {self.config.temperature} K\n")
+                f.write(f"Operators: {', '.join(op[0] for op in self.operators)}\n")
+                if self.simulation_box:
+                    f.write(f"Simulation Box: {self.simulation_box}\n")
+                f.write("\n")
         
         config_dict = {
             'method': self.config.method,
@@ -205,11 +217,14 @@ class MultiPhaseBHMC:
         self.worker_trajectories = {}  # Store for plotting
         self.worker_box_updates = {}   # Store adaptive box updates for plotting
         
+
+
         for worker_result in results:
             wid = worker_result['worker_id']
             accepted = worker_result['accepted_structures'] 
             trajectory = worker_result['energy_trajectory']
             box_updates = worker_result.get('box_updates', [])
+            operator_rates = worker_result.get('operator_acceptance_rates', {})
             
             all_accepted_structures.extend(accepted)
             self.worker_trajectories[wid] = trajectory
@@ -217,6 +232,7 @@ class MultiPhaseBHMC:
             self._log(
                 f"  Worker {wid}: {len(accepted)} structures accepted, "
                 f"{len(trajectory)} trajectory points, {len(box_updates)} box updates"
+                f"  Operator acceptance rates: {', '.join(f'{op}: {rate:.1f}%' for op, rate in operator_rates.items())}"
             )
         
         self.phase_a_structures = all_accepted_structures
@@ -303,6 +319,16 @@ class MultiPhaseBHMC:
             self._log(f" Simulation Box: {self.simulation_box}")
         if self.worker_log_file:
             self._log(f" Worker log: {self.worker_log_file}")
+            # Append Header to worker log file for Phase B
+            with open(self.worker_log_file, 'a') as f:
+                f.write(f"\n\nBHMC Phase B Worker Log\n")
+                f.write(f"Configuration: {n_processes} workers, {n_steps_per_worker} steps each\n")
+                f.write(f"Method: {self.config.method}, Basis: {self.config.basis}, Temperature: {self.config.temperature} K\n")
+                f.write(f"Local Operators: {', '.join(op[0] for op in local_operators)}\n")
+                if self.simulation_box:
+                    f.write(f"Simulation Box: {self.simulation_box}\n")
+                f.write("\n")
+            
         config_dict = {
             "method": self.config.method,
             "basis": self.config.basis,

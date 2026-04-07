@@ -22,14 +22,14 @@ from logger import Logger
 from interpolate import Interpolator
 
 # Random visualization delete sometimes
-from visualizations import plot_contour_vdw_radii, plot_pairwise_distance_heatmap
+from visualizations import plot_contour_vdw_radii, plot_pairwise_distance_heatmap, plot_initial_molecules_centers
 
 
 if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
 
-    N_WORKERS = 30
+    N_WORKERS = 5
 
     # Parse the Arguments
     args = get_args()
@@ -74,6 +74,8 @@ if __name__ == "__main__":
         n_configurations=N_WORKERS
     )
 
+    plot_initial_molecules_centers(initial_molecules, submol_indices, simulation_box, save_path="figures/initial_molecules_centers.png")
+
     # ── BHMC Phase A: Global Exploration ────────────────────────
     bhmc_logger = Logger(name="bhmc", log_file="cluster_gen.out", file_mode="a")
 
@@ -99,11 +101,11 @@ if __name__ == "__main__":
         logger=bhmc_logger,
         worker_log_file="bhmc_workers.log"
     )
-
+        
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=3000,
+        n_structures_per_worker=300,
         n_processes=N_WORKERS
     )
 

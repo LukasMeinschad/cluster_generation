@@ -217,7 +217,8 @@ def _phase_a_worker(args: Tuple) -> Dict:
     
     
     weights = np.array(weights) / sum(weights)  # Normalize weights
-
+    operator_accepted_counts = {op['name']: 0 for op in operators}
+    operator_attempt_counts = {op['name']: 0 for op in operators}
 
     
     evaluator = EnergyEvaluator(
@@ -254,9 +255,25 @@ def _phase_a_worker(args: Tuple) -> Dict:
             else:
                 new_structure = op_info["func"](current_structure,submolecule_indices=submolecule_indices)
 
+            # Check if the structure has clashes
+            if nonlocal_ops._has_inter_submolecule_clashes(
+                new_structure,
+                submolecule_indices=submolecule_indices,
+                scale=0.5
+            ):
+                _log(f"Worker {worker_id}: Operator {op_info['name']} produced a structure with clashes. Rejecting.", level="warning")
+                n_rejected += 1; box_controller.record_step(False)
+                # Count operator attempt and rejection
+                operator_attempt_counts[op_info['name']] += 1
+                energy_trajectory.append((step+1, current_energy))
+                continue
+
+
             if np.allclose(new_structure.coordinates, current_structure.coordinates):
                 _log(f"Worker {worker_id}: Operator {op_info['name']} did not change the structure. Skipping.", level="warning")
                 n_rejected += 1; box_controller.record_step(False)
+                # Count operator attempt and rejection
+                operator_attempt_counts[op_info['name']] += 1
                 energy_trajectory.append((step+1, current_energy))
                 continue
             
@@ -265,6 +282,8 @@ def _phase_a_worker(args: Tuple) -> Dict:
             if new_energy is None:
                 _log(f"Worker {worker_id}: Energy evaluation failed for proposed structure. Rejecting.", level="warning")
                 n_rejected += 1; box_controller.record_step(False)
+                # Count operator attempt and rejection
+                operator_attempt_counts[op_info['name']] += 1
                 energy_trajectory.append((step+1, current_energy))
                 continue
             
@@ -287,9 +306,12 @@ def _phase_a_worker(args: Tuple) -> Dict:
                 current_mulliken_charge = new_mulliken_charge 
                 accepted_structures.append((copy.deepcopy(current_structure), current_energy, current_dipole_vec, current_dipole_mag, current_mulliken_charge))
                 n_accepted += 1
+                operator_accepted_counts[op_info['name']] += 1
+                operator_attempt_counts[op_info['name']] += 1
                 _log(f"Worker {worker_id}: Accepted new structure at step {step+1} with energy {current_energy:.6f} Hartree")
             else:
                 n_rejected += 1
+                operator_attempt_counts[op_info['name']] += 1
  
             box_controller.record_step(accept)
             energy_trajectory.append((step+1, current_energy))
@@ -297,6 +319,8 @@ def _phase_a_worker(args: Tuple) -> Dict:
         except Exception as e:
             _log(f"Worker {worker_id}: Exception during operator application or evaluation: {e}", level="error")
             n_rejected += 1; box_controller.record_step(False)
+            # Count operator attempt
+            operator_attempt_counts[op_info['name']] += 1
             energy_trajectory.append((step+1, current_energy))
             continue
 
@@ -321,12 +345,15 @@ def _phase_a_worker(args: Tuple) -> Dict:
             
     mode_rate = n_accepted / (n_accepted + n_rejected) * 100 if (n_accepted + n_rejected) > 0 else 0.0
     _log(f"Worker {worker_id}: Finished Phase A. Accepted {n_accepted} structures, Rejected {n_rejected} structures. Acceptance Rate: {mode_rate:.2f}%")
+    operator_rates = {op: (operator_accepted_counts[op] / operator_attempt_counts[op] * 100 if operator_attempt_counts[op] > 0 else 0.0) for op in operator_accepted_counts}
+    
 
     return {
         'accepted_structures': accepted_structures,
         'energy_trajectory': energy_trajectory,
         'box_updates': box_updates,
-        'worker_id': worker_id
+        'worker_id': worker_id,
+        'operator_acceptance_rates': operator_rates
     }
 
 
@@ -362,6 +389,9 @@ def _phase_b_worker(args: Tuple) -> Dict:
             weights.append(weight)
 
     weights = np.array(weights) / sum(weights)
+    # Count the operators
+    operator_accepted_counts = {op['name']: 0 for op in operators}
+    operator_attempt_counts = {op['name']: 0 for op in operators}
     
     evaluator = EnergyEvaluator(
         method=config_dict.get('method', 'hf'),
@@ -374,6 +404,7 @@ def _phase_b_worker(args: Tuple) -> Dict:
     current_energy, current_dipole_vec, current_dipole_mag, current_mulliken_charge = evaluator.evaluate(current_structure)
     
     if current_energy is None:
+        _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
         return {"best_structure": None, "accepted_structures": [], "energy_trajectory": [], "worker_id": worker_id}
 
     best_energy = current_energy
@@ -399,11 +430,31 @@ def _phase_b_worker(args: Tuple) -> Dict:
 
         try:
             new_structure = op_info['func'](current_structure, submolecule_indices, adaptive=adaptive)
+            
+            if local_ops._has_inter_submolecule_clashes(
+                new_structure,
+                submolecule_indices=submolecule_indices,
+                scale=0.5
+            ):
+                n_rejected += 1
+                # Count operator attempt and rejection
+                operator_attempt_counts[op_info['name']] += 1
+                energy_trajectory.append((step+1, current_energy))
+                continue
+            
             if np.allclose(new_structure.coordinates, current_structure.coordinates):
+                n_rejected += 1
+                # Count operator attempt and rejection
+                operator_attempt_counts[op_info['name']] += 1
+                energy_trajectory.append((step+1, current_energy))
                 raise ValueError("No coordinate change")
                 
             new_energy, new_dipole_vec, new_dipole_mag, new_mulliken_charge = evaluator.evaluate(new_structure)
             if new_energy is None:
+                n_rejected += 1
+                # Count operator attempt and rejection
+                operator_attempt_counts[op_info['name']] += 1
+                energy_trajectory.append((step+1, current_energy))
                 raise ValueError("Energy invalid")
 
             # Metropolis-Hastings Acceptance
@@ -428,18 +479,29 @@ def _phase_b_worker(args: Tuple) -> Dict:
                     best_mulliken_charge = new_mulliken_charge
             else:
                 n_rejected += 1
+                # Count operator attempt and rejection
+                operator_attempt_counts[op_info['name']] += 1
+
                 
             energy_trajectory.append((step+1, current_energy))
 
         except Exception as e:
             n_rejected += 1
+            # Count operator attempt
+            operator_attempt_counts[op_info['name']] += 1
             energy_trajectory.append((step+1, current_energy))
+
+    operator_rates = {op: (operator_accepted_counts[op] / operator_attempt_counts[op] * 100 if operator_attempt_counts[op] > 0 else 0.0) for op in operator_accepted_counts} 
+
+    _log(f"Worker {worker_id}: Finished Phase B. Accepted {n_accepted} structures, Rejected {n_rejected} structures. Acceptance Rate: {(n_accepted / (n_accepted + n_rejected) * 100 if (n_accepted + n_rejected) > 0 else 0.0):.2f}%")
+    _log(f"Worker {worker_id}: Operator acceptance rates: {operator_rates}")
 
     return {
         "best_structure": (best_structure, best_energy, best_dipole_vec, best_dipole_mag, best_mulliken_charge),
         "accepted_structures": accepted_structures,
         "energy_trajectory": energy_trajectory,
-        "worker_id": worker_id
+        "worker_id": worker_id,
+        "operator_acceptance_rates": operator_rates
     }
 
 

@@ -1,7 +1,7 @@
 ================================================================================
                                   CLUSTER GEN                                   
 ================================================================================
-Start Time: 2026-04-06 21:41:57
+Start Time: 2026-04-07 23:09:04
 Python Version: 3.9.23
 Working Directory: /media/storage_6/lme/master_thesis/cluster_generation
 Log File: /media/storage_6/lme/master_thesis/cluster_generation/cluster_gen.out
@@ -16,7 +16,7 @@ Configuration:
   Box scale factor: 1.8
   Minimum distance: 1.5 Angstrom
   Optimize submolecules: True
-  Initial configurations: 30
+  Initial configurations: 5
 
 
 [1/5] Loading molecule from test_molecules/h2o_2.xyz
@@ -37,16 +37,16 @@ Workers: 2
  Radius: 3.05 Angstrom
  Volume: 119.33 Angstrom^3
 
-[5/5] Generating 30 random initial configurations
+[5/5] Generating 5 random initial configurations
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
+  Submolecule 2 placed successfully after 1 attempts
   Configuration 1 generated successfully
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
+  Submolecule 2 placed successfully after 1 attempts
   Configuration 2 generated successfully
 
 [5/5] Generating random initial configuration
@@ -56,138 +56,13 @@ Workers: 2
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
+  Submolecule 2 placed successfully after 3 attempts
   Configuration 4 generated successfully
 
 [5/5] Generating random initial configuration
   Submolecule 1 placed successfully after 1 attempts
   Submolecule 2 placed successfully after 1 attempts
   Configuration 5 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 6 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 7 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 8 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 9 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 10 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 11 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 12 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 13 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 14 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 15 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 16 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
-  Configuration 17 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 18 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
-  Configuration 19 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 20 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 21 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
-  Configuration 22 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 23 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 24 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
-  Configuration 25 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 2 attempts
-  Configuration 26 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 27 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 28 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 29 generated successfully
-
-[5/5] Generating random initial configuration
-  Submolecule 1 placed successfully after 1 attempts
-  Submolecule 2 placed successfully after 1 attempts
-  Configuration 30 generated successfully
 ============================================================
 Initialization Complete!
 Total atoms: 6
@@ -199,16 +74,238 @@ Box volume: 119.33 Angstrom^3
                     Phase A: Global PES Exploration                     
 ========================================================================
 Configuration:
-  Workers: 30
-  Steps per worker: 3000
-  Total steps: 90000
+  Workers: 5
+  Steps per worker: 300
+  Total steps: 1500
   Method/Basis: hf/cc-pvdz
   Temperature: 5000 K
   Adaptive operators: True
-  Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation
-  Independent initial configs: 30
-  Simulation Box: <box.SimulationBox object at 0x149c67842790>
+  Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation, com_com_approach, com_com_separation
+  Independent initial configs: 5
+  Simulation Box: <box.SimulationBox object at 0x146e8cd5ec70>
   Worker log: bhmc_workers.log
-Estimated single point time: 0.01 seconds (Energy: -10.107459 Hartree)
-Estimated Phase A time: 18.10 minutes
+Estimated single point time: 0.01 seconds (Energy: -10.139663 Hartree)
+Estimated Phase A time: 0.20 minutes
 Starting parallel BHMC chains...
+  Worker 0: 0 structures accepted, 301 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 1: 0 structures accepted, 301 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 2: 75 structures accepted, 301 trajectory points, 16 box updates  Operator acceptance rates: twist: 23.0%, large_displacement: 39.5%, mirror: 20.6%, roto_reflection: 6.5%, exchange: 35.3%, random_so3: 54.2%, principal_axis_rotation: 42.9%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 3: 66 structures accepted, 301 trajectory points, 12 box updates  Operator acceptance rates: twist: 22.2%, large_displacement: 42.6%, mirror: 20.5%, roto_reflection: 5.7%, exchange: 30.0%, random_so3: 29.4%, principal_axis_rotation: 42.3%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 4: 0 structures accepted, 301 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+------------------------------------------------------------------------
+Phase A Results
+------------------------------------------------------------------------
+Total steps: 1500
+Total accepted: 141
+Overall acceptance rate: 9.40%
+Energy Statistics (Hartree):
+  Min:  -10.145147
+  Max:  -10.102581
+  Mean: -10.139790
+  Std:  0.004877
+Dipole Statistics (Debye):
+  Min:  0.0919
+  Max:  0.9383
+  Mean: 0.6046
+  Std:  0.2229
+Wrote 141 structures to trajectories/phase_a_candidates.xyz
+========================================================================
+                            Phase A Analysis                            
+========================================================================
+Total structures: 141
+Target clusters: 5
+Added batch of 141 structures to phase: unknown. Total structures in this phase: 141
+Energy Statistics (phase: all):
+  N Structures: 141
+  Min: -10.145147
+  Max: -10.102581
+  Mean: -10.139790
+  Median: -10.140360
+  Std: 0.004877
+  Q25: -10.141552
+  Q75: -10.139809
+  IQR: 0.001743
+Dipole Magnitude Statistics (Debye):
+  Min:  0.0919
+  Max:  0.9383
+  Mean: 0.6046
+  Std:  0.2229
+Computing and caching feature matrix...
+Computing Mulliken charge features for 141 - Phase: all
+Mulliken Charge Statistics (non-zero values):
+  Count: 846
+  Mean: -0.0000
+  Std: 0.4013
+  Min: -0.6457
+  Max: 0.3446
+Computing H-bond features for 141 (angle_threshold=150.0°) - Phase: all
+Using 42 parallel processes for H-bond computation
+Starting multiprocessing pool for H-bond feature computation...
+Structures with H-bonds: 1/141
+Total H-bond configs: 1
+Avg H-bonds per struct (with H-bonds): 1.00
+Avg H-bond angle: 156.76° (std: 0.00°)
+Min/Max H-bond angle: 156.76° / 156.76°
+Avg D-A distance: 2.92 Å (std: 0.00 Å)
+Feature matrix shape: (141, 34)
+Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude', 'Mulliken Charges...']
+Feature 0 variance: 0.000024
+Feature 1 variance: 0.405936
+Feature 2 variance: 0.161517
+Feature 3 variance: 0.000000
+Feature 4 variance: 0.000000
+Feature 5 variance: 0.000000
+Feature 6 variance: 0.007042
+Feature 7 variance: 173.041645
+Feature 8 variance: 0.060169
+Feature 9 variance: 0.000000
+Feature 10 variance: 0.000000
+Feature 11 variance: 0.671388
+Feature 12 variance: 1.047766
+Feature 13 variance: 0.612525
+Feature 14 variance: 0.000000
+Feature 15 variance: 0.829879
+Feature 16 variance: 0.971343
+Feature 17 variance: 0.911588
+Feature 18 variance: 0.852292
+Feature 19 variance: 1.319932
+Feature 20 variance: 0.771935
+Feature 21 variance: 0.000000
+Feature 22 variance: 0.000000
+Feature 23 variance: 0.000000
+Feature 24 variance: 0.662296
+Feature 25 variance: 2.977467
+Feature 26 variance: 0.000141
+Feature 27 variance: 0.049673
+Feature 28 variance: 0.000089
+Feature 29 variance: 0.000066
+Feature 30 variance: 0.000015
+Feature 31 variance: 0.000018
+Feature 32 variance: 0.000037
+Feature 33 variance: 0.000014
+Removed 9 zero-variance features. New shape: (141, 25)
+Feature 0 stats: mean=0.0054, std=0.0049, min=0.0000, max=0.0426
+Feature 1 stats: mean=2.2075, std=0.6371, min=0.0000, max=3.5752
+Feature 2 stats: mean=1.9821, std=0.4019, min=1.0817, max=3.0809
+Feature 3 stats: mean=0.0071, std=0.0839, min=0.0000, max=1.0000
+Feature 4 stats: mean=1.1118, std=13.1545, min=0.0000, max=156.7583
+Feature 5 stats: mean=0.0207, std=0.2453, min=0.0000, max=2.9231
+Feature 6 stats: mean=3.9150, std=0.8194, min=2.0642, max=6.1946
+Feature 7 stats: mean=3.9879, std=1.0236, min=1.9057, max=6.5946
+Feature 8 stats: mean=4.0614, std=0.7826, min=2.0298, max=6.3486
+Feature 9 stats: mean=3.8633, std=0.9110, min=1.3768, max=6.4511
+Feature 10 stats: mean=3.9603, std=0.9856, min=1.6499, max=7.0347
+Feature 11 stats: mean=4.0193, std=0.9548, min=1.7548, max=6.8108
+Feature 12 stats: mean=4.0435, std=0.9232, min=2.3649, max=6.7502
+Feature 13 stats: mean=4.1065, std=1.1489, min=1.9495, max=7.3235
+Feature 14 stats: mean=4.1886, std=0.8786, min=1.8591, max=6.9690
+Feature 15 stats: mean=3.9133, std=0.8138, min=2.0727, max=6.1307
+Feature 16 stats: mean=3.9857, std=1.7255, min=1.0849, max=9.3811
+Feature 17 stats: mean=0.0224, std=0.0119, min=0.0017, max=0.0464
+Feature 18 stats: mean=0.6046, std=0.2229, min=0.0919, max=0.9383
+Feature 19 stats: mean=-0.5679, std=0.0094, min=-0.6457, max=-0.5495
+Feature 20 stats: mean=0.2852, std=0.0082, min=0.2741, max=0.3446
+Feature 21 stats: mean=0.2826, std=0.0039, min=0.2610, max=0.2946
+Feature 22 stats: mean=-0.5670, std=0.0042, min=-0.5845, max=-0.5490
+Feature 23 stats: mean=0.2848, std=0.0061, min=0.2763, max=0.3280
+Feature 24 stats: mean=0.2824, std=0.0038, min=0.2681, max=0.2940
+Feature matrix computed and cached.
+Top 25 features for PC1:
+ Asphericity          : 0.2996
+ Rg                   : 0.2995
+ Dist_2               : 0.2959
+ Acylindricity        : 0.2940
+ Dist_9               : 0.2769
+ Dist_6               : 0.2758
+ Dist_7               : 0.2722
+ Dist_3               : 0.2679
+ Dist_4               : 0.2545
+ Dist_10              : 0.2509
+ Dist_11              : 0.2410
+ Dist_8               : 0.2238
+ Mulliken_4           : -0.1567
+ Mulliken_1           : -0.1472
+ Mulliken_0           : 0.1322
+ Delta E              : -0.1258
+ Mulliken_5           : 0.0969
+ Mulliken_2           : 0.0788
+ Mulliken_3           : 0.0575
+ Avg D-A Distance     : -0.0540
+ Num H-bonds          : -0.0540
+ Avg H-bond Angle     : -0.0540
+ RMSD                 : 0.0495
+ Kappa^2              : 0.0479
+ Dipole Magnitude     : 0.0063
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 141
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 141
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 141
+Cluster 0: representative index 8, E=-10.142557 Ha
+Cluster 1: representative index 76, E=-10.108812 Ha
+Cluster 2: representative index 82, E=-10.135200 Ha
+Cluster 3: representative index 103, E=-10.140840 Ha
+Cluster 4: representative index 75, E=-10.145147 Ha
+Total clusters (excluding noise): 5. Representatives obtained: 5
+Writing representative features to cluster_features.log
+Most varied feature among representatives: Rot_B (variance: 3931.7039)
+========================================================================
+           Crossover Interpolation of Phase A Representatives           
+========================================================================
+Interpolating between Representative 0 and 1...
+Interpolating between Representative 0 and 2...
+Interpolating between Representative 0 and 3...
+Interpolating between Representative 0 and 4...
+Interpolating between Representative 1 and 2...
+Interpolating between Representative 1 and 3...
+Interpolating between Representative 1 and 4...
+Interpolating between Representative 2 and 3...
+Interpolating between Representative 2 and 4...
+Interpolating between Representative 3 and 4...
+Generated 20 crossover structures from 5 representatives
+Wrote 20 structures to trajectories/phase_a_crossover_structures.xyz
+========================================================================
+                       Phase B: Local Refinement                        
+========================================================================
+Configuration:
+ Representatives: 5
+ Steps per worker: 50
+ Total Steps: 250
+ Method/Basis: hf/cc-pvdz
+ Temperature: 150 K
+ Adaptive operators: False
+ Local Operators: random_displacement, random_rotation, local_twist, correlated_displacement, small_principal_axis_rotation
+ Simulation Box: <box.SimulationBox object at 0x146e8cd5ec70>
+ Worker log: bhmc_workers.log
+Estimated single point time: 0.00 seconds (Energy: -10.142557 Hartree)
+Estimated Phase B time: 0.02 minutes
+Starting parallel local refinement workers...
+ Worker 0: Best energy = -10.142557 Ha, accepted structures = 0, trajectory points = 51
+ Worker 1: Best energy = -10.145639 Ha, accepted structures = 37, trajectory points = 51
+ Worker 2: Best energy = -10.135200 Ha, accepted structures = 0, trajectory points = 51
+ Worker 3: Best energy = -10.140840 Ha, accepted structures = 0, trajectory points = 51
+ Worker 4: Best energy = -10.145721 Ha, accepted structures = 38, trajectory points = 51
+------------------------------------------------------------------------
+Phase B Results
+------------------------------------------------------------------------
+ Total steps: 250
+ Total accepted: 75
+ Overall acceptance rate: 30.00%
+Best energies across workers (Hartree):
+ Min:  -10.145721
+ Max:  -10.135200
+ Mean: -10.141992
+ Std:  0.003873
+========================================================================
+                           Local Optimization                           
+========================================================================
+Optimized 3/5 structures successfully
+Wrote 141 structures to trajectories/phase_a_candidates.xyz
+Wrote 5 structures to trajectories/representatives.xyz
+Wrote 5 structures to trajectories/phase_b_best.xyz
+Wrote 3 structures to trajectories/optimized_representatives.xyz
+========================================================================
+              Rigid-Body Interpolation between Opt. Minima              
+========================================================================
+Interpolating path from Global Min (0) to Local Min (1)...
+Wrote 20 structures to trajectories/interpolated_path_0_to_1.xyz
+Saved energy profile plot for path 0 to 1
+Interpolating path from Global Min (0) to Local Min (2)...

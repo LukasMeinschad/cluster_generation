@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 from typing import Optional
 from scipy.spatial.distance import pdist, squareform
@@ -10,6 +11,7 @@ A various collection of visualization functions for analysis of molecules and BH
 """
 
 from molecule_class import Molecule
+from box import SimulationBox
 
 def _ensure_dir(filepath: str):
     """  
@@ -133,5 +135,85 @@ def plot_pairwise_distance_heatmap(molecule: Molecule, save_path: Optional[str] 
         plt.savefig(save_path, dpi=300)
     plt.close()
 
+def plot_initial_molecules_centers(molecules: list[Molecule],
+                                   submolecule_indices: Optional[list[int]] = None,
+                                   simulation_box: Optional[SimulationBox] = None,
+                                   save_path: Optional[str] = None):
+    """ 
+    Plots the submolecule centers for a list of molecules in a 3D scatter plot
+    """
+    if submolecule_indices is None:
+        raise ValueError("Submolecule indices must be provided for plotting centers.")
     
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    # Create cmap for number of molecules
+    cmap = plt.get_cmap("tab10")
+    for i, molecule in enumerate(molecules):
+        coords = molecule.coordinates
+        for indices in submolecule_indices:
+            sub_coords = coords[indices]
+            center = sub_coords.mean(axis=0)
+            ax.scatter(center[0], center[1], center[2], label=f'Molecule {i} Submolecule {indices}', s=50, color=cmap(i % 10))
+
+    if simulation_box is not None:
+        if simulation_box.box_type == "sphere":
+            # Plot the outer sphere as a wireframe
+            u = np.linspace(0, 2 * np.pi, 100)
+            v = np.linspace(0, np.pi, 100)
+            x = simulation_box.radius * np.outer(np.cos(u), np.sin(v)) + simulation_box.center[0]
+            y = simulation_box.radius * np.outer(np.sin(u), np.sin(v)) + simulation_box.center[1]
+            z = simulation_box.radius * np.outer(np.ones(np.size(u)), np.cos(v)) + simulation_box.center[2]
+            ax.plot_wireframe(x, y, z, color='gray', alpha=0.2, label='Simulation Box (Sphere)',)
+        elif simulation_box.box_type == "cube":
+            raise NotImplementedError("Cube box visualization is not implemented yet.")
+    
+    ax.set_title("Submolecule Centers")
+    ax.set_xlabel("X (Å)")
+    ax.set_ylabel("Y (Å)")
+    ax.set_zlabel("Z (Å)")
+    ax.legend()
+    plt.tight_layout()
+    if save_path:
+        _ensure_dir(save_path)
+        plt.savefig(save_path, dpi=300)
+    plt.close()
+
+    # Plot X-Y, X-Z and Y-Z projections
+    planes = [
+        ("X","Y", (0,1)),
+        ("X","Z", (0,2)),
+        ("Y","Z", (1,2))
+    ]
+    for label_a, label_b, indices in planes:
+        plt.figure(figsize=(8, 6))
+        for i, molecule in enumerate(molecules):
+            coords = molecule.coordinates
+            for sub_indices in submolecule_indices:
+                sub_coords = coords[sub_indices]
+                center = sub_coords.mean(axis=0)
+                plt.scatter(center[indices[0]], center[indices[1]], label=f'Molecule {i} Submolecule {sub_indices}', s=50, color=cmap(i % 10))
+        if simulation_box is not None:
+            if simulation_box.box_type == "sphere":
+                # Plot the outer circle as a contour
+                theta = np.linspace(0, 2 * np.pi, 100)
+                x = simulation_box.radius * np.cos(theta) + simulation_box.center[indices[0]]
+                y = simulation_box.radius * np.sin(theta) + simulation_box.center[indices[1]]
+                plt.plot(x, y, color='gray', alpha=0.2, label='Simulation Box (Sphere)')
+            elif simulation_box.box_type == "cube":
+                raise NotImplementedError("Cube box visualization is not implemented yet.")
+        
+        plt.title(f"Submolecule Centers - {label_a}-{label_b} Projection")
+        plt.xlabel(f"{label_a} (Å)")
+        plt.ylabel(f"{label_b} (Å)")
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        if save_path:
+            base, ext = os.path.splitext(save_path)
+            plane_save_path = f"{base}_{label_a}_{label_b}{ext}"
+            _ensure_dir(plane_save_path)
+            plt.savefig(plane_save_path, dpi=300)
+        plt.close()
+     
 

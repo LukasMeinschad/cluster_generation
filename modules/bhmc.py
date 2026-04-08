@@ -702,6 +702,8 @@ class MultiPhaseBHMC:
             operators = list(op_rates.keys())
             rates = [op_rates[op] for op in operators]
             ax.bar(operators, rates, color='skyblue')
+            # Adjust tick labels for better readability
+            ax.set_xticklabels(operators, rotation=45, ha='right')
             ax.set_title(f"Worker {worker_id}")
             ax.set_xlabel("Operator")
             ax.set_ylabel("Acceptance Rate (%)")

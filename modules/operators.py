@@ -605,7 +605,7 @@ class NonLocalOperators(MolecularOperators):
     def com_com_approach_operator(self,
                                   molecule: "Molecule",
                                   submolecule_indices: List[List[int]],
-                                  approach_distance_range: Tuple[float, float] = (0.1, 0.8),
+                                  approach_distance_range: Tuple[float, float] = (0.05, 0.3),
                                   adaptive: bool = True) -> "Molecule":
         """   
         Implement a com_com_approach operator:
@@ -650,8 +650,10 @@ class NonLocalOperators(MolecularOperators):
         else:
             effective_range = approach_distance_range
         
-        desired_distance = random.uniform(*effective_range)
-        displacement_magnitude = current_distance - desired_distance
+        delta = random.uniform(*effective_range) 
+        new_distance = max(current_distance - delta, 0.1)  # Avoid collapse
+        displacement_magnitude = current_distance - new_distance
+
         displacement_vector = direction * displacement_magnitude
 
         # Move submol2 towards submol1
@@ -661,7 +663,7 @@ class NonLocalOperators(MolecularOperators):
     def com_com_separation_operator(self,
                                       molecule: "Molecule",
                                       submolecule_indices: List[List[int]],
-                                      separation_distance_range: Tuple[float, float] = (0.1, 0.8),
+                                      separation_distance_range: Tuple[float, float] = (0.05, 0.1),
                                       adaptive: bool = True) -> "Molecule":
           """   
           Implement a com_com_separation operator:
@@ -706,8 +708,10 @@ class NonLocalOperators(MolecularOperators):
           else:
                 effective_range = separation_distance_range
           
-          desired_distance = random.uniform(*effective_range)
-          displacement_magnitude = desired_distance - current_distance
+          delta = random.uniform(*effective_range)
+          new_distance = current_distance + delta
+          displacement_magnitude = new_distance - current_distance
+
           displacement_vector = direction * displacement_magnitude
 
           # Move submol2 away from submol1
@@ -937,3 +941,12 @@ if __name__ == "__main__":
     # Check the clash function
     operators = NonLocalOperators()
     print(operators._has_inter_submolecule_clashes(mol, submolecule_indices))
+    # Apply com_com_approach operator
+    perturbed = operators.com_com_approach_operator(mol, submolecule_indices, approach_distance_range=(0.1, 0.5), adaptive=False)
+    print("Original COM-COM distance:", np.linalg.norm(GeometryOps.center_of_mass(mol.coordinates[0:3], mol.masses[0:3]) - GeometryOps.center_of_mass(mol.coordinates[3:6], mol.masses[3:6])))
+    print("Perturbed COM-COM distance:", np.linalg.norm(GeometryOps.center_of_mass(perturbed.coordinates[0:3], perturbed.masses[0:3]) - GeometryOps.center_of_mass(perturbed.coordinates[3:6], perturbed.masses[3:6])))
+    # Apply com_com_separation operator
+    perturbed_sep = operators.com_com_separation_operator(mol, submolecule_indices, separation_distance_range=(0.1, 0.5), adaptive=False)
+    print("Separated COM-COM distance:", np.linalg.norm(GeometryOps.center_of_mass(perturbed_sep.coordinates[0:3], perturbed_sep.masses[0:3]) - GeometryOps.center_of_mass(perturbed_sep.coordinates[3:6], perturbed_sep.masses[3:6])))
+
+

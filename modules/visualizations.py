@@ -207,7 +207,8 @@ def plot_initial_molecules_centers(molecules: list[Molecule],
         plt.title(f"Submolecule Centers - {label_a}-{label_b} Projection")
         plt.xlabel(f"{label_a} (Å)")
         plt.ylabel(f"{label_b} (Å)")
-        plt.legend()
+        # Make legend under the plot in a box with multiple columns
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=len(molecules) // 4)
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
         if save_path:

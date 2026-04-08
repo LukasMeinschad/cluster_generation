@@ -453,8 +453,7 @@ class ClusterInitializer:
             placing_method: Method to place molecules:
                 - "random" for random placement with distance checks
                 - "grid" for systematic grid placement (TODO: Implement)
-                - "sobol" for low-discrepancy sequence placement (TODO: Implement)
-
+                - "sobol" for low-discrepancy sequence placement
         """
         
         if len(submolecules) == 0:
@@ -598,7 +597,88 @@ class ClusterInitializer:
             [2*(q1*q3 - q0*q2), 2*(q2*q3 + q0*q1), 1 - 2*(q1**2 + q2**2)]
         ])
 
+    @staticmethod
+    def partition_sphere(center, radius, n):
+        """
+        Calculates angular partitons for a given sphere
+
+        Each slice will cover an angle of delta_theta = 2 pi / n in longitude (theta), and the full range of latitude (phi) from 0 to pi.
+
+        Parameters:
+            center: Center of the sphere (3D coordinates)
+            radius: Radius of the sphere
+            n: Number of partitions (submolecules)
         
+            Returns:
+               A list of tuples representing start and end longitude (theta)
+        """
+        cx, cy, cz = center
+        partitions = []
+
+        # Calculate the angle step
+        angle_step = (2*np.pi) / n
+
+        for i in range(n):
+            start_angle = i * angle_step
+            end_angle = (i + 1) * angle_step
+            partitions.append((start_angle, end_angle))
+        return partitions            
+
+    @staticmethod
+    def _spherical_to_cartesian(r: float, theta: float, phi: float, center: np.ndarray) -> np.ndarray:
+        """ 
+        Convert spherical coordinates to cartesian coordinates
+        theta: azimut in [0, 2pi)
+        phi : polar angle in [0, pi]
+        """
+        x = center[0] + r * np.sin(phi) * np.cos(theta)
+        y = center[1] + r * np.sin(phi) * np.sin(theta)
+        z = center[2] + r * np.cos(phi)
+        return np.array([x, y, z])
+    
+    @staticmethod
+    def generate_partition_points(center,
+                                  radius,
+                                  n_partitions,
+                                  n_theta = 10,
+                                  n_phi = 10,
+                                  n_r = 5):
+        """ 
+        Generates a grid of points for each partition of the sphere
+
+        Args:
+            center: Center of the sphere (3D coordinates)
+            radius: Radius of the sphere
+            n_partitions: Number of partitions (submolecules)
+            n_theta: Number of points in theta direction per partition
+            n_phi: Number of points in phi direction
+            n_r: Number of points in radial direction
+        """
+        center = np.array(center)
+        slices = ClusterInitializer.partition_sphere(center, radius, n_partitions)
+        all_partition_points = []
+
+        # Define ranges for phi and r (constant for all partitions)
+        phi_values = np.linspace(0, np.pi, n_phi)
+        r_values = np.linspace(0, radius, n_r)
+
+        for start_theta, end_theta in slices:
+            partition_points = []
+            theta_values = np.linspace(start_theta, end_theta, n_theta)
+
+            # Create the grid
+            for r in r_values:
+                for phi in phi_values:
+                    for theta in theta_values:
+                        points = ClusterInitializer._spherical_to_cartesian(r, theta, phi, center)
+                        partition_points.append(points)
+            all_partition_points.append(np.array(partition_points))
+        return all_partition_points
+    
+    
+    
+
+
 
     
 # =============================== Debugging and Testing ===============================
@@ -780,6 +860,55 @@ if __name__ == "__main__":
     energy = energy_evaluator.evaluate_energy(molecule) 
     print(f"\nEnergy evaluation test:")
     print(f"  Evaluated energy: {energy:.6f} Hartree")
+
+
+    # Test the sphere partition function and create a plot
+    center_point = np.array([0.0, 0.0, 0.0])
+    radius = 5.0
+    n_submolecules = 4
+    partitions = ClusterInitializer.partition_sphere(center_point, radius, n_submolecules)
+    print(f"\nSphere partitioning test:")
+    for i, (start, end) in enumerate(partitions):
+        print(f"  Submolecule {i+1}: Start angle (theta) = {start:.2f} rad, End angle (theta) = {end:.2f} rad")
+    
+    plt.figure(figsize=(6, 6))
+    theta = np.linspace(0, 2*np.pi, 100)
+    for i, (start, end) in enumerate(partitions):
+        plt.fill_between(theta, 0, radius, where=((theta >= start) & (theta < end)), alpha=0.5, label=f'Submolecule {i+1}')
+    plt.title('Sphere Partitioning for Submolecules')
+    plt.xlabel('Theta (radians)')
+    plt.ylabel('Radius (Angstrom)')
+    plt.legend()
+    plt.savefig("figures/sphere_partitioning.png")
+
+
+    # Test the grid point generation for the sphere partitions
+    n_theta = 10
+    n_phi = 5
+    n_r = 3
+    partition_points = ClusterInitializer.generate_partition_points(
+        center=center_point,
+        radius=radius,
+        n_partitions=n_submolecules,
+        n_theta=n_theta,
+        n_phi=n_phi,
+        n_r=n_r
+    )
+
+    # Plot in 3D plot
+    from mpl_toolkits.mplot3d import Axes3D
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    colors = ['red', 'green', 'blue', 'orange']
+    for i, points in enumerate(partition_points):
+        ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=20, color=colors[i], alpha=0.6, label=f'Submolecule {i+1}')
+    ax.set_title('Grid Points in Sphere Partitions')
+    ax.set_xlabel('X (Angstrom)')
+    ax.set_ylabel('Y (Angstrom)')
+    ax.set_zlabel('Z (Angstrom)')
+    ax.legend()
+    plt.savefig("figures/partition_points.png")
+
 
 #    test_initializer(
 #        xyz_file=xyz_file,

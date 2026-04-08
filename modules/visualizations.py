@@ -145,7 +145,7 @@ def plot_initial_molecules_centers(molecules: list[Molecule],
     if submolecule_indices is None:
         raise ValueError("Submolecule indices must be provided for plotting centers.")
     
-    fig = plt.figure(figsize=(10, 8))
+    fig = plt.figure(figsize=(12, 8))
     ax = fig.add_subplot(111, projection='3d')
     # Create cmap for number of molecules
     cmap = plt.get_cmap("tab10")
@@ -172,7 +172,8 @@ def plot_initial_molecules_centers(molecules: list[Molecule],
     ax.set_xlabel("X (Å)")
     ax.set_ylabel("Y (Å)")
     ax.set_zlabel("Z (Å)")
-    ax.legend()
+    # Make legend under the plot in a box with multiple columns
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=len(molecules) // 4)
     plt.tight_layout()
     if save_path:
         _ensure_dir(save_path)

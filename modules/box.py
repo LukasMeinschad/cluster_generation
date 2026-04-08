@@ -94,7 +94,8 @@ class SimulationBox:
         Args:
             coordinates: Array of shape (N, 3) representing atomic coordinates
         """
-        coords = np.atleast_3d(coordinates)
+        coords = np.atleast_2d(coordinates)
+        
 
         if self.box_type == "sphere":
             dist = np.linalg.norm(coords - self.center, axis=-1)
@@ -109,7 +110,7 @@ class SimulationBox:
 
     def apply_boundary_conditions(self,
                                   coordinates: np.ndarray,
-                                  method: str = "reject") -> Tuple[np.ndarray, bool]:
+                                  method: str = "reflect") -> Tuple[np.ndarray, bool]:
         """   
         Applys the boundary condition to coordinates.
 
@@ -126,7 +127,55 @@ class SimulationBox:
         elif method == "wrap":
             #TODO Implement this someday
             raise NotImplementedError("Wrap method is not implemented yet")
+        elif method == "rescale":
+            # Rescales the coordinates along its COM vector to fit inside the box
+            return self._rescale_coordinates(coords)
         
+    
+    def _rescale_coordinates(self, 
+                             coordinates: np.ndarray,
+                             scale_factor: float = 0.5) -> Tuple[np.ndarray, bool]:
+        """ 
+        Rescales the coordinates along its COM vector to fit inside the box
+
+        Algorithm:
+        1. Compute the geometric center of the molecule
+        2. Rescale the COM so that r_new = r_old * (R - epsilon) / r_old
+
+        Args:
+            coordinates: Array of shape (N, 3) representing atomic coordinates
+            scale_factor: Percentage factor of box radius to rescale to (default is 0.5, meaning 50% inside the box)
+        """
+        coords = coordinates.copy()
+        centroid = np.mean(coords, axis=0)
+        com_vec = centroid - self.center
+        dist = np.linalg.norm(com_vec)
+        if dist == 0:
+            # If the COM is exactly at the center, we can just place it at a random point inside
+            return self.get_random_position(n_points=len(coords)), True
+        direction = com_vec / dist
+        if self.box_type == "sphere":
+            r_epsilon = self.radius * scale_factor
+            new_dist = min(dist, self.radius - r_epsilon)
+            new_centroid = self.center + direction * new_dist
+            translation = new_centroid - centroid
+            coords += translation
+            return coords, self.is_inside(coords)
+        elif self.box_type == "cube":
+            # For cube we need to rescale each coordinate separately
+            half_dims = self.box_dimensions / 2.0
+            rel_coords = coords - self.center
+            for i in range(3):
+                if abs(rel_coords[:, i]).max() > half_dims[i] * scale_factor:
+                    scale = (half_dims[i] * scale_factor) / abs(rel_coords[:, i]).max()
+                    rel_coords[:, i] *= scale
+            new_coords = self.center + rel_coords
+            return new_coords, self.is_inside(new_coords)
+        else:
+            raise ValueError("box_type must be 'sphere' or 'cube'")
+        
+
+
     def _reflect_coordinates(self, coordinates: np.ndarray) -> Tuple[np.ndarray, bool]:
         """   
         Reflects the molecule into the box as a rigid body
@@ -249,3 +298,89 @@ class SimulationBox:
             box_dimensions=np.array(data["box_dimensions"]) if data.get("box_dimensions") is not None else None,
             center=np.array(data["center"]) if data.get("center") is not None else None
         )
+
+
+def _run_box_self_tests() -> None:
+    print("\n" + "=" * 70)
+    print("Simulation Box Self Tests")
+    print("=" * 70)
+
+    sphere = SimulationBox(box_type="sphere", radius=5.0, center=np.array([0.0, 0.0, 0.0]))
+
+    # Generate coords outside the sphere
+    coords_outside = np.array([
+        [7.0, 0.0, 0.0],
+        [7.5, 0.2, -0.1],
+        [6.8, -0.3, 0.1],
+    ])
+    print("\n [Sphere] Outside check:", sphere.is_inside(coords_outside))  # Should be False
+    
+    # Test reject
+    rejected_coords, ok_reject = sphere.apply_boundary_conditions(coords_outside, method="reject")
+    print(" [Sphere] Reject method:", ok_reject)  # Should be False
+    print(" [Sphere]Rejected coords unchanged:", np.allclose(rejected_coords, coords_outside))  # Should be True
+
+    # Test Reflect should move rigid body inside
+    reflected_coords, ok_reflect = sphere.apply_boundary_conditions(coords_outside, method="reflect")
+    print(" [Sphere] Reflect method:", ok_reflect)  # Should be True
+    print(" [Sphere] Reflected coords inside:", sphere.is_inside(reflected_coords))
+
+    # Rigid-body check: pairwise distances should be preserved
+    def pairwise_distances(c):
+        n = len(c)
+        d = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                d.append(np.linalg.norm(c[i] - c[j]))
+        return np.array(d)
+    d_before = pairwise_distances(coords_outside)
+    d_after = pairwise_distances(reflected_coords)
+    print(" [Sphere] Rigid-body preserved:", np.allclose(d_before, d_after, atol=1e-8))
+
+    # Test rescaling should move the COM inside
+    rescaled_coords, ok_rescale = sphere.apply_boundary_conditions(coords_outside, method="rescale")
+    print(" [Sphere] Rescale method:", ok_rescale)  # Should be True
+    print(" [Sphere] Rescaled coords inside:", sphere.is_inside(rescaled_coords))
+
+    # Test if rescale preserves rigid_body
+    d_rescaled = pairwise_distances(rescaled_coords)
+    print(" [Sphere] Rescale rigid-body preserved:", np.allclose(d_before, d_rescaled, atol=1e-8))
+
+    # Random points inside the sphere should all be inside
+    rnd = sphere.get_random_position(n_points=1000)
+    inside_random = sphere.is_inside(rnd)
+    print(" [Sphere] Random points inside check:", np.all(inside_random))  #
+
+    # Make a figure of how the reflection works as an X-Y projection
+    
+    # First make coords that are outside in x but inside in y and z
+    coords_outside_x_y = np.array([
+        [7.0, 0.0, 0.0],
+        [7.5, 0.2, -0.1],
+        [6.8, -0.3, 0.1],
+    ])
+    reflected_coords_xy, _ = sphere.apply_boundary_conditions(coords_outside_x_y, method="reflect")
+    # Add rescaled coords for comparison
+    rescaled_coords_xy, _ = sphere.apply_boundary_conditions(coords_outside_x_y, method="rescale")
+
+
+    # Plot the original and reflected points
+    plt.figure(figsize=(6, 6))
+    plt.scatter(coords_outside_x_y[:, 0], coords_outside_x_y[:, 1], color='red', label='Original (Outside)', s=100)
+    plt.scatter(reflected_coords_xy[:, 0], reflected_coords_xy[:, 1], color='blue', label='Reflected (Inside)', s=100)
+    plt.scatter(rescaled_coords_xy[:, 0], rescaled_coords_xy[:, 1], color='green', label='Rescaled (Inside)', s=100, marker='x')
+    # Plot the circle representing the sphere boundary
+    theta = np.linspace(0, 2 * np.pi, 100)
+    x_circle = sphere.radius * np.cos(theta) + sphere.center[0]
+    y_circle = sphere.radius * np.sin(theta) + sphere.center[1]
+    plt.plot(x_circle, y_circle, color='gray', linestyle='--', label='Sphere Boundary')
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.title("Reflection of Points into Sphere")
+    plt.legend()
+    plt.grid(True)
+    plt.axis('equal')
+    plt.savefig("figures/simulation_box_reflection_test.png", dpi=300)
+
+if __name__ == "__main__":
+    _run_box_self_tests()

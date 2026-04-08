@@ -216,7 +216,7 @@ class MultiPhaseBHMC:
         all_accepted_structures = []
         self.worker_trajectories = {}  # Store for plotting
         self.worker_box_updates = {}   # Store adaptive box updates for plotting
-        
+        self.worker_operator_acceptance = {}  # Store operator acceptance rates for analysis 
 
 
         for worker_result in results:
@@ -229,6 +229,7 @@ class MultiPhaseBHMC:
             all_accepted_structures.extend(accepted)
             self.worker_trajectories[wid] = trajectory
             self.worker_box_updates[wid] = box_updates
+            self.worker_operator_acceptance[wid] = operator_rates
             self._log(
                 f"  Worker {wid}: {len(accepted)} structures accepted, "
                 f"{len(trajectory)} trajectory points, {len(box_updates)} box updates"
@@ -268,6 +269,7 @@ class MultiPhaseBHMC:
         # Plot worker trajectories
         self.plot_worker_trajectories()
         self.plot_adaptive_box_updates()
+        self.plot_worker_operator_acceptance()
         
         return self.phase_a_structures
     
@@ -682,6 +684,38 @@ class MultiPhaseBHMC:
         plt.tight_layout()
         plt.savefig(save_path, dpi=300)
         plt.close()
+
+    # plot operator acceptance rates for each worker
+    def plot_worker_operator_acceptance(self,
+                                      save_path: str = "figures/worker_operator_acceptance.png"):
+        """  
+        Plots the Operator Acceptance Rates for each worker in Phase A as a bar chart
+        """ 
+        import matplotlib.pyplot as plt
+        from pathlib import Path
+        ncols = len(self.worker_operator_acceptance) // 4 
+        nrows = (len(self.worker_operator_acceptance) + ncols - 1) // ncols
+        fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), sharey=True)
+        axes = axes.flatten() if len(self.worker_operator_acceptance) > 1 else [axes]
+        for i, (worker_id, op_rates) in enumerate(sorted(self.worker_operator_acceptance.items(), key=lambda x: x[0])):
+            ax = axes[i]
+            operators = list(op_rates.keys())
+            rates = [op_rates[op] for op in operators]
+            ax.bar(operators, rates, color='skyblue')
+            ax.set_title(f"Worker {worker_id}")
+            ax.set_xlabel("Operator")
+            ax.set_ylabel("Acceptance Rate (%)")
+            ax.set_ylim(0, 100)
+            ax.grid(True, alpha=0.3)
+        # Hide any unused subplots
+        for j in range(i + 1, len(axes)):
+            axes[j].axis('off')
+        plt.tight_layout()
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(save_path, dpi=300)
+        plt.close()
+
+
 
     # ========================= Interpolation ====
 

@@ -29,7 +29,7 @@ if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
 
-    N_WORKERS = 5
+    N_WORKERS = 30
 
     # Parse the Arguments
     args = get_args()
@@ -64,14 +64,18 @@ if __name__ == "__main__":
         basis="cc-pvdz",
         box_type="sphere",
         box_scale_factor=1.8,
-        min_distance=1.5,
+        min_distance=0.8,
         optimize_submolecules=True,
         verbose=False
     )
     initializer = ClusterInitializer(config=init_config, logger=init_logger)
     initial_molecules, submol_indices, simulation_box = initializer.initialize_from_xyz(
-        args.i[0], 
-        n_configurations=N_WORKERS
+        args.i[0],
+        n_workers = N_WORKERS, 
+        n_configurations=10000,
+        placing_method = "sobol",
+        energy_backend = "xtb",
+        energy_xtb_method = "GFN2-xTB"
     )
 
     plot_initial_molecules_centers(initial_molecules, submol_indices, simulation_box, save_path="figures/initial_molecules_centers.png")
@@ -105,7 +109,7 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=300,
+        n_structures_per_worker=3000,
         n_processes=N_WORKERS
     )
 

@@ -24,6 +24,8 @@ import multiprocessing
 # Import sobol sequence generator
 from scipy.stats import qmc
 
+# Time module
+import time
 
 # Logger import
 from logger import Logger
@@ -452,8 +454,9 @@ class ClusterInitializer:
             simulation_box: Simulation box to place molecules in
             placing_method: Method to place molecules:
                 - "random" for random placement with distance checks
-                - "grid" for systematic grid placement (TODO: Implement)
+                - "partition" partition based placemement in the simulation box (for spherical currently)
                 - "sobol" for low-discrepancy sequence placement
+                
         """
         
         if len(submolecules) == 0:
@@ -642,7 +645,10 @@ class ClusterInitializer:
                                   n_partitions,
                                   n_theta = 10,
                                   n_phi = 10,
-                                  n_r = 5):
+                                  n_r = 5,
+                                  spacing: Optional[str] = "linear",
+                                  sobol_scramble: bool = True,
+                                  sobol_seed: Optional[int] = None):
         """ 
         Generates a grid of points for each partition of the sphere
 
@@ -653,29 +659,83 @@ class ClusterInitializer:
             n_theta: Number of points in theta direction per partition
             n_phi: Number of points in phi direction
             n_r: Number of points in radial direction
+
+        spacing methods:
+            - "linear": using a linear grid in (r, phi, theta)
+            - "equal_volume_grid" a deterministic grid closer to uniform 3D density
+            - "sobol" using quasi-random sampling uniformly in volume per partition        
         """
-        center = np.array(center)
-        slices = ClusterInitializer.partition_sphere(center, radius, n_partitions)
+        center = np.asarray(center, dtype=np.float64)
+        spacing = (spacing or "linear").lower().strip()
+
+        if radius <= 0:
+            raise ValueError("Radius must be positive")
+        if n_partitions <= 0:
+            raise ValueError("n_partitions must be > 0") 
+
+        slices = ClusterInitializer.partition_sphere(center, radius, n_partitions) 
         all_partition_points = []
 
-        # Define ranges for phi and r (constant for all partitions)
-        phi_values = np.linspace(0, np.pi, n_phi)
-        r_values = np.linspace(0, radius, n_r)
+        if spacing not in {"linear", "equal_volume_grid", "sobol"}:
+            raise ValueError(f"Unknown spacing method: {spacing}. Choose from 'linear', 'equal_volume_grid', or 'sobol'.")
+    
+        for p_idx, (theta_start, theta_end) in enumerate(slices):
+            if spacing == "sobol":
+                # Keep the point count consistent with linear grid
+                n_points = max(1, n_theta * n_phi * n_r)
+                
+                # Generate engine per partition
+                seed = None if sobol_seed is None else sobol_seed + p_idx
+                engine = qmc.Sobol(d=3, scramble=sobol_scramble, seed=seed)
+                u = engine.random(n=n_points)
 
-        for start_theta, end_theta in slices:
+                # Uniform sample in the wedge volume:
+                # r^3 ~ U(0, R^3), cosphi = U(-1,1) theta ~ U(theta0, theta1)
+                r = radius * np.cbrt(u[:, 0])  
+                cos_phi = 2.0 * u[:, 1] - 1.0
+                sin_phi = np.sqrt(np.clip(1.0 - cos_phi * cos_phi, 0.0, 1.0))
+                theta = theta_start + (theta_end - theta_start) * u[:, 2]
+
+                # Transform to cartesian
+                x = center[0] + r * sin_phi * np.cos(theta) 
+                y = center[1] + r * sin_phi * np.sin(theta)
+                z = center[2] + r * cos_phi
+                points = np.column_stack((x, y, z))
+                all_partition_points.append(points)
+                continue
+            
+            theta_values = np.linspace(theta_start, theta_end, n_theta, endpoint=False)
+
+            # grid based methods
+            if spacing == "linear":
+                phi_values = np.linspace(0, np.pi, n_phi)
+                r_values = np.linspace(0, radius, n_r)
+            elif spacing == "equal_volume_grid":
+                # Midpoints to avoid piling exactly at poles and center
+                j = np.arange(n_phi)
+                k = np.arange(n_r)
+
+                cos_phi_values = -1.0 + 2.0 * (j + 0.5) / n_phi
+                phi_values = np.arccos(np.clip(cos_phi_values, -1.0, 1.0))
+
+                # r^3 uniformly
+                r_values = radius * np.cbrt((k + 0.5) / n_r)
+
             partition_points = []
-            theta_values = np.linspace(start_theta, end_theta, n_theta)
-
-            # Create the grid
             for r in r_values:
                 for phi in phi_values:
+                    sin_phi = np.sin(phi)
+                    cos_phi = np.cos(phi)
                     for theta in theta_values:
-                        points = ClusterInitializer._spherical_to_cartesian(r, theta, phi, center)
-                        partition_points.append(points)
+                        x = center[0] + r * sin_phi * np.cos(theta)
+                        y = center[1] + r * sin_phi * np.sin(theta)
+                        z = center[2] + r * cos_phi
+                        partition_points.append([x, y, z])
             all_partition_points.append(np.array(partition_points))
         return all_partition_points
     
-    
+
+            
     
 
 
@@ -882,32 +942,55 @@ if __name__ == "__main__":
     plt.savefig("figures/sphere_partitioning.png")
 
 
-    # Test the grid point generation for the sphere partitions
-    n_theta = 10
-    n_phi = 5
-    n_r = 3
-    partition_points = ClusterInitializer.generate_partition_points(
-        center=center_point,
-        radius=radius,
-        n_partitions=n_submolecules,
-        n_theta=n_theta,
-        n_phi=n_phi,
-        n_r=n_r
-    )
+    # Test three different spacing methods for partition point generation^
+    n_theta = 40
+    n_phi = 20
+    n_r = 20
+    
+    times = []
+    for spacing_method in ["linear", "equal_volume_grid", "sobol"]:
+        
+        times = []
+        start_time = time.time()
+        points = ClusterInitializer.generate_partition_points(
+            center=center_point,
+            radius=radius,
+            n_partitions=n_submolecules,
+            n_theta=n_theta,
+            n_phi=n_phi,
+            n_r=n_r,
+            spacing=spacing_method,
+            sobol_scramble=True,
+            sobol_seed=42
+        )
+        end_time = time.time()
+        elapsed = end_time - start_time
+        times.append(elapsed)
+        total_points = sum(len(p) for p in points)
+        print(f"\nPartition point generation test with spacing method '{spacing_method}':")
+        print(f"  Total points generated: {total_points}")
+        # Make 3D plot of sampled points for the first partition
+        fig = plt.figure(figsize=(8, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        for p_idx, partition_points in enumerate(points):
+            ax.scatter(partition_points[:, 0], partition_points[:, 1], partition_points[:, 2], s=20, alpha=0.6, label=f'Partition {p_idx+1}')
+        ax.set_title(f'Partition Points with {spacing_method.capitalize()} Spacing')
+        ax.set_xlabel('X (Angstrom)')
+        ax.set_ylabel('Y (Angstrom)')
+        ax.set_zlabel('Z (Angstrom)')
+        ax.legend()
+        plt.savefig(f"figures/partition_points_{spacing_method}.png")
 
-    # Plot in 3D plot
-    from mpl_toolkits.mplot3d import Axes3D
-    fig = plt.figure(figsize=(8, 8))
-    ax = fig.add_subplot(111, projection='3d')
-    colors = ['red', 'green', 'blue', 'orange']
-    for i, points in enumerate(partition_points):
-        ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=20, color=colors[i], alpha=0.6, label=f'Submolecule {i+1}')
-    ax.set_title('Grid Points in Sphere Partitions')
-    ax.set_xlabel('X (Angstrom)')
-    ax.set_ylabel('Y (Angstrom)')
-    ax.set_zlabel('Z (Angstrom)')
-    ax.legend()
-    plt.savefig("figures/partition_points.png")
+    # Plot timing results for partition point generation
+    plt.figure(figsize=(6, 4))
+    plt.bar(["Linear", "Equal Volume Grid", "Sobol"], times, color=['blue', 'orange', 'green'])
+    plt.ylabel('Time (seconds)')
+    plt.title('Timing for Partition Point Generation')
+    plt.savefig("figures/partition_point_generation_timing.png")
+
+      
+
+
 
 
 #    test_initializer(

@@ -1,5 +1,4 @@
 import numpy as np
-import itertools
 from typing import Tuple, List, Optional, Dict
 from dataclasses import dataclass
 from mendeleev.fetch import fetch_table
@@ -7,9 +6,10 @@ import networkx as nx
 from string import digits
 import time 
 import matplotlib.pyplot as plt
-
+from numba import njit, prange
 # Dataclass are used for simpler data structures
 
+from geometry import GeometryOps
 
 @dataclass
 class Bond:
@@ -94,54 +94,71 @@ class GeometryCalculator:
 
 
 class BondClassifier:
-    """
-    Classifies bonds as covalent or hydrogen bonds
-    """
+    """Bond thresholds and numba helpers for pairwise bond classification."""
     
     COVALENT_THRESHOLD = 0.7
     HYDROGEN_BOND_LOWER = 0.3
     HYDROGEN_BOND_UPPER = 0.7
     
-    def __init__(self, molecule: 'Molecule'):
-        self.molecule = molecule
-        self.geometry = GeometryCalculator()
-    
-    def classify_bond(self, idx1: int, idx2: int) -> Optional[Bond]:
-        """
-        Classify bond between two atoms
-        Returns Bond object with type or None if no bond
-        """
-        label1 = self.molecule.atom_labels[idx1]
-        label2 = self.molecule.atom_labels[idx2]
-        
-        distance = self.geometry.calculate_distance(
-            self.molecule.coordinates[idx1],
-            self.molecule.coordinates[idx2]
-        )
-        
-        radius_sum = (
-            self.molecule.get_covalent_radius(label1) +
-            self.molecule.get_covalent_radius(label2)
-        )
-        
-        strength = self.geometry.calculate_bond_strength(distance, radius_sum)
-        
-        if strength >= self.COVALENT_THRESHOLD:
-            return Bond(label1, label2, strength)
-        elif self.HYDROGEN_BOND_LOWER <= strength < self.HYDROGEN_BOND_UPPER:
-            if self._is_hydrogen_bond(label1, label2):
-                return Bond(label1, label2, strength)
-        
-        return None
-    
-    def _is_hydrogen_bond(self, label1: str, label2: str) -> bool:
-        """Check if bond involves H and O (can be extended)"""
-        elements = {
-            Molecule._remove_digits_from_label(label1),
-            Molecule._remove_digits_from_label(label2)
-        }
-        return "H" in elements and "O" in elements
+    @staticmethod
+    @njit(fastmath=True)
+    def _pairwise_bond_scan(
+        coords: np.ndarray,
+        cov_radii: np.ndarray,
+        is_h: np.ndarray,
+        is_o: np.ndarray,
+        cov_thr: float,
+        hb_lo: float,
+        hb_hi: float
+        ):
+        """Numba kernel that classifies all atom pairs into bond buckets."""
+        n = coords.shape[0]
+        max_pairs = n *(n-1) // 2
 
+        cov_i = np.empty(max_pairs, dtype=np.int64)
+        cov_j = np.empty(max_pairs, dtype=np.int64)
+        cov_s = np.empty(max_pairs, dtype=np.float64)
+        n_cov = 0
+
+        hb_i = np.empty(max_pairs, dtype=np.int64)
+        hb_j = np.empty(max_pairs, dtype=np.int64)
+        hb_s = np.empty(max_pairs, dtype=np.float64)
+        n_hb = 0
+
+        for i in range(n-1):
+            xi, yi, zi = coords[i,0], coords[i,1], coords[i,2]
+            ri = cov_radii[i]
+            hi = is_h[i]
+            oi = is_o[i]
+
+            for j in range(i+1, n):
+                dx = xi - coords[j,0]
+                dy = yi - coords[j,1]
+                dz = zi - coords[j,2]
+                dist = np.sqrt(dx*dx + dy*dy + dz*dz)
+                rsum = ri + cov_radii[j]
+                if rsum <= 1e-14:
+                    continue
+
+                # calculate bond strength
+                s = np.exp(-((dist/rsum) - 1))
+                if s >= cov_thr:
+                    cov_i[n_cov] = i
+                    cov_j[n_cov] = j
+                    cov_s[n_cov] = s
+                    n_cov += 1
+                elif hb_lo <= s < hb_hi:
+                    # H-O only
+                    if (hi and is_o[j]) or (oi and is_h[j]):
+                        hb_i[n_hb] = i
+                        hb_j[n_hb] = j
+                        hb_s[n_hb] = s
+                        n_hb += 1
+    
+        return (
+            cov_i[:n_cov], cov_j[:n_cov], cov_s[:n_cov],
+            hb_i[:n_hb], hb_j[:n_hb], hb_s[:n_hb]
+        )
 
 class HydrogenBondAnalyzer:
     """Analyzes hydrogen bond configurations in molecules"""
@@ -151,95 +168,73 @@ class HydrogenBondAnalyzer:
         self.geometry = GeometryCalculator()
     
     def find_configurations(self) -> List[HBondConfiguration]:
-        """Find all H-bond configurations: Donor-H-Acceptor"""
-        configurations = []
-        donor_indices = self._get_donor_indices()
-        acceptor_indices = self._get_acceptor_indices()
-        
-        for donor_idx in donor_indices:
-            configs = self._find_configs_for_donor(donor_idx, acceptor_indices)
-            configurations.extend(configs)
-        
-        return configurations
-    
-    def _find_configs_for_donor(
-        self, 
-        donor_idx: int, 
-        acceptor_indices: List[int]
-    ) -> List[HBondConfiguration]:
-        """Find all configurations for a specific donor"""
-        configurations = []
-        donor_label = self.molecule.atom_labels[donor_idx]
-        donor_bonds = self.molecule.get_bonds_for_atom(donor_label, bond_type='covalent')
-        
-        for acceptor_idx in acceptor_indices:
-            if donor_idx == acceptor_idx:
-                continue
-            
-            acceptor_label = self.molecule.atom_labels[acceptor_idx]
-            acceptor_bonds = self.molecule.get_bonds_for_atom(acceptor_label, bond_type='hydrogen')
-            
-            # Find common hydrogen atoms
-            h_atoms = self._find_common_hydrogens(donor_bonds, acceptor_bonds, donor_label, acceptor_label)
-            
-            for h_label in h_atoms:
-                h_idx = np.where(self.molecule.atom_labels == h_label)[0][0]
-                config = HBondConfiguration(donor_idx, h_idx, acceptor_idx)
-                config.angle = self._calculate_config_angle(config)
-                config.donor_acceptor_distance = self._calculate_donor_acceptor_distance(config)
-                configurations.append(config)
-        
-        return configurations
-
-    def _calculate_donor_acceptor_distance(self, config: HBondConfiguration) -> float:
         """  
-        Helper function to calculate the distacne between the donor and acceptor atoms
+        Find all H-bond configurations of type Donor-H-Acceptor in molecule
+        """
+        # Ensure the bonds exist
+        covalent_bonds, hydrogen_bonds = self.molecule.get_bonds()
 
-        Args:
-            config (HBondConfiguration): The hydrogen bond configuration for which to calculate the distance
-        """    
-        coords_donor = self.molecule.coordinates[config.donor_idx]
-        coords_acceptor = self.molecule.coordinates[config.acceptor_idx]
-        return self.geometry.calculate_distance(coords_donor, coords_acceptor)
+        atom_labels = self.molecule.atom_labels
+        coords = self.molecule.coordinates
+        n_atoms = len(atom_labels)
 
+        # One-time maps and masks
+        label_to_idx = {label: i for i, label in enumerate(atom_labels)}
+        elements = np.array(
+            [Molecule._remove_digits_from_label(lbl) for lbl in atom_labels], dtype=object
+        )
+        donor_indices = np.where(np.isin(elements, self.molecule.hbond_donors))[0]
+        acceptor_indices = np.where(np.isin(elements, self.molecule.hbond_acceptors))[0]
+        hydrogen_indices = set(np.where(elements == "H")[0])
 
+        # Build neighbor sets once (index based, no repeated lookups)
+        cov_neighbors = [set() for _ in range(n_atoms)]
+        for b in covalent_bonds:
+            i = label_to_idx[b.atom1]
+            j = label_to_idx[b.atom2]
+            cov_neighbors[i].add(j)
+            cov_neighbors[j].add(i)
 
-    def _find_common_hydrogens(
-        self, 
-        donor_bonds: List[Bond], 
-        acceptor_bonds: List[Bond],
-        donor_label: str,
-        acceptor_label: str
-    ) -> set:
-        """Find hydrogen atoms common to donor and acceptor bonds"""
-        donor_neighbors = {b.get_other_atom(donor_label) for b in donor_bonds}
-        acceptor_neighbors = {b.get_other_atom(acceptor_label) for b in acceptor_bonds}
+        h_neighbors = [set() for _ in range(n_atoms)]
+        for b in hydrogen_bonds:
+            i = label_to_idx[b.atom1]
+            j = label_to_idx[b.atom2]
+            h_neighbors[i].add(j)
+            h_neighbors[j].add(i)
         
-        common = donor_neighbors.intersection(acceptor_neighbors)
-        common.discard(None)
-        return common
+        # Initialize configurations list
+        configurations: List[HBondConfiguration] = []
+
+        for donor_idx in donor_indices:
+            donor_cov = cov_neighbors[donor_idx]
+            if not donor_cov:
+                continue
+
+            donor_coords = coords[donor_idx]
+
+            for acceptor_idx in acceptor_indices:
+                if donor_idx == acceptor_idx:
+                    continue
+
+                # H must be covalently bound to donor and hydrogen bonded to acceptor
+                common_h = donor_cov.intersection(h_neighbors[acceptor_idx]).intersection(hydrogen_indices)  
+                if not common_h:
+                    continue
+                acceptor_coords = coords[acceptor_idx]
+                da_dist = self.geometry.calculate_distance(donor_coords, acceptor_coords) 
+
+                for h_idx in common_h:
+                    h_coord = coords[h_idx]
+                    angle = self.geometry.calculate_angle(donor_coords, h_coord, acceptor_coords) 
+
+                    configurations.append(
+                        HBondConfiguration(donor_idx, h_idx, acceptor_idx, angle=angle, donor_acceptor_distance=da_dist)
+                    )  
+
+        return configurations
+
+
     
-    def _calculate_config_angle(self, config: HBondConfiguration) -> float:
-        """Calculate angle for H-bond configuration"""
-        coords_donor = self.molecule.coordinates[config.donor_idx]
-        coords_h = self.molecule.coordinates[config.hydrogen_idx]
-        coords_acceptor = self.molecule.coordinates[config.acceptor_idx]
-        
-        return self.geometry.calculate_angle(coords_donor, coords_h, coords_acceptor)
-    
-    def _get_donor_indices(self) -> List[int]:
-        """Get indices of potential H-bond donors"""
-        return [
-            idx for idx, label in enumerate(self.molecule.atom_labels)
-            if Molecule._remove_digits_from_label(label) in self.molecule.hbond_donors
-        ]
-    
-    def _get_acceptor_indices(self) -> List[int]:
-        """Get indices of potential H-bond acceptors"""
-        return [
-            idx for idx, label in enumerate(self.molecule.atom_labels)
-            if Molecule._remove_digits_from_label(label) in self.molecule.hbond_acceptors
-        ]
 
 
 class Molecule:
@@ -494,24 +489,32 @@ class Molecule:
     
     # Bond analysis
     def compute_bonds(self) -> None:
-        """Compute all bonds in molecule"""
-        classifier = BondClassifier(self)
-        covalent = []
-        hydrogen = []
+        """Compute covalent and hydrogen bonds from a single numba pair scan."""
+        elements = np.array([self._remove_digits_from_label(label) for label in self.atom_labels], dtype=object)
+        is_h = (elements == "H").astype(np.bool_)
+        is_o = (elements == "O").astype(np.bool_)
+
+        cov_i, cov_j, cov_s, hb_i, hb_j, hb_s = BondClassifier._pairwise_bond_scan(
+            self.coordinates,
+            self.covalent_radii,
+            is_h,
+            is_o,
+            BondClassifier.COVALENT_THRESHOLD,
+            BondClassifier.HYDROGEN_BOND_LOWER,
+            BondClassifier.HYDROGEN_BOND_UPPER
+        )
+        self._covalent_bonds = [
+            Bond(self.atom_labels[i], self.atom_labels[j], float(s))
+            for i, j, s in zip(cov_i, cov_j, cov_s)
         
-        n_atoms = len(self.atom_labels)
-        for i, j in itertools.combinations(range(n_atoms), 2):
-            bond = classifier.classify_bond(i, j)
-            if bond:
-                if bond.strength >= BondClassifier.COVALENT_THRESHOLD:
-                    covalent.append(bond)
-                else:
-                    hydrogen.append(bond)
-        
-        self._covalent_bonds = covalent
-        self._hydrogen_bonds = hydrogen
+        ]
+        self._hydrogen_bonds = [
+            Bond(self.atom_labels[i], self.atom_labels[j], float(s))
+            for i, j, s in zip(hb_i, hb_j, hb_s)
+        ]
         self._bonds_computed = True
-    
+
+
     def get_bonds(self, force_recompute: bool = False) -> Tuple[List[Bond], List[Bond]]:
         """Get covalent and hydrogen bonds"""
         if not self._bonds_computed or force_recompute:
@@ -585,16 +588,21 @@ class Molecule:
         """Calculate geometric center of the molecule"""
         return np.mean(self.coordinates, axis=0)
 
-    def compute_rmsd(self, other: 'Molecule') -> float:
+    def compute_rmsd(self, other: 'Molecule', optimal_correspondence: bool = False) -> float:
         """ 
-        Computes the RMSD between this molecule and another
+        Computes the RMSD between this molecule and another molecule.
+
+        If optimal_correspondence is True, it will use the Hungarian algorithm to find the best atom mapping before calculating RMSD.
         """
         if len(self.coordinates) != len(other.coordinates):
             raise ValueError("Molecules must have the same number of atoms for RMSD calculation")
-        
-        diff = self.coordinates - other.coordinates
-        rmsd = np.sqrt(np.mean(np.sum(diff**2, axis=1)))
-        return rmsd
+        if optimal_correspondence:
+            coords2 = GeometryOps.find_optimal_correspondence(self.coordinates, other.coordinates)
+        else:
+            coords2 = other.coordinates
+        diff = self.coordinates - coords2
+
+        return float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
 
 
 
@@ -668,17 +676,37 @@ class Molecule:
         # Generate random points
         random_points = np.random.uniform(min_coords, max_coords, size=(n_points, 3))
 
-        # Vectorize distance calculation
-        coords_expanded = coords[:, np.newaxis, :]  # Shape (n_atoms, 1, 3)
-        points_expanded = random_points[np.newaxis, :, :]  # Shape (1, n_points, 3)
-        distances = np.linalg.norm(coords_expanded - points_expanded, axis=2)  # Shape (n_atoms, n_points)
-        inside_mask = np.any(distances <= radii[:, np.newaxis], axis=0)  # Shape (n_points,)
-        # Count points inside
-        inside_count = np.sum(inside_mask)
+        
+        # Count how many points are inside any atom's VDW sphere
+        inside_count = self._count_points_inside_atoms(random_points, coords, radii)
+
         volume = (inside_count / n_points) * box_volume
         self.volume = volume
         return volume
-    
+
+    @staticmethod
+    @njit(fastmath=True, parallel=True)
+    def _count_points_inside_atoms(points: np.ndarray, coords: np.ndarray, radii: np.ndarray) -> int:
+        """ 
+        Numba-optimized function to count how many points are inside
+        """
+        inside = 0
+        n_points = points.shape[0]
+        n_atoms = coords.shape[0]
+        for p in prange(n_points):
+            px, py, pz = points[p, 0], points[p, 1], points[p, 2]
+            hit = False
+            for a in range(n_atoms):
+                dx = px - coords[a, 0]
+                dy = py - coords[a, 1]
+                dz = pz - coords[a, 2]
+                if dx*dx + dy*dy + dz*dz <= radii[a] * radii[a]:
+                    hit = True
+                    break
+            if hit:
+                inside += 1
+        return inside
+
     def get_coordinates_array(self) -> np.ndarray:
         """Get coordinates as numpy array"""
         return self.coordinates.copy()
@@ -879,3 +907,70 @@ class SubMolecule(Molecule):
         axs[1].grid(True)
         plt.tight_layout()
         plt.savefig("figures/mc_volume_convergence_speed.png")
+
+if __name__ == "__main__":
+    h2o_2_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_2.xyz"
+    with open(h2o_2_file, "r") as f:
+        h2o_2_xyz = f.read()
+    h2o_2 = Molecule.from_xyz(h2o_2_xyz, name="H2O Dimer")
+    # compute and print bonds
+    covalent_bonds, hydrogen_bonds = h2o_2.get_bonds()
+    print("Covalent Bonds:")
+    for bond in covalent_bonds:
+        print(f"  {bond.atom1} - {bond.atom2}")
+    print("Hydrogen Bonds:")
+    for bond in hydrogen_bonds:
+        print(f"  {bond.atom1} - {bond.atom2}") 
+
+    # Test the hydrogen bond configurations
+    time_start = time.time()
+    hbond_configs = h2o_2.find_hbond_configurations()
+    time_end = time.time()
+    print(f"Found {len(hbond_configs)} H-bond configurations in {time_end - time_start:.4f} seconds")
+    for config in hbond_configs:
+        print(f"Donor: {h2o_2.atom_labels[config.donor_idx]}, Hydrogen: {h2o_2.atom_labels[config.hydrogen_idx]}, Acceptor: {h2o_2.atom_labels[config.acceptor_idx]}, Angle: {config.angle:.2f}, Distance: {config.donor_acceptor_distance:.2f}")
+
+    # Test the compute bonds function for a bunch of alkanes
+    ethane_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/ethan.xyz"
+    propane_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/propan.xyz" 
+    butan_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/butan.xyz"
+    pentane_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/pentane.xyz"
+    hexan_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/hexan.xyz"
+    heptane_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/heptane.xyz"
+    with open(ethane_file, "r") as f:
+        ethane_xyz = f.read()
+    with open(propane_file, "r") as f:
+        propane_xyz = f.read()
+    with open(butan_file, "r") as f:
+        butan_xyz = f.read()
+    with open(pentane_file, "r") as f:
+        pentane_xyz = f.read()
+    with open(hexan_file, "r") as f:
+        hexan_xyz = f.read()
+    with open(heptane_file, "r") as f:
+        heptane_xyz = f.read()
+    ethane = Molecule.from_xyz(ethane_xyz, name="Ethane")
+    propane = Molecule.from_xyz(propane_xyz, name="Propane")
+    butan = Molecule.from_xyz(butan_xyz, name="Butane")
+    pentane = Molecule.from_xyz(pentane_xyz, name="Pentane")
+    hexan = Molecule.from_xyz(hexan_xyz, name="Hexane")
+    heptane = Molecule.from_xyz(heptane_xyz, name="Heptane")
+    times = []
+    # Compute bonds for each molecule and time it
+    for mol in [ethane, propane, butan, pentane, hexan, heptane]:
+        start_time = time.time()
+        mol.compute_bonds()
+        end_time = time.time()
+        elapsed = end_time - start_time
+        times.append(elapsed)
+        print(f"{mol.name}: {elapsed:.4f} seconds")
+
+    # Plot times vs number of atoms
+    num_atoms = [len(mol.coordinates) for mol in [ethane, propane, butan, pentane, hexan, heptane]]
+    plt.figure(figsize=(8, 5))
+    plt.plot(num_atoms, times, marker='o')
+    plt.xlabel("Number of Atoms")
+    plt.ylabel("Bond Computation Time (s)")
+    plt.title("Bond Computation Time vs Number of Atoms")
+    plt.grid(True)
+    plt.savefig("figures/bond_computation_time.png")

@@ -29,7 +29,7 @@ if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
 
-    N_WORKERS = 5
+    N_WORKERS = 20
 
     # Parse the Arguments
     args = get_args()
@@ -79,6 +79,13 @@ if __name__ == "__main__":
     )
 
     plot_initial_molecules_centers(initial_molecules, submol_indices, simulation_box, save_path="figures/initial_molecules_centers.png")
+
+    # Log initial candidates
+    init_logger.write_xyz_trajectory(
+        molecules=initial_molecules,
+        filepath="trajectories/initial_candidates.xyz",
+        energies=None
+    )
 
     # ── BHMC Phase A: Global Exploration ────────────────────────
     bhmc_logger = Logger(name="bhmc", log_file="cluster_gen.out", file_mode="a")

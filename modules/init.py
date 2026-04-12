@@ -33,6 +33,10 @@ import time
 # Logger import
 from logger import Logger
 
+# Import geometry ops for rmsd
+from geometry import GeometryOps
+
+
 @dataclass
 class InitializationConfig:
     """Configuration for cluster initialization."""
@@ -152,6 +156,19 @@ class ClusterInitializer:
         if self.logger:
            getattr(self.logger, level)(msg) 
 
+    # Helper Method for RMSD Computation
+    @staticmethod
+    def _calculate_rmsd(coords1: np.ndarray, coords2: np.ndarray) -> float:
+        """  
+        Calculates the RMSD with optimal atom correspondence using the Hungarian algorithm.
+        For this Geometry Ops is utilized
+        """
+        coords_2_opt = GeometryOps.find_optimal_correspondence(coords1, coords2)
+        diff = coords1 - coords_2_opt
+        return float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
+    
+
+
     def initialize_from_xyz(
         self,
         xyz_file: str,
@@ -257,6 +274,28 @@ class ClusterInitializer:
         
         if len(scored) == 0:
             raise RuntimeError("All energy evaluations failed. Cannot select initial configurations.")
+        
+        # Select lowest energy_reference
+        ref_energy, ref_mol = scored[0]
+    
+        rmsd_vs_ref = []
+        energies = []
+        for e, mol in scored:
+            rmsd = self._calculate_rmsd(ref_mol.coordinates, mol.coordinates)
+            rmsd_vs_ref.append(rmsd)
+            energies.append(e)
+
+        # Optional Quickplot of RMSD vs Energy to check diversity of candidates
+        plt.figure(figsize=(6,4))
+        plt.scatter(rmsd_vs_ref, energies, alpha=0.7, s=10)
+        plt.xlabel("RMSD to lowest-energy candidate (Angstrom)")
+        plt.ylabel("Energy (Hartree)")
+        plt.title("Initialization Prescreening: Energy vs RMSD")
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig("figures/initialization_prescreening.png")
+        plt.close()
+        
         scored.sort(key=lambda x: x[0])
         selected_molecules = [mol for _, mol in scored[:n_workers]]
         e_min = scored[0][0]
@@ -264,10 +303,17 @@ class ClusterInitializer:
             self._log(f"Warning: Only {len(scored)} valid configurations found, but n_workers={n_workers}. Returning all valid configurations.")
             n_workers = len(scored)
         e_max = scored[n_workers - 1][0]
-        self._log(
-            f"Pre-screening complete: valid = {len(scored)}, failed = {failed}, "
-            f"Selected energies in range {e_min:.6f} to {e_max:.6f} Hartree ?? check unit :))"
-        )
+        
+        # Compute and log energy range and statistics
+        self._log(f"Pre-screening completed: {len(scored)} valid configurations out of {n_configurations} generated.")
+
+        self._log(f"Statistics of generated configurations:")
+        self._log(f"  Energy range: {e_min:.6f} to {e_max:.6f} Hartree")
+        self._log(f"  Energy of lowest-energy candidate: {e_min:.6f} Hartree")
+        self._log(f"  Energy of highest-energy selected candidate: {e_max:.6f} Hartree")
+        self._log(f"  Energy distribution: mean {np.mean(energies):.6f}, median {np.median(energies):.6f}, std {np.std(energies):.6f} Hartree")
+
+        
 
         summary_lines = [
             f"{'='*60}",

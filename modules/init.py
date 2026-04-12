@@ -7,6 +7,9 @@ This module handles:
 3. Optimizing individual submolecules
 4. Creating simulation boxes
 5. Generating initial random configurations
+
+
+TODO: Check the grid based method and make a final comparison for the thesis
 """
 
 import numpy as np
@@ -155,6 +158,10 @@ class ClusterInitializer:
         n_workers: int = 1,
         n_configurations: int = 10000,
         placing_method: str = "random",
+        grid_spacing: Optional[str] = "sobol",
+        n_theta: Optional[int] = None,
+        n_phi: Optional[int] = None,
+        n_r: Optional[int] = None,
         energy_backend: str= "xtb",
         energy_xtb_method: str = "GFN2-xTB",
     ) -> Tuple[Molecule, List[List[int]], SimulationBox]:
@@ -169,7 +176,15 @@ class ClusterInitializer:
             xyz_file: Path to XYZ file containing molecular structure
             n_workers: Number of configurations to return (e.g, one per BHMC worker)
             n_configurations: Number of random configurations to generate for pre-screening
-            placing_method: Placement method for initial coordinates ("random" or "sobol")
+            placing_method: Placement method for initial coordinates ("random" or "sobol", "grid")
+
+
+        For the grid based placement method, the following additional parameters can be used:
+            grid_spacing: Method to space points in the grid ("linear", "equal_volume_grid", or "sobol")
+            n_theta: Number of points in theta direction (for spherical)
+            n_phi: Number of points in phi direction (for spherical)
+
+
                 energy_backend: Backend to use for energy evaluation ("xtb", "ase_emt", or "psi4")
                     energy_xtb_method: Method to use for xTB energy evaluation (e.g., "GFN2-xTB")
 
@@ -215,6 +230,10 @@ class ClusterInitializer:
             simulation_box = simulation_box,
             n_configurations = n_configurations,
             placing_method = placing_method,
+            grid_spacing = grid_spacing,
+            n_theta = n_theta,
+            n_phi = n_phi,
+            n_r = n_r,
         )
 
         # Step 5b: Energy prescreening and ranking
@@ -235,9 +254,15 @@ class ClusterInitializer:
             else:
                 failed += 1
         self._log(f"\nEnergy evaluation complete: {len(scored)} successful, {failed} failed")
+        
+        if len(scored) == 0:
+            raise RuntimeError("All energy evaluations failed. Cannot select initial configurations.")
         scored.sort(key=lambda x: x[0])
         selected_molecules = [mol for _, mol in scored[:n_workers]]
         e_min = scored[0][0]
+        if len(scored) < n_workers:
+            self._log(f"Warning: Only {len(scored)} valid configurations found, but n_workers={n_workers}. Returning all valid configurations.")
+            n_workers = len(scored)
         e_max = scored[n_workers - 1][0]
         self._log(
             f"Pre-screening complete: valid = {len(scored)}, failed = {failed}, "
@@ -271,6 +296,10 @@ class ClusterInitializer:
             simulation_box: SimulationBox,
             n_configurations: int = 1,
             placing_method: str = "random",
+            grid_spacing: Optional[str] = "sobol",
+            n_theta: Optional[int] = None,
+            n_phi: Optional[int] = None,
+            n_r: Optional[int] = None,
         ) -> List[Molecule]:
         """   
         Helper function to generate multiple random initial configurations inside the simulation box
@@ -279,19 +308,57 @@ class ClusterInitializer:
             submolecules: List of submolecules to place
             simulation_box: Simulation box to place molecules in
             n_configurations: Number of random configurations to generate
-            placing_method: Placement method for initial coordinates ("random" or "sobol")
+            placing_method: Placement method for initial coordinates ("random" or "sobol", "grid")
+        
+        If one chooses the grid based placing method, the following additional parameters can be used
+            grid_spacing: Method to space points in the grid ("linear", "equal_volume_grid", or "sobol")
+            n_theta: Number of points in theta direction (for spherical)
+            n_phi: Number of points in phi direction (for spherical)
+            n_r: Number of points in radial direction (for spherical)
         """
+        if n_configurations <= 0:
+            raise ValueError("n_configurations must be > 0")
 
-        configurations = []
-        for config_idx in range(n_configurations):
+        # Check and parse method
+        method = (placing_method or "random").lower().strip()
+        if method not in {"random", "sobol", "grid"}:
+            raise ValueError(f"Invalid placing method: {placing_method}. Choose from 'random', 'sobol', or 'grid'.")
+        
+        # Check and parse spacing
+        spacing = (grid_spacing or "sobol").lower().strip()
+
+
+        if method == "grid":
+            if spacing not in {"linear", "equal_volume_grid", "sobol"}:
+                raise ValueError(f"Invalid grid spacing method: {grid_spacing}. Choose from 'linear', 'equal_volume_grid', or 'sobol'.")
+            
+            # Set default for the grid parameters based on the number of configurations
+            # Partition the configurations evenly across the grid dimensions
+            if n_theta is None or n_phi is None or n_r is None:
+                n_submols = len(submolecules)
+                n_per_submol = max(1, n_configurations // n_submols)
+                n_theta = n_phi = n_r = int(np.ceil(n_per_submol ** (1/3)))
+                self._log(f"Grid spacing selected. Setting n_theta = n_phi = n_r = {n_theta} to generate at least {n_configurations} configurations.")
+            self._log(f"Generating grid-based configurations with spacing: {spacing}, n_theta: {n_theta}, n_phi: {n_phi}, n_r: {n_r}")
+        
+        else:
+            # Not needed outside of the grid
+            spacing = n_theta = n_phi = n_r = None
+         
+        configurations: List[Molecule] = []
+        for _ in range(n_configurations):
             mol = self._generate_configuration(
-                submolecules,
-                simulation_box,
-                placing_method=placing_method,
+                submolecules = submolecules,
+                simulation_box = simulation_box,
+                placing_method=method,
+                grid_spacing=spacing,
+                n_theta=n_theta,
+                n_phi=n_phi,
+                n_r=n_r,
             )
             configurations.append(mol)
-        return configurations 
-
+        return configurations
+        
 
 
     def _load_molecule(self, xyz_file: str) -> Molecule:
@@ -445,6 +512,10 @@ class ClusterInitializer:
         submolecules: List[Molecule], 
         simulation_box: SimulationBox,
         placing_method: str = "random",
+        grid_spacing: Optional[str] = None,
+        n_theta: Optional[int] = None,
+        n_phi: Optional[int] = None,
+        n_r: Optional[int] = None,
     ) -> Molecule:
         """
         Generate random initial configuration inside simulation box.
@@ -454,26 +525,60 @@ class ClusterInitializer:
             simulation_box: Simulation box to place molecules in
             placing_method: Method to place molecules:
                 - "random" for random placement with distance checks
-                - "partition" partition based placemement in the simulation box (for spherical currently)
                 - "sobol" for low-discrepancy sequence placement
+                - "grid" for systematic grid-based placement (requires additional parameters)
+            
                 
         """
         
         if len(submolecules) == 0:
             raise ValueError("No submolecules to place")
         
-
-        method = placing_method.lower().strip()
+        method = (placing_method or "random").lower().strip(    )
         
         if method not in {"random", "grid", "sobol"}:
             raise ValueError(f"Invalid placing method: {placing_method}. "
                              "Choose from 'random', 'grid', or 'sobol'.")
 
         sobol_engine = None
+        sobol_engine_rotation = None
         if method == "sobol":
             sobol_engine = qmc.Sobol(d=3, scramble=True)
             sobol_engine_rotation = qmc.Sobol(d=3, scramble=True)
         
+        partition_points = None
+        partition_perm = None
+        partition_ptr = None
+        if method == "grid":
+            if simulation_box.box_type != "sphere":
+                raise ValueError("Grid-based placement is currently only implemented for spherical boxes.")
+            
+            spacing = (grid_spacing or "sobol").lower().strip()
+            if spacing not in {"linear", "equal_volume_grid", "sobol"}:
+                raise ValueError(f"Invalid grid spacing method: {grid_spacing}. Choose from 'linear', 'equal_volume_grid', or 'sobol'.")
+            
+            # Choose n_theta, n_phi, n_r based on config or defaults
+            n_theta = 10 if n_theta is None else int(n_theta)
+            n_phi = 10 if n_phi is None else int(n_phi)
+            n_r = 5 if n_r is None else int(n_r)
+            if n_theta <= 0 or n_phi <= 0 or n_r <= 0:
+                raise ValueError("n_theta, n_phi, and n_r must be positive integers for grid placement.")
+            
+            partition_points = self.generate_partition_points(
+                center=simulation_box.center,
+                radius=simulation_box.radius,
+                n_partitions=len(submolecules),
+                n_theta=n_theta,
+                n_phi=n_phi,
+                n_r=n_r,
+                spacing=spacing,
+                sobol_scramble=True,
+                sobol_seed=None
+            )
+            # Randomize traversal per partition ot avoid starting always at same points
+            partition_perm = [np.random.permutation(len(points)) for points in partition_points]
+            # Pointers to track next point in each partition
+            partition_ptr = [0] * len(submolecules)
 
         placed_coords = np.empty((0, 3))
         placed_atoms = []
@@ -515,6 +620,19 @@ class ClusterInitializer:
                     else:
                         raise ValueError(f"Unsupported box type for Sobol placement: {simulation_box.box_type}")
                 
+                # Grid based mode
+                else:
+
+                    # Get next point from the current partition's list
+                    perm = partition_perm[i]
+                    ptr = partition_ptr[i]
+                    if ptr >= len(perm):
+                        break
+
+                    p_idx = perm[ptr]
+                    partition_ptr[i] = ptr + 1
+                    position = partition_points[i][p_idx]
+
                 # Sample Random Rotation
                 if method == "sobol":
                     rotation_matrix = self._sobol_rotation_matrix(sobol_engine_rotation)
@@ -522,8 +640,6 @@ class ClusterInitializer:
                     rotation_matrix = self._random_rotation_matrix()
             
                 rotated_coords = (rotation_matrix @ centered_coords.T).T
-                
-                # Translate to new position
                 new_coords = rotated_coords + position
                 
                 # Check distance constraints
@@ -863,6 +979,64 @@ def test_initializer(xyz_file: str,
     except Exception as e:
         print(f"\nInitialization failed with error: {e}")
 
+def test_submolecule_partition_mapping(
+        initial_molecules: List[Molecule],
+        submol_indices: List[List[int]],
+        simulation_box: SimulationBox,
+        atol: float = 1e-10,
+        verbose: bool = True
+        ) -> bool:
+        """
+        Function that verifies that submolecule i is placed in the partition i of the sphere
+
+        Returns:
+            True if the mapping is correct, False otherwise
+        """
+        if simulation_box.box_type != "sphere":
+            raise ValueError("Submolecule partition mapping test is only applicable for spherical boxes.")
+        
+        if len(submol_indices) == 0:
+            raise ValueError("No submolecules to test")
+        
+        center = np.asarray(simulation_box.center, dtype=np.float64)
+        n_submols = len(submol_indices)
+        partitions = ClusterInitializer.partition_sphere(center, simulation_box.radius, n_submols)
+
+        failures = []
+
+        for cfg_idx, mol in enumerate(initial_molecules):
+            for i, atom_idx in enumerate(submol_indices):
+                idx = np.asarray(atom_idx, dtype=int)
+                sub_coords = mol.coordinates[idx]
+                submol_masses = mol.masses[idx]
+
+                # Calculate com
+                com = np.average(sub_coords, axis=0, weights=submol_masses)
+                rel = com - center
+
+                # Azimuth angle in [0, 2pi)]
+                theta = np.arctan2(rel[1], rel[0])
+                if theta < 0:
+                    theta += 2 * np.pi
+
+                start_angle, end_angle = partitions[i]
+
+                # Partitions are contigous [start, end) we allow tiny tolerance
+                # for the last partition include the right edge ~2*pi
+                if i == n_submols - 1:
+                    ok = (theta >= start_angle - atol) and (theta <= end_angle + atol)
+                else:
+                    ok = (theta >= start_angle - atol) and (theta < end_angle + atol)
+                
+        if verbose:
+            if not failures:
+                print(f"\nSubmolecule partition mapping test passed for all {len(initial_molecules)} configurations.")
+            else:
+                print(f"\nSubmolecule partition mapping test failed for {len(failures)} cases:")
+                for cfg_idx, sub_idx, theta, start, end in failures:
+                    print(f"  Configuration {cfg_idx+1}, Submolecule {sub_idx+1}: theta={theta:.4f} not in [{start:.4f}, {end:.4f})")
+        return len(failures) == 0
+
 if __name__ == "__main__":
     """  
     Run test when module is executed directly
@@ -987,8 +1161,52 @@ if __name__ == "__main__":
     plt.ylabel('Time (seconds)')
     plt.title('Timing for Partition Point Generation')
     plt.savefig("figures/partition_point_generation_timing.png")
+    
 
-      
+    print("\n" + "="*80)
+    print("Grid Placement Test for H2O-Dimer")
+
+    h2o_dimer_xyz = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_2.xyz"
+    
+    grid_config = InitializationConfig(
+        method="hf",
+        basis="cc-pvdz",
+        optimize_submolecules=True,
+        box_type="sphere",
+        box_scale_factor=2.5,
+        min_distance=2.0,
+        verbose=True
+    )
+    grid_initializer = ClusterInitializer(config=grid_config)
+
+    grid_initial_molecules, grid_submol_indices, grid_simulation_box = grid_initializer.initialize_from_xyz(
+        xyz_file=h2o_dimer_xyz,
+        n_workers=10,
+        n_configurations=50,
+        placing_method="grid",
+        grid_spacing="sobol",
+        n_theta=8,
+        n_phi=8,
+        n_r=6,
+        energy_backend="xtb",
+        energy_xtb_method="GFN2-xTB"
+    )
+
+    print(f"\nGrid placement test completed. Generated {len(grid_initial_molecules)} configurations with grid-based placement and Sobol spacing.")
+    print(f"Number of submolecules: {len(grid_submol_indices)}")
+    print(f"Simulation box type: {grid_simulation_box.box_type}, Volume: {grid_simulation_box.get_volume():.2f} Angstrom^3")
+
+    # Test partition mapping
+    ok_partition_mapping = test_submolecule_partition_mapping(
+        initial_molecules=grid_initial_molecules,
+        submol_indices=grid_submol_indices,
+        simulation_box=grid_simulation_box,
+        atol=1e-8,
+        verbose=True
+    )
+    print(f"\nSubmolecule partition mapping test result: {'Passed' if ok_partition_mapping else 'Failed'}") 
+
+
 
 
 

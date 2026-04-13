@@ -276,7 +276,7 @@ class Molecule:
     _mass_cache: Dict[str, float] = {}
     _covalent_radius_cache: Dict[str, float] = {}
     _vdw_radius_cache: Dict[str, float] = {}
-    
+    _atomic_numbers_cache: Dict[str, int] = {} 
     @classmethod
     def _init_caches(cls):
         """Build element lookup caches from periodic table (called once)."""
@@ -289,7 +289,9 @@ class Molecule:
             cls._covalent_radius_cache[sym] = (cov_r / 100.0) if cov_r and not np.isnan(cov_r) else 0.0
             vdw_r = row.get("vdw_radius")
             cls._vdw_radius_cache[sym] = (vdw_r / 100.0) if vdw_r and not np.isnan(vdw_r) else 0.0
-    
+            cls._atomic_numbers_cache[sym] = row["atomic_number"]
+
+
     hbond_donors = ["O", "N", "F"]
     hbond_acceptors = ["O", "N", "F"]
 
@@ -318,6 +320,7 @@ class Molecule:
         """
         self.name = name
         self.atom_labels = np.array([], dtype=object)
+        self.atomic_numbers = np.array([], dtype=np.int64)
         self.coordinates = np.empty((0, 3), dtype=np.float64)
         self.masses = np.array([], dtype=np.float64)
         self.vdw_radii = np.array([], dtype=np.float64)
@@ -420,6 +423,16 @@ class Molecule:
             return cls._vdw_radius_cache[element_symbol]
         raise ValueError(f"Element {element_symbol} not found in periodic table")
     
+    @classmethod 
+    def get_atomic_number(cls, element_label: str) -> int:
+        """Get the atomic number for a given element""" 
+        element_symbol = cls._remove_digits_from_label(element_label)
+        if element_symbol in cls._atomic_numbers_cache:
+            return cls._atomic_numbers_cache[element_symbol]
+        raise ValueError(f"Element {element_symbol} not found in periodic table")
+
+
+    
     # Atom management
     def add_atom(self, atom_label: str, coordinates: List[float]) -> None:
         """Add single atom to molecule"""
@@ -437,6 +450,9 @@ class Molecule:
         covalent_radius = self.get_covalent_radius(atom_label)
         self.covalent_radii = np.append(self.covalent_radii, covalent_radius)
         self.masses = np.append(self.masses, mass)
+        self.atomic_numbers = np.append(self.atomic_numbers, self.get_atomic_number(atom_label))
+
+        
         
         self._bonds_computed = False
     
@@ -461,11 +477,14 @@ class Molecule:
         masses = np.array([self._get_atomic_mass(elem) for elem in elements])
         vdw_radii = np.array([self.get_vdw_radius(label) for label in atom_labels])
         covalent_radii = np.array([self.get_covalent_radius(label) for label in atom_labels])
+        atomic_numbers = np.array([self.get_atomic_number(label) for label in atom_labels], dtype=np.int64)
+
 
         self.masses = np.concatenate([self.masses, masses])
         self.vdw_radii = np.concatenate([self.vdw_radii, vdw_radii])
         self.covalent_radii = np.concatenate([self.covalent_radii, covalent_radii])
         self._bonds_computed = False
+        self.atomic_numbers = np.concatenate([self.atomic_numbers, atomic_numbers])
 
     
     def _calculate_masses_batch(self, atom_labels: List[str]) -> np.ndarray:
@@ -770,6 +789,7 @@ class Molecule:
         new_mol.atom_labels = self.atom_labels  # shared (immutable during BHMC)
         new_mol.coordinates = self.coordinates.copy()  # deep copy - this is what changes
         new_mol.masses = self.masses  # shared
+        new_mol.atomic_numbers = self.atomic_numbers  # shared
         new_mol.vdw_radii = self.vdw_radii  # shared
         new_mol.covalent_radii = self.covalent_radii  # shared
         new_mol.charge = self.charge
@@ -830,7 +850,35 @@ class Molecule:
         """Get list of element symbols for each atom"""
         return [self._remove_digits_from_label(label) for label in self.atom_labels]   
 
+    def coloumb_matrix(self) -> np.ndarray:
+        """ 
+        Calculates the coloumb matrix for a given molecule. The coloumb matrix is NxN symmetric and defined via
 
+        C_ij = 0.5 * Z_i^2.4 if i == j
+        C_ij = (Z_i * Z_j) / |R_i - R_j| if i != j
+
+        where Z_i is the atomic number of atom i and R_i is the position vector of atom i.
+        """
+        n_atoms = len(self.atom_labels)
+        symbols = self.get_symbols()
+        atomic_numbers = np.array([self.get_atomic_number(label) for label in symbols], dtype=np.float64)
+        coords = self.coordinates
+        coloumb_mat = np.zeros((n_atoms, n_atoms), dtype=np.float64)
+
+        for i in range(n_atoms):
+            for j in range(i, n_atoms):
+                if i == j:
+                    coloumb_mat[i, j] = 0.5 * atomic_numbers[i] ** 2.4
+                else:
+                    dist = np.linalg.norm(coords[i] - coords[j])
+                    if dist > 1e-12:
+                        value = (atomic_numbers[i] * atomic_numbers[j]) / dist
+                    else:
+                        value = 0.0  # Avoid division by zero
+                    coloumb_mat[i, j] = value
+                    coloumb_mat[j, i] = value  # Symmetric matrix
+        
+        return coloumb_mat
 
 class SubMolecule(Molecule):
     """Represents a fragment of a larger molecule"""
@@ -1004,6 +1052,23 @@ if __name__ == "__main__":
         elapsed = end_time - start_time
         times.append(elapsed)
         print(f"{mol.name}: {elapsed:.4f} seconds")
+
+    # compute and time coloumb matrix for each molecule
+    for mol in [ethane, propane, butan, pentane, hexan, heptane]:
+        start_time = time.time()
+        coloumb_mat = mol.coloumb_matrix()
+        end_time = time.time()
+        elapsed = end_time - start_time
+        print(f"{mol.name} Coloumb Matrix: {elapsed:.4f} seconds")
+        # plot the coloumb matrix as a heatmap
+        plt.figure(figsize=(6, 5))
+        plt.imshow(coloumb_mat, cmap='viridis')
+        plt.colorbar(label='Coulomb Matrix Value')
+        plt.title(f"Coulomb Matrix Heatmap for {mol.name}")
+        plt.xlabel("Atom Index")
+        plt.ylabel("Atom Index")
+        plt.savefig(f"figures/{mol.name}_coloumb_matrix.png")
+
 
     # Plot times vs number of atoms
     num_atoms = [len(mol.coordinates) for mol in [ethane, propane, butan, pentane, hexan, heptane]]

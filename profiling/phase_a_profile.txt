@@ -1,22 +1,22 @@
 --- Profiling Results for Phase A ---
-         2047576 function calls (1991862 primitive calls) in 133.992 seconds
+         2035410 function calls (1979696 primitive calls) in 40.607 seconds
 
    Ordered by: cumulative time
    List reduced from 1960 to 10 due to restriction <10>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-        6    0.000    0.000  127.845   21.308 /home/lme/.local/lib/python3.9/site-packages/tqdm/std.py:1160(__iter__)
-        7    0.000    0.000  127.844   18.263 /home/lme/.conda/envs/p4env/lib/python3.9/threading.py:280(wait)
-       31  127.844    4.124  127.844    4.124 {method 'acquire' of '_thread.lock' objects}
-        6    0.000    0.000  127.841   21.307 /home/lme/.conda/envs/p4env/lib/python3.9/multiprocessing/pool.py:850(next)
-        3    0.000    0.000    4.492    1.497 /home/lme/.local/lib/python3.9/site-packages/matplotlib/pyplot.py:1129(savefig)
-        3    0.000    0.000    3.505    1.168 /home/lme/.local/lib/python3.9/site-packages/matplotlib/figure.py:3234(savefig)
-        3    0.000    0.000    3.505    1.168 /home/lme/.local/lib/python3.9/site-packages/matplotlib/backend_bases.py:2052(print_figure)
-        9    0.000    0.000    3.027    0.336 /home/lme/.local/lib/python3.9/site-packages/matplotlib/artist.py:93(draw_wrapper)
-   2835/9    0.013    0.000    3.027    0.336 /home/lme/.local/lib/python3.9/site-packages/matplotlib/artist.py:54(draw_wrapper)
-        9    0.000    0.000    3.027    0.336 /home/lme/.local/lib/python3.9/site-packages/matplotlib/figure.py:3134(draw)
+        6    0.000    0.000   35.393    5.899 /home/lme/.local/lib/python3.9/site-packages/tqdm/std.py:1160(__iter__)
+        6    0.000    0.000   35.392    5.899 /home/lme/.conda/envs/p4env/lib/python3.9/threading.py:280(wait)
+       27   35.392    1.311   35.392    1.311 {method 'acquire' of '_thread.lock' objects}
+        6    0.000    0.000   35.391    5.898 /home/lme/.conda/envs/p4env/lib/python3.9/multiprocessing/pool.py:850(next)
+        3    0.000    0.000    3.809    1.270 /home/lme/.local/lib/python3.9/site-packages/matplotlib/pyplot.py:1129(savefig)
+        3    0.000    0.000    2.936    0.979 /home/lme/.local/lib/python3.9/site-packages/matplotlib/figure.py:3234(savefig)
+        3    0.000    0.000    2.936    0.979 /home/lme/.local/lib/python3.9/site-packages/matplotlib/backend_bases.py:2052(print_figure)
+        9    0.000    0.000    2.535    0.282 /home/lme/.local/lib/python3.9/site-packages/matplotlib/artist.py:93(draw_wrapper)
+   2835/9    0.012    0.000    2.535    0.282 /home/lme/.local/lib/python3.9/site-packages/matplotlib/artist.py:54(draw_wrapper)
+        9    0.000    0.000    2.535    0.282 /home/lme/.local/lib/python3.9/site-packages/matplotlib/figure.py:3134(draw)
 
 
 
 --- Memory Usage for Phase A ---
-Current memory usage: 47.23 MB; Peak memory usage: 53.08 MB
+Current memory usage: 17.65 MB; Peak memory usage: 17.88 MB

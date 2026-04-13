@@ -695,7 +695,12 @@ class BHMCAnalyzer:
         if n_structures == 0:
             return np.zeros((0, 1))
 
-        max_atoms = max(len(s.mulliken_charges) for s in structures if s.mulliken_charges is not None)
+        available_charge_lengths = [len(s.mulliken_charges) for s in structures if s.mulliken_charges is not None]
+        if not available_charge_lengths:
+            self._log("No Mulliken charges found. Returning zero placeholder feature.", level="warning")
+            return np.zeros((n_structures, 1))
+
+        max_atoms = max(available_charge_lengths)
         features = np.zeros((n_structures, max_atoms))
         for i, s in enumerate(structures):
             if s.mulliken_charges is not None:
@@ -712,7 +717,86 @@ class BHMCAnalyzer:
         return features
 
 
-    def compute_coloumb_matrix()
+    def compute_coloumb_matrix_features(self, phase: Optional[str] = None) -> np.ndarray:
+        """ 
+        Computes the Coloumb-Matrix and and sorts the upper triangle matrix to get a descriptor.
+        This descriptor is of length n_atoms * (n_atoms - 1) / 2 for each structure.
+
+        The coloumb matrix is symmetric and the elements C_ij are defined by
+
+        C_ij = 0.5 * Z_i^2.4 if i == j
+        C_ij = Z_i * Z_j / |R_i - R_j| if i != j
+
+        where Z_i is the atomic number of atom i and R_i is the position vector of atom i.
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+
+        if not structures:
+            return np.zeros((0, 0))
+        
+        # Compute the feature length
+        max_atoms = max(len(s.molecule.atom_labels) for s in structures)
+        feature_length = max_atoms * (max_atoms - 1) // 2
+
+        features = np.zeros((len(structures), feature_length))
+        for i, s in enumerate(structures):
+            Z = np.asarray(s.molecule.atomic_numbers, dtype=np.float64)
+            coords = s.molecule.coordinates
+            N = len(Z)
+            if len(Z) == 0:
+                raise ValueError(f"Structure {i} has no atomic numbers defined.")
+            if len(coords) == 0:
+                raise ValueError(f"Structure {i} has no coordinates defined.")
+
+            # Build Coulomb matrix: C_ii = 0.5*Z_i^2.4, C_ij = Z_i*Z_j/|R_i-R_j|
+            dist = cdist(coords, coords)
+            zz = np.outer(Z, Z)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                mat = np.divide(zz, dist, out=np.zeros_like(zz), where=dist > 1e-12)
+            np.fill_diagonal(mat, 0.5 * (Z ** 2.4))
+
+            # Keep permutation-robust descriptor style analogous to interatomic distances.
+            upper_tri = mat[np.triu_indices(N, k=1)]
+            features[i, :len(upper_tri)] = np.sort(upper_tri)
+        return features
+
+    def eigenspectrum_coloumb_matrix(self, phase: Optional[str] = None) -> np.ndarray:
+        """ 
+        Computes the eigenspectrum of the coloumb matrix for each structure and uses the sorted eigenvalues as features.
+        """ 
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+
+        if not structures:
+            return np.zeros((0, 0))
+        
+        max_atoms = max(len(s.molecule.atom_labels) for s in structures)
+        features = np.zeros((len(structures), max_atoms))
+        for i, s in enumerate(structures):
+            Z = np.asarray(s.molecule.atomic_numbers, dtype=np.float64)
+            coords = s.molecule.coordinates
+            N = len(Z)
+            if len(Z) == 0:
+                raise ValueError(f"Structure {i} has no atomic numbers defined.")
+            if len(coords) == 0:
+                raise ValueError(f"Structure {i} has no coordinates defined.")
+
+            dist = cdist(coords, coords)
+            zz = np.outer(Z, Z)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                mat = np.divide(zz, dist, out=np.zeros_like(zz), where=dist > 1e-12)
+            np.fill_diagonal(mat, 0.5 * (Z ** 2.4))
+
+            eigenvalues = np.linalg.eigvalsh(mat)
+            features[i, :len(eigenvalues)] = np.sort(eigenvalues)[::-1]  # Sort in descending order
+        return features
+
+    
 
     # ====================== Clustering Methods =======================
 
@@ -752,6 +836,7 @@ class BHMCAnalyzer:
             rmsd_values = np.array([self._calculate_rmsd(s.molecule.coordinates, self.get_lowest_energy_structure().molecule.coordinates) for s in self.structures])
             rotational_constants = np.array([self.determine_rotational_constants(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
             intermolecular_distances = np.array(self.compute_interatomic_distance_matrix())
+            coloumb_matrix_features = self.compute_coloumb_matrix_features()
 
             
 
@@ -762,6 +847,7 @@ class BHMCAnalyzer:
                 rotational_constants, 
                 hbond_features, 
                 intermolecular_distances,
+                coloumb_matrix_features,
                 geom_features[:, 1:4],  # Asphericity, Acylindricity, Kappa^2
                 dipole_mags, 
                 mulliken_features
@@ -769,8 +855,22 @@ class BHMCAnalyzer:
 
 
             )
+
+            n_iad = intermolecular_distances.shape[1] if intermolecular_distances.ndim == 2 else 0
+            n_coloumb = coloumb_matrix_features.shape[1] if coloumb_matrix_features.ndim == 2 else 0
+            n_mulliken = mulliken_features.shape[1] if mulliken_features.ndim == 2 else 0
+            all_feature_names = [
+                'Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C',
+                'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance'
+            ]
+            all_feature_names.extend([f'Dist_{i}' for i in range(n_iad)])
+            all_feature_names.extend([f'Coulomb_{i}' for i in range(n_coloumb)])
+            all_feature_names.extend(['Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude'])
+            all_feature_names.extend([f'Mulliken_{i}' for i in range(n_mulliken)])
+            self.used_features = all_feature_names
+
             self._log(f"Feature matrix shape: {self._feature_matrix_raw.shape}")
-            self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude', 'Mulliken Charges...']")
+            self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Coulomb Matrix...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude', 'Mulliken Charges...']")
             
 
             feature_variances = []
@@ -782,6 +882,8 @@ class BHMCAnalyzer:
                 non_zero_var_indices = [i for i, var in enumerate(feature_variances) if var > 1e-6]
                 self._non_zero_var_indices = non_zero_var_indices  # Store which features are kept
                 self._feature_matrix_raw = self._feature_matrix_raw[:, non_zero_var_indices]
+                if self.used_features is not None:
+                    self.used_features = [self.used_features[i] for i in non_zero_var_indices]
                 self._log(f"Removed {len(feature_variances) - len(non_zero_var_indices)} zero-variance features. New shape: {self._feature_matrix_raw.shape}")
              
             # Log Statistics of remaining features
@@ -829,8 +931,9 @@ class BHMCAnalyzer:
         7. Average H-bond angle
         8. Average D-A distance
         9. Gyration Tensor Shape Descriptors (Asphericity, Acylindricity, Kappa^2)
-        10. Dipole Magnitude (Debye)
-        11. Mulliken Charges (flattened)
+        10. Coulomb Matrix Descriptor (sorted upper triangle)
+        11. Dipole Magnitude (Debye)
+        12. Mulliken Charges (flattened)
         """
         self._ensure_feature_matrix()
         if normalize:
@@ -1162,35 +1265,9 @@ class BHMCAnalyzer:
         Handles both filtered and unfiltered feature matrices.
         """
         self._ensure_feature_matrix()
-        
-        # Build complete list of all possible feature names (before filtering)
-        all_feature_names = ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 
-                             'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance']
-        
-        # Add intermolecular distance names
-        n_atoms = len(self.structures[0].molecule.coordinates) if self.structures else 0
-        n_distances = n_atoms * (n_atoms - 1) // 2
-        all_feature_names.extend([f'Dist_{i}' for i in range(n_distances)])
-        
-        # Add shape descriptor names
-        all_feature_names.extend(['Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude'])
-        
-        # Determine where mulliken charges start in the original feature list
-        mulliken_start_idx = len(all_feature_names)
-        
-        # If we have filtered features, count how many mulliken features were kept
-        if self._non_zero_var_indices is not None:
-            # Count kept indices that are >= mulliken_start_idx
-            n_mulliken_kept = sum(1 for idx in self._non_zero_var_indices if idx >= mulliken_start_idx)
-            all_feature_names.extend([f'Mulliken_{i}' for i in range(n_mulliken_kept)])
-            # Return only the names for kept indices
-            return [all_feature_names[i] for i in self._non_zero_var_indices if i < len(all_feature_names)]
-        else:
-            # No filtering, calculate mulliken from matrix shape
-            n_mulliken = self._feature_matrix_raw.shape[1] - len(all_feature_names)
-            if n_mulliken > 0:
-                all_feature_names.extend([f'Mulliken_{i}' for i in range(n_mulliken)])
-            return all_feature_names
+        if self.used_features is None:
+            return []
+        return self.used_features
     
     def plot_pca_loadings(self, phase: Optional[str] = None, pc_index: int= 0, top_n_features: int = -1):
         """  
@@ -1448,26 +1525,7 @@ class BHMCAnalyzer:
         else:
             row_labels = [f"Rep {i}" for i in range(len(rep_indices))]
 
-        # Build column labels
-        col_labels = [
-            "Delta_E", "RMSD", "Rg",
-            "Rot_A", "Rot_B", "Rot_C",
-            "N_Hbond", "Avg_HB_Ang", "Avg_DA_Dist"
-        ]
-        # Obtain the n_interatomics since this is an n x n matrix and we take the
-        # upper triangle we have n*(n-1)/2 elements
-        n_atoms = len(self.structures[0].molecule.coordinates) if self.structures else 0
-        n_interatomics = n_atoms * (n_atoms - 1) // 2
-        for j in range(n_interatomics):
-            col_labels.append(f"IAD_{j}")
-        
-        # Geometric and Dipole features
-        col_labels += ["Asphericity", "Acylindricity", "Kappa^2", "Dipole_Mag"]
-
-        # Mulliken Charges is the rest
-        n_mulliken = raw.shape[1] - len(col_labels)
-        for j in range(n_mulliken):
-            col_labels.append(f"Mulliken_{j}")
+        col_labels = self.get_feature_names()
         
         rep_matrix_raw = raw[rep_indices]
         rep_matrix_norm = normalized[rep_indices]
@@ -1475,7 +1533,7 @@ class BHMCAnalyzer:
         # Compute maximum variane
         variances = np.var(rep_matrix_raw, axis=0)
         max_var_idx = np.argmax(variances)
-        most_changed_feature = col_labels[max_var_idx]
+        most_changed_feature = col_labels[max_var_idx] if max_var_idx < len(col_labels) else f"Feature_{max_var_idx}"
         max_variance_val = variances[max_var_idx]
 
         if self.logger:

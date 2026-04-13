@@ -167,7 +167,7 @@ class ClusterInitializer:
         diff = coords1 - coords_2_opt
         return float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
     
-
+    
 
     def initialize_from_xyz(
         self,
@@ -298,6 +298,8 @@ class ClusterInitializer:
         
         scored.sort(key=lambda x: x[0])
         selected_molecules = [mol for _, mol in scored[:n_workers]]
+        
+        
         e_min = scored[0][0]
         if len(scored) < n_workers:
             self._log(f"Warning: Only {len(scored)} valid configurations found, but n_workers={n_workers}. Returning all valid configurations.")

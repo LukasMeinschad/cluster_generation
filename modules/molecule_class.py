@@ -170,71 +170,102 @@ class HydrogenBondAnalyzer:
     def find_configurations(self) -> List[HBondConfiguration]:
         """  
         Find all H-bond configurations of type Donor-H-Acceptor in molecule
+        
+        Optimized approach:
+        - Build H -> donor map from covalent bonds
+        - Build H -> acceptor map from hydrogen bonds
+        - Iterate the hydrogens directly instead of donor x acceptor cross-product
         """
-        # Ensure the bonds exist
         covalent_bonds, hydrogen_bonds = self.molecule.get_bonds()
 
         atom_labels = self.molecule.atom_labels
         coords = self.molecule.coordinates
         n_atoms = len(atom_labels)
-
-        # One-time maps and masks
+        if n_atoms == 0:
+            return []
+        
+        # Label to index map for bond object conversion 
         label_to_idx = {label: i for i, label in enumerate(atom_labels)}
+
+        # Element typing masks
         elements = np.array(
             [Molecule._remove_digits_from_label(lbl) for lbl in atom_labels], dtype=object
         )
-        donor_indices = np.where(np.isin(elements, self.molecule.hbond_donors))[0]
-        acceptor_indices = np.where(np.isin(elements, self.molecule.hbond_acceptors))[0]
-        hydrogen_indices = set(np.where(elements == "H")[0])
+        donor_mask = np.isin(elements, self.molecule.hbond_donors)
+        acceptor_mask = np.isin(elements, self.molecule.hbond_acceptors)
+        hydrogen_mask = (elements == "H")
 
-        # Build neighbor sets once (index based, no repeated lookups)
-        cov_neighbors = [set() for _ in range(n_atoms)]
+        # donor_of_h[h] = donor index or -1
+        donor_of_h = np.full(n_atoms, -1, dtype=np.int64)
+
+        # acceptors_by_h[ħ] = list of acceptor indices hydrogen-bonded to h
+        acceptors_by_h: List[List[int]] = [[] for _ in range(n_atoms)]
+
+        # Build H -> donor from covalent bonds
         for b in covalent_bonds:
             i = label_to_idx[b.atom1]
             j = label_to_idx[b.atom2]
-            cov_neighbors[i].add(j)
-            cov_neighbors[j].add(i)
 
-        h_neighbors = [set() for _ in range(n_atoms)]
+            if hydrogen_mask[i] and donor_mask[j]:
+                donor_of_h[i] = j
+            elif hydrogen_mask[j] and donor_mask[i]:
+                donor_of_h[j] = i
+            
+        # Build H -> acceptors from hydrogen bonds
         for b in hydrogen_bonds:
             i = label_to_idx[b.atom1]
             j = label_to_idx[b.atom2]
-            h_neighbors[i].add(j)
-            h_neighbors[j].add(i)
-        
-        # Initialize configurations list
-        configurations: List[HBondConfiguration] = []
 
-        for donor_idx in donor_indices:
-            donor_cov = cov_neighbors[donor_idx]
-            if not donor_cov:
-                continue
+            if hydrogen_mask[i] and acceptor_mask[j]:
+                acceptors_by_h[i].append(j)
+            elif hydrogen_mask[j] and acceptor_mask[i]:
+                acceptors_by_h[j].append(i)
+
+        # Assembly D-H-A configurations
+        configurations: List[HBondConfiguration] = []
+        hydrogen_indices = np.where(hydrogen_mask)[0]
+        for h_idx in hydrogen_indices:
+            donor_idx = donor_of_h[h_idx]
+            if donor_idx < 0:
+                continue  # This H is not covalently bonded to a donor
 
             donor_coords = coords[donor_idx]
+            h_coords = coords[h_idx]
 
-            for acceptor_idx in acceptor_indices:
-                if donor_idx == acceptor_idx:
-                    continue
+            for acceptor_idx in acceptors_by_h[h_idx]:
+                if acceptor_idx == donor_idx:
+                    continue  # Skip if acceptor is same as donor
 
-                # H must be covalently bound to donor and hydrogen bonded to acceptor
-                common_h = donor_cov.intersection(h_neighbors[acceptor_idx]).intersection(hydrogen_indices)  
-                if not common_h:
-                    continue
                 acceptor_coords = coords[acceptor_idx]
-                da_dist = self.geometry.calculate_distance(donor_coords, acceptor_coords) 
 
-                for h_idx in common_h:
-                    h_coord = coords[h_idx]
-                    angle = self.geometry.calculate_angle(donor_coords, h_coord, acceptor_coords) 
 
-                    configurations.append(
-                        HBondConfiguration(donor_idx, h_idx, acceptor_idx, angle=angle, donor_acceptor_distance=da_dist)
-                    )  
+                # D-A distance
+                da_vec = acceptor_coords - donor_coords
+                da_dist = float(np.sqrt(np.dot(da_vec, da_vec)))
 
+                #D-H-A angle at H
+                v1 = donor_coords - h_coords
+                v2 = acceptor_coords - h_coords
+                n1 = np.linalg.norm(v1)
+                n2 = np.linalg.norm(v2)
+                if n1 <= 1e-12 or n2 <= 1e-12:
+                    continue  # Avoid division by zero
+                cos_theta = np.dot(v1, v2) / (n1 * n2)
+                cos_theta = np.clip(cos_theta, -1.0, 1.0)
+                angle = float(np.degrees(np.arccos(cos_theta)))
+                configurations.append(
+                    HBondConfiguration(
+                        donor_idx,
+                        h_idx,
+                        acceptor_idx,
+                        angle=angle,
+                        donor_acceptor_distance=da_dist
+                    )
+                )
         return configurations
 
 
-    
+   
 
 
 class Molecule:
@@ -411,22 +442,31 @@ class Molecule:
     
     def add_atoms_batch(self, atom_labels: List[str], coordinates: np.ndarray) -> None:
         """Add multiple atoms efficiently"""
-        if len(atom_labels) != coordinates.shape[0]:
-            raise ValueError("Number of labels must match number of coordinates")
+
+        n_new = len(atom_labels)
+        if n_new != coordinates.shape[0]:
+            raise ValueError("Number of atom labels must match number of coordinate sets")
         if coordinates.shape[1] != 3:
-            raise ValueError("Coordinates must have shape (n_atoms, 3)")
+            raise ValueError("Coordinates must be 3-dimensional (x, y, z)")
         
-        self.atom_labels = np.append(self.atom_labels, atom_labels)
+        # Convert to numpy arrays
+        atom_labels = np.array(atom_labels, dtype=object)
+        coordinates = np.array(coordinates, dtype=np.float64)
+
+        self.atom_labels = np.concatenate([self.atom_labels, atom_labels])
         self.coordinates = np.vstack([self.coordinates, coordinates])
-        
-        masses = self._calculate_masses_batch(atom_labels)
+
+        # Vectorized lookup
+        elements = np.array([self._remove_digits_from_label(label) for label in atom_labels], dtype=object)
+        masses = np.array([self._get_atomic_mass(elem) for elem in elements])
         vdw_radii = np.array([self.get_vdw_radius(label) for label in atom_labels])
         covalent_radii = np.array([self.get_covalent_radius(label) for label in atom_labels])
-        self.vdw_radii = np.append(self.vdw_radii, vdw_radii)
-        self.covalent_radii = np.append(self.covalent_radii, covalent_radii)
-        self.masses = np.append(self.masses, masses)
-        
+
+        self.masses = np.concatenate([self.masses, masses])
+        self.vdw_radii = np.concatenate([self.vdw_radii, vdw_radii])
+        self.covalent_radii = np.concatenate([self.covalent_radii, covalent_radii])
         self._bonds_computed = False
+
     
     def _calculate_masses_batch(self, atom_labels: List[str]) -> np.ndarray:
         """Calculate atomic masses for multiple atoms"""
@@ -909,7 +949,7 @@ class SubMolecule(Molecule):
         plt.savefig("figures/mc_volume_convergence_speed.png")
 
 if __name__ == "__main__":
-    h2o_2_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_2.xyz"
+    h2o_2_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_dimer.xyz"
     with open(h2o_2_file, "r") as f:
         h2o_2_xyz = f.read()
     h2o_2 = Molecule.from_xyz(h2o_2_xyz, name="H2O Dimer")
@@ -974,3 +1014,34 @@ if __name__ == "__main__":
     plt.title("Bond Computation Time vs Number of Atoms")
     plt.grid(True)
     plt.savefig("figures/bond_computation_time.png")
+
+    # Speed testing of add_atoms_batch
+
+    # Generate random molecules with increasing number of atoms and time add_atoms_batch
+    atom_counts = [100, 500, 1000, 5000, 10000, 50000, 100000]
+    add_times = []
+    for count in atom_counts:
+        labels = [f"C{i+1}" for i in range(count)]
+        coords = np.random.rand(count, 3) * 10  # Random coordinates in a 10x10x10 box
+        mol = Molecule(name=f"Random_{count}_atoms")
+        start_time = time.time()
+        mol.add_atoms_batch(labels, coords)
+        end_time = time.time()
+        elapsed = end_time - start_time
+        add_times.append(elapsed)
+        print(f"Added {count} atoms in {elapsed:.4f} seconds")
+
+    # Test the hydrogen bond configuration speed
+    # Generate random molecules with 5, 10, 20, 50, 100, 200 atoms
+    hbond_times = []
+    for count in [5, 10, 20, 50, 100, 200]:
+        labels = [f"O{i+1}" for i in range(count)]  # Use O to maximize H-bond candidates
+        coords = np.random.rand(count, 3) * 10
+        mol = Molecule(name=f"Hbond_Test_{count}_atoms")
+        mol.add_atoms_batch(labels, coords)
+        start_time = time.time()
+        configs = mol.find_hbond_configurations()
+        end_time = time.time()
+        elapsed = end_time - start_time
+        hbond_times.append(elapsed)
+        print(f"Found {len(configs)} H-bond configurations in {elapsed:.4f} seconds for {count} atoms")

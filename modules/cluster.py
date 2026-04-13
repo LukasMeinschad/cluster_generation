@@ -4,11 +4,20 @@ Module for various clustering methods and analysis of the sampled molecular conf
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import math
 from typing import List, Tuple, Optional, Dict, Any, Union
 from dataclasses import dataclass, field
 from collections import defaultdict
 
+
+
+# Imports for profiling and memory tracking
+import cProfile 
+import pstats
+import io 
+import tracemalloc
+import sys 
+import time
 
 from sklearn.cluster import AgglomerativeClustering as SklearnAgglomerativeClustering
 from sklearn.preprocessing import StandardScaler
@@ -180,6 +189,8 @@ class BHMCAnalyzer:
             else:
                 raise ValueError(f"Invalid structure tuple length: {len(item)}. Expected 2 or 4.")
         self._log(f"Added batch of {len(structures)} structures to phase: {phase}. Total structures in this phase: {len(self.phases[phase])}")
+        # Log Data usage of the new structures
+        self._log(f"Size of new structures added: {sys.getsizeof(self.structures[-1]) * len(structures) / 1e6:.2f} MB")
 
 
 
@@ -633,10 +644,14 @@ class BHMCAnalyzer:
                 angle_threshold,
                 max_distance
             ))
+        
+        # Determine the chunksie
+        chunksize = max(1, min(20, math.ceil(n_structures / (n_processes * 4))))
+
         if n_processes > 1:
             self._log("Starting multiprocessing pool for H-bond feature computation...")
             with Pool(processes=n_processes) as pool:
-                results = pool.map(_compute_hbond_single, worker_args, chunksize=max(1, n_structures // (n_processes * 4)))
+                results = pool.map(_compute_hbond_single, worker_args, chunksize=chunksize)
         else:
             self._log("Computing H-bond features sequentially (n_processes=1)...")
             results = list(map(_compute_hbond_single, worker_args))
@@ -697,6 +712,8 @@ class BHMCAnalyzer:
         return features
 
 
+    def compute_coloumb_matrix()
+
     # ====================== Clustering Methods =======================
 
     def _ensure_feature_matrix(self, remove_zero_variance: bool = True):
@@ -705,73 +722,97 @@ class BHMCAnalyzer:
 
         Further removes zero variance features to avoid issues in clustering algorithms and to reduce dimensionality.
         """
-        if self._feature_matrix_raw is not None:
-            return 
-        self._log("Computing and caching feature matrix...")
+        # Start Profiling and Memory Tracking
+        start_time = time.time()
+        pr = cProfile.Profile()
+        pr.enable()
+        tracemalloc.start()
+        try:
+            if self._feature_matrix_raw is not None:
+                return 
+            self._log("Computing and caching feature matrix...")
 
-        # Base Energy and Dipoles
-        lowest_energy = self.get_lowest_energy_structure()
-        delta_e = np.array([s.energy - lowest_energy.energy for s in self.structures]).reshape(-1, 1)
-        dipole_mags = np.array([s.dipole_magnitude for s in self.structures]).reshape(-1, 1)
+            # Base Energy and Dipoles
+            lowest_energy = self.get_lowest_energy_structure()
+            delta_e = np.array([s.energy - lowest_energy.energy for s in self.structures]).reshape(-1, 1)
+            dipole_mags = np.array([s.dipole_magnitude for s in self.structures]).reshape(-1, 1)
 
-        # Get Mulliken charge features
-        mulliken_features = self.compute_mulliken_charge_features()
-        
-
-
-        # H-Bond Features
-        hbond_features = self.compute_hbond_features()
-
-        # Extractor for Geometric Features
-        extractor = FeatureExtractor()
-        geom_features = extractor.extract_fast_features(self.structures, self.submolecule_indices)
-
-        rmsd_values = np.array([self._calculate_rmsd(s.molecule.coordinates, self.get_lowest_energy_structure().molecule.coordinates) for s in self.structures])
-        rotational_constants = np.array([self.determine_rotational_constants(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
-        intermolecular_distances = np.array(self.compute_interatomic_distance_matrix())
-
-        
-
-        self._feature_matrix_raw = np.hstack((
-            delta_e, 
-            rmsd_values.reshape(-1, 1), 
-            geom_features[:, :1],  # Rg
-            rotational_constants, 
-            hbond_features, 
-            intermolecular_distances,
-            geom_features[:, 1:4],  # Asphericity, Acylindricity, Kappa^2
-            dipole_mags, 
-            mulliken_features
-        )
+            # Get Mulliken charge features
+            mulliken_features = self.compute_mulliken_charge_features()
+            
 
 
-        )
-        self._log(f"Feature matrix shape: {self._feature_matrix_raw.shape}")
-        self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude', 'Mulliken Charges...']")
-        
+            # H-Bond Features
+            hbond_features = self.compute_hbond_features()
 
-        feature_variances = []
-        for i in range(self._feature_matrix_raw.shape[1]):
-            var = np.var(self._feature_matrix_raw[:, i])
-            feature_variances.append(var)
-            self._log(f"Feature {i} variance: {var:.6f}")
-        if remove_zero_variance:
-            non_zero_var_indices = [i for i, var in enumerate(feature_variances) if var > 1e-6]
-            self._non_zero_var_indices = non_zero_var_indices  # Store which features are kept
-            self._feature_matrix_raw = self._feature_matrix_raw[:, non_zero_var_indices]
-            self._log(f"Removed {len(feature_variances) - len(non_zero_var_indices)} zero-variance features. New shape: {self._feature_matrix_raw.shape}")
-         
-        # Log Statistics of remaining features
-        for i in range(self._feature_matrix_raw.shape[1]):
-            col = self._feature_matrix_raw[:, i]
-            self._log(f"Feature {i} stats: mean={np.mean(col):.4f}, std={np.std(col):.4f}, min={np.min(col):.4f}, max={np.max(col):.4f}")
-        
-        
-        scaler = StandardScaler()
-        
-        self._feature_matrix_normalized = scaler.fit_transform(self._feature_matrix_raw)
-        self._log("Feature matrix computed and cached.")
+            # Extractor for Geometric Features
+            extractor = FeatureExtractor()
+            geom_features = extractor.extract_fast_features(self.structures, self.submolecule_indices)
 
+            rmsd_values = np.array([self._calculate_rmsd(s.molecule.coordinates, self.get_lowest_energy_structure().molecule.coordinates) for s in self.structures])
+            rotational_constants = np.array([self.determine_rotational_constants(s.molecule.coordinates, s.molecule.masses) for s in self.structures])
+            intermolecular_distances = np.array(self.compute_interatomic_distance_matrix())
+
+            
+
+            self._feature_matrix_raw = np.hstack((
+                delta_e, 
+                rmsd_values.reshape(-1, 1), 
+                geom_features[:, :1],  # Rg
+                rotational_constants, 
+                hbond_features, 
+                intermolecular_distances,
+                geom_features[:, 1:4],  # Asphericity, Acylindricity, Kappa^2
+                dipole_mags, 
+                mulliken_features
+            )
+
+
+            )
+            self._log(f"Feature matrix shape: {self._feature_matrix_raw.shape}")
+            self._log(f"Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude', 'Mulliken Charges...']")
+            
+
+            feature_variances = []
+            for i in range(self._feature_matrix_raw.shape[1]):
+                var = np.var(self._feature_matrix_raw[:, i])
+                feature_variances.append(var)
+                self._log(f"Feature {i} variance: {var:.6f}")
+            if remove_zero_variance:
+                non_zero_var_indices = [i for i, var in enumerate(feature_variances) if var > 1e-6]
+                self._non_zero_var_indices = non_zero_var_indices  # Store which features are kept
+                self._feature_matrix_raw = self._feature_matrix_raw[:, non_zero_var_indices]
+                self._log(f"Removed {len(feature_variances) - len(non_zero_var_indices)} zero-variance features. New shape: {self._feature_matrix_raw.shape}")
+             
+            # Log Statistics of remaining features
+            for i in range(self._feature_matrix_raw.shape[1]):
+                col = self._feature_matrix_raw[:, i]
+                self._log(f"Feature {i} stats: mean={np.mean(col):.4f}, std={np.std(col):.4f}, min={np.min(col):.4f}, max={np.max(col):.4f}")
+            
+            
+            scaler = StandardScaler()
+            
+            self._feature_matrix_normalized = scaler.fit_transform(self._feature_matrix_raw)
+            self._log("Feature matrix computed and cached.")
+
+            # Log memory usage of the feature matrix
+            self._log(f"Size of raw feature matrix: {self._feature_matrix_raw.nbytes / 1e6:.2f} MB")
+            self._log(f"Size of normalized feature matrix: {self._feature_matrix_normalized.nbytes / 1e6:.2f} MB")
+        finally:
+            pr.disable()
+            s = io.StringIO()
+            ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+            ps.print_stats(10)  # Print top 10 functions
+            current, peak = tracemalloc.get_traced_memory()
+            # Log Memory Usage
+            self._log(f"Current memory usage: {current / 1e6:.2f} MB; Peak memory usage: {peak / 1e6:.2f} MB")
+            tracemalloc.stop()
+            total_time = time.time() - start_time
+            self._log(f"Time taken to compute feature matrix: {total_time:.2f} seconds")
+            # Write CPU usage to profiling folder
+            with open("profiling/feature_matrix_cpu.txt", "w") as f:
+                f.write(f"--- Profiling Feature Matrix Computation ---\n")
+                f.write(s.getvalue())
 
 
 
@@ -1461,5 +1502,50 @@ class BHMCAnalyzer:
                 row_str = f"{row_label:<15} | " + " | ".join([f"{val:<15.4f}" for val in row_data])
                 f.write(row_str + "\n")
             
+    # ================================ Testing functions ================================
+    def test_chunksize_effect(self, angle_threshold=150.0, max_distance=3.5, n_processes=None):
+        """  
+        Testing function how different chunksizes affect the H-bond feature calculation
+        """
+        n_structures = len(self.structures)
+        if n_structures == 0:
+            self._log("No structures available for testing chunksize effect.", level="warning")
+            return
+        
+        if n_processes is None:
+            n_processes = max(1, cpu_count() - 2)
+        n_processes = min(n_processes, n_structures)
+
+        chunksizes = [1, 2, 4, 8, 16, 32, 64, max(1, math.ceil(n_structures / n_processes * 4))]
+        results = []
+        print(f"Testing chunksize effect on H-bond feature calculation with {n_structures} structures and {n_processes} processes...")
+        worker_args = [
+            (
+                list(s.molecule.atom_labels),
+                np.array(s.molecule.coordinates),
+                angle_threshold,
+                max_distance
+            )
+            for s in self.structures
+        ]
+        times = []
+        for chunksize in chunksizes:
+            start = time.time()
+            with Pool(processes=n_processes) as pool:
+                pool.map(_compute_hbond_single, worker_args, chunksize=chunksize)
+            end = time.time()
+            elapsed = end - start
+            times.append(elapsed)
+
+        # plot results
+        plt.figure(figsize=(10, 6))
+        plt.plot(chunksizes, times, marker='o')
+        plt.xscale('log')
+        plt.xlabel('Chunksize')
+        plt.ylabel('Time (seconds)')
+        plt.title(f'Effect of Chunksize on H-bond Feature Calculation (n_structures={n_structures}, processes={n_processes})')
+        plt.grid(True, alpha=0.3)
+        plt.savefig("figures/chunksize_effect.png", dpi=200)
+        plt.close()
 
         

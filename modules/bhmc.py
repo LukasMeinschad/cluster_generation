@@ -15,6 +15,18 @@ import copy
 from tqdm import tqdm
 import time
 
+# Matplotlib
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for plotting
+
+
+# Profiling and Memory Tracking
+import cProfile
+import pstats
+import io 
+import tracemalloc
+import sys
+
 # Module imports
 from molecule_class import Molecule
 from operators import NonLocalOperators, LocalOperators
@@ -126,152 +138,179 @@ class MultiPhaseBHMC:
         
         Each worker starts from a different initial configuration for better PES coverage.
         """
-        if n_processes is None:
-            n_processes = len(initial_molecules)
-        
-        if len(initial_molecules) != n_processes:
-            raise ValueError(f"Number of initial molecules ({len(initial_molecules)}) must match n_processes ({n_processes})")
-        
-        if self.logger:
-            self.logger.header("Phase A: Global PES Exploration")
-        
-        self._log(f"Configuration:")
-        self._log(f"  Workers: {n_processes}")
-        self._log(f"  Steps per worker: {n_structures_per_worker}")
-        self._log(f"  Total steps: {n_processes * n_structures_per_worker}")
-        self._log(f"  Method/Basis: {self.config.method}/{self.config.basis}")
-        self._log(f"  Temperature: {self.config.temperature} K")
-        self._log(f"  Adaptive operators: {self.config.adaptive_operators}")
-        self._log(f"  Operators: {', '.join(op[0] for op in self.operators)}")
-        self._log(f"  Independent initial configs: {n_processes}")
-        if self.simulation_box:
-            self._log(f"  Simulation Box: {self.simulation_box}")
-        if self.worker_log_file:
-            self._log(f"  Worker log: {self.worker_log_file}")
-            # Clear worker log file at the start of Phase A
-            with open(self.worker_log_file, 'w') as f:
-                f.write(f"BHMC Phase A Worker Log\n")
-                f.write(f"Configuration: {n_processes} workers, {n_structures_per_worker} steps each\n")
-                f.write(f"Method: {self.config.method}, Basis: {self.config.basis}, Temperature: {self.config.temperature} K\n")
-                f.write(f"Operators: {', '.join(op[0] for op in self.operators)}\n")
-                if self.simulation_box:
-                    f.write(f"Simulation Box: {self.simulation_box}\n")
-                f.write("\n")
-        
-        config_dict = {
-            'method': self.config.method,
-            'basis': self.config.basis,
-            'backend': self.config.backend,
-            'xtb_method': self.config.xtb_method,
-            'temperature': self.config.temperature,
-            'verbose': self.config.verbose,
-            'adaptive_operators': self.config.adaptive_operators,
-
-            # Adaptive Box scaling
-            'adaptive_box': self.config.adaptive_box,
-            'box_update_interval': self.config.box_update_interval,
-            'box_target_acceptance': self.config.box_target_acceptance,
-            'box_acceptance_window': self.config.box_acceptance_window,
-            'box_growth_kp': self.config.box_growth_kp,
-            'box_growth_max': self.config.box_growth_max,
-            'box_max_scale': self.config.box_max_scale,
-            'box_stable_windows': self.config.box_stable_windows
-        }
-
-        # Run initial sp calculation to estimate time
-        sp_molecule = initial_molecules[0]
-        sp_time = self.estimate_single_point_time(sp_molecule)
-        if sp_time is not None:
-            est_time = sp_time * n_structures_per_worker * n_processes
-            self._log(f"Estimated Phase A time: {est_time/60:.2f} minutes")
-            print(f"Estimated Phase A time: {est_time/60:.2f} minutes")
-
-
-        
-        sim_box_dict = self.simulation_box.to_dict() if self.simulation_box else None
-        
-        args_list = [
-            (
-                initial_molecules[worker_id],
-                submolecule_indices,
-                n_structures_per_worker,
-                self.operators,
-                config_dict,
-                worker_id,
-                sim_box_dict,
-                self.worker_log_file,
-            )
-            for worker_id in range(n_processes)
-        ]
-        
-        self._log("Starting parallel BHMC chains...")
-        
-        with Pool(processes=n_processes) as pool:
+        # Memory Tracking and CPU Profiling
+        pr = cProfile.Profile()
+        pr.enable()
+        tracemalloc.start()
+        try: 
+            if n_processes is None:
+                n_processes = len(initial_molecules)
             
-            results_generator = pool.imap(_phase_a_worker, args_list)
-            results = list(tqdm(results_generator, total=n_processes, desc="Phase A Workers"))
-
-        
-        # Collect results and trajectories
-        all_accepted_structures = []
-        self.worker_trajectories = {}  # Store for plotting
-        self.worker_box_updates = {}   # Store adaptive box updates for plotting
-        self.worker_operator_acceptance = {}  # Store operator acceptance rates for analysis 
-
-
-        for worker_result in results:
-            wid = worker_result['worker_id']
-            accepted = worker_result['accepted_structures'] 
-            trajectory = worker_result['energy_trajectory']
-            box_updates = worker_result.get('box_updates', [])
-            operator_rates = worker_result.get('operator_acceptance_rates', {})
+            if len(initial_molecules) != n_processes:
+                raise ValueError(f"Number of initial molecules ({len(initial_molecules)}) must match n_processes ({n_processes})")
             
-            all_accepted_structures.extend(accepted)
-            self.worker_trajectories[wid] = trajectory
-            self.worker_box_updates[wid] = box_updates
-            self.worker_operator_acceptance[wid] = operator_rates
-            self._log(
-                f"  Worker {wid}: {len(accepted)} structures accepted, "
-                f"{len(trajectory)} trajectory points, {len(box_updates)} box updates"
-                f"  Operator acceptance rates: {', '.join(f'{op}: {rate:.1f}%' for op, rate in operator_rates.items())}"
-            )
-        
-        self.phase_a_structures = all_accepted_structures
-        
-        # Summary statistics
-        total_generated = n_processes * n_structures_per_worker
-        total_accepted = len(all_accepted_structures)
-        
-        if self.logger:
-            self.logger.section("Phase A Results")
-        
-        self._log(f"Total steps: {total_generated}")
-        self._log(f"Total accepted: {total_accepted}")
-        if total_generated > 0:
-            self._log(f"Overall acceptance rate: {total_accepted/total_generated*100:.2f}%")
-        
-        if all_accepted_structures:
-            energies = [e for _, e, _, _, _ in all_accepted_structures]
-            dipoles = [d for _, _, _, d, _ in all_accepted_structures]
-            mulliken_charges = [m for _, _, _, _, m in all_accepted_structures]
-            self._log(f"Energy Statistics (Hartree):")
-            self._log(f"  Min:  {min(energies):.6f}")
-            self._log(f"  Max:  {max(energies):.6f}")
-            self._log(f"  Mean: {np.mean(energies):.6f}")
-            self._log(f"  Std:  {np.std(energies):.6f}")
-            self._log(f"Dipole Statistics (Debye):")
-            self._log(f"  Min:  {min(dipoles):.4f}")
-            self._log(f"  Max:  {max(dipoles):.4f}")
-            self._log(f"  Mean: {np.mean(dipoles):.4f}")
-            self._log(f"  Std:  {np.std(dipoles):.4f}") 
+            if self.logger:
+                self.logger.header("Phase A: Global PES Exploration")
+            
+            self._log(f"Configuration:")
+            self._log(f"  Workers: {n_processes}")
+            self._log(f"  Steps per worker: {n_structures_per_worker}")
+            self._log(f"  Total steps: {n_processes * n_structures_per_worker}")
+            self._log(f"  Method/Basis: {self.config.method}/{self.config.basis}")
+            self._log(f"  Temperature: {self.config.temperature} K")
+            self._log(f"  Adaptive operators: {self.config.adaptive_operators}")
+            self._log(f"  Operators: {', '.join(op[0] for op in self.operators)}")
+            self._log(f"  Independent initial configs: {n_processes}")
+            if self.simulation_box:
+                self._log(f"  Simulation Box: {self.simulation_box}")
+            if self.worker_log_file:
+                self._log(f"  Worker log: {self.worker_log_file}")
+                # Clear worker log file at the start of Phase A
+                with open(self.worker_log_file, 'w') as f:
+                    f.write(f"BHMC Phase A Worker Log\n")
+                    f.write(f"Configuration: {n_processes} workers, {n_structures_per_worker} steps each\n")
+                    f.write(f"Method: {self.config.method}, Basis: {self.config.basis}, Temperature: {self.config.temperature} K\n")
+                    f.write(f"Operators: {', '.join(op[0] for op in self.operators)}\n")
+                    if self.simulation_box:
+                        f.write(f"Simulation Box: {self.simulation_box}\n")
+                    f.write("\n")
+            
+            config_dict = {
+                'method': self.config.method,
+                'basis': self.config.basis,
+                'backend': self.config.backend,
+                'xtb_method': self.config.xtb_method,
+                'temperature': self.config.temperature,
+                'verbose': self.config.verbose,
+                'adaptive_operators': self.config.adaptive_operators,
 
-        
-        # Plot worker trajectories
-        self.plot_worker_trajectories()
-        self.plot_adaptive_box_updates()
-        self.plot_worker_operator_acceptance()
-        
-        return self.phase_a_structures
+                # Adaptive Box scaling
+                'adaptive_box': self.config.adaptive_box,
+                'box_update_interval': self.config.box_update_interval,
+                'box_target_acceptance': self.config.box_target_acceptance,
+                'box_acceptance_window': self.config.box_acceptance_window,
+                'box_growth_kp': self.config.box_growth_kp,
+                'box_growth_max': self.config.box_growth_max,
+                'box_max_scale': self.config.box_max_scale,
+                'box_stable_windows': self.config.box_stable_windows
+            }
+
+            # Run initial sp calculation to estimate time
+            sp_molecule = initial_molecules[0]
+            sp_time = self.estimate_single_point_time(sp_molecule)
+            if sp_time is not None:
+                est_time = sp_time * n_structures_per_worker * n_processes
+                self._log(f"Estimated Phase A time: {est_time/60:.2f} minutes")
+                print(f"Estimated Phase A time: {est_time/60:.2f} minutes")
+
+
+            
+            sim_box_dict = self.simulation_box.to_dict() if self.simulation_box else None
+            
+            args_list = [
+                (
+                    initial_molecules[worker_id],
+                    submolecule_indices,
+                    n_structures_per_worker,
+                    self.operators,
+                    config_dict,
+                    worker_id,
+                    sim_box_dict,
+                    self.worker_log_file,
+                )
+                for worker_id in range(n_processes)
+            ]
+            
+            self._log("Starting parallel BHMC chains...")
+            
+            with Pool(processes=n_processes) as pool:
+                
+                results_generator = pool.imap(_phase_a_worker, args_list)
+                results = list(tqdm(results_generator, total=n_processes, desc="Phase A Workers"))
+
+            
+            # Collect results and trajectories
+            all_accepted_structures = []
+            self.worker_trajectories = {}  # Store for plotting
+            self.worker_box_updates = {}   # Store adaptive box updates for plotting
+            self.worker_operator_acceptance = {}  # Store operator acceptance rates for analysis 
+
+
+            for worker_result in results:
+                wid = worker_result['worker_id']
+                accepted = worker_result['accepted_structures'] 
+                trajectory = worker_result['energy_trajectory']
+                box_updates = worker_result.get('box_updates', [])
+                operator_rates = worker_result.get('operator_acceptance_rates', {})
+                
+                all_accepted_structures.extend(accepted)
+                self.worker_trajectories[wid] = trajectory
+                self.worker_box_updates[wid] = box_updates
+                self.worker_operator_acceptance[wid] = operator_rates
+                self._log(
+                    f"  Worker {wid}: {len(accepted)} structures accepted, "
+                    f"{len(trajectory)} trajectory points, {len(box_updates)} box updates"
+                    f"  Operator acceptance rates: {', '.join(f'{op}: {rate:.1f}%' for op, rate in operator_rates.items())}"
+                )
+
+            # Log size of accepted structures for Phase A
+            self._log(f"Size of accepted structures (Phase A): {sys.getsizeof(all_accepted_structures)/10**6:.2f} MB")
+            
+            self.phase_a_structures = all_accepted_structures
+            
+            # Summary statistics
+            total_generated = n_processes * n_structures_per_worker
+            total_accepted = len(all_accepted_structures)
+            
+            if self.logger:
+                self.logger.section("Phase A Results")
+            
+            self._log(f"Total steps: {total_generated}")
+            self._log(f"Total accepted: {total_accepted}")
+            if total_generated > 0:
+                self._log(f"Overall acceptance rate: {total_accepted/total_generated*100:.2f}%")
+            
+            if all_accepted_structures:
+                energies = [e for _, e, _, _, _ in all_accepted_structures]
+                dipoles = [d for _, _, _, d, _ in all_accepted_structures]
+                mulliken_charges = [m for _, _, _, _, m in all_accepted_structures]
+                self._log(f"Energy Statistics (Hartree):")
+                self._log(f"  Min:  {min(energies):.6f}")
+                self._log(f"  Max:  {max(energies):.6f}")
+                self._log(f"  Mean: {np.mean(energies):.6f}")
+                self._log(f"  Std:  {np.std(energies):.6f}")
+                self._log(f"Dipole Statistics (Debye):")
+                self._log(f"  Min:  {min(dipoles):.4f}")
+                self._log(f"  Max:  {max(dipoles):.4f}")
+                self._log(f"  Mean: {np.mean(dipoles):.4f}")
+                self._log(f"  Std:  {np.std(dipoles):.4f}") 
+
+            
+            # Plot worker trajectories
+            self.plot_worker_trajectories()
+            self.plot_adaptive_box_updates()
+            self.plot_worker_operator_acceptance()
+
+        finally:
+            pr.disable()
+            current, peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+            s = io.StringIO()
+            ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+            ps.print_stats(10)
+            # Log memory usage
+            self._log(f"Profiling Results for Phase A:")
+            self._log(f"Current memory usage: {current / 10**6:.2f} MB; Peak memory usage: {peak / 10**6:.2f} MB")
+
+            # TODO move this to an log file etc
+            # Write profiling results to an out file
+            with open("profiling/phase_a_profile.txt", 'w') as f:
+                f.write(f"--- Profiling Results for Phase A ---\n")
+                f.write(s.getvalue())
+                f.write(f"\n--- Memory Usage for Phase A ---\n")
+                f.write(f"Current memory usage: {current / 10**6:.2f} MB; Peak memory usage: {peak / 10**6:.2f} MB\n")
+
+            return self.phase_a_structures
     
     def run_phase_b(self,
                     representatives: List["StructureData"],
@@ -478,7 +517,7 @@ class MultiPhaseBHMC:
         #analyzer.plot_rmsd_heatmap()
         
         # Precompute the feature matrix
-        analyzer.feature_matrix(normalize=True)  # Normalized features for clustering
+        #analyzer.feature_matrix(normalize=True)  # Normalized features for clustering
 
 
         analyzer.plot_energy_distribution()
@@ -487,7 +526,8 @@ class MultiPhaseBHMC:
         #analyzer.plot_pca_explained_variance()
         analyzer.plot_pca_loadings(pc_index=0)
 
-        
+        # Test hbond_features chunk size (uncomment)
+        #analyzer.test_chunksize_effect() 
 
         if cluster_method in {"kmeans", "agglomerative"}:
             if n_clusters is None:

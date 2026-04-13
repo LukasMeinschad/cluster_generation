@@ -29,7 +29,7 @@ if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
 
-    N_WORKERS = 20
+    N_WORKERS = 5
 
     # Parse the Arguments
     args = get_args()
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     molecule = Molecule.from_xyz(xyz_content)
 
     # Plot contour
-    plot_contour_vdw_radii(molecule, save_path="figures/contour_vdw_radii.png")
+    # plot_contour_vdw_radii(molecule, save_path="figures/contour_vdw_radii.png")
     plot_pairwise_distance_heatmap(molecule, save_path="figures/pairwise_distance_heatmap.png")
 
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     init_logger = Logger(name="init", log_file="cluster_gen.out", file_mode="a")
 
     init_config = InitializationConfig(
-        method="hf",
+        method="mp2",
         basis="cc-pvdz",
         box_type="sphere",
         box_scale_factor=1.8,
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=1000,
+        n_structures_per_worker=5000,
         n_processes=N_WORKERS
     )
 
@@ -229,52 +229,52 @@ if __name__ == "__main__":
         energies=optimized_energies
     )
 
-    # ── Interpolation of Energy Paths ───────────────────────────
-    if len(optimized_mols) >= 2:
-        logger_opt.header("Rigid-Body Interpolation between Opt. Minima")
-        interpolator = Interpolator()
-        
-        # Wir berechnen Pfade vom tiefsten Minimum (Index 0) zu den anderen n Minima
-        n_paths = min(len(optimized_mols) - 1, 3) # Limitiert auf max. 3 Pfade, um Zeit zu sparen
-        
-        # Für die Energiebewertungen der Pfade reicht ggf. Hartree-Fock, um Zeit zu sparen.
-        # Falls du MP2 willst, nutze einfach den bestehenden 'calc' weiter.
-        eval_config = Config(method="hf", basis="cc-pvdz", memory="2GB")
-        eval_calc = Psi4Calculator(config=eval_config, verbose=False)
-        
-        for i in range(1, n_paths + 1):
-            logger_opt.info(f"Interpolating path from Global Min (0) to Local Min ({i})...")
-            
-            path_mols, path_energies = interpolator.slerp_interpolate(
-                mol_a=optimized_mols[0],
-                mol_b=optimized_mols[i],
-                submolecule_indices=submol_indices,
-                n_points=20,  # 12 Schritte pro Pfad
-                calculator=eval_calc
-            )
-            
+  #  # ── Interpolation of Energy Paths ───────────────────────────
+  #  if len(optimized_mols) >= 2:
+  #      logger_opt.header("Rigid-Body Interpolation between Opt. Minima")
+  #      interpolator = Interpolator()
+  #      
+  #      # Wir berechnen Pfade vom tiefsten Minimum (Index 0) zu den anderen n Minima
+  #      n_paths = min(len(optimized_mols) - 1, 3) # Limitiert auf max. 3 Pfade, um Zeit zu sparen
+  #      
+  #      # Für die Energiebewertungen der Pfade reicht ggf. Hartree-Fock, um Zeit zu sparen.
+  #      # Falls du MP2 willst, nutze einfach den bestehenden 'calc' weiter.
+  #      eval_config = Config(method="hf", basis="cc-pvdz", memory="2GB")
+  #      eval_calc = Psi4Calculator(config=eval_config, verbose=False)
+  #      
+  #      for i in range(1, n_paths + 1):
+  #          logger_opt.info(f"Interpolating path from Global Min (0) to Local Min ({i})...")
+  #          
+  #          path_mols, path_energies = interpolator.slerp_interpolate(
+  #              mol_a=optimized_mols[0],
+  #              mol_b=optimized_mols[i],
+  #              submolecule_indices=submol_indices,
+  #              n_points=20,  # 12 Schritte pro Pfad
+  #              calculator=eval_calc
+  #          )
+  #          
 
-            logger_opt.write_xyz_trajectory(
-                molecules=path_mols,
-                filepath=f"trajectories/interpolated_path_0_to_{i}.xyz",
-                energies=path_energies
-            )
+  #          logger_opt.write_xyz_trajectory(
+  #              molecules=path_mols,
+  #              filepath=f"trajectories/interpolated_path_0_to_{i}.xyz",
+  #              energies=path_energies
+  #          )
 
-            # Plot the energy profiles
-            valid_indices = [idx for idx, energy in enumerate(path_energies) if energy is not None]
-            valid_energies = [energy for energy in path_energies if energy is not None]
-            if valid_energies:
-                plt.figure(figsize=(8, 5))
-                plt.plot(valid_indices, valid_energies, marker='o', linestyle='-', color='#1f77b4')
-                plt.xlabel("Interpolation Step")
-                plt.ylabel("Energy (Hartree)")
-                plt.title(f"Energy Profile: Global Min to Local Min {i}")
-                plt.grid(True, linestyle="--", alpha=0.7)
-                plt.savefig(f"trajectories/energy_profile_0_to_{i}.png")
-                plt.close()
-                logger_opt.info(f"Saved energy profile plot for path 0 to {i}")
-            else:
-                logger_opt.warning(f"No valid energies for path 0 to {i}, skipping plot.")
+  #          # Plot the energy profiles
+  #          valid_indices = [idx for idx, energy in enumerate(path_energies) if energy is not None]
+  #          valid_energies = [energy for energy in path_energies if energy is not None]
+  #          if valid_energies:
+  #              plt.figure(figsize=(8, 5))
+  #              plt.plot(valid_indices, valid_energies, marker='o', linestyle='-', color='#1f77b4')
+  #              plt.xlabel("Interpolation Step")
+  #              plt.ylabel("Energy (Hartree)")
+  #              plt.title(f"Energy Profile: Global Min to Local Min {i}")
+  #              plt.grid(True, linestyle="--", alpha=0.7)
+  #              plt.savefig(f"trajectories/energy_profile_0_to_{i}.png")
+  #              plt.close()
+  #              logger_opt.info(f"Saved energy profile plot for path 0 to {i}")
+  #          else:
+  #              logger_opt.warning(f"No valid energies for path 0 to {i}, skipping plot.")
 
 
         

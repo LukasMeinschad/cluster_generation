@@ -83,3 +83,9 @@ $$L(p') = q p' q^{-1} = (0,r)$$
 where $r = (\cos \frac{\theta}{2} - \sin^2 \frac{\theta}{2} ||u||^2) p + 2 \sin^2 \frac{\theta}{2} (u \cdot p) u + 2 \cos \frac{\theta}{2} \sin \frac{\theta}{2} (u \times p)$
 
 Here $L$ is a linear transformation of the quaternion space to itself and since $q$ is unitary the transformation is an isometry. Also $L(q) = q$ and so $L$ leaves vectors parallel to $q$ invariant.
+
+# Further literature
+
++ THis nice master thesis on the descriptors used for clustering 
+https://helda.helsinki.fi/bitstreams/854bc939-7fe0-4e81-b426-deea91e37768/download
+

@@ -1327,8 +1327,50 @@ class BHMCAnalyzer:
         for name, loading in zip(sorted_names, sorted_loadings):
             self._log(f" {name:<20} : {loading:.4f}")
 
-
-
+    def plot_pca_3D_clustered(self,
+                              n_clusters: Optional[int] = None,
+                              phase: Optional[str] = None,
+                              cluster_method: str = "agglomerative",
+                              **cluster_kwargs):
+        """ 
+        Plots the PCA as a 3D dimensional scatter plot.
+        The x-y dimensions are the first two principal components and the z-dimension is the energies
+        
+        Args:
+            n_clusters: Number of clusters to form (only for agglomerative and kmeans)
+            phase: Specified phase to analyze. If None, analyzes all structures.
+            cluster_method: Clustering method ("agglomerative", "kmeans", "dbscan", "hdbscan")
+            **cluster_kwargs: Passed to the clustering method
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        if not structures:
+            print(f"No structures found for phase: {phase}")
+            return
+        # Obtain the PCA
+        pca_result, explained_variance = self.pca(phase=phase)
+        if cluster_method in ["dbscan", "hdbscan"]:
+            labels = self.cluster(method=cluster_method, phase=phase, **cluster_kwargs)
+            title_suffix = f"clusters={len(set(labels) - {-1})}, noise={np.sum(labels == -1)}"
+        else:
+            if n_clusters is None:
+                raise ValueError("n_clusters must be specified for agglomerative or kmeans clustering")
+            labels = self.cluster(method=cluster_method, n_clusters=n_clusters, phase=phase, **cluster_kwargs)
+            title_suffix = f"k={n_clusters}"
+        energies = np.array([s.energy for s in (self.phases[phase] if phase else self.structures)])
+        fig = plt.figure(figsize=(12, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        scatter = ax.scatter(pca_result[:, 0], pca_result[:, 1], energies, c=labels, cmap='tab10', alpha=0.7)
+        ax.set_xlabel(f'PC1 ({explained_variance[0]*100:.1f}%)')
+        ax.set_ylabel(f'PC2 ({explained_variance[1]*100:.1f}%)')
+        ax.set_zlabel('Energy (Ha)')
+        ax.set_title(f'3D PCA + {cluster_method.capitalize()} ({title_suffix}) - Phase: {phase if phase else "All"}', fontsize=12)
+        plt.colorbar(scatter, label='Cluster Label')
+        plt.grid(True, alpha=0.3)
+        plt.savefig(f"figures/pca_3d_{cluster_method}_{phase if phase else 'all'}.png", dpi=200, bbox_inches='tight')
+        plt.close()
 
     def plot_pca_explained_variance(self, n_components: int = 20, phase: Optional[str] = None):
         """  
@@ -1486,6 +1528,50 @@ class BHMCAnalyzer:
         plt.grid(True, alpha=0.3)
         plt.savefig(f"figures/umap_{cluster_method}_{phase if phase else 'all'}_{colored_by}.png", dpi=200, bbox_inches='tight')
         plt.close()
+
+    def plot_umap_3D_clustered(self,
+                              n_clusters: Optional[int] = None,
+                              phase: Optional[str] = None,
+                              cluster_method: str = "agglomerative",
+                              random_state: int = 42,
+                              n_neighbors: int = 15,
+                              **cluster_kwargs) -> None:
+        """  
+        Plots a 3D UMAP projection:
+        x-y are the first two UMAP dimensions and z is the energy.
+        The points are colored by cluster labels.
+
+        Args:
+            n_clusters: Number of clusters to form (only for agglomerative and kmeans)
+            phase: Specified phase to analyze. If None, analyzes all structures.
+            cluster_method: Clustering method ("agglomerative", "kmeans", "dbscan", "hdbscan")
+            n_neighbors: Number of neighbors for UMAP
+            **cluster_kwargs: Passed to the clustering method
+        """
+        if UMAP is None:
+            raise ImportError("UMAP is not installed.")
+        if cluster_method in ["dbscan", "hdbscan"]:
+            labels = self.cluster(method=cluster_method, phase=phase, **cluster_kwargs)
+            title_suffix = f"clusters={len(set(labels) - {-1})}, noise={np.sum(labels == -1)}"
+        else:
+            if n_clusters is None:
+                raise ValueError("n_clusters must be specified for agglomerative or kmeans clustering")
+            labels = self.cluster(method=cluster_method, n_clusters=n_clusters, phase=phase, **cluster_kwargs)
+            title_suffix = f"k={n_clusters}"
+        umap_result = self.umap(n_components=2, n_neighbors=n_neighbors, random_state=random_state, phase=phase)
+        energies = np.array([s.energy for s in (self.phases[phase] if phase else self.structures)])
+        fig = plt.figure(figsize=(12, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        scatter = ax.scatter(umap_result[:, 0], umap_result[:, 1], energies, c=labels, cmap='tab10', alpha=0.7)
+        ax.set_xlabel('UMAP Dim 1')
+        ax.set_ylabel('UMAP Dim 2')
+        ax.set_zlabel('Energy (Ha)')
+        ax.set_title(f'3D UMAP + {cluster_method.capitalize()} ({title_suffix}) - Phase: {phase if phase else "All"}', fontsize=12)
+        plt.colorbar(scatter, label='Cluster Label')
+        plt.grid(True, alpha=0.3)
+        plt.savefig(f"figures/umap_3d_{cluster_method}_{phase if phase else 'all'}.png", dpi=200, bbox_inches='tight')
+        plt.close()
+
 
 
     def log_representative_features(

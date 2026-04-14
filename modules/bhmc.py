@@ -555,6 +555,16 @@ class MultiPhaseBHMC:
         analyzer.plot_umap_clustered(n_clusters=n_clusters,
                                      cluster_method=cluster_method,**cluster_kwargs)
 
+        analyzer.plot_pca_3D_clustered(n_clusters=n_clusters,
+                                       cluster_method=cluster_method,**cluster_kwargs)
+        
+        analyzer.plot_umap_3D_clustered(n_clusters=n_clusters,
+                                        cluster_method=cluster_method,
+                                        n_neighbors=15,
+                                        **cluster_kwargs)
+        
+
+
         representatives = analyzer.get_cluster_representatives(method="lowest_energy")
         analyzer.log_representative_features(representatives,labels=labels) 
     

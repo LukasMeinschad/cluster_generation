@@ -63,7 +63,7 @@ if __name__ == "__main__":
         method="mp2",
         basis="cc-pvdz",
         box_type="sphere",
-        box_scale_factor=1.8,
+        box_scale_factor=1.3,
         min_distance=0.8,
         optimize_submolecules=True,
         verbose=False
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     phase_a_candidates = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=1000,
+        n_structures_per_worker=3000,
         n_processes=N_WORKERS
     )
 
@@ -165,44 +165,27 @@ if __name__ == "__main__":
         )
 
 
-    # ── BHMC Phase B: Local Refinement ──────────────────────────
-    # Switch to lower temperature and disable adaptive scaling
-    bhmc_sampler.config.temperature = 150
-    bhmc_sampler.config.adaptive_operators = False
 
-    phase_b_results = bhmc_sampler.run_phase_b(
-        representatives=representatives,
-        submolecule_indices=submol_indices,
-        n_steps_per_worker=50,
-    )
-
-    # Extract best structures from Phase B
-    phase_b_molecules = []
-    phase_b_energies = []
-    for result in phase_b_results:
-        best = result["best_structure"]
-        if best is not None:
-            phase_b_molecules.append(best[0])
-            phase_b_energies.append(best[1])
-
-    # ── Local Optimization ──────────────────────────────────────
+    # ── Local Optimization (skip Phase B) ──────────────────────
     logger_opt = Logger(name="optimization", log_file="cluster_gen.out", file_mode="a")
     logger_opt.header("Local Optimization")
 
     # Psi4 Config für Optimierung (und spätere Interpolations-Punkte)
     config = Config(method="mp2", basis="cc-pvdz", memory="2GB")
     calc = Psi4Calculator(config=config, verbose=False)
-    
-    optimization_results = calc.batch_optimize_parallel_unordered(phase_b_molecules, n_processes=N_WORKERS)
-    
+
+    # Directly optimize the phase A representatives
+    rep_molecules = [rep.molecule for rep in representatives]
+    optimization_results = calc.batch_optimize_parallel_unordered(rep_molecules, n_processes=N_WORKERS)
+
     # Erfolgreiche Optimierungen extrahieren und nach Energie sortieren (wichtig für die Interpolation)
     successful_opts = [res for res in optimization_results if res.success]
     successful_opts.sort(key=lambda x: x.energy)  # Index 0 ist jetzt das absolute globale Minimum!
-    
+
     optimized_mols = [result.molecule for result in successful_opts]
     optimized_energies = [result.energy for result in successful_opts]
 
-    logger_opt.info(f"Optimized {len(optimized_mols)}/{len(phase_b_molecules)} structures successfully")
+    logger_opt.info(f"Optimized {len(optimized_mols)}/{len(rep_molecules)} structures successfully")
 
     # ── Write Intermediate Trajectories ─────────────────────────
     logger_opt.write_xyz_trajectory(
@@ -216,12 +199,6 @@ if __name__ == "__main__":
         filepath="trajectories/representatives.xyz",
         energies=None
     )    
-
-    logger_opt.write_xyz_trajectory(
-        molecules=phase_b_molecules,
-        filepath="trajectories/phase_b_best.xyz",
-        energies=phase_b_energies
-    )
 
     logger_opt.write_xyz_trajectory(
         molecules=optimized_mols,

@@ -1645,7 +1645,182 @@ class BHMCAnalyzer:
             for row_label, row_data in zip(row_labels, rep_matrix_norm):
                 row_str = f"{row_label:<15} | " + " | ".join([f"{val:<15.4f}" for val in row_data])
                 f.write(row_str + "\n")
+
+    # Benchmark on Speed on Clustering Methods:
+    def _algorithm_complexity_registry(self) -> Dict[str, Any]:
+        """ 
+        Returns the complexity functions O(n,m,k) for supported clustering algorithms.
+
+        Values are rough operation-count models (not wall-clock time)
+
+        Args used here:
+            n = number of structures
+            m = number of features
+            k = number of clusters (for methods that require it)
+        """
+        def agglomerative(n: int, m:int, k: int, **kwargs) -> float:
+            """ 
+            Typically O(n^3) or O(n^2 * m) for m features
+
+            With simple linkage one can achieve O(n^2)
+            """
+            return float(n * n * m)
+
+        def kmeans(n: int, m: int, k: int, n_iter: int = 300, **kwargs) -> float:
+            """ 
+            O(n * m * k * n_iter) where n_iter is the number of iterations until convergence
+            """
+            return float(n * m * k * n_iter)
+        
+        def dbscan_avg(n: int, m:int, k:int, **kwargs) -> float:
+            """ 
+            Average case with spatial indexing asa rough model
             
+            O(n * log(n) * m) for feature distance calculations with efficient indexing
+            """
+            return float(n * np.log2(max(n,2)) * m)
+        
+        def dbscan_worst(n: int, m: int, k: int, **kwargs) -> float:
+            """ 
+            Worst case (no spatial indexing or all points in one cluster)
+            O(n^2 * m) for pairwise distance calculations
+            """
+            return float(n * n * m)
+        
+        def hdbscan_avg(n: int, m:int, k:int, **kwargs) -> float:
+            """ 
+            Average case pretty similar to DBSCAN with efficient spatial indexing
+            """
+            return float(n * np.log2(max(n,2)) * m)
+
+        return {
+            "agglomerative": agglomerative,
+            "kmeans": kmeans,
+            "dbscan_avg": dbscan_avg,
+            "dbscan_worst": dbscan_worst,
+            "hdbscan_avg": hdbscan_avg
+            }
+    
+    def benchmark_operations_per_sample(
+            self,
+            k_values: Tuple[int, ...] = (2, 5, 10, 20, 50, 100),
+            phase: Optional[str] = None,
+            algorithms: Optional[List[str]] = None,
+            n_iter_kmeans: int = 300,) -> Dict[int, List[Dict[str,float]]]:
+        """ 
+        Compute and rank operations per sample for each algorithm and each k:
+        Similar Implementation see:
+
+        https://doi.org/10.48550/arXiv.2106.12792
+        
+
+        Routine:
+        1) Determine dataset size (n,m)
+        2) For each k and algorutm compute O(n,m,k)/n
+        3) Sort ascending by operations per sample
+        """
+        self._log("--- Benchmarking Clustering Algorithms Complexity ---")
+
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures
+        n = len(structures)
+        if n == 0:
+            self._log(f"No structures found for phase: {phase}", level="warning")
+            return {}
+        # m = feature dimension used by clustering
+        feature_mat = self.feature_matrix(normalize=True)
+        m = feature_mat.shape[1]
+
+        registry = self._algorithm_complexity_registry()
+        selected_algorithms = algorithms if algorithms is not None else list(registry.keys())
+
+        # Validate algorithm names
+        unknown = [a for a in selected_algorithms if a not in registry]
+        if unknown:
+            raise ValueError(f"Unknown algorithms specified: {unknown}. Valid options are: {list(registry.keys())}")
+        
+        results_by_k: Dict[int, List[Dict[str, float]]] = {}
+
+        self._log(f"Operation Benchmark start (phase = {phase if phase else 'all'}, n={n}, m={m}, k_values={k_values})")
+        
+        for k in k_values:
+            steps: List[Dict[str, float]] = []
+
+            for algo_name in selected_algorithms:
+                # Obtain the complexity function
+                complexity_fn = registry[algo_name]
+                ops_total = complexity_fn(n=n, m=m, k=k, n_iter=n_iter_kmeans)
+                ops_per_sample = ops_total / float(n)
+
+                steps.append({
+                    "algorithm": algo_name,
+                    "k": float(k),
+                    "ops_total": float(ops_total),
+                    "ops_per_sample": float(ops_per_sample)
+                })
+
+            steps.sort(key=lambda x: x["ops_per_sample"])
+            results_by_k[int(k)] = steps
+            
+            # Write to the logger
+            self._log(f"--- k={k} ---")
+            for step in steps:
+                self._log(f"{step['algorithm']:<15} : Total Ops = {step['ops_total']:.2e}, Ops/Sample = {step['ops_per_sample']:.2e}")
+        
+            # Search for algorithm with lowest ops/sample per k and log it
+            for step in steps:
+                if step["ops_per_sample"] == steps[0]["ops_per_sample"]:
+                    self._log(f"Lowest Ops/Sample for k={k}: {step['algorithm']} with {step['ops_per_sample']:.2e} ops/sample")
+                    break
+
+            self._log(f"--- End of Clustering Operation Benchmark ---\n")
+        
+        return results_by_k
+    
+    # =============================== Noise Assesment in Dataset ===============================
+
+    def add_noise(
+            self,
+            data_set: np.ndarray,
+            random_state: Optional[int] = 42
+        ) -> np.ndarray:
+        """ 
+        Adds artificial uniform noise per dimension and appends it to the dataset.
+
+
+        Mapping:
+        - a = min(Dataset) per dimension
+        - b = max(Dataset) per dimension
+        - Noise = (b-a) * rand(n,m) + a
+        - DataSet = Dataset.join(Noise)
+        """
+        if data_set.ndim != 2:
+            raise ValueError("Input data_set must be a 2D array (n_samples, n_features)")
+        n,m = data_set.shape 
+        rng = np.random.default_rng(seed=random_state)
+        a = np.min(data_set, axis=0)
+        b = np.max(data_set, axis=0)
+        noise = (b-a) * rng.random((n, m)) + a
+        return np.vstack([data_set, noise])
+    
+    def get_distance_to_mean(self, data_set: np.ndarray) -> np.ndarray:
+        """ 
+        Computes sorted Euclidean distance of each sample to the dataset mean
+        """
+        if data_set.ndim != 2:
+            raise ValueError("Input data_set must be a 2D array (n_samples, n_features)")
+        if data_set.shape[0] == 0:
+            return np.array([])
+        mean_vec = np.mean(data_set, axis=0)
+        dist_mean = np.linalg.norm(data_set - mean_vec, axis=1)
+        return np.sort(dist_mean)
+    
+    
+            
+
+
     # ================================ Testing functions ================================
     def test_chunksize_effect(self, angle_threshold=150.0, max_distance=3.5, n_processes=None):
         """  

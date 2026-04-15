@@ -29,7 +29,7 @@ if __name__ == "__main__":
     time_start = time.time()
     mp.set_start_method('spawn', force=True)
 
-    N_WORKERS = 5
+    N_WORKERS = 10
 
     # Parse the Arguments
     args = get_args()

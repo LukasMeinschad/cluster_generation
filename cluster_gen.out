@@ -1,7 +1,7 @@
 ================================================================================
                                   CLUSTER GEN                                   
 ================================================================================
-Start Time: 2026-04-14 13:11:11
+Start Time: 2026-04-15 11:14:38
 Python Version: 3.9.23
 Working Directory: /media/storage_6/lme/master_thesis/cluster_generation
 Log File: /media/storage_6/lme/master_thesis/cluster_generation/cluster_gen.out
@@ -16,427 +16,300 @@ Configuration:
   Simulation Box Scale Factor: 1.3
   Minimum Distance Between Submolecules: 0.8 Angstrom
   Candidate configurations generated: 10000
-  Workers (n_keep) for energy ranking: 5
+  Workers (n_keep) for energy ranking: 10
   Energy Evaluation Backend: xtb
   xTB Method (if applicable): GFN2-xTB
 
 
-[1/5] Loading molecule from test_molecules/water_clusters/h2o_timer.xyz
- Loaded: 9 atoms
+[1/5] Loading molecule from test_molecules/h2o_n2.xyz
+ Loaded: 5 atoms
 
 [2/5] Fragmenting molecule into submolecules
- Found 3 submolecules:
-  Submolecule 1: 3 atoms
+ Found 2 submolecules:
+  Submolecule 1: 2 atoms
   Submolecule 2: 3 atoms
-  Submolecule 3: 3 atoms
 
 [3/5] Optimizing Submolecules (parallelized)
-Workers: 3
-  Submolecule 3 optimized successfully
-  Submolecule 2 optimized successfully
+Workers: 2
   Submolecule 1 optimized successfully
+  Submolecule 2 optimized successfully
 
 [4/5] Creating simulation box
  Box type:  sphere
- Radius: 2.52 Angstrom
- Volume: 67.43 Angstrom^3
+ Radius: 2.24 Angstrom
+ Volume: 47.34 Angstrom^3
 
 Energy evaluation complete: 10000 successful, 0 failed
 Pre-screening completed: 10000 valid configurations out of 10000 generated.
 Statistics of generated configurations:
-  Energy range: -15.227747 to -15.224567 Hartree
-  Energy of lowest-energy candidate: -15.227747 Hartree
-  Energy of highest-energy selected candidate: -15.224567 Hartree
-  Energy distribution: mean -15.141111, median -15.190839, std 0.144572 Hartree
+  Energy range: -10.832867 to -10.832780 Hartree
+  Energy of lowest-energy candidate: -10.832867 Hartree
+  Energy of highest-energy selected candidate: -10.832780 Hartree
+  Energy distribution: mean -10.813930, median -10.830555, std 0.065230 Hartree
 ============================================================
 Initialization Complete!
-Total atoms: 9
-Submolecules: 3
+Total atoms: 5
+Submolecules: 2
 Simulation box type: sphere
 Candidates generated: 10000, Valid: 10000, Failed: 0
-Sekected for workers: 5, Energy range: -15.227747 to -15.224567 Hartree
-Box radius: 2.52 Angstrom
-Box volume: 67.43 Angstrom^3
-Wrote 5 structures to trajectories/initial_candidates.xyz
+Sekected for workers: 10, Energy range: -10.832867 to -10.832780 Hartree
+Box radius: 2.24 Angstrom
+Box volume: 47.34 Angstrom^3
+Wrote 10 structures to trajectories/initial_candidates.xyz
 ========================================================================
                     Phase A: Global PES Exploration                     
 ========================================================================
 Configuration:
-  Workers: 5
+  Workers: 10
   Steps per worker: 3000
-  Total steps: 15000
+  Total steps: 30000
   Method/Basis: hf/cc-pvdz
   Temperature: 5000 K
   Adaptive operators: True
   Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation, com_com_approach, com_com_separation
-  Independent initial configs: 5
-  Simulation Box: <box.SimulationBox object at 0x7f0da89fa190>
+  Independent initial configs: 10
+  Simulation Box: <box.SimulationBox object at 0x14638929a9a0>
   Worker log: bhmc_workers.log
-Estimated single point time: 0.01 seconds (Energy: -15.227747 Hartree)
-Estimated Phase A time: 2.34 minutes
+Estimated single point time: 0.01 seconds (Energy: -10.832867 Hartree)
+Estimated Phase A time: 3.66 minutes
 Starting parallel BHMC chains...
-  Worker 0: 0 structures accepted, 3001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
-  Worker 1: 1760 structures accepted, 3001 trajectory points, 372 box updates  Operator acceptance rates: twist: 37.6%, large_displacement: 68.3%, mirror: 41.2%, roto_reflection: 13.7%, exchange: 75.2%, random_so3: 86.3%, principal_axis_rotation: 79.7%, com_com_approach: 95.3%, com_com_separation: 94.1%
-  Worker 2: 1862 structures accepted, 3001 trajectory points, 385 box updates  Operator acceptance rates: twist: 43.7%, large_displacement: 70.0%, mirror: 44.0%, roto_reflection: 15.5%, exchange: 75.5%, random_so3: 85.3%, principal_axis_rotation: 83.2%, com_com_approach: 96.1%, com_com_separation: 95.0%
-  Worker 3: 1906 structures accepted, 3001 trajectory points, 419 box updates  Operator acceptance rates: twist: 39.1%, large_displacement: 74.2%, mirror: 48.5%, roto_reflection: 20.0%, exchange: 73.2%, random_so3: 86.7%, principal_axis_rotation: 85.0%, com_com_approach: 97.4%, com_com_separation: 100.0%
-  Worker 4: 1853 structures accepted, 3001 trajectory points, 405 box updates  Operator acceptance rates: twist: 38.8%, large_displacement: 69.9%, mirror: 39.7%, roto_reflection: 19.4%, exchange: 79.5%, random_so3: 80.6%, principal_axis_rotation: 85.5%, com_com_approach: 94.8%, com_com_separation: 97.5%
-Size of accepted structures (Phase A): 0.06 MB
+  Worker 0: 1847 structures accepted, 3001 trajectory points, 378 box updates  Operator acceptance rates: twist: 43.5%, large_displacement: 68.0%, mirror: 46.0%, roto_reflection: 18.8%, exchange: 74.8%, random_so3: 89.5%, principal_axis_rotation: 78.2%, com_com_approach: 92.0%, com_com_separation: 96.2%
+  Worker 1: 2026 structures accepted, 3001 trajectory points, 436 box updates  Operator acceptance rates: twist: 59.4%, large_displacement: 69.6%, mirror: 58.5%, roto_reflection: 32.6%, exchange: 75.5%, random_so3: 85.4%, principal_axis_rotation: 73.2%, com_com_approach: 86.5%, com_com_separation: 96.6%
+  Worker 2: 1863 structures accepted, 3001 trajectory points, 403 box updates  Operator acceptance rates: twist: 46.5%, large_displacement: 69.3%, mirror: 52.5%, roto_reflection: 26.4%, exchange: 73.1%, random_so3: 88.1%, principal_axis_rotation: 71.3%, com_com_approach: 87.3%, com_com_separation: 90.1%
+  Worker 3: 2104 structures accepted, 3001 trajectory points, 438 box updates  Operator acceptance rates: twist: 56.6%, large_displacement: 76.4%, mirror: 62.4%, roto_reflection: 37.9%, exchange: 74.7%, random_so3: 88.9%, principal_axis_rotation: 76.6%, com_com_approach: 92.9%, com_com_separation: 99.2%
+  Worker 4: 2001 structures accepted, 3001 trajectory points, 426 box updates  Operator acceptance rates: twist: 49.9%, large_displacement: 77.7%, mirror: 52.7%, roto_reflection: 30.0%, exchange: 79.4%, random_so3: 85.2%, principal_axis_rotation: 76.4%, com_com_approach: 96.6%, com_com_separation: 96.2%
+  Worker 5: 2080 structures accepted, 3001 trajectory points, 437 box updates  Operator acceptance rates: twist: 59.0%, large_displacement: 74.7%, mirror: 58.7%, roto_reflection: 32.5%, exchange: 79.6%, random_so3: 89.6%, principal_axis_rotation: 76.5%, com_com_approach: 91.8%, com_com_separation: 93.5%
+  Worker 6: 2038 structures accepted, 3001 trajectory points, 440 box updates  Operator acceptance rates: twist: 56.9%, large_displacement: 73.3%, mirror: 59.7%, roto_reflection: 32.0%, exchange: 79.1%, random_so3: 88.0%, principal_axis_rotation: 72.4%, com_com_approach: 91.7%, com_com_separation: 98.1%
+  Worker 7: 2095 structures accepted, 3001 trajectory points, 456 box updates  Operator acceptance rates: twist: 55.8%, large_displacement: 77.6%, mirror: 58.3%, roto_reflection: 36.1%, exchange: 79.9%, random_so3: 90.0%, principal_axis_rotation: 74.1%, com_com_approach: 95.2%, com_com_separation: 100.0%
+  Worker 8: 1986 structures accepted, 3001 trajectory points, 417 box updates  Operator acceptance rates: twist: 52.5%, large_displacement: 72.9%, mirror: 57.8%, roto_reflection: 31.8%, exchange: 70.6%, random_so3: 84.1%, principal_axis_rotation: 73.1%, com_com_approach: 94.6%, com_com_separation: 98.3%
+  Worker 9: 1967 structures accepted, 3001 trajectory points, 404 box updates  Operator acceptance rates: twist: 46.1%, large_displacement: 75.6%, mirror: 49.9%, roto_reflection: 26.2%, exchange: 81.2%, random_so3: 82.5%, principal_axis_rotation: 76.2%, com_com_approach: 98.3%, com_com_separation: 99.2%
+Size of accepted structures (Phase A): 0.16 MB
 ------------------------------------------------------------------------
 Phase A Results
 ------------------------------------------------------------------------
-Total steps: 15000
-Total accepted: 7381
-Overall acceptance rate: 49.21%
+Total steps: 30000
+Total accepted: 20007
+Overall acceptance rate: 66.69%
 Energy Statistics (Hartree):
-  Min:  -15.224631
-  Max:  -15.166888
-  Mean: -15.210070
-  Std:  0.004678
+  Min:  -10.832937
+  Max:  -10.732790
+  Mean: -10.829483
+  Std:  0.005450
 Dipole Statistics (Debye):
-  Min:  0.0535
-  Max:  1.4929
-  Mean: 0.7890
-  Std:  0.2899
+  Min:  0.3038
+  Max:  0.9485
+  Mean: 0.4911
+  Std:  0.0339
 Profiling Results for Phase A:
-Current memory usage: 30.57 MB; Peak memory usage: 31.32 MB
-Wrote 7381 structures to trajectories/phase_a_candidates.xyz
+Current memory usage: 66.06 MB; Peak memory usage: 66.30 MB
+Wrote 20007 structures to trajectories/phase_a_candidates.xyz
 ========================================================================
                             Phase A Analysis                            
 ========================================================================
-Total structures: 7381
+Total structures: 20007
 Target clusters: 5
-Added batch of 7381 structures to phase: unknown. Total structures in this phase: 7381
-Size of new structures added: 0.35 MB
+Added batch of 20007 structures to phase: unknown. Total structures in this phase: 20007
+Size of new structures added: 0.96 MB
 Energy Statistics (phase: all):
-  N Structures: 7381
-  Min: -15.224631
-  Max: -15.166888
-  Mean: -15.210070
-  Median: -15.210619
-  Std: 0.004678
-  Q25: -15.212527
-  Q75: -15.208822
-  IQR: 0.003705
+  N Structures: 20007
+  Min: -10.832937
+  Max: -10.732790
+  Mean: -10.829483
+  Median: -10.831176
+  Std: 0.005450
+  Q25: -10.831577
+  Q75: -10.830412
+  IQR: 0.001165
 Dipole Magnitude Statistics (Debye):
-  Min:  0.0535
-  Max:  1.4929
-  Mean: 0.7890
-  Std:  0.2899
+  Min:  0.3038
+  Max:  0.9485
+  Mean: 0.4911
+  Std:  0.0339
 Computing and caching feature matrix...
-Computing Mulliken charge features for 7381 - Phase: all
+Computing Mulliken charge features for 20007 - Phase: all
 Mulliken Charge Statistics (non-zero values):
-  Count: 66429
+  Count: 100035
   Mean: -0.0000
-  Std: 0.3992
-  Min: -0.6698
-  Max: 0.3483
-Computing H-bond features for 7381 (angle_threshold=150.0°) - Phase: all
+  Std: 0.3078
+  Min: -0.6243
+  Max: 0.3760
+Computing H-bond features for 20007 (angle_threshold=150.0°) - Phase: all
 Using 42 parallel processes for H-bond computation
 Starting multiprocessing pool for H-bond feature computation...
-Structures with H-bonds: 211/7381
-Total H-bond configs: 215
-Avg H-bonds per struct (with H-bonds): 1.02
-Avg H-bond angle: 160.02° (std: 6.61°)
-Min/Max H-bond angle: 150.04° / 177.87°
-Avg D-A distance: 2.75 Å (std: 0.20 Å)
-Feature matrix shape: (7381, 94)
+Structures with H-bonds: 0/20007
+Total H-bond configs: 0
+Feature matrix shape: (20007, 38)
 Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Coulomb Matrix...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude', 'Mulliken Charges...']
-Feature 0 variance: 0.000022
-Feature 1 variance: 0.392740
-Feature 2 variance: 0.324629
+Feature 0 variance: 0.000030
+Feature 1 variance: 0.688886
+Feature 2 variance: 0.247187
 Feature 3 variance: 0.000000
 Feature 4 variance: 0.000000
 Feature 5 variance: 0.000000
-Feature 6 variance: 0.029364
-Feature 7 variance: 712.343309
-Feature 8 variance: 0.211629
+Feature 6 variance: 0.000000
+Feature 7 variance: 0.000000
+Feature 8 variance: 0.000000
 Feature 9 variance: 0.000000
-Feature 10 variance: 0.000000
-Feature 11 variance: 2.231743
-Feature 12 variance: 2.362421
-Feature 13 variance: 2.340937
-Feature 14 variance: 2.289182
-Feature 15 variance: 2.455852
-Feature 16 variance: 2.391990
+Feature 10 variance: 1.188726
+Feature 11 variance: 1.345198
+Feature 12 variance: 1.329698
+Feature 13 variance: 1.189329
+Feature 14 variance: 1.352113
+Feature 15 variance: 1.338915
+Feature 16 variance: 0.000000
 Feature 17 variance: 0.000000
-Feature 18 variance: 2.322655
-Feature 19 variance: 2.457958
-Feature 20 variance: 2.386020
-Feature 21 variance: 2.376096
-Feature 22 variance: 2.522823
-Feature 23 variance: 2.475709
-Feature 24 variance: 2.288784
-Feature 25 variance: 2.397516
-Feature 26 variance: 2.373206
-Feature 27 variance: 2.461800
-Feature 28 variance: 2.580368
-Feature 29 variance: 2.544364
-Feature 30 variance: 0.000000
-Feature 31 variance: 0.000000
-Feature 32 variance: 2.312410
-Feature 33 variance: 2.426640
-Feature 34 variance: 2.393109
-Feature 35 variance: 0.000000
-Feature 36 variance: 2.470416
-Feature 37 variance: 2.561749
-Feature 38 variance: 2.547245
-Feature 39 variance: 2.478575
-Feature 40 variance: 2.595851
-Feature 41 variance: 2.499207
-Feature 42 variance: 0.000000
-Feature 43 variance: 0.000000
-Feature 44 variance: 0.000000
-Feature 45 variance: 0.001009
-Feature 46 variance: 0.001218
-Feature 47 variance: 0.001394
-Feature 48 variance: 0.001653
-Feature 49 variance: 0.001859
-Feature 50 variance: 0.002149
-Feature 51 variance: 0.002517
-Feature 52 variance: 0.002950
-Feature 53 variance: 0.003284
-Feature 54 variance: 0.004478
-Feature 55 variance: 0.006935
-Feature 56 variance: 0.013560
-Feature 57 variance: 0.000000
-Feature 58 variance: 0.000000
-Feature 59 variance: 0.000141
-Feature 60 variance: 0.071023
-Feature 61 variance: 0.083006
-Feature 62 variance: 0.095543
-Feature 63 variance: 0.108986
-Feature 64 variance: 0.122842
-Feature 65 variance: 0.144378
-Feature 66 variance: 0.166568
-Feature 67 variance: 0.191244
-Feature 68 variance: 0.194372
-Feature 69 variance: 0.264714
-Feature 70 variance: 0.387048
-Feature 71 variance: 0.675492
-Feature 72 variance: 0.036299
-Feature 73 variance: 0.001574
-Feature 74 variance: 0.000004
-Feature 75 variance: 0.000001
-Feature 76 variance: 0.000003
-Feature 77 variance: 0.000000
-Feature 78 variance: 6.820670
-Feature 79 variance: 12.125305
-Feature 80 variance: 19.510204
-Feature 81 variance: 2.204868
-Feature 82 variance: 7.535654
-Feature 83 variance: 1.597873
-Feature 84 variance: 0.084028
-Feature 85 variance: 0.000085
-Feature 86 variance: 0.000042
-Feature 87 variance: 0.000048
-Feature 88 variance: 0.000078
-Feature 89 variance: 0.000043
-Feature 90 variance: 0.000051
-Feature 91 variance: 0.000086
-Feature 92 variance: 0.000046
-Feature 93 variance: 0.000048
-Removed 16 zero-variance features. New shape: (7381, 78)
-Feature 0 stats: mean=0.0146, std=0.0047, min=0.0000, max=0.0577
-Feature 1 stats: mean=3.2124, std=0.6267, min=0.0000, max=5.1074
-Feature 2 stats: mean=2.8796, std=0.5698, min=1.5020, max=4.6499
-Feature 3 stats: mean=0.0291, std=0.1714, min=0.0000, max=2.0000
-Feature 4 stats: mean=4.5745, std=26.6898, min=0.0000, max=177.8665
-Feature 5 stats: mean=0.0787, std=0.4600, min=0.0000, max=3.0377
-Feature 6 stats: mean=4.8252, std=1.4939, min=1.9524, max=9.1451
-Feature 7 stats: mean=4.8791, std=1.5370, min=1.6610, max=9.9090
-Feature 8 stats: mean=4.8158, std=1.5300, min=1.4374, max=9.9398
-Feature 9 stats: mean=4.8678, std=1.5130, min=2.0177, max=9.2652
-Feature 10 stats: mean=4.8940, std=1.5671, min=1.3699, max=9.8351
-Feature 11 stats: mean=4.8797, std=1.5466, min=1.3871, max=9.3903
-Feature 12 stats: mean=4.8596, std=1.5240, min=1.4749, max=9.5644
-Feature 13 stats: mean=4.9043, std=1.5678, min=1.3470, max=9.6768
-Feature 14 stats: mean=4.8577, std=1.5447, min=1.1597, max=9.8998
-Feature 15 stats: mean=4.9092, std=1.5415, min=1.4897, max=9.8753
-Feature 16 stats: mean=4.9423, std=1.5883, min=1.1988, max=10.3107
-Feature 17 stats: mean=4.9196, std=1.5734, min=1.3245, max=10.1767
-Feature 18 stats: mean=4.8410, std=1.5129, min=1.5091, max=9.5078
-Feature 19 stats: mean=4.8973, std=1.5484, min=1.3357, max=10.1192
-Feature 20 stats: mean=4.8324, std=1.5405, min=1.1199, max=10.2094
-Feature 21 stats: mean=4.8969, std=1.5690, min=1.4082, max=9.3189
-Feature 22 stats: mean=4.9260, std=1.6064, min=1.1709, max=9.9859
-Feature 23 stats: mean=4.9103, std=1.5951, min=1.1129, max=9.5293
-Feature 24 stats: mean=4.8177, std=1.5207, min=2.0000, max=9.5441
-Feature 25 stats: mean=4.8463, std=1.5578, min=1.5829, max=9.7572
-Feature 26 stats: mean=4.8240, std=1.5470, min=1.5567, max=9.5033
-Feature 27 stats: mean=4.8422, std=1.5718, min=1.4702, max=9.3246
-Feature 28 stats: mean=4.8739, std=1.6005, min=1.2797, max=9.8605
-Feature 29 stats: mean=4.8577, std=1.5960, min=1.3341, max=9.7136
-Feature 30 stats: mean=4.8322, std=1.5743, min=1.4525, max=9.9433
-Feature 31 stats: mean=4.8628, std=1.6112, min=1.2986, max=9.6036
-Feature 32 stats: mean=4.8421, std=1.5809, min=1.1251, max=9.9143
-Feature 33 stats: mean=0.1534, std=0.0318, min=0.0970, max=0.3175
-Feature 34 stats: mean=0.1635, std=0.0349, min=0.1046, max=0.3300
-Feature 35 stats: mean=0.1735, std=0.0373, min=0.1061, max=0.3317
-Feature 36 stats: mean=0.1828, std=0.0407, min=0.1079, max=0.3739
-Feature 37 stats: mean=0.1962, std=0.0431, min=0.1167, max=0.3937
-Feature 38 stats: mean=0.2071, std=0.0464, min=0.1186, max=0.4205
-Feature 39 stats: mean=0.2194, std=0.0502, min=0.1216, max=0.4292
-Feature 40 stats: mean=0.2334, std=0.0543, min=0.1222, max=0.4626
-Feature 41 stats: mean=0.2600, std=0.0573, min=0.1349, max=0.5454
-Feature 42 stats: mean=0.2839, std=0.0669, min=0.1383, max=0.6255
-Feature 43 stats: mean=0.3180, std=0.0833, min=0.1426, max=0.6509
-Feature 44 stats: mean=0.3747, std=0.1164, min=0.1496, max=0.6662
-Feature 45 stats: mean=0.6689, std=0.0119, min=0.6676, max=0.8986
-Feature 46 stats: mean=1.2577, std=0.2665, min=0.8046, max=2.6896
-Feature 47 stats: mean=1.3280, std=0.2881, min=0.8327, max=2.6905
-Feature 48 stats: mean=1.3973, std=0.3091, min=0.8579, max=2.7971
-Feature 49 stats: mean=1.4683, std=0.3301, min=0.8996, max=2.8511
-Feature 50 stats: mean=1.5881, std=0.3505, min=0.9029, max=3.0540
-Feature 51 stats: mean=1.6711, std=0.3800, min=0.9348, max=3.2972
-Feature 52 stats: mean=1.7639, std=0.4081, min=0.9518, max=3.4500
-Feature 53 stats: mean=1.8641, std=0.4373, min=0.9697, max=3.5915
-Feature 54 stats: mean=2.0995, std=0.4409, min=1.0093, max=3.8250
-Feature 55 stats: mean=2.2705, std=0.5145, min=1.0801, max=4.2864
-Feature 56 stats: mean=2.5045, std=0.6221, min=1.0813, max=4.9782
-Feature 57 stats: mean=2.8786, std=0.8219, min=1.1797, max=5.8398
-Feature 58 stats: mean=8.2291, std=0.1905, min=6.7057, max=8.2813
-Feature 59 stats: mean=8.2821, std=0.0397, min=7.3151, max=8.2862
-Feature 60 stats: mean=8.2909, std=0.0019, min=8.2813, max=8.2915
-Feature 61 stats: mean=8.2975, std=0.0016, min=8.2915, max=8.2980
-Feature 62 stats: mean=11.2078, std=2.6116, min=8.2980, max=24.4266
-Feature 63 stats: mean=13.9176, std=3.4821, min=8.2981, max=26.7018
-Feature 64 stats: mean=18.8694, std=4.4170, min=8.3343, max=32.7797
-Feature 65 stats: mean=4.8149, std=1.4849, min=1.9828, max=9.1717
-Feature 66 stats: mean=5.7825, std=2.7451, min=0.6970, max=16.3345
-Feature 67 stats: mean=1.8219, std=1.2641, min=0.0124, max=9.2561
-Feature 68 stats: mean=0.7890, std=0.2899, min=0.0535, max=1.4929
-Feature 69 stats: mean=-0.5644, std=0.0092, min=-0.6604, max=-0.5346
-Feature 70 stats: mean=0.2821, std=0.0065, min=0.2517, max=0.3327
-Feature 71 stats: mean=0.2825, std=0.0069, min=0.2502, max=0.3483
-Feature 72 stats: mean=-0.5644, std=0.0088, min=-0.6698, max=-0.5317
-Feature 73 stats: mean=0.2819, std=0.0066, min=0.2499, max=0.3396
-Feature 74 stats: mean=0.2824, std=0.0071, min=0.2494, max=0.3405
-Feature 75 stats: mean=-0.5647, std=0.0093, min=-0.6635, max=-0.5316
-Feature 76 stats: mean=0.2823, std=0.0068, min=0.2446, max=0.3399
-Feature 77 stats: mean=0.2823, std=0.0069, min=0.2520, max=0.3373
+Feature 18 variance: 0.000000
+Feature 19 variance: 0.000000
+Feature 20 variance: 0.149592
+Feature 21 variance: 0.206376
+Feature 22 variance: 0.316235
+Feature 23 variance: 0.573439
+Feature 24 variance: 0.010489
+Feature 25 variance: 0.004183
+Feature 26 variance: 13.294096
+Feature 27 variance: 22.831331
+Feature 28 variance: 0.000000
+Feature 29 variance: 1.105160
+Feature 30 variance: 4.635359
+Feature 31 variance: 0.003067
+Feature 32 variance: 0.001149
+Feature 33 variance: 0.000244
+Feature 34 variance: 0.000263
+Feature 35 variance: 0.000120
+Feature 36 variance: 0.000038
+Feature 37 variance: 0.000038
+Removed 12 zero-variance features. New shape: (20007, 26)
+Feature 0 stats: mean=0.0035, std=0.0055, min=0.0000, max=0.1001
+Feature 1 stats: mean=3.2770, std=0.8300, min=0.0000, max=5.6623
+Feature 2 stats: mean=1.8680, std=0.4972, min=1.0083, max=4.0376
+Feature 3 stats: mean=3.7158, std=1.0903, min=1.6393, max=8.5578
+Feature 4 stats: mean=3.7944, std=1.1598, min=1.3495, max=8.7526
+Feature 5 stats: mean=3.7939, std=1.1531, min=1.3686, max=9.0198
+Feature 6 stats: mean=3.7284, std=1.0906, min=1.6236, max=8.6067
+Feature 7 stats: mean=3.8067, std=1.1628, min=1.3288, max=8.7590
+Feature 8 stats: mean=3.8054, std=1.1571, min=1.3700, max=8.9891
+Feature 9 stats: mean=1.6747, std=0.3868, min=0.7761, max=3.2021
+Feature 10 stats: mean=1.8565, std=0.4543, min=0.7787, max=3.8479
+Feature 11 stats: mean=2.1071, std=0.5623, min=0.8610, max=4.3003
+Feature 12 stats: mean=2.4340, std=0.7573, min=0.8861, max=5.2679
+Feature 13 stats: mean=8.2671, std=0.1024, min=6.5066, max=8.2781
+Feature 14 stats: mean=8.3055, std=0.0647, min=6.8935, max=8.3108
+Feature 15 stats: mean=15.0017, std=3.6461, min=8.2781, max=29.7149
+Feature 16 stats: mean=17.5621, std=4.7782, min=8.3108, max=34.4908
+Feature 17 stats: mean=3.6881, std=1.0513, min=1.8136, max=8.2134
+Feature 18 stats: mean=3.4953, std=2.1530, min=0.6993, max=16.0507
+Feature 19 stats: mean=0.1352, std=0.0554, min=0.0014, max=0.2177
+Feature 20 stats: mean=0.4911, std=0.0339, min=0.3038, max=0.9485
+Feature 21 stats: mean=-0.0022, std=0.0156, min=-0.2224, max=0.0495
+Feature 22 stats: mean=-0.0027, std=0.0162, min=-0.2224, max=0.0450
+Feature 23 stats: mean=-0.5599, std=0.0110, min=-0.6243, max=-0.3823
+Feature 24 stats: mean=0.2824, std=0.0061, min=0.2609, max=0.3495
+Feature 25 stats: mean=0.2824, std=0.0061, min=0.2517, max=0.3760
 Feature matrix computed and cached.
-Size of raw feature matrix: 4.61 MB
-Size of normalized feature matrix: 4.61 MB
-Current memory usage: 20.44 MB; Peak memory usage: 21.29 MB
-Time taken to compute feature matrix: 76.87 seconds
+Size of raw feature matrix: 4.16 MB
+Size of normalized feature matrix: 4.16 MB
+Current memory usage: 18.07 MB; Peak memory usage: 19.30 MB
+Time taken to compute feature matrix: 166.36 seconds
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
-Top 78 features for PC1:
- Rg                   : 0.1656
- Coulomb_19           : -0.1619
- Coulomb_20           : -0.1614
- Coulomb_22           : -0.1614
- Coulomb_5            : -0.1613
- Coulomb_21           : -0.1612
- Coulomb_4            : -0.1611
- Coulomb_6            : -0.1609
- Coulomb_7            : -0.1603
- Coulomb_18           : -0.1597
- Coulomb_3            : -0.1594
- Coulomb_2            : -0.1576
- Coulomb_17           : -0.1572
- Coulomb_16           : -0.1545
- Coulomb_1            : -0.1544
- Coulomb_34           : -0.1536
- Coulomb_15           : -0.1522
- Coulomb_0            : -0.1506
- Coulomb_33           : -0.1482
- Coulomb_8            : -0.1476
- Coulomb_23           : -0.1473
- Coulomb_9            : -0.1403
- Coulomb_24           : -0.1385
- Coulomb_25           : -0.1321
- Coulomb_10           : -0.1290
- Acylindricity        : 0.1277
- Coulomb_26           : -0.1222
- Coulomb_35           : -0.1195
- Coulomb_11           : -0.1171
- Dist_5               : 0.1081
- Dist_6               : 0.1062
- Dist_18              : 0.1049
- Dist_23              : 0.1049
- Dist_12              : 0.1047
- Asphericity          : 0.1047
- Dist_19              : 0.1039
- Dist_2               : 0.1037
- Dist_7               : 0.1031
- Dist_30              : 0.1029
- Dist_13              : 0.1029
- Dist_25              : 0.1027
- Dist_24              : 0.1023
- Dist_4               : 0.1020
- Kappa^2              : 0.1014
- Dist_3               : 0.1014
- Dist_9               : 0.1011
- Dist_31              : 0.1010
- Dist_15              : 0.1009
- Dist_32              : 0.1009
- Dist_20              : 0.1003
- Dist_17              : 0.0999
- Dist_14              : 0.0998
- Dist_11              : 0.0997
- Dist_27              : 0.0994
- Dist_10              : 0.0991
- Dist_16              : 0.0987
- Dist_29              : 0.0981
- Dist_28              : 0.0965
- Coulomb_31           : -0.0811
- Coulomb_29           : -0.0802
- Coulomb_27           : -0.0688
- Mulliken_6           : 0.0636
- Mulliken_0           : 0.0578
- Mulliken_3           : 0.0566
- RMSD                 : 0.0564
- Mulliken_2           : -0.0463
- Mulliken_5           : -0.0446
- Mulliken_8           : -0.0431
- Mulliken_7           : -0.0412
- Num H-bonds          : -0.0395
- Avg H-bond Angle     : -0.0388
- Avg D-A Distance     : -0.0381
- Coulomb_28           : -0.0331
- Mulliken_1           : -0.0329
- Mulliken_4           : -0.0287
- Coulomb_14           : -0.0276
- Delta E              : -0.0256
- Dipole Magnitude     : -0.0044
-Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 7381
+Top 26 features for PC1:
+ Asphericity          : 0.2619
+ Rg                   : 0.2616
+ Acylindricity        : 0.2534
+ Coulomb_8            : -0.2533
+ Coulomb_2            : -0.2520
+ Coulomb_7            : -0.2516
+ Dist_4               : 0.2502
+ Dist_1               : 0.2496
+ Coulomb_3            : -0.2480
+ Coulomb_1            : -0.2475
+ Coulomb_4            : -0.2372
+ Dist_5               : 0.2334
+ Dist_2               : 0.2333
+ Dist_3               : 0.2332
+ Dist_6               : 0.2330
+ Delta E              : -0.1449
+ Mulliken_3           : -0.1285
+ Mulliken_4           : -0.1212
+ Coulomb_5            : -0.0934
+ Coulomb_6            : -0.0776
+ Mulliken_1           : 0.0705
+ Mulliken_0           : 0.0684
+ Dipole Magnitude     : -0.0651
+ Mulliken_2           : -0.0623
+ RMSD                 : 0.0375
+ Kappa^2              : -0.0130
+--- Benchmarking Clustering Algorithms Complexity ---
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Operation Benchmark start (phase = all, n=20007, m=26, k_values=(2, 5, 10, 20, 50, 100))
+--- k=2 ---
+dbscan_avg      : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+hdbscan_avg     : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+kmeans          : Total Ops = 3.12e+08, Ops/Sample = 1.56e+04
+agglomerative   : Total Ops = 1.04e+10, Ops/Sample = 5.20e+05
+--- k=5 ---
+dbscan_avg      : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+hdbscan_avg     : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+kmeans          : Total Ops = 7.80e+08, Ops/Sample = 3.90e+04
+agglomerative   : Total Ops = 1.04e+10, Ops/Sample = 5.20e+05
+--- k=10 ---
+dbscan_avg      : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+hdbscan_avg     : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+kmeans          : Total Ops = 1.56e+09, Ops/Sample = 7.80e+04
+agglomerative   : Total Ops = 1.04e+10, Ops/Sample = 5.20e+05
+--- k=20 ---
+dbscan_avg      : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+hdbscan_avg     : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+kmeans          : Total Ops = 3.12e+09, Ops/Sample = 1.56e+05
+agglomerative   : Total Ops = 1.04e+10, Ops/Sample = 5.20e+05
+--- k=50 ---
+dbscan_avg      : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+hdbscan_avg     : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+kmeans          : Total Ops = 7.80e+09, Ops/Sample = 3.90e+05
+agglomerative   : Total Ops = 1.04e+10, Ops/Sample = 5.20e+05
+--- k=100 ---
+dbscan_avg      : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+hdbscan_avg     : Total Ops = 7.43e+06, Ops/Sample = 3.71e+02
+agglomerative   : Total Ops = 1.04e+10, Ops/Sample = 5.20e+05
+kmeans          : Total Ops = 1.56e+10, Ops/Sample = 7.80e+05
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 20007
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
-Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 7381
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 20007
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
-Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 7381
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 20007
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
-Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 7381
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 20007
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
-Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 7381
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 20007
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
-Cluster 0: representative index 6393, E=-15.215514 Ha
-Cluster 1: representative index 1355, E=-15.224631 Ha
-Cluster 2: representative index 5197, E=-15.220658 Ha
-Cluster 3: representative index 3519, E=-15.217863 Ha
-Cluster 4: representative index 1673, E=-15.218805 Ha
+Cluster 0: representative index 8216, E=-10.831186 Ha
+Cluster 1: representative index 17306, E=-10.832937 Ha
+Cluster 2: representative index 3303, E=-10.832887 Ha
+Cluster 3: representative index 2367, E=-10.831849 Ha
+Cluster 4: representative index 17770, E=-10.830835 Ha
 Total clusters (excluding noise): 5. Representatives obtained: 5
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
 Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
 Time taken to compute feature matrix: 0.00 seconds
 Writing representative features to cluster_features.log
-Most varied feature among representatives: Avg H-bond Angle (variance: 3799.4263)
+Most varied feature among representatives: Coulomb_8 (variance: 36.5972)
 ========================================================================
            Crossover Interpolation of Phase A Representatives           
 ========================================================================
@@ -455,10 +328,10 @@ Wrote 20 structures to trajectories/phase_a_crossover_structures.xyz
 ========================================================================
                            Local Optimization                           
 ========================================================================
-Optimized 2/5 structures successfully
-Wrote 7381 structures to trajectories/phase_a_candidates.xyz
+Optimized 5/5 structures successfully
+Wrote 20007 structures to trajectories/phase_a_candidates.xyz
 Wrote 5 structures to trajectories/representatives.xyz
-Wrote 2 structures to trajectories/optimized_representatives.xyz
+Wrote 5 structures to trajectories/optimized_representatives.xyz
 ========================================================================
-Total runtime: 392.5s (6.5 min)
+Total runtime: 477.0s (7.9 min)
 ========================================================================

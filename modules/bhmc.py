@@ -527,7 +527,12 @@ class MultiPhaseBHMC:
         analyzer.plot_pca_loadings(pc_index=0)
 
         # Test hbond_features chunk size (uncomment)
-        #analyzer.test_chunksize_effect() 
+        #analyzer.test_chunksize_effect()
+        # 
+        # Benchmark clustering operation
+        analyzer.benchmark_operations_per_sample(
+            algorithms=["agglomerative", "kmeans", "dbscan_avg", "hdbscan_avg"]  
+        ) 
 
         if cluster_method in {"kmeans", "agglomerative"}:
             if n_clusters is None:

@@ -358,7 +358,7 @@ class BHMCAnalyzer:
         plt.savefig(f"figures/energy_vs_rmsd_{phase if phase else 'all'}.png")
         plt.close()
 
-    def plot_energy_distribution(self, phase: Optional[str] = None, bins: int = 50):
+    def plot_energy_distribution(self, phase: Optional[str] = None, bins: int = 50, save_path: Optional[str] = None):
         """
         Plots the energy distribution for the specified phase
         Args:
@@ -376,7 +376,10 @@ class BHMCAnalyzer:
         plt.xlabel('Energy')
         plt.ylabel('Frequency')
         plt.grid(True)
-        plt.savefig(f"figures/energy_distribution_{phase if phase else 'all'}.png")
+        if save_path:
+            plt.savefig(save_path)
+        else:
+            plt.savefig(f"figures/energy_distribution_{phase if phase else 'all'}.png")
         plt.close()
 
     def plot_rg_vs_energy(self, phase: Optional[str] = None):
@@ -539,6 +542,38 @@ class BHMCAnalyzer:
         n_after = len(filtered_structures)
         self._log(f"RMSD filtering completed - Phase: {phase if phase else 'all'} - {n_after} structures remaining (removed {n_before - n_after})")  
 
+    def filter_high_energy_outliers(self, method: str = "iqr", factor: float = 1.5, phase: Optional[str] = None) -> None:
+        """
+        Remove high energy outliers based on the chosen method:
+
+        IQR: Removes strctures with energy > Q3 + factor * IQR
+        STD: Removes structures with energy > mean + factor * std
+        ABSOLUTE: Removes structures with energy > absolute threshold (factor is the threshold value in this case)
+        """
+        if phase:
+            structures = self.phases[phase]
+        else:
+            structures = self.structures 
+        energies = np.array([s.energy for s in structures])
+        if method == "iqr":
+            q75, q25 = np.percentile(energies, [75, 25])
+            iqr = q75 - q25
+            threshold = q75 + factor * iqr
+        elif method == "std":
+            mean = np.mean(energies)
+            std = np.std(energies)
+            threshold = mean + factor * std
+        elif method == "absolute":
+            threshold = factor
+        else:
+            raise ValueError(f"Invalid method: {method}. Choose from 'iqr', 'std', 'absolute'.")
+    
+        filtered_structures = [s for s in structures if s.energy <= threshold]
+        if phase:
+            self.phases[phase] = filtered_structures
+        else:
+            self.structures = filtered_structures
+        self._log(f"High energy outlier filtering (method={method}, threshold={threshold:.6f}) - Phase: {phase if phase else 'all'} - {len(filtered_structures)} structures remaining (removed {len(structures) - len(filtered_structures)})")
 
 
                    
@@ -1817,11 +1852,83 @@ class BHMCAnalyzer:
         dist_mean = np.linalg.norm(data_set - mean_vec, axis=1)
         return np.sort(dist_mean)
     
-    
-            
 
+    def noise_assessment(
+            self,
+            data_set: Optional[np.ndarray] = None,
+            bins: int = 50,
+            random_state: Optional[int] = 42,
+            save_path: str = "figures/noise_assessment_dist2mean.png"
+        ) -> Dict[str, Any]:
+        """ 
+        Assessment of noise by comparing distance-to-mean distributions before and after adding
+        synthetic uniform noise.
+        
+        Steps:
+        1) z-score standardization
+        2) add uniform noise and append to dataset
+        3) compute sorted eucliden dist-to-mean for both
+        4) compare histograms
+        """
+        self._log("---- Noise Assessment Start ----")
+
+        # if no external dataset is provided we use the raw feature matrix from analyzer
+        if data_set is None:
+            x = self.feature_matrix(normalize=False)
+            self._log("Using internal raw feature matrix for noise assessment.")
+        else:
+            x = np.asarray(data_set, dtype=np.float64)
+            self._log("Using provided dataset for noise assessment.")
+        if x.ndim != 2:
+            raise ValueError("Input data_set must be a 2D array (n_samples, n_features)")
+        if x.shape[0] < 2:
+            self._log("Not enough samples for noise assessment. Need at least 2 samples.", level="warning")
+            return {}
+        
+        # z score normalizaton
+        mu = np.mean(x, axis=0)
+        sigma = np.std(x, axis=0)
+        sigma_safe = np.where(sigma < 1e-12, 1.0, sigma)
+        x_norm = (x - mu) / sigma_safe
+
+        # Add synthetic noise and compute distance
+        x_noise = self.add_noise(x_norm, random_state=random_state)
+        dist_clean = self.get_distance_to_mean(x_norm)
+        dist_noise = self.get_distance_to_mean(x_noise)
+
+        # Build comparable histrogram densities
+        all_vals = np.concatenate([dist_clean, dist_noise])
+        hist_range = float(np.min(all_vals)), float(np.max(all_vals))
+        hist_clean, edges = np.histogram(dist_clean, bins=bins, range=hist_range, density=True)
+        hist_noise, _ = np.histogram(dist_noise, bins=bins, range=hist_range, density=True)
+        bin_width = edges[1] - edges[0] if len(edges) > 1 else 1.0
+        overlap = float(np.sum(np.minimum(hist_clean, hist_noise)) * bin_width)
+
+        # Simple impact metrics
+        mean_shift = float(np.mean(dist_noise) - np.mean(dist_clean))
+        std_ratio = float(np.std(dist_noise) / np.std(dist_clean)) if np.std(dist_clean) > 1e-12 else float('inf')
+        q95_shift = float(np.percentile(dist_noise, 95) - np.percentile(dist_clean, 95))
+
+        plt.figure(figsize=(10, 6))
+        plt.hist(dist_clean, bins=bins, range=hist_range, density=True, alpha=0.6, label='Clean Data', color='blue')
+        plt.hist(dist_noise, bins=bins, range=hist_range, density=True, alpha=0.6, label='With Noise', color='red')
+        plt.xlabel('Distance to Mean')
+        plt.ylabel('Density')
+        plt.title('Noise Assessment: Distance to Mean Distribution')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.savefig(save_path, dpi=200)
+        plt.close()
+
+        self._log(f"Noise Assessment Results:")
+        self._log(f"Mean Distance Shift: {mean_shift:.4f}")
+        self._log(f"Std Ratio (Noise/Clean): {std_ratio:.4f}")
+        self._log(f"95th Percentile Shift: {q95_shift:.4f}")
+        self._log(f"Distribution Overlap: {overlap:.4f}")
+        self._log("---- Noise Assessment End ----")
 
     # ================================ Testing functions ================================
+
     def test_chunksize_effect(self, angle_threshold=150.0, max_distance=3.5, n_processes=None):
         """  
         Testing function how different chunksizes affect the H-bond feature calculation

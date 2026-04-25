@@ -1,0 +1,364 @@
+================================================================================
+                                  CLUSTER GEN                                   
+================================================================================
+Start Time: 2026-04-15 14:45:01
+Python Version: 3.9.23
+Working Directory: /media/storage_6/lme/master_thesis/cluster_generation
+Log File: /media/storage_6/lme/master_thesis/cluster_generation/cluster_gen.out
+Made by: Lukas Meinschad
+========================================================================
+                         Cluster Initialization                         
+========================================================================
+Configuration:
+  QM Method (Optimization): mp2
+  Basis Set (Optimization): cc-pvdz
+  Simulation Box Type: sphere
+  Simulation Box Scale Factor: 1.3
+  Minimum Distance Between Submolecules: 0.8 Angstrom
+  Candidate configurations generated: 10000
+  Workers (n_keep) for energy ranking: 10
+  Energy Evaluation Backend: xtb
+  xTB Method (if applicable): GFN2-xTB
+
+
+[1/5] Loading molecule from test_molecules/h2o_n2.xyz
+ Loaded: 5 atoms
+
+[2/5] Fragmenting molecule into submolecules
+ Found 2 submolecules:
+  Submolecule 1: 2 atoms
+  Submolecule 2: 3 atoms
+
+[3/5] Optimizing Submolecules (parallelized)
+Workers: 2
+  Submolecule 1 optimized successfully
+  Submolecule 2 optimized successfully
+
+[4/5] Creating simulation box
+ Box type:  sphere
+ Radius: 2.24 Angstrom
+ Volume: 47.34 Angstrom^3
+
+Energy evaluation complete: 10000 successful, 0 failed
+Pre-screening completed: 10000 valid configurations out of 10000 generated.
+Statistics of generated configurations:
+  Energy range: -10.832937 to -10.832788 Hartree
+  Energy of lowest-energy candidate: -10.832937 Hartree
+  Energy of highest-energy selected candidate: -10.832788 Hartree
+  Energy distribution: mean -10.814439, median -10.830551, std 0.060768 Hartree
+============================================================
+Initialization Complete!
+Total atoms: 5
+Submolecules: 2
+Simulation box type: sphere
+Candidates generated: 10000, Valid: 10000, Failed: 0
+Sekected for workers: 10, Energy range: -10.832937 to -10.832788 Hartree
+Box radius: 2.24 Angstrom
+Box volume: 47.34 Angstrom^3
+Wrote 10 structures to trajectories/initial_candidates.xyz
+========================================================================
+                    Phase A: Global PES Exploration                     
+========================================================================
+Configuration:
+  Workers: 10
+  Steps per worker: 3000
+  Total steps: 30000
+  Method/Basis: hf/cc-pvdz
+  Temperature: 5000 K
+  Adaptive operators: True
+  Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation, com_com_approach, com_com_separation
+  Independent initial configs: 10
+  Simulation Box: <box.SimulationBox object at 0x7f4bca5667c0>
+  Worker log: bhmc_workers.log
+Estimated single point time: 0.01 seconds (Energy: -10.832937 Hartree)
+Estimated Phase A time: 3.13 minutes
+Starting parallel BHMC chains...
+  Worker 0: 2086 structures accepted, 3001 trajectory points, 427 box updates  Operator acceptance rates: twist: 55.8%, large_displacement: 75.6%, mirror: 56.5%, roto_reflection: 32.8%, exchange: 76.8%, random_so3: 89.4%, principal_axis_rotation: 77.4%, com_com_approach: 95.8%, com_com_separation: 99.0%
+  Worker 1: 1983 structures accepted, 3001 trajectory points, 422 box updates  Operator acceptance rates: twist: 45.5%, large_displacement: 73.3%, mirror: 51.4%, roto_reflection: 28.3%, exchange: 82.6%, random_so3: 89.8%, principal_axis_rotation: 74.0%, com_com_approach: 96.3%, com_com_separation: 96.4%
+  Worker 2: 1939 structures accepted, 3001 trajectory points, 417 box updates  Operator acceptance rates: twist: 50.2%, large_displacement: 70.6%, mirror: 51.0%, roto_reflection: 29.4%, exchange: 76.8%, random_so3: 84.8%, principal_axis_rotation: 72.9%, com_com_approach: 93.0%, com_com_separation: 97.4%
+  Worker 3: 0 structures accepted, 3001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 4: 1935 structures accepted, 3001 trajectory points, 395 box updates  Operator acceptance rates: twist: 48.5%, large_displacement: 72.2%, mirror: 51.2%, roto_reflection: 29.6%, exchange: 75.2%, random_so3: 83.9%, principal_axis_rotation: 71.4%, com_com_approach: 93.1%, com_com_separation: 97.7%
+  Worker 5: 2006 structures accepted, 3001 trajectory points, 413 box updates  Operator acceptance rates: twist: 51.8%, large_displacement: 71.6%, mirror: 59.3%, roto_reflection: 25.0%, exchange: 80.8%, random_so3: 88.2%, principal_axis_rotation: 76.8%, com_com_approach: 94.3%, com_com_separation: 98.1%
+  Worker 6: 2038 structures accepted, 3001 trajectory points, 416 box updates  Operator acceptance rates: twist: 51.6%, large_displacement: 74.6%, mirror: 63.7%, roto_reflection: 25.5%, exchange: 84.8%, random_so3: 84.7%, principal_axis_rotation: 74.0%, com_com_approach: 97.4%, com_com_separation: 97.6%
+  Worker 7: 0 structures accepted, 3001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 8: 0 structures accepted, 3001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 9: 1949 structures accepted, 3001 trajectory points, 414 box updates  Operator acceptance rates: twist: 47.8%, large_displacement: 70.6%, mirror: 51.5%, roto_reflection: 28.0%, exchange: 74.7%, random_so3: 89.8%, principal_axis_rotation: 78.9%, com_com_approach: 96.5%, com_com_separation: 97.3%
+Size of accepted structures (Phase A): 0.11 MB
+------------------------------------------------------------------------
+Phase A Results
+------------------------------------------------------------------------
+Total steps: 30000
+Total accepted: 13936
+Overall acceptance rate: 46.45%
+Energy Statistics (Hartree):
+  Min:  -10.832865
+  Max:  -10.751609
+  Mean: -10.829568
+  Std:  0.006034
+Dipole Statistics (Debye):
+  Min:  0.2610
+  Max:  0.8855
+  Mean: 0.4896
+  Std:  0.0303
+Profiling Results for Phase A:
+Current memory usage: 51.33 MB; Peak memory usage: 51.57 MB
+Wrote 13936 structures to trajectories/phase_a_candidates.xyz
+========================================================================
+                            Phase A Analysis                            
+========================================================================
+Total structures: 13936
+Target clusters: 5
+Added batch of 13936 structures to phase: unknown. Total structures in this phase: 13936
+Size of new structures added: 0.67 MB
+Energy Statistics (phase: all):
+  N Structures: 13936
+  Min: -10.832865
+  Max: -10.751609
+  Mean: -10.829568
+  Median: -10.831204
+  Std: 0.006034
+  Q25: -10.831565
+  Q75: -10.830763
+  IQR: 0.000802
+Dipole Magnitude Statistics (Debye):
+  Min:  0.2610
+  Max:  0.8855
+  Mean: 0.4896
+  Std:  0.0303
+High energy outlier filtering (method=iqr, threshold=-10.829561) - Phase: all - 11632 structures remaining (removed 2304)
+Computing and caching feature matrix...
+Computing Mulliken charge features for 11632 - Phase: all
+Mulliken Charge Statistics (non-zero values):
+  Count: 58160
+  Mean: -0.0000
+  Std: 0.3076
+  Min: -0.5913
+  Max: 0.3059
+Computing H-bond features for 11632 (angle_threshold=150.0°) - Phase: all
+Using 42 parallel processes for H-bond computation
+Starting multiprocessing pool for H-bond feature computation...
+Structures with H-bonds: 0/11632
+Total H-bond configs: 0
+Feature matrix shape: (11632, 38)
+Features: ['Delta E', 'RMSD', 'Rg', 'Rot A', 'Rot B', 'Rot C', 'Num H-bonds', 'Avg H-bond Angle', 'Avg D-A Distance', 'Intermolecular Distances...', 'Coulomb Matrix...', 'Asphericity', 'Acylindricity', 'Kappa^2', 'Dipole Magnitude', 'Mulliken Charges...']
+Feature 0 variance: 0.000000
+Feature 1 variance: 0.977428
+Feature 2 variance: 0.210613
+Feature 3 variance: 0.000000
+Feature 4 variance: 0.000000
+Feature 5 variance: 0.000000
+Feature 6 variance: 0.000000
+Feature 7 variance: 0.000000
+Feature 8 variance: 0.000000
+Feature 9 variance: 0.000000
+Feature 10 variance: 1.025021
+Feature 11 variance: 1.173987
+Feature 12 variance: 1.180262
+Feature 13 variance: 1.012291
+Feature 14 variance: 1.157575
+Feature 15 variance: 1.174214
+Feature 16 variance: 0.000000
+Feature 17 variance: 0.000000
+Feature 18 variance: 0.000000
+Feature 19 variance: 0.000000
+Feature 20 variance: 0.099313
+Feature 21 variance: 0.128041
+Feature 22 variance: 0.187402
+Feature 23 variance: 0.317747
+Feature 24 variance: 0.008621
+Feature 25 variance: 0.001771
+Feature 26 variance: 8.458521
+Feature 27 variance: 13.126546
+Feature 28 variance: 0.000000
+Feature 29 variance: 0.933679
+Feature 30 variance: 4.317320
+Feature 31 variance: 0.002808
+Feature 32 variance: 0.000128
+Feature 33 variance: 0.000073
+Feature 34 variance: 0.000074
+Feature 35 variance: 0.000009
+Feature 36 variance: 0.000006
+Feature 37 variance: 0.000006
+Removed 13 zero-variance features. New shape: (11632, 25)
+Feature 0 stats: mean=3.6900, std=0.9886, min=0.0000, max=6.5250
+Feature 1 stats: mean=2.0185, std=0.4589, min=1.2941, max=4.0240
+Feature 2 stats: mean=4.0387, std=1.0124, min=2.2179, max=8.2301
+Feature 3 stats: mean=4.0839, std=1.0835, min=1.7532, max=8.0940
+Feature 4 stats: mean=4.1086, std=1.0864, min=1.8057, max=8.4346
+Feature 5 stats: mean=4.0460, std=1.0061, min=2.2089, max=8.5539
+Feature 6 stats: mean=4.0907, std=1.0759, min=1.7248, max=8.7704
+Feature 7 stats: mean=4.1174, std=1.0836, min=1.7479, max=8.5914
+Feature 8 stats: mean=1.5507, std=0.3151, min=0.7981, max=2.5749
+Feature 9 stats: mean=1.6983, std=0.3578, min=0.8148, max=2.8178
+Feature 10 stats: mean=1.9065, std=0.4329, min=0.8805, max=3.2037
+Feature 11 stats: mean=2.1573, std=0.5637, min=0.9087, max=4.0584
+Feature 12 stats: mean=8.2679, std=0.0929, min=6.5467, max=8.2781
+Feature 13 stats: mean=8.3076, std=0.0421, min=7.0493, max=8.3108
+Feature 14 stats: mean=13.6890, std=2.9084, min=8.2781, max=21.7491
+Feature 15 stats: mean=15.6802, std=3.6231, min=8.3108, max=25.3521
+Feature 16 stats: mean=4.0096, std=0.9663, min=2.4599, max=8.1852
+Feature 17 stats: mean=4.0389, std=2.0778, min=1.3858, max=15.9464
+Feature 18 stats: mean=0.1385, std=0.0530, min=0.0006, max=0.2175
+Feature 19 stats: mean=0.4863, std=0.0113, min=0.4441, max=0.6166
+Feature 20 stats: mean=-0.0003, std=0.0085, min=-0.0494, max=0.0276
+Feature 21 stats: mean=-0.0003, std=0.0086, min=-0.0516, max=0.0254
+Feature 22 stats: mean=-0.5613, std=0.0030, min=-0.5913, max=-0.5329
+Feature 23 stats: mean=0.2808, std=0.0025, min=0.2681, max=0.3020
+Feature 24 stats: mean=0.2811, std=0.0024, min=0.2682, max=0.3059
+Feature matrix computed and cached.
+Size of raw feature matrix: 2.33 MB
+Size of normalized feature matrix: 2.33 MB
+Current memory usage: 13.37 MB; Peak memory usage: 14.21 MB
+Time taken to compute feature matrix: 101.07 seconds
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Top 25 features for PC1:
+ Asphericity          : 0.2721
+ Rg                   : 0.2720
+ Acylindricity        : 0.2674
+ Coulomb_2            : -0.2597
+ Coulomb_8            : -0.2590
+ Dist_4               : 0.2582
+ Dist_1               : 0.2581
+ Coulomb_7            : -0.2577
+ Coulomb_3            : -0.2577
+ Coulomb_1            : -0.2546
+ Coulomb_4            : -0.2450
+ Dist_3               : 0.2394
+ Dist_5               : 0.2390
+ Dist_6               : 0.2386
+ Dist_2               : 0.2384
+ Coulomb_5            : -0.0984
+ Coulomb_6            : -0.0752
+ Mulliken_4           : -0.0686
+ Mulliken_3           : -0.0633
+ RMSD                 : 0.0289
+ Kappa^2              : -0.0254
+ Dipole Magnitude     : -0.0222
+ Mulliken_1           : 0.0167
+ Mulliken_0           : 0.0160
+ Mulliken_2           : 0.0153
+--- Benchmarking Clustering Algorithms Complexity ---
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Operation Benchmark start (phase = all, n=11632, m=25, k_values=(2, 5, 10, 20, 50, 100))
+--- k=2 ---
+dbscan_avg      : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+hdbscan_avg     : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+kmeans          : Total Ops = 1.74e+08, Ops/Sample = 1.50e+04
+agglomerative   : Total Ops = 3.38e+09, Ops/Sample = 2.91e+05
+Lowest Ops/Sample for k=2: dbscan_avg with 3.38e+02 ops/sample
+--- End of Clustering Operation Benchmark ---
+
+--- k=5 ---
+dbscan_avg      : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+hdbscan_avg     : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+kmeans          : Total Ops = 4.36e+08, Ops/Sample = 3.75e+04
+agglomerative   : Total Ops = 3.38e+09, Ops/Sample = 2.91e+05
+Lowest Ops/Sample for k=5: dbscan_avg with 3.38e+02 ops/sample
+--- End of Clustering Operation Benchmark ---
+
+--- k=10 ---
+dbscan_avg      : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+hdbscan_avg     : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+kmeans          : Total Ops = 8.72e+08, Ops/Sample = 7.50e+04
+agglomerative   : Total Ops = 3.38e+09, Ops/Sample = 2.91e+05
+Lowest Ops/Sample for k=10: dbscan_avg with 3.38e+02 ops/sample
+--- End of Clustering Operation Benchmark ---
+
+--- k=20 ---
+dbscan_avg      : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+hdbscan_avg     : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+kmeans          : Total Ops = 1.74e+09, Ops/Sample = 1.50e+05
+agglomerative   : Total Ops = 3.38e+09, Ops/Sample = 2.91e+05
+Lowest Ops/Sample for k=20: dbscan_avg with 3.38e+02 ops/sample
+--- End of Clustering Operation Benchmark ---
+
+--- k=50 ---
+dbscan_avg      : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+hdbscan_avg     : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+agglomerative   : Total Ops = 3.38e+09, Ops/Sample = 2.91e+05
+kmeans          : Total Ops = 4.36e+09, Ops/Sample = 3.75e+05
+Lowest Ops/Sample for k=50: dbscan_avg with 3.38e+02 ops/sample
+--- End of Clustering Operation Benchmark ---
+
+--- k=100 ---
+dbscan_avg      : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+hdbscan_avg     : Total Ops = 3.93e+06, Ops/Sample = 3.38e+02
+agglomerative   : Total Ops = 3.38e+09, Ops/Sample = 2.91e+05
+kmeans          : Total Ops = 8.72e+09, Ops/Sample = 7.50e+05
+Lowest Ops/Sample for k=100: dbscan_avg with 3.38e+02 ops/sample
+--- End of Clustering Operation Benchmark ---
+
+---- Noise Assessment Start ----
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Using internal raw feature matrix for noise assessment.
+Noise Assessment Results:
+Mean Distance Shift: 9.7863
+Std Ratio (Noise/Clean): 2.1000
+95th Percentile Shift: 16.0726
+Distribution Overlap: 0.0289
+---- Noise Assessment End ----
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 11632
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 11632
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 11632
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 11632
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Performing KMeans Clustering (n_clusters=5, n_init=10, max_iter=300) for phase: all - n_structures: 11632
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Cluster 0: representative index 5561, E=-10.832865 Ha
+Cluster 1: representative index 3882, E=-10.832566 Ha
+Cluster 2: representative index 697, E=-10.832863 Ha
+Cluster 3: representative index 120, E=-10.831647 Ha
+Cluster 4: representative index 5678, E=-10.831173 Ha
+Total clusters (excluding noise): 5. Representatives obtained: 5
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Current memory usage: 0.01 MB; Peak memory usage: 0.01 MB
+Time taken to compute feature matrix: 0.00 seconds
+Writing representative features to cluster_features.log
+Most varied feature among representatives: Coulomb_8 (variance: 21.9880)
+========================================================================
+           Crossover Interpolation of Phase A Representatives           
+========================================================================
+Interpolating between Representative 0 and 1...
+Interpolating between Representative 0 and 2...
+Interpolating between Representative 0 and 3...
+Interpolating between Representative 0 and 4...
+Interpolating between Representative 1 and 2...
+Interpolating between Representative 1 and 3...
+Interpolating between Representative 1 and 4...
+Interpolating between Representative 2 and 3...
+Interpolating between Representative 2 and 4...
+Interpolating between Representative 3 and 4...
+Generated 20 crossover structures from 5 representatives
+Wrote 20 structures to trajectories/phase_a_crossover_structures.xyz
+========================================================================
+                           Local Optimization                           
+========================================================================
+Optimized 4/5 structures successfully
+Wrote 13936 structures to trajectories/phase_a_candidates.xyz
+Wrote 5 structures to trajectories/representatives.xyz
+Wrote 4 structures to trajectories/optimized_representatives.xyz
+========================================================================
+Total runtime: 390.7s (6.5 min)
+========================================================================

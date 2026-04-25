@@ -508,19 +508,13 @@ class MultiPhaseBHMC:
             self._log(f"  Mean: {np.mean(dipoles):.4f}")
             self._log(f"  Std:  {np.std(dipoles):.4f}")
         
+        # Plot Energy Ditribution before filtering
+        analyzer.plot_energy_distribution(save_path="figures/phase_a_energy_distribution_before_filtering.png")
+        # Filter energies
+        analyzer.filter_high_energy_outliers()
 
-
-
-        
-
-        #analyzer.rmsd_filtering()
-        #analyzer.plot_rmsd_heatmap()
-        
-        # Precompute the feature matrix
-        #analyzer.feature_matrix(normalize=True)  # Normalized features for clustering
-
-
-        analyzer.plot_energy_distribution()
+        # Plot energy distribution after filtering 
+        analyzer.plot_energy_distribution(save_path="figures/phase_a_energy_distribution_after_filtering.png")
         analyzer.plot_energy_vs_rmsd()
         #analyzer.plot_int_d_vs_e()
         #analyzer.plot_pca_explained_variance()
@@ -533,6 +527,9 @@ class MultiPhaseBHMC:
         analyzer.benchmark_operations_per_sample(
             algorithms=["agglomerative", "kmeans", "dbscan_avg", "hdbscan_avg"]  
         ) 
+
+        # run noise assesment
+        analyzer.noise_assessment()
 
         if cluster_method in {"kmeans", "agglomerative"}:
             if n_clusters is None:

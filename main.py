@@ -69,7 +69,7 @@ if __name__ == "__main__":
     phase_a_structures = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=300,
+        n_structures_per_worker=500,
         n_processes=len(initial_molecules),
     )
 
@@ -83,3 +83,5 @@ if __name__ == "__main__":
         filepath="trajectories/phase_a_structures.xyz",
         energies=phase_a_energies,
     )
+
+    

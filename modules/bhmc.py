@@ -32,9 +32,8 @@ from molecule_class import Molecule
 from operators import NonLocalOperators, LocalOperators
 from cluster import BHMCAnalyzer
 from box import SimulationBox
-from cluster_generation.modules.class_test_results.psi4_interface import direct_energy
 from bhmc_config import BHMCConfig
-from cluster_generation.modules.archive2.bhmc_energy import EnergyEvaluator
+from calculator import EnergyEvaluator
 from logger import Logger
 from bhmc_worker import _phase_a_worker, _phase_b_worker
 
@@ -112,18 +111,21 @@ class MultiPhaseBHMC:
         This can then be used to estimate the total time of a Phase
         """
         evaluator = EnergyEvaluator(
-            method=self.config.method,
-            basis=self.config.basis,
             backend=self.config.backend,
-            xtb_method=self.config.xtb_method
+            qm_method=self.config.qm_method,
+            qm_basis=self.config.qm_basis,
+            xtb_method=self.config.xtb_method,
+            gpaw_mode=self.config.gpaw_mode,
+            gpaw_basis=self.config.gpaw_basis,
+            gpaw_xc=self.config.gpaw_xc,
         )
         start_time = time.time()
-        result = evaluator.evaluate(molecule)
-        end_time = time.time()
-        if result is None or result[0] is None:
-            self._log("Warning: Single point energy evaluation failed during timing estimation.", level="warning")
+        try:
+            energy = evaluator.evaluate(molecule)
+        except Exception as exc:
+            self._log(f"Warning: Single point energy evaluation failed during timing estimation: {exc}", level="warning")
             return None
-        energy, _, _, _ = result
+        end_time = time.time()
         elapsed = end_time - start_time
         self._log(f"Estimated single point time: {elapsed:.2f} seconds (Energy: {energy:.6f} Hartree)")
         return elapsed
@@ -156,7 +158,7 @@ class MultiPhaseBHMC:
             self._log(f"  Workers: {n_processes}")
             self._log(f"  Steps per worker: {n_structures_per_worker}")
             self._log(f"  Total steps: {n_processes * n_structures_per_worker}")
-            self._log(f"  Method/Basis: {self.config.method}/{self.config.basis}")
+            self._log(f"  Method/Basis: {self.config.qm_method}/{self.config.qm_basis}")
             self._log(f"  Temperature: {self.config.temperature} K")
             self._log(f"  Adaptive operators: {self.config.adaptive_operators}")
             self._log(f"  Operators: {', '.join(op[0] for op in self.operators)}")
@@ -169,17 +171,20 @@ class MultiPhaseBHMC:
                 with open(self.worker_log_file, 'w') as f:
                     f.write(f"BHMC Phase A Worker Log\n")
                     f.write(f"Configuration: {n_processes} workers, {n_structures_per_worker} steps each\n")
-                    f.write(f"Method: {self.config.method}, Basis: {self.config.basis}, Temperature: {self.config.temperature} K\n")
+                    f.write(f"Method: {self.config.qm_method}, Basis: {self.config.qm_basis}, Temperature: {self.config.temperature} K\n")
                     f.write(f"Operators: {', '.join(op[0] for op in self.operators)}\n")
                     if self.simulation_box:
                         f.write(f"Simulation Box: {self.simulation_box}\n")
                     f.write("\n")
             
             config_dict = {
-                'method': self.config.method,
-                'basis': self.config.basis,
+                'qm_method': self.config.qm_method,
+                'qm_basis': self.config.qm_basis,
                 'backend': self.config.backend,
                 'xtb_method': self.config.xtb_method,
+                'gpaw_mode': self.config.gpaw_mode,
+                'gpaw_basis': self.config.gpaw_basis,
+                'gpaw_xc': self.config.gpaw_xc,
                 'temperature': self.config.temperature,
                 'verbose': self.config.verbose,
                 'adaptive_operators': self.config.adaptive_operators,
@@ -271,19 +276,12 @@ class MultiPhaseBHMC:
                 self._log(f"Overall acceptance rate: {total_accepted/total_generated*100:.2f}%")
             
             if all_accepted_structures:
-                energies = [e for _, e, _, _, _ in all_accepted_structures]
-                dipoles = [d for _, _, _, d, _ in all_accepted_structures]
-                mulliken_charges = [m for _, _, _, _, m in all_accepted_structures]
+                energies = [e for _, e in all_accepted_structures]
                 self._log(f"Energy Statistics (Hartree):")
                 self._log(f"  Min:  {min(energies):.6f}")
                 self._log(f"  Max:  {max(energies):.6f}")
                 self._log(f"  Mean: {np.mean(energies):.6f}")
                 self._log(f"  Std:  {np.std(energies):.6f}")
-                self._log(f"Dipole Statistics (Debye):")
-                self._log(f"  Min:  {min(dipoles):.4f}")
-                self._log(f"  Max:  {max(dipoles):.4f}")
-                self._log(f"  Mean: {np.mean(dipoles):.4f}")
-                self._log(f"  Std:  {np.std(dipoles):.4f}") 
 
             
             # Plot worker trajectories
@@ -335,8 +333,8 @@ class MultiPhaseBHMC:
 
         Returns:
             List of worker results dicts with keys:
-                'best_structure': (Molecule, energy, dipole_vec, dipole_mag) tuple of the best structure found
-                'accepted_structures': List of (Molecule, energy, dipole_vec, dipole_mag) tuples
+                'best_structure': (Molecule, energy) tuple of the best structure found
+                'accepted_structures': List of (Molecule, energy) tuples
                 'energy_trajectory': List of (step, current_energy) for every step
         """
         if local_operators is None:
@@ -352,7 +350,7 @@ class MultiPhaseBHMC:
         self._log(f" Representatives: {n_workers}")
         self._log(f" Steps per worker: {n_steps_per_worker}")
         self._log(f" Total Steps: {n_workers * n_steps_per_worker}")
-        self._log(f" Method/Basis: {self.config.method}/{self.config.basis}")
+        self._log(f" Method/Basis: {self.config.qm_method}/{self.config.qm_basis}")
         self._log(f" Temperature: {self.config.temperature} K")
         self._log(f" Adaptive operators: {self.config.adaptive_operators}")
         self._log(f" Local Operators: {', '.join(op[0] for op in local_operators)}")
@@ -364,17 +362,20 @@ class MultiPhaseBHMC:
             with open(self.worker_log_file, 'a') as f:
                 f.write(f"\n\nBHMC Phase B Worker Log\n")
                 f.write(f"Configuration: {n_processes} workers, {n_steps_per_worker} steps each\n")
-                f.write(f"Method: {self.config.method}, Basis: {self.config.basis}, Temperature: {self.config.temperature} K\n")
+                f.write(f"Method: {self.config.qm_method}, Basis: {self.config.qm_basis}, Temperature: {self.config.temperature} K\n")
                 f.write(f"Local Operators: {', '.join(op[0] for op in local_operators)}\n")
                 if self.simulation_box:
                     f.write(f"Simulation Box: {self.simulation_box}\n")
                 f.write("\n")
             
         config_dict = {
-            "method": self.config.method,
-            "basis": self.config.basis,
+            "qm_method": self.config.qm_method,
+            "qm_basis": self.config.qm_basis,
             "backend": self.config.backend,
             "xtb_method": self.config.xtb_method,
+            "gpaw_mode": self.config.gpaw_mode,
+            "gpaw_basis": self.config.gpaw_basis,
+            "gpaw_xc": self.config.gpaw_xc,
             "temperature": self.config.temperature,
             "max_temperature": self.config.max_temperature,
             "verbose": self.config.verbose,
@@ -425,7 +426,7 @@ class MultiPhaseBHMC:
             all_accepted_structures.extend(accepted)
 
             self.phase_b_trajectories[wid] = trajectory
-            best_e_str = f"{best[1]:.6f} Ha" if best else "N/A"
+            best_e_str = f"{best[1]:.6f} Ha" if best else "N/A"  # best = (mol, energy)
             self._log(f" Worker {wid}: Best energy = {best_e_str}, accepted structures = {len(accepted)}, trajectory points = {len(trajectory)}")
 
         if self.logger:
@@ -435,14 +436,13 @@ class MultiPhaseBHMC:
         total_accepted = sum(len(r["accepted_structures"]) for r in results)
         total_steps = n_workers * n_steps_per_worker
 
-
         self._log(f" Total steps: {total_steps}")
         self._log(f" Total accepted: {total_accepted}")
         if total_steps > 0:
             self._log(f" Overall acceptance rate: {total_accepted/total_steps*100:.2f}%")
-        
+
         if best_structures:
-            energies = [bs[1] for bs in best_structures]
+            energies = [bs[1] for bs in best_structures]  # (mol, energy)
             self._log(f"Best energies across workers (Hartree):")
             self._log(f" Min:  {min(energies):.6f}")
             self._log(f" Max:  {max(energies):.6f}")
@@ -870,8 +870,8 @@ if __name__ == "__main__":
     )
     bhmc_config = BHMCConfig(
         temperature=1,
-        method="hf",
-        basis="6-311G(d,p)",
+        qm_method="hf",
+        qm_basis="6-311G(d,p)",
         verbose=False,
         adaptive_operators=True,
         adaptive_box = True,
@@ -914,11 +914,9 @@ if __name__ == "__main__":
     # 
     
     for i, best in enumerate(best_structures):
-        mol = best[0]
-        energy = best[1]
-        dipole = best[3]
+        mol, energy = best
         mol.write_xyz(f"best_structure_worker_{i}.xyz")
-        print(f"Worker {i}: Best energy = {energy:.6f} Ha, Dipole = {dipole:.4f} D")
+        print(f"Worker {i}: Best energy = {energy:.6f} Ha")
     
     
 

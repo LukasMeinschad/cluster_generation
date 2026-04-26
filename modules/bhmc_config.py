@@ -5,11 +5,14 @@ from dataclasses import dataclass
 @dataclass
 class BHMCConfig:
     """Configuration for Basin Hopping Monte Carlo sampling."""
-    temperature: float = 400.0  # Temperature in Kelvin
-    method: str = "hf"          # Quantum chemistry method
-    basis: str = "sto-3g"       # Basis set
-    backend: str = "psi4"       # Backend for energy evaluation 
+    temperature: float = 400.0   # Temperature in Kelvin
+    qm_method: str = "hf"        # Quantum chemistry method
+    qm_basis: str = "sto-3g"     # Basis set
+    backend: str = "psi4"        # Backend for energy evaluation
     xtb_method: str = "GFN2-xTB" # Method for XTB if backend is set to xtb
+    gpaw_mode: str = "lcao"      # GPAW mode (lcao or fd)
+    gpaw_basis: str = "dzp"      # GPAW basis set
+    gpaw_xc: str = "B3LYP"      # GPAW exchange-correlation functional
     
 
 

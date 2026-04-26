@@ -26,6 +26,7 @@ class ReferenceFrame:
     def z_axis(self) -> np.ndarray:
         return self.axes[:,2]
 
+
 @dataclass
 class Quaternion:
     """
@@ -195,6 +196,18 @@ class Quaternion:
             q1 = (R[0,2] + R[2,0]) / (4 * q3)
             q2 = (R[1,2] + R[2,1]) / (4 * q3)
         return Quaternion(q0, q1, q2, q3).normalize()
+
+    @staticmethod
+    def is_valid_rotation_matrix(R: np.ndarray) -> bool:
+        """  
+        Checks if the given matrix is truly a valid rotation
+        we check 
+        1. Orthonormality: R^T R = I
+        2. Proper Rotation: det(R) = +1
+        """
+        should_be_identity = R.T @ R
+        I = np.eye(3)
+        return np.allclose(should_be_identity, I) and np.isclose(np.linalg.det(R), 1.0)
 
     def slerp(q1: "Quaternion", q2: "Quaternion", t: float) -> "Quaternion":
         """ 

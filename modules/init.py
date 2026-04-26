@@ -33,6 +33,7 @@ from modules.calculator import EnergyEvaluator
 
 # Import the Featurizer
 from modules.featurizer import Featurizer, FeaturizerConfig
+from modules.cluster import Clustering
 
 
 
@@ -227,66 +228,59 @@ class ClusterInitializer:
                 failed += 1
         self._log(f"\nEnergy evaluation complete: {len(scored)} successful, {failed} failed")
         
-        mols = [mol for _, mol in scored]
-        # Here we include the machine learning featurizer for the generated candidates
-        FeaturizerConfig = FeaturizerConfig(descriptor_type="SOAP")
-        featurizer = Featurizer(FeaturizerConfig)
-        # Compute the soap feature matrix
-        feature_mat = featurizer.compute_soap_features(mols)
-
-        
-                                            
-
-
         if len(scored) == 0:
             raise RuntimeError("All energy evaluations failed. Cannot select initial configurations.")
-        
-        scored.sort(key=lambda x: x[0])
 
-        # Initialize Machine-Learning Featurizer here
-
-        # Select the lowest-energy reference for RMSD analysis
-        ref_mol = scored[0][1]
-    
-        rmsd_vs_ref = []
-        energies = []
-        for e, mol in scored:
-            rmsd = self._calculate_rmsd(ref_mol.coordinates, mol.coordinates)
-            rmsd_vs_ref.append(rmsd)
-            energies.append(e)
-
-        # Optional Quickplot of RMSD vs Energy to check diversity of candidates
-        plt.figure(figsize=(6,4))
-        plt.scatter(rmsd_vs_ref, energies, alpha=0.7, s=10)
-        plt.xlabel("RMSD to lowest-energy candidate (Angstrom)")
-        plt.ylabel("Energy (Hartree)")
-        plt.title("Initialization Prescreening: Energy vs RMSD")
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-        import os
-        os.makedirs("figures", exist_ok=True)
-        plt.savefig("figures/initialization_prescreening.png")
-        plt.close()
-
-        selected_molecules = [mol for _, mol in scored[:n_workers]]
-        
-        
-        e_min = scored[0][0]
         if len(scored) < n_workers:
             self._log(f"Warning: Only {len(scored)} valid configurations found, but n_workers={n_workers}. Returning all valid configurations.")
             n_workers = len(scored)
-        e_max = scored[n_workers - 1][0]
         
-        # Compute and log energy range and statistics
-        self._log(f"Pre-screening completed: {len(scored)} valid configurations out of {n_configurations} generated.")
+        scored.sort(key=lambda x: x[0])
 
-        self._log(f"Statistics of generated configurations:")
+        mols = [mol for _, mol in scored]
+        energies = [e for e, _ in scored]
+        e_min = energies[0]   # already sorted ascending
+        e_max = energies[-1]
+
+        # Build feature matrix and cluster candidates with k-means
+        featurizer_config = FeaturizerConfig(descriptor_type="SOAP")
+        featurizer = Featurizer(featurizer_config)
+        feature_mat = featurizer.build_feature_matrix(mols, energies=energies, include_hbonds=True)
+        n_clusters = min(n_workers, len(mols))
+        clustering = Clustering(feature_matrix=feature_mat, normalize=True)
+        labels = clustering.kmeans_clustering(n_clusters=n_clusters)
+
+        # Plot UMAP embedding (labels are stored on the clustering object after kmeans)
+        embedding = clustering.umap(n_components=2)
+        clustering.plot_embedding(embedding, title="Initialization UMAP", save_path="figures/initialization_umap.png")
+
+        # Evaluate and log clustering quality metrics
+        metrics = clustering.evaluate(labels)
+        self._log(f"\nClustering evaluation metrics:")
+        for metric_name, metric_value in metrics.items():
+            self._log(f"  {metric_name}: {metric_value:.4f}")
+
+        # Pick one representative per cluster → these become the MC starting structures
+        rep_indices = clustering.get_cluster_representatives(labels=labels, method="centroid")
+        selected_molecules = [mols[i] for i in rep_indices.values()]
+
+        # Locally Optimize the selected representatives to ensure they are at least in a local minimum before starting BHMC
+        for i, mol in enumerate(selected_molecules):
+            self._log(f"Optimizing selected representative {i+1}/{len(selected_molecules)}...")
+            try:
+                optimized = self.energy_evaluator.optimize_geometry(mol, optimizer="BFGS", write_trajectory=False)
+                selected_molecules[i] = optimized
+                self._log(f" Optimization successful")
+            except Exception as exc:
+                self._log(f" Optimization failed: {exc}", level="error")
+                # Keep original if optimization fails
+        
+
+        self._log(f"\nPre-screening completed: {len(scored)} valid configurations out of {n_configurations} generated.")
+        self._log(f"Statistics of scored configurations:")
         self._log(f"  Energy range: {e_min:.6f} to {e_max:.6f} Hartree")
-        self._log(f"  Energy of lowest-energy candidate: {e_min:.6f} Hartree")
-        self._log(f"  Energy of highest-energy selected candidate: {e_max:.6f} Hartree")
         self._log(f"  Energy distribution: mean {np.mean(energies):.6f}, median {np.median(energies):.6f}, std {np.std(energies):.6f} Hartree")
-
-        
+        self._log(f"  Clusters formed: {n_clusters}, Representatives selected: {len(selected_molecules)}")
 
         summary_lines = [
             f"{'='*60}",
@@ -295,7 +289,7 @@ class ClusterInitializer:
             f"Submolecules: {len(submolecules)}",
             f"Simulation box type: {simulation_box.box_type}",
             f"Candidates generated: {n_configurations}, Valid: {len(scored)}, Failed: {failed}",
-            f"Selected for workers: {n_workers}, Energy range: {e_min:.6f} to {e_max:.6f} Hartree",
+            f"Selected for workers: {len(selected_molecules)}, Energy range: {e_min:.6f} to {e_max:.6f} Hartree",
         ]
         if simulation_box.box_type == "sphere":
             summary_lines.append(f"Box radius: {simulation_box.radius:.2f} Angstrom")
@@ -655,7 +649,7 @@ class ClusterInitializer:
 
         for i, submol in enumerate(submolecules):
             if self.config.verbose:
-                print(f"  Placing submolecule {i+1}...", end=" ", flush=True)
+                print(f" Placing submolecule {i+1}/{len(submolecules)} with {len(submol.coordinates)} atoms...")
             
             # Get submolecule COM
             submol_com = np.average(submol.coordinates, axis=0, weights=submol.masses)
@@ -1113,6 +1107,7 @@ if __name__ == "__main__":
     initializer = ClusterInitializer(config=init_config)
     initial_molecules, submol_indices, simulation_box = initializer.initialize_from_xyz(
         xyz_file=xyz_file,
+        n_workers=4,
         n_configurations=5000,
         placing_method="sobol",
     )

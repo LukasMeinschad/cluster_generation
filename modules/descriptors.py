@@ -3,8 +3,8 @@ from numba import njit, prange
 from multiprocessing import Pool, cpu_count
 from typing import List, Tuple
 
-from geometry import GeometryOps
-from molecule_class import Molecule
+from modules.geometry import GeometryOps
+from modules.molecule_class import Molecule
 
 
 # ====================== Numba Core Functions =====================

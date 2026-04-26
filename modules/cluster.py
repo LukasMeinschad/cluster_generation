@@ -40,11 +40,11 @@ try:
 except ImportError:
     HDBSCAN = None
 
-from molecule_class import Molecule
-from geometry import GeometryOps
-from box import SimulationBox
-from logger import Logger
-from descriptors import FeatureExtractor
+from modules.molecule_class import Molecule
+from modules.geometry import GeometryOps
+from modules.box import SimulationBox
+from modules.logger import Logger
+from modules.descriptors import FeatureExtractor
 
 def _compute_hbond_single(args: Tuple) -> Tuple[int,float]:
     """  
@@ -279,7 +279,7 @@ class Clustering:
         This is a measrue how similar each point is to its own cluster compared vs neighboring clusters
         Objects with a high silhouette coefficient are well matched to their own cluster and poorly matched to neighboring clusters.
         """
-        from sklearn.metrics import sillhouette_score as _sk_silhouette_score
+        from sklearn.metrics import silhouette_score as _sk_silhouette_score
         lbl = self._resolve_labels(labels)
         fm, lbl = self._mask_noise(lbl)
         if len(set(lbl)) < 2:
@@ -297,7 +297,7 @@ class Clustering:
         Since algorithms that produce clusters with low intra-cluster distances (high intra-cluster similarity) and high inter-cluster distances will habve a low
         Davies-Bouldin index, the clustering algorithm that produces a collection of clusters with the smallest Davies-Bouldin index is considered the best.
         """
-        from sklean.metrics import davies_bouldin_score as _sk_davies_bouldin_score
+        from sklearn.metrics import davies_bouldin_score as _sk_davies_bouldin_score
         lbl = self._resolve_labels(labels)
         fm, lbl = self._mask_noise(lbl)
         if len(set(lbl)) < 2:
@@ -333,6 +333,7 @@ class Clustering:
             "calinski_harabasz_score": self.calinski_harabasz_score(lbl)
         }
         return scores
+    
     def elbow_analysis(
         self,
         k_range: range = range(2, 11),
@@ -361,6 +362,8 @@ class Clustering:
         plt.grid(True)
         plt.savefig(save_path)
         plt.close()
+        # Return the inertia values for each k
+        return inertias
     
     def silhouette_analysis(
         self,
@@ -394,7 +397,104 @@ class Clustering:
         plt.legend()
         plt.savefig(save_path)
         plt.close()
+        return best_k, scores 
 
+    # ----- Obtain cluster representatives -----
+    def get_cluster_representatives(self, labels: Optional[np.ndarray] = None, method: str = "centroid") -> Dict[int, int]:
+        """
+        Return one representative index per cluster.
+
+        Args:
+            labels: Cluster label array. If None uses self.labels (run clustering first).
+            method: "centroid" picks the point closest to the cluster mean in feature space;
+                    "medoid" picks the point with the smallest average pairwise distance to all
+                    cluster members (slower but more robust to non-convex clusters).
+
+        Returns:
+            Dict mapping cluster_label -> index into the original data (rows of feature_matrix).
+            Noise points (label == -1 from DBSCAN/HDBSCAN) are skipped.
+        """
+        lbl = labels if labels is not None else self.labels
+        if lbl is None:
+            raise ValueError("No cluster labels available. Run clustering first or pass labels.")
+
+        fm = self._fm()
+        representatives: Dict[int, int] = {}
+
+        for label in np.unique(lbl):
+            if label == -1:
+                continue
+            mask = lbl == label
+            cluster_features = fm[mask]
+            cluster_indices = np.where(mask)[0]
+
+            if method == "centroid":
+                centroid = cluster_features.mean(axis=0)
+                local_idx = int(np.argmin(np.linalg.norm(cluster_features - centroid, axis=1)))
+            elif method == "medoid":
+                dists = cdist(cluster_features, cluster_features)
+                local_idx = int(np.argmin(np.mean(dists, axis=1)))
+            else:
+                raise ValueError(f"Unknown method '{method}'. Choose 'centroid' or 'medoid'.")
+
+            representatives[int(label)] = int(cluster_indices[local_idx])
+
+        self._log(f"Cluster representatives ({method}): {representatives}")
+        return representatives
+
+    def _algorithm_complexity_registry(self) -> Dict[str, Any]:
+        """ 
+        Returns the complexity functions O(n,m,k) for supported clustering algorithms.
+
+        Values are rough operation-count models (not wall-clock time)
+
+        Args used here:
+            n = number of structures
+            m = number of features
+            k = number of clusters (for methods that require it)
+        """
+        def agglomerative(n: int, m:int, k: int, **kwargs) -> float:
+            """ 
+            Typically O(n^3) or O(n^2 * m) for m features
+
+            With simple linkage one can achieve O(n^2)
+            """
+            return float(n * n * m)
+
+        def kmeans(n: int, m: int, k: int, n_iter: int = 300, **kwargs) -> float:
+            """ 
+            O(n * m * k * n_iter) where n_iter is the number of iterations until convergence
+            """
+            return float(n * m * k * n_iter)
+        
+        def dbscan_avg(n: int, m:int, k:int, **kwargs) -> float:
+            """ 
+            Average case with spatial indexing asa rough model
+            
+            O(n * log(n) * m) for feature distance calculations with efficient indexing
+            """
+            return float(n * np.log2(max(n,2)) * m)
+        
+        def dbscan_worst(n: int, m: int, k: int, **kwargs) -> float:
+            """ 
+            Worst case (no spatial indexing or all points in one cluster)
+            O(n^2 * m) for pairwise distance calculations
+            """
+            return float(n * n * m)
+        
+        def hdbscan_avg(n: int, m:int, k:int, **kwargs) -> float:
+            """ 
+            Average case pretty similar to DBSCAN with efficient spatial indexing
+            """
+            return float(n * np.log2(max(n,2)) * m)
+
+        return {
+            "agglomerative": agglomerative,
+            "kmeans": kmeans,
+            "dbscan_avg": dbscan_avg,
+            "dbscan_worst": dbscan_worst,
+            "hdbscan_avg": hdbscan_avg
+            }
 
 
 @dataclass
@@ -1477,9 +1577,11 @@ class BHMCAnalyzer:
 
         
             +   Method == "centroid": For each cluster computes the centroid in the normalized feature space and selects the structure closest to the centroid (Euclidean distance)
-            +   Method == 'lowest_energy': Selects the lowest energy structure in each cluster as the representative
+            +   Method == "medoid": Selects the point with the smallest average distance to all points in the cluster
+            +   Method == "density": Alias for "medoid" (robust for DBSCAN/HDBSCAN clusters)
+            +   Method == "lowest_energy": Selects the lowest energy structure in each cluster as the representative
         Args:
-            labels: Cluster^er labels array. If None, uses cached labels from the last clustering run. If no cached labels, raises  ValueError
+            labels: Clusterer labels array. If None, uses cached labels from the last clustering run. If no cached labels, raises  ValueError
         
         Returns:
             List of StructureData objects representing the cluster centers
@@ -1492,6 +1594,11 @@ class BHMCAnalyzer:
         feature_mat = self.feature_matrix(normalize=True)
         unique_labels = np.unique(labels)
         representatives = []
+
+        def _medoid_index(cluster_features: np.ndarray) -> int:
+            # Compute pairwise distances and choose the point with minimal mean distance.
+            dists = cdist(cluster_features, cluster_features)
+            return int(np.argmin(np.mean(dists, axis=1)))
 
         if method == 'centroid':
             for label in unique_labels:
@@ -1511,6 +1618,21 @@ class BHMCAnalyzer:
         
             self._log(f"Total clusters (excluding noise): {len(unique_labels) - (1 if -1 in unique_labels else 0)}. Representatives obtained: {len(representatives)}")
         
+        elif method == 'medoid' or method == 'density':
+            for label in unique_labels:
+                if label == -1:
+                    # Skip noise points form DBSCAN/HDBSCAN
+                    continue
+                mask = labels == label
+                cluster_features = feature_mat[mask]
+                cluster_indices = np.where(mask)[0]
+                medoid_local = _medoid_index(cluster_features)
+                closest_idx = cluster_indices[medoid_local]
+                rep = self.structures[closest_idx]
+                self._log(f"Cluster {label}: representative index {closest_idx}, medoid avg dist: {np.mean(cdist(cluster_features, cluster_features)[medoid_local]):.3f}, E={rep.energy:.6f} Ha")
+                representatives.append(rep)
+            self._log(f"Total clusters (excluding noise): {len(unique_labels) - (1 if -1 in unique_labels else 0)}. Representatives obtained: {len(representatives)}")
+
         elif method == 'lowest_energy':
             for label in unique_labels:
                 if label == -1:
@@ -1523,7 +1645,10 @@ class BHMCAnalyzer:
                 self._log(f"Cluster {label}: representative index {self.structures.index(lowest_energy_struct)}, E={lowest_energy_struct.energy:.6f} Ha")
             self._log(f"Total clusters (excluding noise): {len(unique_labels) - (1 if -1 in unique_labels else 0)}. Representatives obtained: {len(representatives)}")
         else:
-            raise ValueError(f"Unsupported method for selecting cluster representatives: {method}. Supported methods: 'centroid', 'lowest_energy'")
+            raise ValueError(
+                "Unsupported method for selecting cluster representatives: "
+                f"{method}. Supported methods: 'centroid', 'medoid', 'density', 'lowest_energy'"
+            )
         
         
         return representatives

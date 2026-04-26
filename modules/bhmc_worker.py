@@ -13,7 +13,7 @@ import tracemalloc
 from molecule_class import Molecule
 from operators import NonLocalOperators, LocalOperators
 from box import SimulationBox
-from cluster_generation.modules.archive2.bhmc_energy import EnergyEvaluator
+from calculator import EnergyEvaluator
 from logger import Logger
 
 # Constants
@@ -234,15 +234,22 @@ def _phase_a_worker(args: Tuple) -> Dict:
 
 
          evaluator = EnergyEvaluator(
-             method=config_dict.get('method', 'hf'),
-             basis=config_dict.get('basis', 'sto-3g'),
              backend=config_dict.get('backend', 'psi4'),
-             xtb_method=config_dict.get('xtb_method', 'GFN2-xTB')
+             qm_method=config_dict.get('qm_method', 'hf'),
+             qm_basis=config_dict.get('qm_basis', 'sto-3g'),
+             xtb_method=config_dict.get('xtb_method', 'GFN2-xTB'),
+             gpaw_mode=config_dict.get('gpaw_mode', 'lcao'),
+             gpaw_basis=config_dict.get('gpaw_basis', 'dzp'),
+             gpaw_xc=config_dict.get('gpaw_xc', 'B3LYP'),
          )
 
 
          current_structure = copy.deepcopy(initial_molecule)
-         current_energy, current_dipole_vec, current_dipole_mag, current_mulliken_charge = evaluator.evaluate(current_structure)
+         try:
+             current_energy = evaluator.evaluate(current_structure)
+         except Exception as exc:
+             _log(f"Worker {worker_id}: Failed to evaluate initial energy: {exc}", level="error")
+             current_energy = None
 
          if current_energy is None:
              _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
@@ -289,7 +296,10 @@ def _phase_a_worker(args: Tuple) -> Dict:
                      energy_trajectory.append((step+1, current_energy))
                      continue
                  
-                 new_energy, new_dipole_vec, new_dipole_mag, new_mulliken_charge = evaluator.evaluate(new_structure)
+                 try:
+                     new_energy = evaluator.evaluate(new_structure)
+                 except Exception as exc:
+                     new_energy = None
 
                  if new_energy is None:
                      _log(f"Worker {worker_id}: Energy evaluation failed for proposed structure. Rejecting.", level="warning")
@@ -312,11 +322,8 @@ def _phase_a_worker(args: Tuple) -> Dict:
                          _log(f"Worker {worker_id}: Step {step+1}, ΔE = {delta_e_ev:.4f} eV, Prob = {prob:.4f}, Rand = {rand_val:.4f}")
 
                  if accept:
-                     # Set new values
                      current_structure, current_energy = copy.deepcopy(new_structure), new_energy
-                     current_dipole_vec, current_dipole_mag = new_dipole_vec, new_dipole_mag
-                     current_mulliken_charge = new_mulliken_charge 
-                     accepted_structures.append((copy.deepcopy(current_structure), current_energy, current_dipole_vec, current_dipole_mag, current_mulliken_charge))
+                     accepted_structures.append((copy.deepcopy(current_structure), current_energy))
                      n_accepted += 1
                      operator_accepted_counts[op_info['name']] += 1
                      operator_attempt_counts[op_info['name']] += 1
@@ -415,23 +422,27 @@ def _phase_b_worker(args: Tuple) -> Dict:
     operator_attempt_counts = {op['name']: 0 for op in operators}
     
     evaluator = EnergyEvaluator(
-        method=config_dict.get('method', 'hf'),
-        basis=config_dict.get('basis', 'sto-3g'),
         backend=config_dict.get('backend', 'psi4'),
-        xtb_method=config_dict.get('xtb_method', 'GFN2-xTB')
+        qm_method=config_dict.get('qm_method', 'hf'),
+        qm_basis=config_dict.get('qm_basis', 'sto-3g'),
+        xtb_method=config_dict.get('xtb_method', 'GFN2-xTB'),
+        gpaw_mode=config_dict.get('gpaw_mode', 'lcao'),
+        gpaw_basis=config_dict.get('gpaw_basis', 'dzp'),
+        gpaw_xc=config_dict.get('gpaw_xc', 'B3LYP'),
     )
 
     current_structure = copy.deepcopy(initial_molecule)
-    current_energy, current_dipole_vec, current_dipole_mag, current_mulliken_charge = evaluator.evaluate(current_structure)
-    
+    try:
+        current_energy = evaluator.evaluate(current_structure)
+    except Exception as exc:
+        current_energy = None
+
     if current_energy is None:
         _log(f"Worker {worker_id}: Failed to evaluate initial energy!", level="error")
         return {"best_structure": None, "accepted_structures": [], "energy_trajectory": [], "worker_id": worker_id}
 
     best_energy = current_energy
     best_structure = copy.deepcopy(current_structure)
-    best_dipole_vec, best_dipole_mag = current_dipole_vec, current_dipole_mag
-    best_mulliken_charge = current_mulliken_charge
 
     accepted_structures = []
     energy_trajectory = [(0, current_energy)]
@@ -470,10 +481,12 @@ def _phase_b_worker(args: Tuple) -> Dict:
                 energy_trajectory.append((step+1, current_energy))
                 raise ValueError("No coordinate change")
                 
-            new_energy, new_dipole_vec, new_dipole_mag, new_mulliken_charge = evaluator.evaluate(new_structure)
+            try:
+                new_energy = evaluator.evaluate(new_structure)
+            except Exception:
+                new_energy = None
             if new_energy is None:
                 n_rejected += 1
-                # Count operator attempt and rejection
                 operator_attempt_counts[op_info['name']] += 1
                 energy_trajectory.append((step+1, current_energy))
                 raise ValueError("Energy invalid")
@@ -489,15 +502,12 @@ def _phase_b_worker(args: Tuple) -> Dict:
 
             if accept:
                 current_structure, current_energy = copy.deepcopy(new_structure), new_energy
-                accepted_structures.append((copy.deepcopy(current_structure), current_energy, new_dipole_vec, new_dipole_mag, new_mulliken_charge))
+                accepted_structures.append((copy.deepcopy(current_structure), current_energy))
                 n_accepted += 1
-                
-                # Check for absolute best
+
                 if current_energy < best_energy:
                     best_energy = current_energy
                     best_structure = copy.deepcopy(current_structure)
-                    best_dipole_vec, best_dipole_mag = new_dipole_vec, new_dipole_mag
-                    best_mulliken_charge = new_mulliken_charge
             else:
                 n_rejected += 1
                 # Count operator attempt and rejection
@@ -518,7 +528,7 @@ def _phase_b_worker(args: Tuple) -> Dict:
     _log(f"Worker {worker_id}: Operator acceptance rates: {operator_rates}")
 
     return {
-        "best_structure": (best_structure, best_energy, best_dipole_vec, best_dipole_mag, best_mulliken_charge),
+        "best_structure": (best_structure, best_energy),
         "accepted_structures": accepted_structures,
         "energy_trajectory": energy_trajectory,
         "worker_id": worker_id,
@@ -543,7 +553,8 @@ if __name__ == "__main__":
     submolecule_indices = [[0, 1, 2], [3, 4, 5]]
 
     config_dict = {
-        'method': 'xtb',
+        'qm_method': 'hf',
+        'qm_basis': 'sto-3g',
         'backend': 'xtb',
         'xtb_method': 'GFN2-xTB',
         'temperature': 300.0,
@@ -580,7 +591,7 @@ if __name__ == "__main__":
     
     best_struct_info = result.get('best_structure')
     if best_struct_info:
-        best_mol, best_energy, best_dipole_vec, best_dipole_mag = best_struct_info
+        best_mol, best_energy = best_struct_info
         print(f"Beste gefundene Energie: {best_energy:.6f} Hartree")
         print(f"Anzahl akzeptierter Strukturen: {len(result['accepted_structures'])}")
         print(f"Länge der Energietrajektorie: {len(result['energy_trajectory'])}")

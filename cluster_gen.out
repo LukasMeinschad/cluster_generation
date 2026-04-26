@@ -1,0 +1,23 @@
+========================================================================
+                         Cluster Initialization                         
+========================================================================
+Configuration:
+  QM Method (Optimization): hf
+  Basis Set (Optimization): sto-3g
+  Simulation Box Type: sphere
+  Simulation Box Scale Factor: 1.5
+  Minimum Distance Between Submolecules: 2.0 Angstrom
+  Candidate configurations generated: 10000
+  Workers (n_keep) for energy ranking: 10
+  Energy Evaluation Backend: xtb
+  xTB Method (if applicable): GFN2-xTB
+
+
+[1/5] Loading molecule from test_molecules/water_clusters/h2o_dimer.xyz
+ Loaded: 6 atoms
+
+[2/5] Fragmenting molecule into submolecules
+ Found 2 submolecules:
+  Submolecule 1: 3 atoms
+  Submolecule 2: 3 atoms
+Workers: 2

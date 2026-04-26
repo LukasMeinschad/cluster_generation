@@ -1,7 +1,10 @@
-""" 
+"""
 Calculator wrapper for energy evaluation. This is ASE-based and uses the ASE calculator interface
 """
-from modules.molecule_class import Molecule 
+try:
+    from modules.molecule_class import Molecule
+except ImportError:
+    from molecule_class import Molecule
 
 # ====== ASE imports ======
 from ase import Atoms

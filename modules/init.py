@@ -32,7 +32,7 @@ from modules.geometry import GeometryOps
 from modules.calculator import EnergyEvaluator
 
 # Import the Featurizer
-from modules.featurizer import Featurizer
+from modules.featurizer import Featurizer, FeaturizerConfig
 
 
 
@@ -227,10 +227,15 @@ class ClusterInitializer:
                 failed += 1
         self._log(f"\nEnergy evaluation complete: {len(scored)} successful, {failed} failed")
         
-        #DELETE!
-        # Save the molecules as a numpy object for later analysis
-        mols = [np.array([mol for _, mol in scored], dtype=object)]
-        np.save("initial_molecules.npy", mols)
+        mols = [mol for _, mol in scored]
+        # Here we include the machine learning featurizer for the generated candidates
+        FeaturizerConfig = FeaturizerConfig(descriptor_type="SOAP")
+        featurizer = Featurizer(FeaturizerConfig)
+        # Compute the soap feature matrix
+        feature_mat = featurizer.compute_soap_features(mols)
+
+        
+                                            
 
 
         if len(scored) == 0:

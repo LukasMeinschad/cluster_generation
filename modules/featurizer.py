@@ -25,6 +25,8 @@ class FeaturizerConfig:
     soap_sigma: float = 0.5 # Std of the Gaussians used to expand the atomic density
     soap_rbf: str = "gto" # Type of radial basis functions (e.g. "gto", "polynomial")
     soap_average: str = "inner" # Averaging method for SOAP features ("inner", "outer", "off")
+    hbond_angle_threshold: float = 150.0 # Minimum D-H···A angle (degrees) for a valid H-bond
+    hbond_max_distance: float = 3.5      # Maximum donor-acceptor distance (Å) for a valid H-bond
 
 
 
@@ -96,6 +98,94 @@ class Featurizer:
             feature_matrix.append(features)
         
         return np.array(feature_matrix)
+
+    def compute_energy_features(self, energies: List[float]) -> np.ndarray:
+        """
+        Compute relative energy features from a list of absolute energies.
+
+        Returns an (n_molecules, 1) array of delta_E = E - E_min, so the
+        lowest-energy structure has delta_E = 0 and all others are positive.
+        """
+        e = np.array(energies, dtype=float)
+        return (e - e.min()).reshape(-1, 1)
+
+    def compute_hbond_features(self, molecules: List[Molecule]) -> np.ndarray:
+        """
+        Compute hydrogen bond features for a list of Molecule objects.
+
+        For each molecule computes:
+          - n_hbonds            : number of valid H-bond configurations
+          - avg_hbond_angle     : mean D-H···A angle (0.0 if none)
+          - avg_da_distance     : mean donor-acceptor distance in Å (0.0 if none)
+
+        Uses the thresholds from FeaturizerConfig (hbond_angle_threshold,
+        hbond_max_distance), matching the same criteria as BHMCAnalyzer.
+
+        Returns array of shape (n_molecules, 3).
+        """
+        angle_thr = self.config.hbond_angle_threshold
+        max_dist  = self.config.hbond_max_distance
+        features  = np.zeros((len(molecules), 3))
+        for i, mol in enumerate(molecules):
+            mol.compute_bonds()
+            valid = mol.get_valid_hbond_configurations(
+                angle_threshold=angle_thr, max_distance=max_dist
+            )
+            # Extra distance guard (mirrors cluster.py filter)
+            valid = [c for c in valid
+                     if c.donor_acceptor_distance is not None
+                     and c.donor_acceptor_distance <= max_dist]
+            n = len(valid)
+            features[i, 0] = n
+            if n > 0:
+                features[i, 1] = float(np.mean([c.angle for c in valid]))
+                features[i, 2] = float(np.mean([c.donor_acceptor_distance for c in valid]))
+        return features
+
+    def build_feature_matrix(
+        self,
+        molecules: List[Molecule],
+        energies: Optional[List[float]] = None,
+        include_hbonds: bool = True,
+    ) -> np.ndarray:
+        """
+        Build a combined feature matrix by concatenating:
+          1. SOAP descriptors  (always included)
+          2. Delta-E column    (included when energies is not None)
+          3. H-bond features   (included when include_hbonds=True)
+
+        The column order matches the convention in BHMCAnalyzer._ensure_feature_matrix
+        so that both pipelines stay consistent.
+
+        Args:
+            molecules:      List of Molecule objects.
+            energies:       Absolute energies (same length as molecules).
+                            If provided, a delta_E column is prepended.
+            include_hbonds: Whether to append the three H-bond columns.
+
+        Returns:
+            np.ndarray of shape (n_molecules, n_features).
+            The corresponding column names are stored in self.feature_names_.
+        """
+        parts: List[np.ndarray] = []
+        names: List[str] = []
+
+        if energies is not None:
+            energy_feats = self.compute_energy_features(energies)
+            parts.append(energy_feats)
+            names.append("Delta_E")
+
+        soap_feats = self.compute_soap_features(molecules)
+        parts.append(soap_feats)
+        names.extend([f"SOAP_{i}" for i in range(soap_feats.shape[1])])
+
+        if include_hbonds:
+            hbond_feats = self.compute_hbond_features(molecules)
+            parts.append(hbond_feats)
+            names.extend(["n_hbonds", "avg_hbond_angle", "avg_da_distance"])
+
+        self.feature_names_: List[str] = names
+        return np.hstack(parts)
 
     def plot_soap_feature_histograms_average(self, feature_mat: np.ndarray, n_features_to_plot: int = 5):
         """ 

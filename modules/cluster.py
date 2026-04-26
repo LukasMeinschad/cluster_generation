@@ -74,6 +74,328 @@ def _compute_hbond_single(args: Tuple) -> Tuple[int,float]:
     return n_hbonds, avg_angle, avg_da_distance 
 
 
+class Clustering:
+    """ 
+    General Clustering Class for Clustering of Molecular Structures
+
+    Takes as an input a feature matrix of the type
+    (n_structures, n_features) and performs clustering using various algorithms.
+    """
+    def __init__(self,
+                 feature_matrix: np.ndarray,
+                 logger: Optional[Logger] = None,
+                 normalize: bool = True,
+    ):
+        if not isinstance(feature_matrix, np.ndarray):
+            raise ValueError("Feature matrix must be a numpy array")
+        self.feature_matrix_raw = feature_matrix
+        self.logger = logger
+        self.labels: Optional[np.ndarray] = None
+        self._feature_matrix_normalized = None
+        self.scaler: Optional[StandardScaler] = None
+        if normalize:
+            self._normalize()
+
+    def _log(self, msg: str)-> None:
+        if self.logger:
+            self.logger.info(msg) 
+
+    def _normalize(self) -> None:
+        self._scaler = StandardScaler()
+        normed = self._scaler.fit_transform(self.feature_matrix_raw)
+        self._feature_matrix_normalized = np.nan_to_num(normed)  # Replace NaNs with 0.0 and inf with large finite numbers
+        self._log(f"Feature matrix normalized: mean ~ {np.mean(self._feature_matrix_normalized):.4f}, std ~ {np.std(self._feature_matrix_normalized):.4f}")
+
+    def _fm(self) -> np.ndarray:
+        """ 
+        Helper function to get the feature matrix (normalized if available, otherwise raw)
+        """
+        return self._feature_matrix_normalized if self._feature_matrix_normalized is not None else self.feature_matrix_raw
+    
+    # ---- Clustering ------------
+
+    def cluster(self,method: str="kmeans", n_clusters: Optional[int]= None, **kwargs) -> None:
+        """  
+        Unified cluster dispatcher to call the different clustering methods
+        """
+        dispatch = {
+            "kmeans": self.kmeans_clustering,
+            "agglomerative": self.agglomerative_clustering,
+            "dbscan": self.dbscan_clustering,
+            "hdbscan": self.hdbscan_clustering,
+        }
+        if method not in dispatch:
+            raise ValueError(f"Invalid clustering method: {method}. Choose from {list(dispatch.keys())}")
+        fn = dispatch[method]
+        if n_clusters is not None and method in ["kmeans", "agglomerative"]:
+            self._log(f"Clustering with method: {method}, n_clusters: {n_clusters}")
+            self.labels = fn(n_clusters=n_clusters, **kwargs)
+        else:
+            self._log(f"Clustering with method: {method} (no n_clusters needed)")
+            self.labels = fn(**kwargs)
+
+    def kmeans_clustering(self, n_clusters: int = 5, n_init: int = 10,
+                          max_iter: int=300, random_state: int = 42) -> np.ndarray:
+        """ 
+        Perform K-Means clustering on the feature matrix
+        
+        Args:
+            n_clusters: Number of clusters to form
+            n_init: Number of time the k-means algorithm will be run with different centroid seeds. The final results will be the best output of n_init consecutive runs in terms of inertia.
+            max_iter: Maximum number of iterations of the k-means algorithm for a single run.
+            random_state: Determines random number generation for centroid initialization. Use an int to make the randomness deterministic.
+        """
+        km = KMeans(n_clusters=n_clusters, n_init=n_init, max_iter=max_iter, random_state=random_state)
+        self.labels = km.fit_predict(self._fm())
+        self._log(f"K-Means clustering completed: n_clusters={n_clusters}, inertia={km.inertia_:.4f}")
+        return self.labels  
+    
+    def agglomerative_clustering(self, n_clusters: int = 5, linkage: str = "ward") -> np.ndarray:
+        """ 
+        Perform Agglomerative Clustering on the feature matrix
+        
+        Args:
+            n_clusters: Number of clusters to form
+            linkage: Which linkage criterion to use. The linkage criterion determines which distance to use between sets of observation. The algorithm will merge the pairs of cluster that minimize this criterion. 
+                     - "ward": minimizes the variance of the clusters being merged (only works with Euclidean distance)
+                     - "complete": uses the maximum distances between all observations of the two sets
+                     - "average": uses the average of the distances of each observation of the two sets
+                     - "single": uses the minimum of the distances between all observations of the two sets
+        """
+        ac = SklearnAgglomerativeClustering(n_clusters=n_clusters, linkage=linkage)
+        self.labels = ac.fit_predict(self._fm())
+        self._log(f"Agglomerative clustering completed: n_clusters={n_clusters}, linkage={linkage}")
+        return self.labels
+
+    def dbscan_clustering(self, eps: float = 0.5, min_samples: int = 5) -> np.ndarray:
+        """ 
+        Perform DBSCAN clustering on the feature matrix
+        
+        Args:
+            eps: The maximum distance between two samples for one to be considered as in the neighborhood of the other. This is not a maximum bound on the distances of points within a cluster. This is the most important DBSCAN parameter to choose appropriately for your data set and distance function.
+            min_samples: The number of samples (or total weight) in a neighborhood for a point to be considered as a core point. This includes the point itself.
+        """
+        dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+        self.labels = dbscan.fit_predict(self._fm())
+        n_clusters = len(set(self.labels)) - (1 if -1 in self.labels else 0)
+        n_noise = list(self.labels).count(-1)
+        self._log(f"DBSCAN clustering completed: eps={eps}, min_samples={min_samples}, n_clusters={n_clusters}, n_noise={n_noise}")
+        return self.labels
+        
+    def hdbscan_clustering(self, min_cluster_size: int = 5, min_samples: Optional[int] = None) -> np.ndarray:
+        """ 
+        Perform HDBSCAN clustering on the feature matrix
+        
+        Args:
+            min_cluster_size: The minimum size of clusters; single linkage splits that contain fewer points than this will be considered points "falling out" of a cluster instead of a cluster splitting into two new clusters.
+            min_samples: The number of samples in a neighborhood for a point to be considered as a core point. This includes the point itself. If None, the default value is the same as min_cluster_size.
+        """
+        if HDBSCAN is None:
+            raise ImportError("HDBSCAN is not installed. Please install it with `pip install hdbscan` to use this method.")
+        hdbscan = HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples)
+        self.labels = hdbscan.fit_predict(self._fm())
+        n_clusters = len(set(self.labels)) - (1 if -1 in self.labels else 0)
+        n_noise = list(self.labels).count(-1)
+        self._log(f"HDBSCAN clustering completed: min_cluster_size={min_cluster_size}, min_samples={min_samples}, n_clusters={n_clusters}, n_noise={n_noise}")
+        return self.labels
+
+    # ---- Dimensionality reduction ------------
+
+    def pca(self, n_components: int=2) -> Tuple[np.ndarray, np.ndarray]:
+        """   
+        Applies a PCA dimensionality reduction
+
+        returns (embedding, explained_variance_ratio)
+        """
+        p = PCA(n_components=n_components)
+        embedding = p.fit_transform(self._fm())
+        self._log(f"PCA completed: n_components={n_components}, explained_variance_ratio={p.explained_variance_ratio_}")
+        return embedding, p.explained_variance_ratio_
+
+    def tsne(self, n_components: int=2, perpelxity: float = 30.0, n_iter: int=1000, random_state: int = 42) -> np.ndarray:
+        """  
+        Applies a T-SNE Dimensionality Reduction
+        """
+        ts = TSNE(n_components=n_components, perplexity=perpelxity, n_iter=n_iter, random_state=random_state)
+        embedding = ts.fit_transform(self._fm())
+        self._log(f"T-SNE completed: n_components={n_components}, perplexity={perpelxity}, n_iter={n_iter}")
+        return embedding
+    
+    def umap(self, n_components: int=2, n_neighbors: int=15, min_dist: float=0.1, random_state: int = 42) -> np.ndarray:
+        """  
+        Applies a UMAP Dimensionality Reduction
+        """
+        if UMAP is None:
+            raise ImportError("UMAP is not installed. Please install it with `pip install umap-learn` to use this method.")
+        umap = UMAP(n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, random_state=random_state)
+        embedding = umap.fit_transform(self._fm())
+        self._log(f"UMAP completed: n_components={n_components}, n_neighbors={n_neighbors}, min_dist={min_dist}")
+        return embedding
+
+    # ---- Plotting of Dimensionality Reduction Methods -----
+    
+    def plot_embedding(self, embedding: np.ndarray, title: str = "Embedding", save_path: Optional[str] = None) -> None:
+        """  
+        Helper function to plot a 2D embedding with cluster labels if available
+        """
+        plt.figure(figsize=(8, 6))
+        if self.labels is not None:
+            sns.scatterplot(x=embedding[:, 0], y=embedding[:, 1], hue=self.labels, palette='tab10', s=100, alpha=0.7)
+            plt.legend(title="Cluster")
+        else:
+            sns.scatterplot(x=embedding[:, 0], y=embedding[:, 1], color='blue', s=100, alpha=0.7)
+        plt.title(title)
+        plt.xlabel("Component 1")
+        plt.ylabel("Component 2")
+        plt.grid(True)
+        if save_path:
+            plt.savefig(save_path)
+        else:
+            plt.savefig(f"figures/{title.replace(' ', '_').lower()}.png")
+        plt.close()
+    
+
+    
+    # ----- Evaluation and Assessment -----
+    def _resolve_labels(self, labels: Optional[np.ndarray]) -> np.ndarray:
+        """  
+        Helper function to resolve labels for evaluation. If labels are provided, use them. Otherwise, use the stored self.labels. If neither is available, raise an error.
+        """
+        lbl = labels if labels is not None else self.labels
+        if lbl is None:
+            raise ValueError("No labels provided for evaluation. Please run clustering first or provide labels.")
+        return lbl
+    
+    def _mask_noise(self, labels: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """  
+        Helper function to return (feature_matrix, labels) with noise points (label=-1) removed for evaluation metrics that require it
+        """
+        mask = labels != -1
+        return self._fm()[mask], labels[mask]
+    
+    def silhouette_score(self, labels: Optional[np.ndarray] = None) -> float:
+        """ 
+        Determine the Sillhouette coefficient.
+        This is a measrue how similar each point is to its own cluster compared vs neighboring clusters
+        Objects with a high silhouette coefficient are well matched to their own cluster and poorly matched to neighboring clusters.
+        """
+        from sklearn.metrics import sillhouette_score as _sk_silhouette_score
+        lbl = self._resolve_labels(labels)
+        fm, lbl = self._mask_noise(lbl)
+        if len(set(lbl)) < 2:
+            self._log("Silhouette score cannot be computed with less than 2 clusters (after masking noise). Returning 0.0", level="warning")
+            return 0.0
+        score = _sk_silhouette_score(fm, lbl)
+        self._log(f"Silhouette Score: {score:.4f}")
+        return score
+    
+    def davies_bouldin_score(self, labels: Optional[np.ndarray] = None) -> float:
+        """ 
+        DB = 1/n sum(max((sigma_i + sigma_j) / d(c_i, c_j))) for i != j
+        where n is the number of clusters, sigma_i is the average distance of all points in cluster i to the centroid of cluster i, and d(c_i, c_j) is the distance between the centroids of clusters i and j.
+
+        Since algorithms that produce clusters with low intra-cluster distances (high intra-cluster similarity) and high inter-cluster distances will habve a low
+        Davies-Bouldin index, the clustering algorithm that produces a collection of clusters with the smallest Davies-Bouldin index is considered the best.
+        """
+        from sklean.metrics import davies_bouldin_score as _sk_davies_bouldin_score
+        lbl = self._resolve_labels(labels)
+        fm, lbl = self._mask_noise(lbl)
+        if len(set(lbl)) < 2:
+            self._log("Davies-Bouldin score cannot be computed with less than 2 clusters (after masking noise). Returning inf", level="warning")
+            return float('inf')
+        score = _sk_davies_bouldin_score(fm, lbl)
+        self._log(f"Davies-Bouldin Score: {score:.4f}")
+        return score
+    
+    def calinski_harabasz_score(self, labels: Optional[np.ndarray] = None) -> float:
+        """  
+        Calinski-Harabasz Index = (Tr / (k - 1)) / (Tw / (n - k))
+        where Tr is the between-clusters dispersion matrix, Tw is the within-cluster dispersion matrix, n is the number of samples, and k is the number of clusters.
+        """
+        from sklearn.metrics import calinski_harabasz_score as _sk_calinski_harabasz_score
+        lbl = self._resolve_labels(labels)
+        fm, lbl = self._mask_noise(lbl)
+        if len(set(lbl)) < 2:
+            self._log("Calinski-Harabasz score cannot be computed with less than 2 clusters (after masking noise). Returning 0.0", level="warning")
+            return 0.0
+        score = _sk_calinski_harabasz_score(fm, lbl)
+        self._log(f"Calinski-Harabasz Score: {score:.4f}")
+        return score
+    
+    def evaluate(self, labels: Optional[np.ndarray] = None) -> Dict[str, float]:
+        """  
+        Evaluate the clustering using multiple metrics and return a dictionary of scores
+        """
+        lbl = self._resolve_labels(labels)
+        scores = {
+            "silhouette_score": self.silhouette_score(lbl),
+            "davies_bouldin_score": self.davies_bouldin_score(lbl),
+            "calinski_harabasz_score": self.calinski_harabasz_score(lbl)
+        }
+        return scores
+    def elbow_analysis(
+        self,
+        k_range: range = range(2, 11),
+        n_init: int = 10,
+        random_state: int = 42,
+        save_path: str = "figures/elbow_analysis.png"
+        ) -> Dict[int, float]:
+        """
+        Run k-means for each k in k_range and recort the within cluster sum of squares (inertia) to perform an elbow analysis for determining the optimal number of clusters. 
+        The 'elbow' point in the curve is a heuristic for the optimal k 
+        Returns a dict mapping of k->inertia for each k in k_range
+        """
+        inertias: Dict[int, float] = {}
+        for k in k_range:
+            km = KMeans(n_clusters=k, n_init=n_init, random_state=random_state)
+            km.fit(self._fm())
+            inertias[k] = float(km.inertia_)
+            self._log(f"Elbow analysis: k={k}, inertia={km.inertia_:.4f}")
+        # Plot the elbow curve
+        plt.figure(figsize=(8, 5))
+        plt.plot(list(inertias.keys()), list(inertias.values()), marker='o')
+        plt.title('Elbow Analysis for K-Means Clustering')
+        plt.xlabel('Number of Clusters (k)')
+        plt.ylabel('Inertia (Within-Cluster Sum of Squares)')
+        plt.xticks(list(inertias.keys()))
+        plt.grid(True)
+        plt.savefig(save_path)
+        plt.close()
+    
+    def silhouette_analysis(
+        self,
+        k_range: range = range(2, 11),
+        n_init: int = 10,
+        random_state: int = 42,
+        save_path: str = "figures/silhouette_analysis.png"
+        )  -> int:
+        """
+        Run k-means for each k in k_range and record the silhouette score
+        Plot score vs k, then marks the best k in red and returns that best k
+        Use this alongside the elbow_analysis() to choose k confidently.
+        """
+        from sklearn.metrics import silhouette_score as _sk_silhouette_score
+        scores: Dict[int, float] = {}
+        for k in k_range:
+            km = KMeans(n_clusters=k, n_init=n_init, random_state=random_state)
+            lbl = km.fit_predict(self._fm())
+            scores[k] = _sk_silhouette_score(self._fm(), lbl)
+            self._log(f"Silhouette analysis: k={k}, silhouette_score={scores[k]:.4f}") 
+        
+        best_k = max(scores, key=scores.__getitem__)
+        plt.figure(figsize=(8, 5))
+        plt.plot(list(scores.keys()), list(scores.values()), marker='o', linewidth=2, color='blue')
+        plt.scatter(best_k, scores[best_k], color='red', s=100, label=f'Best k={best_k}')
+        plt.title('Silhouette Analysis for K-Means Clustering')
+        plt.xlabel('Number of Clusters (k)')
+        plt.ylabel('Silhouette Score')
+        plt.xticks(list(scores.keys()))
+        plt.grid(True)
+        plt.legend()
+        plt.savefig(save_path)
+        plt.close()
+
+
 
 @dataclass
 class StructureData:

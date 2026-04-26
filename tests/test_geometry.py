@@ -111,5 +111,59 @@ def test_rotate_points(initialize_quaternion_1):
                                         [0.0, 0.0, 1.0]])  # 90 degree rotation around z-axis
     assert np.allclose(rotated_points, expected_rotated_points)
 
+def test_centroid_compute():
+    """  
+    Tests the computation of a centroid using GeometryOps
+    """
+    points = np.array([[1.0, 0.0, 0.0],
+                       [0.0, 1.0, 0.0],
+                       [0.0, 0.0, 1.0]])
+    centroid = GeometryOps.centroid(points)
+    expected_centroid = np.array([1/3, 1/3, 1/3])
+    assert np.allclose(centroid, expected_centroid)
+
+def test_center_of_mass_compute():
+    """  
+    Tests the computation of a center of mass using GeometryOps
+    """
+    points = np.array([[1.0, 0.0, 0.0],
+                       [0.0, 1.0, 0.0],
+                       [0.0, 0.0, 1.0]])
+    masses = np.array([1.0, 2.0, 3.0])
+    com = GeometryOps.center_of_mass(points, masses)
+    expected_com = np.array([1/6, 1/3, 1/2])
+    assert np.allclose(com, expected_com)
+
+def test_inertia_tensor_compute():
+    """  
+    Tests the computation of the moment of inertia tensor using GeometryOp
+    """
+    points = np.array([[1.0, 0.0, 0.0],
+                       [0.0, 1.0, 0.0],
+                       [0.0, 0.0, 1.0]])
+    masses = np.array([1.0, 1.0, 1.0])
+    inertia_tensor = GeometryOps.inertia_tensor(points, masses)
+    # The inertia tensor would be a matrix with 2 on the diagonal
+    expected_inertia_tensor = np.array([[2.0, 0.0, 0.0],
+                                        [0.0, 2.0, 0.0],
+                                        [0.0, 0.0, 2.0]])
+    assert np.allclose(inertia_tensor, expected_inertia_tensor)
+
+def test_kabsch_rotation():
+    """ 
+    Tests the Kabsch algorithm for finding the optimal rotation between point P,Q
+    """ 
+    P = np.array([[1.0, 0.0, 0.0],
+                  [0.0, 1.0, 0.0],
+                  [0.0, 0.0, 1.0]])
+    Q = np.array([[0.0, 1.0, 0.0],
+                  [-1.0, 0.0, 0.0],
+                  [0.0, 0.0, 1.0]])  # P rotated by 90 degrees around z-axis
+    R = GeometryOps.kabsch_rotation(P, Q)
+    # Kabsch returns P @ R = Q 
+    P_rotated = P @ R
+    assert np.allclose(P_rotated, Q)
+
+
 
 

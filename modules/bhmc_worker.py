@@ -13,7 +13,7 @@ import tracemalloc
 from molecule_class import Molecule
 from operators import NonLocalOperators, LocalOperators
 from box import SimulationBox
-from bhmc_energy import EnergyEvaluator
+from cluster_generation.modules.archive2.bhmc_energy import EnergyEvaluator
 from logger import Logger
 
 # Constants

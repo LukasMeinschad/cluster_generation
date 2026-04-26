@@ -1,15 +1,11 @@
-"""
-Initialization module for BHMC cluster sampling.
+"""Initialization of molecular clusters for BHMC sampling.
 
-This module handles:
-1. Loading molecular structures from XYZ files
-2. Fragmenting into submolecules based on connectivity
-3. Optimizing individual submolecules
-4. Creating simulation boxes
-5. Generating initial random configurations
-
-
-TODO: Check the grid based method and make a final comparison for the thesis
+The module provides a complete initialization workflow:
+1. Load structures from XYZ files
+2. Fragment into connected submolecules
+3. Optionally optimize each submolecule
+4. Build a simulation box
+5. Generate and rank candidate initial configurations
 """
 
 import numpy as np
@@ -18,97 +14,51 @@ from dataclasses import dataclass
 import matplotlib.pyplot as plt
 
 
-from molecule_class import Molecule
-from box import SimulationBox
-from psi4_interface import Psi4Calculator, Config
+from modules.molecule_class import Molecule
+from modules.box import SimulationBox
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 
 # Import sobol sequence generator
 from scipy.stats import qmc
 
-# Time module
-import time
-
 # Logger import
-from logger import Logger
+from modules.logger import Logger
 
 # Import geometry ops for rmsd
-from geometry import GeometryOps
+from modules.geometry import GeometryOps
+
+# Import energy evaluator for prescreening
+from modules.calculator import EnergyEvaluator
+
+# Import the Featurizer
+from modules.featurizer import Featurizer
+
 
 
 @dataclass
 class InitializationConfig:
-    """Configuration for cluster initialization."""
-    method: str = "hf"              # QM method for optimization
-    basis: str = "sto-3g"           # Basis set for optimization
+    """Configuration options for cluster initialization and prescreening."""
+    
+    # Configuration of energy evaluation for prescreening
+    backend: str = "psi4" # QM based energy evaluation
+    qm_method: str = "hf"              # QM method for optimization
+    qm_basis: str = "sto-3g"           # Basis set for optimization
+    xtb_method: str = "GFN2-xTB"       # Method for xTB energy evaluation (if applicable)
+    gpaw_mode: str = "lcao"
+    gpaw_basis: str = "dzp"
+    gpaw_xc: str = "B3LYP"
+
     box_type: str = "sphere"        # "sphere" or "cube"
     box_scale_factor: float = 2.5   # Scaling factor for box size
     min_distance: float = 2.0       # Minimum distance between submolecules (Angstrom)
     max_placement_attempts: int = 1000  # Max attempts to place molecules
-    optimize_submolecules: bool = True  # Whether to optimize submolecules
+    optimize_submolecules: bool = True  # Whether to optimize submolecules 
+    optimize_parallel: bool = True  # Wether ot optimize the submolecules in parallel
     verbose: bool = True
 
-@dataclass
-class InitEnergyConfig:
-    backend: str = "xtb" # TODO Psi4 implementation
-    method: str = "hf"
-    basis: str = "sto-3g"
-    xtb_method: str = "GFN2-xTB"
-    verbose: bool = False 
 
-class InitEnergyEvaluator:
-    """ 
-    Energy evaluator for initialization pre-screening
-    """
-    EV_TO_HARTREE = 0.0367493  # 1 eV in Hartree
 
-    def __init__(self, config: InitEnergyConfig):
-        """ 
-        Initialize the energy evaluator with the specified configuration
-        """
-        self.config = config
-        self.backend = config.backend.lower()
-        self._calculator = None
-        if self.backend in {"xtb", "ase_emt"}:
-            self._init_ase_backend()
-    
-    def _log(self, msg: str) -> None:
-        if self.config.verbose:
-            print(msg)
-        
-    def _init_ase_backend(self) -> None:
-        try:
-            from ase.calculators.emt import EMT
-            if self.backend == "xtb":
-                from xtb.ase.calculator import XTB
-                self._calculator = XTB(method=self.config.xtb_method)
-            else:
-                self._calculator = EMT()
-        except ImportError as e:
-            raise RuntimeError(
-                f"Failed to initialize backend {self.backend}: {e}. "
-            )
-    def evaluate_energy(self, molecule: Molecule) -> Optional[float]:
-        """  
-        Returns the energy 
-        """
-        try: 
-            if self.backend in {"xtb", "ase_emt"}:
-                from ase import Atoms
-                symbols = molecule.get_symbols()
-                if symbols is None:
-                    return None
-                atoms = Atoms(symbols=symbols, positions=molecule.coordinates)
-                atoms.calc = self._calculator
-                energy_ev = atoms.get_potential_energy()
-                return float(energy_ev) * self.EV_TO_HARTREE
-            
-            self._log(f"Unknown backend for energy evaluation: {self.backend}")
-            return None
-        except Exception as e:
-            self._log(f"Energy evaluation failed for backend {self.backend}: {e}")
-            return None
         
     def rank_candidates(
             self,
@@ -118,12 +68,24 @@ class InitEnergyEvaluator:
         """  
         Evaluate all candidates and return lowest n_keep as (energy, molecule)
         """
+        evaluator = EnergyEvaluator(
+            backend=self.backend,
+            qm_method=self.qm_method,
+            qm_basis=self.qm_basis,
+            xtb_method=self.xtb_method,
+            gpaw_mode=self.gpaw_mode,
+            gpaw_basis=self.gpaw_basis,
+            gpaw_xc=self.gpaw_xc,
+        )
+
         scored: List[Tuple[Optional[float], Molecule]] = []
         for mol in molecules:
-            e = self.evaluate_energy(mol)
-            if e is not None:
+            try:
+                e = evaluator.evaluate(mol)
                 scored.append((e, mol))
-            
+            except Exception:
+                continue
+
         # Sort according to lowest energy and return top n_keep
         scored.sort(key=lambda x: x[0])
         return scored[:n_keep]
@@ -135,22 +97,23 @@ class ClusterInitializer:
     """Handles initialization of molecular clusters for BHMC sampling."""
     
     def __init__(self, config: InitializationConfig, logger: Optional[Logger] = None):
-        """Initialize the cluster initializer.
-        
-        Args:
-            config: Initialization configuration
-        """
+        """Create a cluster initializer with configuration and optional logger."""
         self.config = config
-        self.logger = logger 
-        self.calculator = None
-        if self.config.optimize_submolecules:
-            qm_config = Config(method=config.method, basis=config.basis)
-            self.calculator = Psi4Calculator(config=qm_config, verbose=config.verbose)
+        self.logger = logger
+
+        # Set the energy evaluator for prescreening 
+        self.energy_evaluator = EnergyEvaluator(
+            backend=self.config.backend,
+            qm_method=self.config.qm_method,
+            qm_basis=self.config.qm_basis,
+            xtb_method=self.config.xtb_method,
+            gpaw_mode=self.config.gpaw_mode,
+            gpaw_basis=self.config.gpaw_basis,
+            gpaw_xc=self.config.gpaw_xc   
+        )
 
     def _log(self, msg: str, level: str = "info") -> None:
-        """   
-        Helper Method to log messages
-        """
+        """Log a message to stdout and to the configured logger."""
         if self.config.verbose:
             print(msg)
         if self.logger:
@@ -159,10 +122,7 @@ class ClusterInitializer:
     # Helper Method for RMSD Computation
     @staticmethod
     def _calculate_rmsd(coords1: np.ndarray, coords2: np.ndarray) -> float:
-        """  
-        Calculates the RMSD with optimal atom correspondence using the Hungarian algorithm.
-        For this Geometry Ops is utilized
-        """
+        """Return RMSD after optimal atom correspondence matching."""
         coords_2_opt = GeometryOps.find_optimal_correspondence(coords1, coords2)
         diff = coords1 - coords_2_opt
         return float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
@@ -181,39 +141,31 @@ class ClusterInitializer:
         n_r: Optional[int] = None,
         energy_backend: str= "xtb",
         energy_xtb_method: str = "GFN2-xTB",
-    ) -> Tuple[Molecule, List[List[int]], SimulationBox]:
+    ) -> Tuple[List[Molecule], List[List[int]], SimulationBox]:
         """
-        Complete initialization workflow from XYZ file.
-        First fragments the molecule, then optimizes the submolecules using psi4.
-        Then we create a simulation box and generate n_configurations random initial configurations
-        Next we evaluate the energy for each configuration using the specified energy backend
-        and return the lowest n_workers configurations as the initial molecules for the BHMC sampling         
+        Run the full initialization workflow from an XYZ structure.
 
         Args:
             xyz_file: Path to XYZ file containing molecular structure
-            n_workers: Number of configurations to return (e.g, one per BHMC worker)
-            n_configurations: Number of random configurations to generate for pre-screening
-            placing_method: Placement method for initial coordinates ("random" or "sobol", "grid")
-
-
-        For the grid based placement method, the following additional parameters can be used:
+            n_workers: Number of configurations to return (e.g. one per BHMC worker)
+            n_configurations: Number of candidates generated for prescreening
+            placing_method: Placement method ("random", "sobol", or "grid")
             grid_spacing: Method to space points in the grid ("linear", "equal_volume_grid", or "sobol")
-            n_theta: Number of points in theta direction (for spherical)
-            n_phi: Number of points in phi direction (for spherical)
-
-
-                energy_backend: Backend to use for energy evaluation ("xtb", "ase_emt", or "psi4")
-                    energy_xtb_method: Method to use for xTB energy evaluation (e.g., "GFN2-xTB")
+            n_theta: Number of angular theta grid points (grid mode)
+            n_phi: Number of angular phi grid points (grid mode)
+            n_r: Number of radial grid points (grid mode)
+            energy_backend: Backend for prescreening energies ("xtb", "ase_emt", or "psi4")
+            energy_xtb_method: xTB method if the backend uses xTB
 
         Returns:
-            Tuple of (initial_molecules, submolecule_indices, simulation_box)
+            Tuple of (selected_molecules, submolecule_indices, simulation_box)
         """
         if self.logger:
             self.logger.header("Cluster Initialization")
             msg = (
                 f"Configuration:\n"
-                f"  QM Method (Optimization): {self.config.method}\n"
-                f"  Basis Set (Optimization): {self.config.basis}\n"
+                f"  QM Method (Optimization): {self.config.qm_method}\n"
+                f"  Basis Set (Optimization): {self.config.qm_basis}\n"
                 f"  Simulation Box Type: {self.config.box_type}\n"
                 f"  Simulation Box Scale Factor: {self.config.box_scale_factor}\n"
                 f"  Minimum Distance Between Submolecules: {self.config.min_distance} Angstrom\n"
@@ -253,30 +205,43 @@ class ClusterInitializer:
             n_r = n_r,
         )
 
-        # Step 5b: Energy prescreening and ranking
-        energy_cfg = InitEnergyConfig(
+        # Step 5b: Energy prescreening and ranking via the shared calculator wrapper
+        self.energy_evaluator = EnergyEvaluator(
             backend=energy_backend,
-            method=self.config.method,
-            basis=self.config.basis,
+            qm_method=self.config.qm_method,
+            qm_basis=self.config.qm_basis,
             xtb_method=energy_xtb_method,
-            verbose=self.config.verbose
+            gpaw_mode=self.config.gpaw_mode,
+            gpaw_basis=self.config.gpaw_basis,
+            gpaw_xc=self.config.gpaw_xc,
         )
-        evaluator = InitEnergyEvaluator(config=energy_cfg)
+
         scored: List[Tuple[float, Molecule]] = []
         failed = 0
         for mol in initial_molecules:
-            e = evaluator.evaluate_energy(mol)
-            if e is not None:
+            try:
+                e = self.energy_evaluator.evaluate(mol)
                 scored.append((e, mol))
-            else:
+            except Exception as exc:
+                self._log(f"Energy evaluation failed for one candidate: {exc}", level="error")
                 failed += 1
         self._log(f"\nEnergy evaluation complete: {len(scored)} successful, {failed} failed")
         
+        #DELETE!
+        # Save the molecules as a numpy object for later analysis
+        mols = [np.array([mol for _, mol in scored], dtype=object)]
+        np.save("initial_molecules.npy", mols)
+
+
         if len(scored) == 0:
             raise RuntimeError("All energy evaluations failed. Cannot select initial configurations.")
         
-        # Select lowest energy_reference
-        ref_energy, ref_mol = scored[0]
+        scored.sort(key=lambda x: x[0])
+
+        # Initialize Machine-Learning Featurizer here
+
+        # Select the lowest-energy reference for RMSD analysis
+        ref_mol = scored[0][1]
     
         rmsd_vs_ref = []
         energies = []
@@ -293,10 +258,11 @@ class ClusterInitializer:
         plt.title("Initialization Prescreening: Energy vs RMSD")
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
+        import os
+        os.makedirs("figures", exist_ok=True)
         plt.savefig("figures/initialization_prescreening.png")
         plt.close()
-        
-        scored.sort(key=lambda x: x[0])
+
         selected_molecules = [mol for _, mol in scored[:n_workers]]
         
         
@@ -324,7 +290,7 @@ class ClusterInitializer:
             f"Submolecules: {len(submolecules)}",
             f"Simulation box type: {simulation_box.box_type}",
             f"Candidates generated: {n_configurations}, Valid: {len(scored)}, Failed: {failed}",
-            f"Sekected for workers: {n_workers}, Energy range: {e_min:.6f} to {e_max:.6f} Hartree",
+            f"Selected for workers: {n_workers}, Energy range: {e_min:.6f} to {e_max:.6f} Hartree",
         ]
         if simulation_box.box_type == "sphere":
             summary_lines.append(f"Box radius: {simulation_box.radius:.2f} Angstrom")
@@ -332,12 +298,12 @@ class ClusterInitializer:
         else:
             summary_lines.append(f"Box dimensions: {simulation_box.box_dimensions}")
             summary_lines.append(f"Box volume: {simulation_box.get_volume():.2f} Angstrom^3")
-        
+
         summary = "\n".join(summary_lines)
         self._log(summary)
-    
-        return selected_molecules, submol_indices, simulation_box 
-    
+
+        return selected_molecules, submol_indices, simulation_box
+
     def _generate_random_configurations(
             self,
             submolecules: List[Molecule],
@@ -349,55 +315,48 @@ class ClusterInitializer:
             n_phi: Optional[int] = None,
             n_r: Optional[int] = None,
         ) -> List[Molecule]:
-        """   
-        Helper function to generate multiple random initial configurations inside the simulation box
+        """Generate multiple initial configurations inside the simulation box.
 
         Args:
-            submolecules: List of submolecules to place
-            simulation_box: Simulation box to place molecules in
-            n_configurations: Number of random configurations to generate
-            placing_method: Placement method for initial coordinates ("random" or "sobol", "grid")
-        
-        If one chooses the grid based placing method, the following additional parameters can be used
-            grid_spacing: Method to space points in the grid ("linear", "equal_volume_grid", or "sobol")
-            n_theta: Number of points in theta direction (for spherical)
-            n_phi: Number of points in phi direction (for spherical)
-            n_r: Number of points in radial direction (for spherical)
+            submolecules: List of submolecules to place.
+            simulation_box: Simulation box used for placement.
+            n_configurations: Number of candidate configurations to generate.
+            placing_method: Placement method ("random", "sobol", or "grid").
+            grid_spacing: Grid spacing strategy for grid mode.
+            n_theta: Number of angular theta grid points (grid mode).
+            n_phi: Number of angular phi grid points (grid mode).
+            n_r: Number of radial grid points (grid mode).
+
+        Returns:
+            List of generated candidate molecules.
         """
         if n_configurations <= 0:
             raise ValueError("n_configurations must be > 0")
 
-        # Check and parse method
         method = (placing_method or "random").lower().strip()
         if method not in {"random", "sobol", "grid"}:
             raise ValueError(f"Invalid placing method: {placing_method}. Choose from 'random', 'sobol', or 'grid'.")
-        
-        # Check and parse spacing
-        spacing = (grid_spacing or "sobol").lower().strip()
 
+        spacing = (grid_spacing or "sobol").lower().strip()
 
         if method == "grid":
             if spacing not in {"linear", "equal_volume_grid", "sobol"}:
                 raise ValueError(f"Invalid grid spacing method: {grid_spacing}. Choose from 'linear', 'equal_volume_grid', or 'sobol'.")
-            
-            # Set default for the grid parameters based on the number of configurations
-            # Partition the configurations evenly across the grid dimensions
+
             if n_theta is None or n_phi is None or n_r is None:
                 n_submols = len(submolecules)
                 n_per_submol = max(1, n_configurations // n_submols)
                 n_theta = n_phi = n_r = int(np.ceil(n_per_submol ** (1/3)))
                 self._log(f"Grid spacing selected. Setting n_theta = n_phi = n_r = {n_theta} to generate at least {n_configurations} configurations.")
             self._log(f"Generating grid-based configurations with spacing: {spacing}, n_theta: {n_theta}, n_phi: {n_phi}, n_r: {n_r}")
-        
         else:
-            # Not needed outside of the grid
             spacing = n_theta = n_phi = n_r = None
-         
+
         configurations: List[Molecule] = []
         for _ in range(n_configurations):
             mol = self._generate_configuration(
-                submolecules = submolecules,
-                simulation_box = simulation_box,
+                submolecules=submolecules,
+                simulation_box=simulation_box,
                 placing_method=method,
                 grid_spacing=spacing,
                 n_theta=n_theta,
@@ -440,10 +399,27 @@ class ClusterInitializer:
         return submolecules
     
     def _optimize_submolecules(self, submolecules: List[Molecule]) -> List[Molecule]:
-        """Optimize each submolecule individually (parallelized)."""
-        self._log(f"\n[3/5] Optimizing Submolecules (parallelized)")
+        """Optimize all submolecules, optionally in parallel."""
+        # If optimize parallel is enabled and we have more than 1 submol -> optimize in parallel
+        if self.config.optimize_parallel and len(submolecules) > 1:
+            return self._optimize_submolecules_parallel(submolecules)
+        
+        optimized = []
+        for i, submol in enumerate(submolecules):
+            self._log(f"  Optimizing submolecule {i+1} with {len(submol.coordinates)} atoms...")
+            try:
+                optimized_submol = self.energy_evaluator.optimize_geometry(submol, optimizer="BFGS", write_trajectory=False)
+                optimized.append(optimized_submol)
+                self._log(f"   Optimization successful")
+            except Exception as exc:
+                self._log(f"   Optimization failed: {exc}", level="error")
+                optimized.append(submol)  # Fall back to original if optimization fails
+        return optimized
+        
 
-    
+    def _optimize_submolecules_parallel(self, submolecules: List[Molecule]) -> List[Molecule]:
+        """Optimize each submolecule in parallel using a process pool."""
+
         n_workers = min(len(submolecules), multiprocessing.cpu_count())
         self._log(f"Workers: {n_workers}")
 
@@ -458,16 +434,21 @@ class ClusterInitializer:
             }
             for i, submol in enumerate(submolecules)
         ]
-    
-        with ProcessPoolExecutor(max_workers=n_workers) as executor:
-            # Submit jobs with serializable data
+        ctx = multiprocessing.get_context("spawn")  # Use spawn to avoid issues with fork in some environments
+        with ProcessPoolExecutor(max_workers=n_workers, mp_context=ctx) as executor:
             future_to_idx = {
                 executor.submit(
                     self._optimize_single_static,
-                    data['atom_labels'],
-                    data['coordinates'],
-                    self.config.method,
-                    self.config.basis
+                    data['atom_labels'].tolist(),
+                    np.asarray(data['coordinates'], dtype=np.float64),
+                    self.config.backend,
+                    self.config.qm_method,
+                    self.config.qm_basis,
+                    self.config.xtb_method,
+                    self.config.gpaw_mode,
+                    self.config.gpaw_basis,
+                    self.config.gpaw_xc,
+                    data['index']
                 ): data['index']
                 for data in submol_data
             }
@@ -490,39 +471,75 @@ class ClusterInitializer:
     def _optimize_single_static(
         atom_labels: List[str],
         coordinates: np.ndarray,
+        backend: str,
         method: str,
-        basis: str
+        basis: str,
+        xtb_method: str,
+        gpaw_mode: str,
+        gpaw_basis: str,
+        gpaw_xc: str,
+        task_id: int
     ) -> Molecule:
-        """
-        Optimize a single submolecule (static method for parallel execution).
+        """Optimize one submolecule in an isolated worker process.
         
         Args:
             atom_labels: List of atom symbols
             coordinates: Atomic coordinates
+            backend: Backend for calculator wrapper
             method: QM method
             basis: Basis set
         
         Returns:
-            Optimized molecule or original if optimization fails
+            Optimized molecule.
         """
-        from psi4_interface import Psi4Calculator, Config
-        from molecule_class import Molecule
-        
-        # Create molecule from data
-        submol = Molecule.from_labels_and_coords(
-            atom_labels=atom_labels,
-            coordinates=coordinates
-        )
-        
-        # Create calculator inside worker process
-        qm_config = Config(method=method, basis=basis)
-        calc = Psi4Calculator(config=qm_config, verbose=False)
-        
+        import os
+        import traceback 
+        import tempfile
+        from pathlib import Path 
+
+        from modules.molecule_class import Molecule
+        from modules.calculator import EnergyEvaluator
+
+        # 1 Thread per worker to avoid oversubscription
+        os.environ["OMP_NUM_THREADS"] = "1"
+        os.environ["MKL_NUM_THREADS"] = "1"
+        os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
+        # Unique scratch per task
+        base = Path.cwd() / ".psi4_scratch"
+        base.mkdir(parents=True, exist_ok=True)
+        task_scratch = Path(tempfile.mkdtemp(prefix=f"task_{task_id}_", dir=str(base)))
+        os.environ["PSI_SCRATCH"] = str(task_scratch)
+
         try:
-            result = calc.optimize(submol)
-            return result.molecule if result.success else submol
-        except Exception:
-            return submol
+            labels = list(atom_labels)
+            coords = np.asarray(coordinates, dtype=np.float64).copy()
+
+            submol = Molecule.from_labels_and_coords(labels, coords)
+            calc = EnergyEvaluator(
+                backend=backend,
+                qm_method=method,
+                qm_basis=basis,
+                xtb_method=xtb_method,
+                gpaw_mode=gpaw_mode,
+                gpaw_basis=gpaw_basis,
+                gpaw_xc=gpaw_xc,
+            )
+            optimized_submol = calc.optimize_geometry(submol, optimizer="BFGS", write_trajectory=False)
+            return optimized_submol
+        except Exception as exc:
+            traceback.print_exc()
+            raise RuntimeError(f"Optimization failed for task {task_id}: {exc}")
+        finally:
+            # Clean up scratch directory
+            if task_scratch.exists():
+                for item in task_scratch.iterdir():
+                    if item.is_file():
+                        item.unlink()
+                    elif item.is_dir():
+                        import shutil
+                        shutil.rmtree(item)
+                task_scratch.rmdir()
         
     
     
@@ -640,7 +657,7 @@ class ClusterInitializer:
             centered_coords = submol.coordinates - submol_com
             
             placed = False
-            for attempt in range(self.config.max_placement_attempts):
+            for _ in range(self.config.max_placement_attempts):
                 
                 if method == "random":
                     position = simulation_box.get_random_position(n_points=1)
@@ -729,7 +746,7 @@ class ClusterInitializer:
 
     @staticmethod
     def _random_rotation_matrix() -> np.ndarray:
-        """Generate a random rotation matrix using quaternions (vecotized)"""
+        """Generate a random 3D rotation matrix from a unit quaternion."""
         u = np.random.rand(3)
         q = np.array([
             np.sqrt(1 - u[0]) * np.sin(2 * np.pi * u[1]),
@@ -745,9 +762,7 @@ class ClusterInitializer:
         ])
     
     def _sobol_rotation_matrix(self, sobol_engine) -> np.ndarray:
-        """ 
-        Generate a quasi-random rotation matrix usign the sobol sequencse
-        """
+        """Generate a quasi-random 3D rotation matrix from Sobol samples."""
         u = sobol_engine.random(n=1)[0]
 
         # Shoemake's algorithm like above
@@ -766,20 +781,19 @@ class ClusterInitializer:
 
     @staticmethod
     def partition_sphere(center, radius, n):
-        """
-        Calculates angular partitons for a given sphere
+        """Split azimuth angle [0, 2*pi) into `n` equal partitions.
 
-        Each slice will cover an angle of delta_theta = 2 pi / n in longitude (theta), and the full range of latitude (phi) from 0 to pi.
+        Args:
+            center: Sphere center (unused, kept for interface compatibility).
+            radius: Sphere radius (unused, kept for interface compatibility).
+            n: Number of partitions.
 
-        Parameters:
-            center: Center of the sphere (3D coordinates)
-            radius: Radius of the sphere
-            n: Number of partitions (submolecules)
-        
-            Returns:
-               A list of tuples representing start and end longitude (theta)
+        Returns:
+            List of (theta_start, theta_end) tuples.
         """
-        cx, cy, cz = center
+        if n <= 0:
+            raise ValueError("n must be a positive integer")
+
         partitions = []
 
         # Calculate the angle step
@@ -792,18 +806,6 @@ class ClusterInitializer:
         return partitions            
 
     @staticmethod
-    def _spherical_to_cartesian(r: float, theta: float, phi: float, center: np.ndarray) -> np.ndarray:
-        """ 
-        Convert spherical coordinates to cartesian coordinates
-        theta: azimut in [0, 2pi)
-        phi : polar angle in [0, pi]
-        """
-        x = center[0] + r * np.sin(phi) * np.cos(theta)
-        y = center[1] + r * np.sin(phi) * np.sin(theta)
-        z = center[2] + r * np.cos(phi)
-        return np.array([x, y, z])
-    
-    @staticmethod
     def generate_partition_points(center,
                                   radius,
                                   n_partitions,
@@ -813,8 +815,7 @@ class ClusterInitializer:
                                   spacing: Optional[str] = "linear",
                                   sobol_scramble: bool = True,
                                   sobol_seed: Optional[int] = None):
-        """ 
-        Generates a grid of points for each partition of the sphere
+        """Generate candidate points for each partition of a spherical box.
 
         Args:
             center: Center of the sphere (3D coordinates)
@@ -824,7 +825,7 @@ class ClusterInitializer:
             n_phi: Number of points in phi direction
             n_r: Number of points in radial direction
 
-        spacing methods:
+        Spacing methods:
             - "linear": using a linear grid in (r, phi, theta)
             - "equal_volume_grid" a deterministic grid closer to uniform 3D density
             - "sobol" using quasi-random sampling uniformly in volume per partition        
@@ -917,11 +918,7 @@ def test_initializer(xyz_file: str,
                      placing_method: str = "random",
                      n_configurations: int = 1,
                      save_output: bool = True):
-    """   
-    Test the ClusterInitializer with a given XYZ file
-
-    This function performs a complete initialization workflow and
-    outputs some diagnostics
+    """Run an end-to-end initialization sanity check and print diagnostics.
     
     Args:
         xyz_file: Path to XYZ file
@@ -931,8 +928,9 @@ def test_initializer(xyz_file: str,
         box_type: Type of simulation box ("sphere" or "cube")
         box_scale: Scaling factor for box size
         min_distance: Minimum distance between submolecules (Angstrom)
-        placing_method: Placement method ("random" or "sobol")
-        save_output: Whether to save output files (initial configuration and representatives)
+        placing_method: Placement method ("random", "sobol", or "grid")
+        n_configurations: Number of candidate configurations to generate
+        save_output: Whether to write generated configurations to disk
     """
     print(f"\n{'='*80}")
     print(f"Testing ClusterInitializer with {xyz_file}")
@@ -942,8 +940,8 @@ def test_initializer(xyz_file: str,
     print(f"Placement method: {placing_method}")
 
     config = InitializationConfig(
-        method=method,
-        basis=basis,
+        qm_method=method,
+        qm_basis=basis,
         optimize_submolecules=optimize,
         box_type=box_type,
         box_scale_factor=box_scale,
@@ -1034,8 +1032,7 @@ def test_submolecule_partition_mapping(
         atol: float = 1e-10,
         verbose: bool = True
         ) -> bool:
-        """
-        Function that verifies that submolecule i is placed in the partition i of the sphere
+        """Verify that each submolecule COM is in its assigned sphere partition.
 
         Returns:
             True if the mapping is correct, False otherwise
@@ -1075,6 +1072,9 @@ def test_submolecule_partition_mapping(
                     ok = (theta >= start_angle - atol) and (theta <= end_angle + atol)
                 else:
                     ok = (theta >= start_angle - atol) and (theta < end_angle + atol)
+
+                if not ok:
+                    failures.append((cfg_idx, i, theta, start_angle, end_angle))
                 
         if verbose:
             if not failures:
@@ -1089,186 +1089,27 @@ if __name__ == "__main__":
     """  
     Run test when module is executed directly
     """
-    xyz_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/nh3_2.xyz"
-    #xyz_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_n2.xyz"
-    #xyz_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_2.xyz"
+    xyz_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/co2_h2o.xyz"
     
-    H2O_2_XYZ = """
-    6
-    Coordinates from ORCA-job h2o_2 E -152.102897751726
-      O           0.20131422818946     -0.13419863189991     -0.38118207664628
-      H           1.10826926774619      0.03054527004232     -0.16898516572928
-      H          -0.26386315635905     -0.06924940339370      0.43390806815981
-      O           3.06513444516272      0.52224610599392      0.05902763481169
-      H           3.25817767296947      1.29105665797100     -0.44996761253291
-      H           3.66908154229119     -0.14039999871364     -0.23001884806303    
-    """
 
 
-
-    method = "hf"
-    basis = "cc-pvdz"
-    optimize = True
-    box_type = "sphere"
-    box_scale = 2.5
-    min_distance = 2.0
-    save_output = True
-    n_configurations = 28
-
-    # Numerical test sample 2^10 points in [0,1] x [0,1] using Sobol sequence
-    sampler = qmc.Sobol(d=2, scramble=True)
-    sample = sampler.random(n=2**10)
-    # Sample 1000 random points in [0,1] x [0,1] using uniform distribution
-    uniform_sample = np.random.rand(2**10, 2)
-    plt.figure(figsize=(12, 6))
-    plt.subplot(1, 2, 1)
-    plt.scatter(sample[:, 0], sample[:, 1], s=5, color='blue')
-    plt.title('Sobol Sequence Sample (1000 points)')
-    plt.subplot(1, 2, 2)
-    plt.scatter(uniform_sample[:, 0], uniform_sample[:, 1], s=5, color='red')
-    plt.title('Uniform Random Sample (1000 points)')
-    plt.tight_layout()
-    plt.savefig("figures/sobol_vs_uniform.png") 
-
-    # Try the Energy Evaluator
-    energy_config = InitEnergyConfig(
+    init_config = InitializationConfig(
         backend="xtb",
-        method="GFN2-xTB",
-        verbose=True
-    )
-    energy_evaluator = InitEnergyEvaluator(config=energy_config)
-    # Create a simple molecule for testing
-    molecule = Molecule.from_xyz(H2O_2_XYZ)
-    energy = energy_evaluator.evaluate_energy(molecule) 
-    print(f"\nEnergy evaluation test:")
-    print(f"  Evaluated energy: {energy:.6f} Hartree")
-
-
-    # Test the sphere partition function and create a plot
-    center_point = np.array([0.0, 0.0, 0.0])
-    radius = 5.0
-    n_submolecules = 4
-    partitions = ClusterInitializer.partition_sphere(center_point, radius, n_submolecules)
-    print(f"\nSphere partitioning test:")
-    for i, (start, end) in enumerate(partitions):
-        print(f"  Submolecule {i+1}: Start angle (theta) = {start:.2f} rad, End angle (theta) = {end:.2f} rad")
-    
-    plt.figure(figsize=(6, 6))
-    theta = np.linspace(0, 2*np.pi, 100)
-    for i, (start, end) in enumerate(partitions):
-        plt.fill_between(theta, 0, radius, where=((theta >= start) & (theta < end)), alpha=0.5, label=f'Submolecule {i+1}')
-    plt.title('Sphere Partitioning for Submolecules')
-    plt.xlabel('Theta (radians)')
-    plt.ylabel('Radius (Angstrom)')
-    plt.legend()
-    plt.savefig("figures/sphere_partitioning.png")
-
-
-    # Test three different spacing methods for partition point generation^
-    n_theta = 40
-    n_phi = 20
-    n_r = 20
-    
-    times = []
-    for spacing_method in ["linear", "equal_volume_grid", "sobol"]:
-        
-        times = []
-        start_time = time.time()
-        points = ClusterInitializer.generate_partition_points(
-            center=center_point,
-            radius=radius,
-            n_partitions=n_submolecules,
-            n_theta=n_theta,
-            n_phi=n_phi,
-            n_r=n_r,
-            spacing=spacing_method,
-            sobol_scramble=True,
-            sobol_seed=42
-        )
-        end_time = time.time()
-        elapsed = end_time - start_time
-        times.append(elapsed)
-        total_points = sum(len(p) for p in points)
-        print(f"\nPartition point generation test with spacing method '{spacing_method}':")
-        print(f"  Total points generated: {total_points}")
-        # Make 3D plot of sampled points for the first partition
-        fig = plt.figure(figsize=(8, 8))
-        ax = fig.add_subplot(111, projection='3d')
-        for p_idx, partition_points in enumerate(points):
-            ax.scatter(partition_points[:, 0], partition_points[:, 1], partition_points[:, 2], s=20, alpha=0.6, label=f'Partition {p_idx+1}')
-        ax.set_title(f'Partition Points with {spacing_method.capitalize()} Spacing')
-        ax.set_xlabel('X (Angstrom)')
-        ax.set_ylabel('Y (Angstrom)')
-        ax.set_zlabel('Z (Angstrom)')
-        ax.legend()
-        plt.savefig(f"figures/partition_points_{spacing_method}.png")
-
-    # Plot timing results for partition point generation
-    plt.figure(figsize=(6, 4))
-    plt.bar(["Linear", "Equal Volume Grid", "Sobol"], times, color=['blue', 'orange', 'green'])
-    plt.ylabel('Time (seconds)')
-    plt.title('Timing for Partition Point Generation')
-    plt.savefig("figures/partition_point_generation_timing.png")
-    
-
-    print("\n" + "="*80)
-    print("Grid Placement Test for H2O-Dimer")
-
-    h2o_dimer_xyz = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_2.xyz"
-    
-    grid_config = InitializationConfig(
-        method="hf",
-        basis="cc-pvdz",
+        qm_method="hf",
+        qm_basis="cc-pvdz",
         optimize_submolecules=True,
+        optimize_parallel=True,
         box_type="sphere",
         box_scale_factor=2.5,
         min_distance=2.0,
-        verbose=True
+        verbose=True,
+        max_placement_attempts=1000
+    ) 
+    initializer = ClusterInitializer(config=init_config)
+    initial_molecules, submol_indices, simulation_box = initializer.initialize_from_xyz(
+        xyz_file=xyz_file,
+        n_configurations=5000,
+        placing_method="sobol",
     )
-    grid_initializer = ClusterInitializer(config=grid_config)
-
-    grid_initial_molecules, grid_submol_indices, grid_simulation_box = grid_initializer.initialize_from_xyz(
-        xyz_file=h2o_dimer_xyz,
-        n_workers=10,
-        n_configurations=50,
-        placing_method="grid",
-        grid_spacing="sobol",
-        n_theta=8,
-        n_phi=8,
-        n_r=6,
-        energy_backend="xtb",
-        energy_xtb_method="GFN2-xTB"
-    )
-
-    print(f"\nGrid placement test completed. Generated {len(grid_initial_molecules)} configurations with grid-based placement and Sobol spacing.")
-    print(f"Number of submolecules: {len(grid_submol_indices)}")
-    print(f"Simulation box type: {grid_simulation_box.box_type}, Volume: {grid_simulation_box.get_volume():.2f} Angstrom^3")
-
-    # Test partition mapping
-    ok_partition_mapping = test_submolecule_partition_mapping(
-        initial_molecules=grid_initial_molecules,
-        submol_indices=grid_submol_indices,
-        simulation_box=grid_simulation_box,
-        atol=1e-8,
-        verbose=True
-    )
-    print(f"\nSubmolecule partition mapping test result: {'Passed' if ok_partition_mapping else 'Failed'}") 
-
-
-
-
-
-
-#    test_initializer(
-#        xyz_file=xyz_file,
-#        method=method,
-#        basis=basis,
-#        optimize=optimize,
-#        box_type=box_type,
-#        box_scale=box_scale,
-#        min_distance=min_distance,
-#        save_output=save_output,
-#        n_configurations=n_configurations
-#    )
-
+    
 

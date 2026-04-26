@@ -1,15 +1,26 @@
-import numpy as np
-from typing import Tuple, List, Optional, Dict
-from dataclasses import dataclass
-from mendeleev.fetch import fetch_table
-import networkx as nx
-from string import digits
-import time 
-import matplotlib.pyplot as plt
-from numba import njit, prange
-# Dataclass are used for simpler data structures
+"""Core molecule data structures and geometry/bond analysis utilities.
 
-from geometry import GeometryOps
+This module contains the main `Molecule` and `SubMolecule` classes that are used
+throughout cluster generation and analysis workflows.
+"""
+
+import numpy as np
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+import time
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import networkx as nx
+from numba import njit, prange
+from mendeleev.fetch import fetch_table
+
+from modules.geometry import GeometryOps
+
+
+# Block networkx backend warning
+import warnings
+warnings.filterwarnings("ignore", message="networkx backend defined more than once")
 
 @dataclass
 class Bond:
@@ -165,6 +176,7 @@ class HydrogenBondAnalyzer:
     
     def __init__(self, molecule: 'Molecule'):
         self.molecule = molecule
+        # Kept as a dedicated geometry utility anchor for future extensions.
         self.geometry = GeometryCalculator()
     
     def find_configurations(self) -> List[HBondConfiguration]:
@@ -184,7 +196,7 @@ class HydrogenBondAnalyzer:
         if n_atoms == 0:
             return []
         
-        # Label to index map for bond object conversion 
+        # Convert Bond atom labels back to integer indices once.
         label_to_idx = {label: i for i, label in enumerate(atom_labels)}
 
         # Element typing masks
@@ -198,7 +210,7 @@ class HydrogenBondAnalyzer:
         # donor_of_h[h] = donor index or -1
         donor_of_h = np.full(n_atoms, -1, dtype=np.int64)
 
-        # acceptors_by_h[ħ] = list of acceptor indices hydrogen-bonded to h
+        # acceptors_by_h[h] = list of acceptor indices hydrogen-bonded to h
         acceptors_by_h: List[List[int]] = [[] for _ in range(n_atoms)]
 
         # Build H -> donor from covalent bonds
@@ -221,7 +233,7 @@ class HydrogenBondAnalyzer:
             elif hydrogen_mask[j] and acceptor_mask[i]:
                 acceptors_by_h[j].append(i)
 
-        # Assembly D-H-A configurations
+        # Assemble D-H-A configurations.
         configurations: List[HBondConfiguration] = []
         hydrogen_indices = np.where(hydrogen_mask)[0]
         for h_idx in hydrogen_indices:
@@ -243,7 +255,7 @@ class HydrogenBondAnalyzer:
                 da_vec = acceptor_coords - donor_coords
                 da_dist = float(np.sqrt(np.dot(da_vec, da_vec)))
 
-                #D-H-A angle at H
+                # D-H-A angle at H
                 v1 = donor_coords - h_coords
                 v2 = acceptor_coords - h_coords
                 n1 = np.linalg.norm(v1)
@@ -276,7 +288,8 @@ class Molecule:
     _mass_cache: Dict[str, float] = {}
     _covalent_radius_cache: Dict[str, float] = {}
     _vdw_radius_cache: Dict[str, float] = {}
-    _atomic_numbers_cache: Dict[str, int] = {} 
+    _atomic_numbers_cache: Dict[str, int] = {}
+
     @classmethod
     def _init_caches(cls):
         """Build element lookup caches from periodic table (called once)."""
@@ -291,7 +304,7 @@ class Molecule:
             cls._vdw_radius_cache[sym] = (vdw_r / 100.0) if vdw_r and not np.isnan(vdw_r) else 0.0
             cls._atomic_numbers_cache[sym] = row["atomic_number"]
 
-
+    # Default donor/acceptor element families for hydrogen bond heuristics.
     hbond_donors = ["O", "N", "F"]
     hbond_acceptors = ["O", "N", "F"]
 
@@ -319,6 +332,7 @@ class Molecule:
         Initializes the Molecule instance with name additionally the logger can be provided 
         """
         self.name = name
+        self.logger = logger
         self.atom_labels = np.array([], dtype=object)
         self.atomic_numbers = np.array([], dtype=np.int64)
         self.coordinates = np.empty((0, 3), dtype=np.float64)
@@ -326,7 +340,7 @@ class Molecule:
         self.vdw_radii = np.array([], dtype=np.float64)
         self.covalent_radii = np.array([], dtype=np.float64)
 
-        # Initialize caches on first Molecule creation
+        # Initialize periodic-table lookup caches once per process.
         self._init_caches()
 
 
@@ -337,7 +351,7 @@ class Molecule:
         self._hydrogen_bonds: List[Bond] = []
         self._bonds_computed = False
 
-        # Optional for Molecular Volume
+        # Cached volume from Monte Carlo estimate (if computed).
         self.volume = None
     
     @staticmethod
@@ -356,6 +370,15 @@ class Molecule:
     def _remove_digits_from_label(label: str) -> str:
         """Remove digits from atom label to get element symbol"""
         return ''.join(filter(str.isalpha, label))
+
+    def _element_symbols_array(self) -> np.ndarray:
+        """Return per-atom element symbols stripped from enumerated labels."""
+        return np.array([self._remove_digits_from_label(label) for label in self.atom_labels], dtype=object)
+
+    def _ensure_bonds_computed(self) -> None:
+        """Ensure bond caches are available before bond-dependent operations."""
+        if not self._bonds_computed:
+            self.compute_bonds()
     
     @classmethod
     def from_xyz(cls, xyz_content: str, name: Optional[str] = None) -> 'Molecule':
@@ -375,7 +398,7 @@ class Molecule:
         return molecule
     
     @classmethod
-    def _parse_xyz_atoms(cls, lines: List[str]) -> Dict:
+    def _parse_xyz_atoms(cls, lines: List[str]) -> Dict[str, object]:
         """Parse atom data from XYZ lines"""
         atoms = []
         coords = []
@@ -472,7 +495,7 @@ class Molecule:
         self.atom_labels = np.concatenate([self.atom_labels, atom_labels])
         self.coordinates = np.vstack([self.coordinates, coordinates])
 
-        # Vectorized lookup
+        # Cache-backed per-element lookups for all incoming atoms.
         elements = np.array([self._remove_digits_from_label(label) for label in atom_labels], dtype=object)
         masses = np.array([self._get_atomic_mass(elem) for elem in elements])
         vdw_radii = np.array([self.get_vdw_radius(label) for label in atom_labels])
@@ -488,9 +511,8 @@ class Molecule:
 
     
     def _calculate_masses_batch(self, atom_labels: List[str]) -> np.ndarray:
-        """Calculate atomic masses for multiple atoms"""
-        remove_digits = str.maketrans("", "", digits)
-        elements = [label.translate(remove_digits) for label in atom_labels]
+        """Calculate atomic masses for multiple atoms."""
+        elements = [self._remove_digits_from_label(label) for label in atom_labels]
         return np.array([self._get_atomic_mass(elem) for elem in elements])
     
     def _get_atomic_mass(self, element_symbol: str) -> float:
@@ -549,7 +571,7 @@ class Molecule:
     # Bond analysis
     def compute_bonds(self) -> None:
         """Compute covalent and hydrogen bonds from a single numba pair scan."""
-        elements = np.array([self._remove_digits_from_label(label) for label in self.atom_labels], dtype=object)
+        elements = self._element_symbols_array()
         is_h = (elements == "H").astype(np.bool_)
         is_o = (elements == "O").astype(np.bool_)
 
@@ -562,6 +584,7 @@ class Molecule:
             BondClassifier.HYDROGEN_BOND_LOWER,
             BondClassifier.HYDROGEN_BOND_UPPER
         )
+        # Convert compact index arrays back into Bond objects for downstream APIs.
         self._covalent_bonds = [
             Bond(self.atom_labels[i], self.atom_labels[j], float(s))
             for i, j, s in zip(cov_i, cov_j, cov_s)
@@ -582,8 +605,7 @@ class Molecule:
     
     def get_bonds_for_atom(self, atom_label: str, bond_type: str = 'covalent') -> List[Bond]:
         """Get all bonds involving specific atom"""
-        if not self._bonds_computed:
-            self.compute_bonds()
+        self._ensure_bonds_computed()
         
         bonds = self._covalent_bonds if bond_type == 'covalent' else self._hydrogen_bonds
         return [bond for bond in bonds if bond.involves(atom_label)]
@@ -591,8 +613,7 @@ class Molecule:
     # Hydrogen bond analysis
     def find_hbond_configurations(self) -> List[HBondConfiguration]:
         """Find all hydrogen bond configurations"""
-        if not self._bonds_computed:
-            self.compute_bonds()
+        self._ensure_bonds_computed()
         
         analyzer = HydrogenBondAnalyzer(self)
         return analyzer.find_configurations()
@@ -612,8 +633,7 @@ class Molecule:
         """
         Get local environments around H-bond donors
         """
-        if not self._bonds_computed:
-            self.compute_bonds()
+        self._ensure_bonds_computed()
         
         donor_indices = [
             idx for idx, label in enumerate(self.atom_labels)
@@ -668,8 +688,7 @@ class Molecule:
     # Fragmentation
     def fragment_by_connectivity(self) -> List["SubMolecule"]:
         """Fragment molecule into connected components"""
-        if not self._bonds_computed:
-            self.compute_bonds()
+        self._ensure_bonds_computed()
         
         G = nx.Graph()
         G.add_nodes_from(self.atom_labels)
@@ -711,11 +730,11 @@ class Molecule:
         
         return self
 
-    def get_total_mass(self):
+    def get_total_mass(self) -> float:
         """   
         Returns the total mass of the molecule
         """
-        return np.sum(self.masses)
+        return float(np.sum(self.masses))
     
     def compute_volume_mc(self, n_points = 800000) -> float:
         """  
@@ -727,7 +746,7 @@ class Molecule:
         coords = self.coordinates 
         radii = self.vdw_radii 
 
-        # Find bounding box with min/max coordinates, ad padding by max VDW radius
+        # Build a padded axis-aligned bounding box around all VDW spheres.
         min_coords = np.min(coords - radii[:, np.newaxis], axis=0)
         max_coords = np.max(coords + radii[:, np.newaxis], axis=0)
         box_dims = max_coords - min_coords
@@ -775,6 +794,7 @@ class Molecule:
         return self.atom_labels.tolist() 
     
     def get_number_of_atoms(self) -> int:
+        """Return the number of atoms in the molecule."""
         return len(self.coordinates)
 
     def copy(self) -> 'Molecule':
@@ -829,17 +849,19 @@ class Molecule:
         """   
         Calculate an Average Covalent Radius for each atom based on its covalent radius
         """
-        # Count the different elemnt types
+        # Count occurrences per element type.
         element_counts = {}
         for label in self.atom_labels:
             element = self._remove_digits_from_label(label)
             element_counts[element] = element_counts.get(element, 0) + 1
-        # Calculate average covalent radius for each element
+
+        # Compute average radius contribution per element.
         average_radii = {}
         for element, count in element_counts.items():
             radius = self.get_covalent_radius(element)
             average_radii[element] = radius / count
-        # Map back to atom labels
+
+        # Expand back to atom-wise list in original atom order.
         average_radii_list = []
         for label in self.atom_labels:
             element = self._remove_digits_from_label(label)
@@ -879,6 +901,34 @@ class Molecule:
                     coloumb_mat[j, i] = value  # Symmetric matrix
         
         return coloumb_mat
+
+    def to_ase_atoms(self):
+        """ 
+        Converts the Molecule to an ASE Atoms object
+        """
+        try:
+            from ase import Atoms
+        except ImportError:
+            raise ImportError("ASE library is required for this function. Please install it via 'pip install ase'.")
+        symbols = self.get_symbols()
+        positions = self.coordinates.copy()
+
+        atoms = Atoms(symbols=symbols, positions=positions)
+
+        atoms.info['name'] = self.name
+        return atoms
+    
+    @classmethod
+    def from_ase_atoms(cls, atoms, name: Optional[str] = None) -> 'Molecule':
+        """   
+        Build a Molecule from an ASE Atoms object
+        """
+        symbol = atoms.get_chemical_symbols()
+        positions = atoms.get_positions()
+
+        molecule = cls(name=name or "Molecule from ASE")
+        molecule.add_atoms_batch(symbol, positions)
+        return molecule
 
 class SubMolecule(Molecule):
     """Represents a fragment of a larger molecule"""
@@ -940,7 +990,7 @@ class SubMolecule(Molecule):
         coords = self.coordinates 
         radii = self.vdw_radii
 
-        # Find bounding box with min/max coordinates, ad padding by max VDW radius
+        # Build a padded axis-aligned bounding box around all VDW spheres.
         min_coords = np.min(coords - radii[:, np.newaxis], axis=0)
         max_coords = np.max(coords + radii[:, np.newaxis], axis=0)
         box_dims = max_coords - min_coords
@@ -949,7 +999,7 @@ class SubMolecule(Molecule):
         # Generate random points 
         random_points = np.random.uniform(min_coords, max_coords, size=(n_points, 3))
 
-        # Vectorizes distance calculation
+        # Vectorized distance computation over all (atom, point) pairs.
         coords_expanded = coords[:, np.newaxis, :]  # Shape (n_atoms, 1, 3)
         points_expanded = random_points[np.newaxis, :, :]  # Shape (1, n_points, 3)
 
@@ -996,117 +1046,4 @@ class SubMolecule(Molecule):
         plt.tight_layout()
         plt.savefig("figures/mc_volume_convergence_speed.png")
 
-if __name__ == "__main__":
-    h2o_2_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_dimer.xyz"
-    with open(h2o_2_file, "r") as f:
-        h2o_2_xyz = f.read()
-    h2o_2 = Molecule.from_xyz(h2o_2_xyz, name="H2O Dimer")
-    # compute and print bonds
-    covalent_bonds, hydrogen_bonds = h2o_2.get_bonds()
-    print("Covalent Bonds:")
-    for bond in covalent_bonds:
-        print(f"  {bond.atom1} - {bond.atom2}")
-    print("Hydrogen Bonds:")
-    for bond in hydrogen_bonds:
-        print(f"  {bond.atom1} - {bond.atom2}") 
 
-    # Test the hydrogen bond configurations
-    time_start = time.time()
-    hbond_configs = h2o_2.find_hbond_configurations()
-    time_end = time.time()
-    print(f"Found {len(hbond_configs)} H-bond configurations in {time_end - time_start:.4f} seconds")
-    for config in hbond_configs:
-        print(f"Donor: {h2o_2.atom_labels[config.donor_idx]}, Hydrogen: {h2o_2.atom_labels[config.hydrogen_idx]}, Acceptor: {h2o_2.atom_labels[config.acceptor_idx]}, Angle: {config.angle:.2f}, Distance: {config.donor_acceptor_distance:.2f}")
-
-    # Test the compute bonds function for a bunch of alkanes
-    ethane_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/ethan.xyz"
-    propane_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/propan.xyz" 
-    butan_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/butan.xyz"
-    pentane_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/pentane.xyz"
-    hexan_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/hexan.xyz"
-    heptane_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/alkanes_speed_test/heptane.xyz"
-    with open(ethane_file, "r") as f:
-        ethane_xyz = f.read()
-    with open(propane_file, "r") as f:
-        propane_xyz = f.read()
-    with open(butan_file, "r") as f:
-        butan_xyz = f.read()
-    with open(pentane_file, "r") as f:
-        pentane_xyz = f.read()
-    with open(hexan_file, "r") as f:
-        hexan_xyz = f.read()
-    with open(heptane_file, "r") as f:
-        heptane_xyz = f.read()
-    ethane = Molecule.from_xyz(ethane_xyz, name="Ethane")
-    propane = Molecule.from_xyz(propane_xyz, name="Propane")
-    butan = Molecule.from_xyz(butan_xyz, name="Butane")
-    pentane = Molecule.from_xyz(pentane_xyz, name="Pentane")
-    hexan = Molecule.from_xyz(hexan_xyz, name="Hexane")
-    heptane = Molecule.from_xyz(heptane_xyz, name="Heptane")
-    times = []
-    # Compute bonds for each molecule and time it
-    for mol in [ethane, propane, butan, pentane, hexan, heptane]:
-        start_time = time.time()
-        mol.compute_bonds()
-        end_time = time.time()
-        elapsed = end_time - start_time
-        times.append(elapsed)
-        print(f"{mol.name}: {elapsed:.4f} seconds")
-
-    # compute and time coloumb matrix for each molecule
-    for mol in [ethane, propane, butan, pentane, hexan, heptane]:
-        start_time = time.time()
-        coloumb_mat = mol.coloumb_matrix()
-        end_time = time.time()
-        elapsed = end_time - start_time
-        print(f"{mol.name} Coloumb Matrix: {elapsed:.4f} seconds")
-        # plot the coloumb matrix as a heatmap
-        plt.figure(figsize=(6, 5))
-        plt.imshow(coloumb_mat, cmap='viridis')
-        plt.colorbar(label='Coulomb Matrix Value')
-        plt.title(f"Coulomb Matrix Heatmap for {mol.name}")
-        plt.xlabel("Atom Index")
-        plt.ylabel("Atom Index")
-        plt.savefig(f"figures/{mol.name}_coloumb_matrix.png")
-
-
-    # Plot times vs number of atoms
-    num_atoms = [len(mol.coordinates) for mol in [ethane, propane, butan, pentane, hexan, heptane]]
-    plt.figure(figsize=(8, 5))
-    plt.plot(num_atoms, times, marker='o')
-    plt.xlabel("Number of Atoms")
-    plt.ylabel("Bond Computation Time (s)")
-    plt.title("Bond Computation Time vs Number of Atoms")
-    plt.grid(True)
-    plt.savefig("figures/bond_computation_time.png")
-
-    # Speed testing of add_atoms_batch
-
-    # Generate random molecules with increasing number of atoms and time add_atoms_batch
-    atom_counts = [100, 500, 1000, 5000, 10000, 50000, 100000]
-    add_times = []
-    for count in atom_counts:
-        labels = [f"C{i+1}" for i in range(count)]
-        coords = np.random.rand(count, 3) * 10  # Random coordinates in a 10x10x10 box
-        mol = Molecule(name=f"Random_{count}_atoms")
-        start_time = time.time()
-        mol.add_atoms_batch(labels, coords)
-        end_time = time.time()
-        elapsed = end_time - start_time
-        add_times.append(elapsed)
-        print(f"Added {count} atoms in {elapsed:.4f} seconds")
-
-    # Test the hydrogen bond configuration speed
-    # Generate random molecules with 5, 10, 20, 50, 100, 200 atoms
-    hbond_times = []
-    for count in [5, 10, 20, 50, 100, 200]:
-        labels = [f"O{i+1}" for i in range(count)]  # Use O to maximize H-bond candidates
-        coords = np.random.rand(count, 3) * 10
-        mol = Molecule(name=f"Hbond_Test_{count}_atoms")
-        mol.add_atoms_batch(labels, coords)
-        start_time = time.time()
-        configs = mol.find_hbond_configurations()
-        end_time = time.time()
-        elapsed = end_time - start_time
-        hbond_times.append(elapsed)
-        print(f"Found {len(configs)} H-bond configurations in {elapsed:.4f} seconds for {count} atoms")

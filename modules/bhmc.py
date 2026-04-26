@@ -32,9 +32,9 @@ from molecule_class import Molecule
 from operators import NonLocalOperators, LocalOperators
 from cluster import BHMCAnalyzer
 from box import SimulationBox
-from psi4_interface import direct_energy
+from cluster_generation.modules.class_test_results.psi4_interface import direct_energy
 from bhmc_config import BHMCConfig
-from bhmc_energy import EnergyEvaluator
+from cluster_generation.modules.archive2.bhmc_energy import EnergyEvaluator
 from logger import Logger
 from bhmc_worker import _phase_a_worker, _phase_b_worker
 

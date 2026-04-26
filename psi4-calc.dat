@@ -1,0 +1,295 @@
+
+Scratch directory: /media/storage_6/lme/master_thesis/cluster_generation/.psi4_scratch/task_0_482c5hz4/
+gradient() will perform analytic gradient computation.
+   => Libint2 <=
+
+    Primary   basis highest AM E, G, H:  6, 6, 3
+    Auxiliary basis highest AM E, G, H:  7, 7, 4
+    Onebody   basis highest AM E, G, H:  -, -, -
+    Solid Harmonics ordering:            Gaussian
+
+*** tstart() called on sv1-c724
+*** at Sun Apr 26 10:06:58 2026
+
+   => Loading Basis Set <=
+
+    Name: CC-PVDZ
+    Role: ORBITAL
+    Keyword: BASIS
+    atoms 1   entry C          line   138 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz.gbs 
+    atoms 2-3 entry O          line   198 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz.gbs 
+
+
+         ---------------------------------------------------------
+                                   SCF
+               by Justin Turney, Rob Parrish, Andy Simmonett
+                          and Daniel G. A. Smith
+                              RHF Reference
+                        1 Threads,    500 MiB Core
+         ---------------------------------------------------------
+
+  ==> Geometry <==
+
+    Molecular point group: c1
+    Full point group: C_inf_v
+
+    Geometry (in Angstrom), charge = 0, multiplicity = 1:
+
+       Center              X                  Y                   Z               Mass       
+    ------------   -----------------  -----------------  -----------------  -----------------
+         C           -0.000065945180    -0.000038011350     0.000001729774    12.000000000000
+         O           -0.941893274288    -0.642808287325    -0.000005416182    15.994914619570
+         O            0.941942748898     0.642836804901     0.000004118439    15.994914619570
+
+  Running in c1 symmetry.
+
+  Rotational constants: A = ************  B =      0.40523  C =      0.40523 [cm^-1]
+  Rotational constants: A = ************  B =  12148.37458  C =  12148.37458 [MHz]
+  Nuclear repulsion =   59.397416277122836
+
+  Charge       = 0
+  Multiplicity = 1
+  Electrons    = 22
+  Nalpha       = 11
+  Nbeta        = 11
+
+  ==> Algorithm <==
+
+  SCF Algorithm Type is DF.
+  DIIS enabled.
+  MOM disabled.
+  Fractional occupation disabled.
+  Guess Type is SAD.
+  Energy threshold   = 1.00e-08
+  Density threshold  = 1.00e-08
+  Integral threshold = 1.00e-12
+
+  ==> Primary Basis <==
+
+  Basis Set: CC-PVDZ
+    Blend: CC-PVDZ
+    Number of shells: 18
+    Number of basis functions: 42
+    Number of Cartesian functions: 45
+    Spherical Harmonics?: true
+    Max angular momentum: 2
+
+   => Loading Basis Set <=
+
+    Name: (CC-PVDZ AUX)
+    Role: JKFIT
+    Keyword: DF_BASIS_SCF
+    atoms 1   entry C          line   121 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz-jkfit.gbs 
+    atoms 2-3 entry O          line   221 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz-jkfit.gbs 
+
+  ==> Integral Setup <==
+
+  DFHelper Memory: AOs need 0.003 GiB; user supplied 0.366 GiB. 
+  Using in-core AOs.
+
+  ==> MemDFJK: Density-Fitted J/K Matrices <==
+
+    J tasked:                   Yes
+    K tasked:                   Yes
+    wK tasked:                   No
+    OpenMP threads:               1
+    Memory [MiB]:               375
+    Algorithm:                 Core
+    Schwarz Cutoff:           1E-12
+    Mask sparsity (%):       0.0000
+    Fitting Condition:        1E-10
+
+   => Auxiliary Basis Set <=
+
+  Basis Set: (CC-PVDZ AUX)
+    Blend: CC-PVDZ-JKFIT
+    Number of shells: 72
+    Number of basis functions: 210
+    Number of Cartesian functions: 243
+    Spherical Harmonics?: true
+    Max angular momentum: 3
+
+  Minimum eigenvalue in the overlap matrix is 1.7521175005E-02.
+  Reciprocal condition number of the overlap matrix is 5.1825107150E-03.
+    Using symmetric orthogonalization.
+
+  ==> Pre-Iterations <==
+
+  SCF Guess: Superposition of Atomic Densities via on-the-fly atomic UHF (no occupation information).
+
+   -------------------------
+    Irrep   Nso     Nmo    
+   -------------------------
+     A         42      42 
+   -------------------------
+    Total      42      42
+   -------------------------
+
+  ==> Iterations <==
+
+                           Total Energy        Delta E     RMS |[F,P]|
+
+   @DF-RHF iter SAD:  -186.93355730775647   -1.86934e+02   0.00000e+00 
+   @DF-RHF iter   1:  -187.57567344771007   -6.42116e-01   1.12304e-02 ADIIS/DIIS
+   @DF-RHF iter   2:  -187.61700415742604   -4.13307e-02   7.62156e-03 ADIIS/DIIS
+   @DF-RHF iter   3:  -187.65232192029018   -3.53178e-02   4.83554e-04 ADIIS/DIIS
+   @DF-RHF iter   4:  -187.65250341223006   -1.81492e-04   7.01668e-05 DIIS
+   @DF-RHF iter   5:  -187.65250869512278   -5.28289e-06   1.81013e-05 DIIS
+   @DF-RHF iter   6:  -187.65250913855482   -4.43432e-07   3.13781e-06 DIIS
+   @DF-RHF iter   7:  -187.65250915370763   -1.51528e-08   9.87739e-07 DIIS
+   @DF-RHF iter   8:  -187.65250915449099   -7.83359e-10   4.98140e-07 DIIS
+   @DF-RHF iter   9:  -187.65250915467269   -1.81700e-10   3.40872e-08 DIIS
+   @DF-RHF iter  10:  -187.65250915467379   -1.10845e-12   2.45478e-09 DIIS
+  Energy and wave function converged.
+
+
+  ==> Post-Iterations <==
+
+    Orbital Energies [Eh]
+    ---------------------
+
+    Doubly Occupied:                                                      
+
+       1A    -20.646152     2A    -20.646076     3A    -11.459345  
+       4A     -1.540757     5A     -1.486877     6A     -0.792235  
+       7A     -0.740188     8A     -0.717240     9A     -0.717240  
+      10A     -0.537067    11A     -0.537067  
+
+    Virtual:                                                              
+
+      12A      0.233333    13A      0.233333    14A      0.258167  
+      15A      0.488121    16A      0.599615    17A      0.599615  
+      18A      0.792273    19A      0.997057    20A      1.051833  
+      21A      1.116307    22A      1.116307    23A      1.256976  
+      24A      1.256976    25A      1.382274    26A      1.382274  
+      27A      1.515010    28A      1.611118    29A      1.611118  
+      30A      1.876944    31A      2.319325    32A      2.871326  
+      33A      2.871326    34A      3.026810    35A      3.026810  
+      36A      3.147584    37A      3.147584    38A      3.202784  
+      39A      3.767290    40A      3.917399    41A      3.917399  
+      42A      3.979753  
+
+    Final Occupation by Irrep:
+              A 
+    DOCC [    11 ]
+    NA   [    11 ]
+    NB   [    11 ]
+
+  @DF-RHF Final Energy:  -187.65250915467379
+
+   => Energetics <=
+
+    Nuclear Repulsion Energy =             59.3974162771228364
+    One-Electron Energy =                -374.4593650166212342
+    Two-Electron Energy =                 127.4094395848246108
+    Total Energy =                       -187.6525091546737940
+
+Computation Completed
+
+
+Properties will be evaluated at   0.000000,   0.000000,   0.000000 [a0]
+
+Properties computed using the SCF density matrix
+
+
+ Multipole Moments:
+
+ ------------------------------------------------------------------------------------
+     Multipole            Electronic (a.u.)      Nuclear  (a.u.)        Total (a.u.)
+ ------------------------------------------------------------------------------------
+
+ L = 1.  Multiply by 2.5417464519 to convert [e a0] to [Debye]
+ Dipole X            :         -0.0005035            0.0000002           -0.0005033
+ Dipole Y            :         -0.0003296            0.0000001           -0.0003295
+ Dipole Z            :          0.0000035           -0.0000000            0.0000035
+ Magnitude           :                                                    0.0006016
+
+ ------------------------------------------------------------------------------------
+
+*** tstop() called on sv1-c724 at Sun Apr 26 10:06:58 2026
+Module time:
+	user time   =       0.29 seconds =       0.00 minutes
+	system time =       0.01 seconds =       0.00 minutes
+	total time  =          0 seconds =       0.00 minutes
+Total time:
+	user time   =       2.78 seconds =       0.05 minutes
+	system time =       0.06 seconds =       0.00 minutes
+	total time  =          3 seconds =       0.05 minutes
+
+*** tstart() called on sv1-c724
+*** at Sun Apr 26 10:06:58 2026
+
+
+         ------------------------------------------------------------
+                                   SCF GRAD                          
+                          Rob Parrish, Justin Turney,                
+                       Andy Simmonett, and Alex Sokolov              
+         ------------------------------------------------------------
+
+  ==> Geometry <==
+
+    Molecular point group: c1
+    Full point group: C_inf_v
+
+    Geometry (in Angstrom), charge = 0, multiplicity = 1:
+
+       Center              X                  Y                   Z               Mass       
+    ------------   -----------------  -----------------  -----------------  -----------------
+         C           -0.000065945180    -0.000038011350     0.000001729774    12.000000000000
+         O           -0.941893274288    -0.642808287325    -0.000005416182    15.994914619570
+         O            0.941942748898     0.642836804901     0.000004118439    15.994914619570
+
+  Nuclear repulsion =   59.397416277122836
+
+  ==> Basis Set <==
+
+  Basis Set: CC-PVDZ
+    Blend: CC-PVDZ
+    Number of shells: 18
+    Number of basis functions: 42
+    Number of Cartesian functions: 45
+    Spherical Harmonics?: true
+    Max angular momentum: 2
+
+  ==> DFJKGrad: Density-Fitted SCF Gradients <==
+
+    Gradient:                    1
+    J tasked:                  Yes
+    K tasked:                  Yes
+    wK tasked:                  No
+    OpenMP threads:              1
+    Integrals threads:           1
+    Memory [MiB]:              375
+    Schwarz Cutoff:          1E-12
+    Fitting Condition:       1E-10
+
+   => Auxiliary Basis Set <=
+
+  Basis Set: (CC-PVDZ AUX)
+    Blend: CC-PVDZ-JKFIT
+    Number of shells: 72
+    Number of basis functions: 210
+    Number of Cartesian functions: 243
+    Spherical Harmonics?: true
+    Max angular momentum: 3
+
+
+  -Total Gradient:
+     Atom            X                  Y                   Z
+    ------   -----------------  -----------------  -----------------
+       1       -0.000360320461    -0.000242431668     0.000000857351
+       2        0.000584903126     0.000397438863    -0.000000426213
+       3       -0.000224582667    -0.000155007194    -0.000000431138
+
+
+*** tstop() called on sv1-c724 at Sun Apr 26 10:06:58 2026
+Module time:
+	user time   =       0.11 seconds =       0.00 minutes
+	system time =       0.00 seconds =       0.00 minutes
+	total time  =          0 seconds =       0.00 minutes
+Total time:
+	user time   =       2.90 seconds =       0.05 minutes
+	system time =       0.06 seconds =       0.00 minutes
+	total time  =          3 seconds =       0.05 minutes
+!ASE Information
+{"parameters": {"basis": "cc-pvdz", "method": "hf", "symmetry": "c1", "ignore_bad_restart": false, "command": null}, "results": {"energy": -5106.284865048937, "forces": [[0.018528422899386242, 0.012466337499968044, -4.408674499125419e-05], [-0.030076927808464306, -0.020437127867960904, 2.19167618981833e-05], [0.011548504979309183, 0.007970790344182617, 2.216998309285392e-05]]}, "atoms": "{\"1\": {\n \"cell\": {\"__ndarray__\": [[3, 3], \"float64\", [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]},\n \"ctime\": 26.31726172645902,\n \"mtime\": 26.31726172645902,\n \"numbers\": {\"__ndarray__\": [[3], \"int64\", [6, 8, 8]]},\n \"pbc\": {\"__ndarray__\": [[3], \"bool\", [false, false, false]]},\n \"positions\": {\"__ndarray__\": [[3, 3], \"float64\", [-4.137754121657013, 1.6335368199082214, -1.7747569880052658e-05, -5.079581450764847, 0.9907665439332202, -2.489352584479775e-05, -3.195745427578609, 2.276411636159726, -1.5358904275144742e-05]]},\n \"unique_id\": \"c07c842cccb0406b844eb0802e280f49\",\n \"user\": \"lme\"},\n\"ids\": [1],\n\"nextid\": 2}\n"}!

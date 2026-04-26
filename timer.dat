@@ -21334,3 +21334,530 @@ DFMP2 (ia|B)(B|Q)                   :      0.017u      0.017s      0.017w     50
 DFMP2 Cia Write                     :      0.000u      0.000s      0.014w     50 calls
 DFMP2 aiB                           :      0.050u      0.017s      0.089w     50 calls
 DFMP2 Tij                           :      0.200u      0.117s      0.164w     50 calls
+
+Host: sv1-c724
+
+Timers On : Sun Apr 26 07:45:14 2026
+Timers Off: Sun Apr 26 07:45:14 2026
+
+Wall Time:        0.41 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Apr 26 07:47:25 2026
+Timers Off: Sun Apr 26 07:47:27 2026
+
+Wall Time:        2.55 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Apr 26 07:48:12 2026
+Timers Off: Sun Apr 26 07:48:15 2026
+
+Wall Time:        2.77 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Apr 26 08:38:39 2026
+Timers Off: Sun Apr 26 08:38:46 2026
+
+Wall Time:        6.85 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+DFH: sparsity prep                  :      0.183u      0.000s      0.126w     11 calls
+Libint2ERI::Libint2ERI              :      0.483u      0.033s      0.288w     77 calls
+DFH: initialize()                   :      0.517u      0.033s      0.320w     11 calls
+DFH: AO Construction                :      0.167u      0.000s      0.112w     11 calls
+DFH: AO-Met. Contraction            :      0.050u      0.000s      0.020w     11 calls
+HF: Form core H                     :      0.017u      0.000s      0.017w     11 calls
+HF: Form S/X                        :      0.000u      0.000s      0.003w     11 calls
+HF: Guess                           :      0.683u      0.017s      0.419w     11 calls
+SAD Guess                           :      0.667u      0.017s      0.397w     11 calls
+HF: Form G                          :      0.067u      0.000s      0.071w    121 calls
+JK: D                               :      0.000u      0.000s      0.001w    121 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w    121 calls
+JK: JK                              :      0.067u      0.000s      0.066w    121 calls
+DFH: compute_JK()                   :      0.067u      0.000s      0.066w    121 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w    121 calls
+DFH: compute_J                      :      0.000u      0.000s      0.015w    121 calls
+DFH: compute_K                      :      0.067u      0.000s      0.046w    121 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w    121 calls
+HF: Form F                          :      0.000u      0.000s      0.001w    121 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    121 calls
+HF: DIIS                            :      0.533u      0.017s      0.321w    110 calls
+HF: Form C                          :      0.083u      0.000s      0.044w    110 calls
+Grad: V T Perturb                   :      0.000u      0.000s      0.010w     11 calls
+Grad: S                             :      0.000u      0.000s      0.003w     11 calls
+Grad: JK                            :      1.300u      0.033s      0.838w     11 calls
+JKGrad: Amn                         :      0.333u      0.017s      0.213w     11 calls
+JKGrad: Awmn                        :      0.000u      0.000s      0.000w     11 calls
+JKGrad: AB                          :      0.167u      0.000s      0.104w     11 calls
+JKGrad: UV                          :      0.000u      0.000s      0.004w     11 calls
+JKGrad: ABx                         :      0.050u      0.000s      0.040w     11 calls
+JKGrad: Amnx                        :      0.750u      0.017s      0.442w     11 calls
+Grad: XC                            :      0.000u      0.000s      0.000w     11 calls
+
+--------------------------------------------------------------------------------------
+DFH: sparsity prep                  :      0.183u      0.000s      0.126w     11 calls
+| Libint2ERI::Libint2ERI            :      0.150u      0.000s      0.079w     11 calls
+DFH: initialize()                   :      0.517u      0.033s      0.320w     11 calls
+| Libint2ERI::Libint2ERI            :      0.100u      0.017s      0.068w     22 calls
+| DFH: AO Construction              :      0.167u      0.000s      0.112w     11 calls
+| DFH: AO-Met. Contraction          :      0.050u      0.000s      0.020w     11 calls
+HF: Form core H                     :      0.017u      0.000s      0.017w     11 calls
+HF: Form S/X                        :      0.000u      0.000s      0.003w     11 calls
+HF: Guess                           :      0.683u      0.017s      0.419w     11 calls
+| SAD Guess                         :      0.667u      0.017s      0.397w     11 calls
+HF: Form G                          :      0.067u      0.000s      0.071w    121 calls
+| JK: D                             :      0.000u      0.000s      0.001w    121 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w    121 calls
+| JK: JK                            :      0.067u      0.000s      0.066w    121 calls
+| | DFH: compute_JK()               :      0.067u      0.000s      0.066w    121 calls
+| | | DFH: Grabbing AOs             :      0.000u      0.000s      0.000w    121 calls
+| | | DFH: compute_J                :      0.000u      0.000s      0.015w    121 calls
+| | | DFH: compute_K                :      0.067u      0.000s      0.046w    121 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w    121 calls
+HF: Form F                          :      0.000u      0.000s      0.001w    121 calls
+HF: Form D                          :      0.000u      0.000s      0.001w    121 calls
+HF: DIIS                            :      0.533u      0.017s      0.321w    110 calls
+HF: Form C                          :      0.083u      0.000s      0.044w    110 calls
+Grad: V T Perturb                   :      0.000u      0.000s      0.010w     11 calls
+Grad: S                             :      0.000u      0.000s      0.003w     11 calls
+Grad: JK                            :      1.300u      0.033s      0.838w     11 calls
+| JKGrad: Amn                       :      0.333u      0.017s      0.213w     11 calls
+| | Libint2ERI::Libint2ERI          :      0.100u      0.017s      0.069w     11 calls
+| JKGrad: Awmn                      :      0.000u      0.000s      0.000w     11 calls
+| JKGrad: AB                        :      0.167u      0.000s      0.104w     11 calls
+| | Libint2ERI::Libint2ERI          :      0.000u      0.000s      0.000w     11 calls
+| JKGrad: UV                        :      0.000u      0.000s      0.004w     11 calls
+| JKGrad: ABx                       :      0.050u      0.000s      0.040w     11 calls
+| | Libint2ERI::Libint2ERI          :      0.000u      0.000s      0.000w     11 calls
+| JKGrad: Amnx                      :      0.750u      0.017s      0.442w     11 calls
+| | Libint2ERI::Libint2ERI          :      0.133u      0.000s      0.070w     11 calls
+Grad: XC                            :      0.000u      0.000s      0.000w     11 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Apr 26 08:56:08 2026
+Timers Off: Sun Apr 26 08:56:13 2026
+
+Wall Time:        5.07 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Apr 26 08:57:02 2026
+Timers Off: Sun Apr 26 08:57:07 2026
+
+Wall Time:        5.18 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Apr 26 08:58:09 2026
+Timers Off: Sun Apr 26 08:58:14 2026
+
+Wall Time:        5.15 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Apr 26 08:59:50 2026
+Timers Off: Sun Apr 26 08:59:53 2026
+
+Wall Time:        3.50 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+DFH: sparsity prep                  :      0.183u      0.017s      0.110w      6 calls
+Libint2ERI::Libint2ERI              :      0.417u      0.017s      0.257w     42 calls
+DFH: initialize()                   :      0.500u      0.000s      0.300w      6 calls
+DFH: AO Construction                :      0.183u      0.000s      0.108w      6 calls
+
+DFH: AO-Met. Contraction            :      0.017u      0.000s      0.020w      6 calls
+HF: Form core H                     :      0.000u      0.000s      0.014w      6 calls
+HF: Form S/X                        :      0.000u      0.000s      0.002w      6 calls
+HF: Guess                           :      0.450u      0.017s      0.301w      6 calls
+Host: sv1-c724
+SAD Guess                           :      0.433u      0.017s      0.289w      6 calls
+HF: Form G                          :      0.050u      0.000s      0.061w     66 calls
+
+JK: D                               :      0.000u      0.000s      0.001w     66 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     66 calls
+JK: JK                              :      0.050u      0.000s      0.058w     66 calls
+DFH: compute_JK()                   :      0.050u      0.000s      0.058w     66 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     66 calls
+DFH: compute_J                      :      0.033u      0.000s      0.012w     66 calls
+DFH: compute_K                      :      0.017u      0.000s      0.042w     66 calls
+Timers On : Sun Apr 26 08:59:50 2026
+JK: AO2USO                          :      0.000u      0.000s      0.000w     66 calls
+HF: Form F                          :      0.000u      0.000s      0.001w     66 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     66 calls
+HF: DIIS                            :      0.250u      0.000s      0.209w     60 calls
+HF: Form C                          :      0.083u      0.000s      0.030w     60 calls
+Timers Off: Sun Apr 26 08:59:53 2026
+Grad: V T Perturb                   :      0.000u      0.000s      0.008w      6 calls
+
+Wall Time:        3.40 seconds
+
+Grad: S                             :      0.017u      0.000s      0.002w      6 calls
+                                                       Time (seconds)
+Grad: JK                            :      1.150u      0.033s      0.754w      6 calls
+JKGrad: Amn                         :      0.300u      0.000s      0.188w      6 calls
+Module                                       User      System        Wall        Calls
+JKGrad: Awmn                        :      0.000u      0.000s      0.000w      6 calls
+JKGrad: AB                          :      0.133u      0.017s      0.095w      6 calls
+JKGrad: UV                          :      0.017u      0.017s      0.004w      6 calls
+DFH: sparsity prep                  :      0.050u      0.033s      0.040w      5 calls
+JKGrad: ABx                         :      0.033u      0.000s      0.031w      6 calls
+JKGrad: Amnx                        :      0.667u      0.000s      0.409w      6 calls
+Grad: XC                            :      0.000u      0.000s      0.000w      6 calls
+Libint2ERI::Libint2ERI              :      0.100u      0.067s      0.074w     35 calls
+
+--------------------------------------------------------------------------------------
+DFH: initialize()                   :      0.117u      0.033s      0.088w      5 calls
+DFH: sparsity prep                  :      0.183u      0.017s      0.110w      6 calls
+| Libint2ERI::Libint2ERI            :      0.117u      0.017s      0.071w      6 calls
+DFH: AO Construction                :      0.050u      0.000s      0.015w      5 calls
+DFH: initialize()                   :      0.500u      0.000s      0.300w      6 calls
+| DFH: AO-Met. Contraction            :      0.000u      0.000s      0.002w      5 calls
+Libint2ERI::Libint2ERI            :      0.100u      0.000s      0.060w     12 calls
+| DFH: AO Construction              :      0.183u      0.000s      0.108w      6 calls
+HF: Form core H                     :      0.000u      0.000s      0.008w      5 calls
+| DFH: AO-Met. Contraction          :      0.017u      0.000s      0.020w      6 calls
+HF: Form S/X                        :      0.000u      0.000s      0.001w      5 calls
+HF: Form core H                     :      0.000u      0.000s      0.014w      6 calls
+HF: Form S/X                        :      0.000u      0.000s      0.002w      6 calls
+HF: Guess                           :      0.450u      0.017s      0.301w      6 calls
+HF: Guess                           :      0.300u      0.050s      0.230w      5 calls
+| SAD Guess                         :      0.433u      0.017s      0.289w      6 calls
+SAD Guess                           :      0.283u      0.050s      0.220w      5 calls
+HF: Form G                          :      0.050u      0.000s      0.061w     66 calls
+| HF: Form G                          :      0.050u      0.000s      0.012w     55 calls
+JK: D                             :      0.000u      0.000s      0.001w     66 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w     66 calls
+JK: D                               :      0.000u      0.000s      0.000w     55 calls
+| JK: JK                            :      0.050u      0.000s      0.058w     66 calls
+| | JK: USO2AO                          :      0.000u      0.000s      0.000w     55 calls
+DFH: compute_JK()               :      0.050u      0.000s      0.058w     66 calls
+| | | JK: JK                              :      0.050u      0.000s      0.010w     55 calls
+DFH: Grabbing AOs             :      0.000u      0.000s      0.000w     66 calls
+| | | DFH: compute_J                :      0.033u      0.000s      0.012w     66 calls
+DFH: compute_JK()                   :      0.050u      0.000s      0.010w     55 calls
+| | | DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     55 calls
+DFH: compute_K                :      0.017u      0.000s      0.042w     66 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w     66 calls
+DFH: compute_J                      :      0.017u      0.000s      0.003w     55 calls
+HF: Form F                          :      0.000u      0.000s      0.001w     66 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     66 calls
+DFH: compute_K                      :      0.017u      0.000s      0.005w     55 calls
+HF: DIIS                            :      0.250u      0.000s      0.209w     60 calls
+HF: Form C                          :      0.083u      0.000s      0.030w     60 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     55 calls
+Grad: V T Perturb                   :      0.000u      0.000s      0.008w      6 calls
+Grad: S                             :      0.017u      0.000s      0.002w      6 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     55 calls
+Grad: JK                            :      1.150u      0.033s      0.754w      6 calls
+| HF: Form D                          :      0.000u      0.000s      0.000w     55 calls
+JKGrad: Amn                       :      0.300u      0.000s      0.188w      6 calls
+| | Libint2ERI::Libint2ERI          :      0.100u      0.000s      0.064w      6 calls
+HF: DIIS                            :      0.183u      0.000s      0.180w     50 calls
+| JKGrad: Awmn                      :      0.000u      0.000s      0.000w      6 calls
+HF: Form C                          :      0.150u      0.000s      0.019w     50 calls
+| JKGrad: AB                        :      0.133u      0.017s      0.095w      6 calls
+| | Grad: V T Perturb                   :      0.000u      0.000s      0.002w      5 calls
+Libint2ERI::Libint2ERI          :      0.000u      0.000s      0.000w      6 calls
+| JKGrad: UV                        :      0.017u      0.017s      0.004w      6 calls
+Grad: S                             :      0.000u      0.000s      0.001w      5 calls
+| JKGrad: ABx                       :      0.033u      0.000s      0.031w      6 calls
+| | Grad: JK                            :      0.283u      0.033s      0.191w      5 calls
+Libint2ERI::Libint2ERI          :      0.000u      0.000s      0.000w      6 calls
+JKGrad: Amn                         :      0.083u      0.000s      0.041w      5 calls
+| JKGrad: Amnx                      :      0.667u      0.000s      0.409w      6 calls
+| | JKGrad: Awmn                        :      0.000u      0.000s      0.000w      5 calls
+Libint2ERI::Libint2ERI          :      0.100u      0.000s      0.062w      6 calls
+Grad: XC                            :      0.000u      0.000s      0.000w      6 calls
+JKGrad: AB                          :      0.033u      0.017s      0.043w      5 calls
+
+**************************************************************************************
+JKGrad: UV                          :      0.000u      0.000s      0.001w      5 calls
+JKGrad: ABx                         :      0.050u      0.000s      0.016w      5 calls
+JKGrad: Amnx                        :      0.083u      0.000s      0.068w      5 calls
+Grad: XC                            :      0.000u      0.000s      0.000w      5 calls
+
+--------------------------------------------------------------------------------------
+DFH: sparsity prep                  :      0.050u      0.033s      0.040w      5 calls
+| Libint2ERI::Libint2ERI            :      0.017u      0.033s      0.027w      5 calls
+DFH: initialize()                   :      0.117u      0.033s      0.088w      5 calls
+| Libint2ERI::Libint2ERI            :      0.017u      0.033s      0.020w     10 calls
+| DFH: AO Construction              :      0.050u      0.000s      0.015w      5 calls
+| DFH: AO-Met. Contraction          :      0.000u      0.000s      0.002w      5 calls
+HF: Form core H                     :      0.000u      0.000s      0.008w      5 calls
+HF: Form S/X                        :      0.000u      0.000s      0.001w      5 calls
+HF: Guess                           :      0.300u      0.050s      0.230w      5 calls
+| SAD Guess                         :      0.283u      0.050s      0.220w      5 calls
+HF: Form G                          :      0.050u      0.000s      0.012w     55 calls
+| JK: D                             :      0.000u      0.000s      0.000w     55 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w     55 calls
+| JK: JK                            :      0.050u      0.000s      0.010w     55 calls
+| | DFH: compute_JK()               :      0.050u      0.000s      0.010w     55 calls
+| | | DFH: Grabbing AOs             :      0.000u      0.000s      0.000w     55 calls
+| | | DFH: compute_J                :      0.017u      0.000s      0.003w     55 calls
+| | | DFH: compute_K                :      0.017u      0.000s      0.005w     55 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w     55 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     55 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     55 calls
+HF: DIIS                            :      0.183u      0.000s      0.180w     50 calls
+HF: Form C                          :      0.150u      0.000s      0.019w     50 calls
+Grad: V T Perturb                   :      0.000u      0.000s      0.002w      5 calls
+Grad: S                             :      0.000u      0.000s      0.001w      5 calls
+Grad: JK                            :      0.283u      0.033s      0.191w      5 calls
+| JKGrad: Amn                       :      0.083u      0.000s      0.041w      5 calls
+| | Libint2ERI::Libint2ERI          :      0.033u      0.000s      0.015w      5 calls
+| JKGrad: Awmn                      :      0.000u      0.000s      0.000w      5 calls
+| JKGrad: AB                        :      0.033u      0.017s      0.043w      5 calls
+| | Libint2ERI::Libint2ERI          :      0.000u      0.000s      0.000w      5 calls
+| JKGrad: UV                        :      0.000u      0.000s      0.001w      5 calls
+| JKGrad: ABx                       :      0.050u      0.000s      0.016w      5 calls
+| | Libint2ERI::Libint2ERI          :      0.000u      0.000s      0.000w      5 calls
+| JKGrad: Amnx                      :      0.083u      0.000s      0.068w      5 calls
+| | Libint2ERI::Libint2ERI          :      0.033u      0.000s      0.013w      5 calls
+Grad: XC                            :      0.000u      0.000s      0.000w      5 calls
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Apr 26 08:59:46 2026
+Timers Off: Sun Apr 26 08:59:55 2026
+
+Wall Time:        8.71 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Apr 26 09:13:27 2026
+Timers Off: Sun Apr 26 09:13:30 2026
+
+Wall Time:        3.44 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: sv1-c724
+
+Timers On : Sun Apr 26 10:06:55 2026
+Timers Off: Sun Apr 26 10:06:58 2026
+
+Wall Time:        3.52 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+DFH: sparsity prep                  :      0.150u      0.017s      0.108w      6 calls
+
+Libint2ERI::Libint2ERI              :      0.433u      0.017s      0.264w     42 calls
+DFH: initialize()                   :      0.450u      0.033s      0.294w      6 calls
+DFH: AO Construction                :      0.183u      0.000s      0.109w      6 calls
+DFH: AO-Met. Contraction            :      0.033u      0.000s      0.020w      6 calls
+Host: sv1-c724
+HF: Form core H                     :      0.000u      0.017s      0.013w      6 calls
+
+HF: Form S/X                        :      0.000u      0.000s      0.002w      6 calls
+HF: Guess                           :      0.433u      0.017s      0.289w      6 calls
+SAD Guess                           :      0.400u      0.017s      0.277w      6 calls
+Timers On : Sun Apr 26 10:06:55 2026
+HF: Form G                          :      0.167u      0.000s      0.059w     66 calls
+JK: D                               :      0.000u      0.000s      0.001w     66 calls
+JK: USO2AO                          :      0.000u      0.000s      0.000w     66 calls
+JK: JK                              :      0.167u      0.000s      0.056w     66 calls
+Timers Off: Sun Apr 26 10:06:58 2026
+DFH: compute_JK()                   :      0.167u      0.000s      0.055w     66 calls
+DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     66 calls
+
+Wall Time:        3.49 seconds
+
+DFH: compute_J                      :      0.017u      0.000s      0.012w     66 calls
+DFH: compute_K                      :      0.133u      0.000s      0.040w     66 calls
+                                                       Time (seconds)
+JK: AO2USO                          :      0.000u      0.000s      0.000w     66 calls
+HF: Form F                          :      0.000u      0.000s      0.001w     66 calls
+Module                                       User      System        Wall        Calls
+HF: Form D                          :      0.000u      0.000s      0.000w     66 calls
+DFH: sparsity prep                  :      0.033u      0.000s      0.035w      5 calls
+HF: DIIS                            :      0.283u      0.000s      0.207w     60 calls
+HF: Form C                          :      0.117u      0.000s      0.029w     60 calls
+Libint2ERI::Libint2ERI              :      0.083u      0.017s      0.062w     35 calls
+Grad: V T Perturb                   :      0.017u      0.000s      0.009w      6 calls
+Grad: S                             :      0.000u      0.000s      0.002w      6 calls
+DFH: initialize()                   :      0.117u      0.017s      0.082w      5 calls
+Grad: JK                            :      1.283u      0.000s      0.811w      6 calls
+DFH: AO Construction                :      0.017u      0.000s      0.015w      5 calls
+JKGrad: Amn                         :      0.350u      0.000s      0.211w      6 calls
+JKGrad: Awmn                        :      0.000u      0.000s      0.000w      6 calls
+DFH: AO-Met. Contraction            :      0.017u      0.000s      0.002w      5 calls
+JKGrad: AB                          :      0.133u      0.000s      0.100w      6 calls
+JKGrad: UV                          :      0.000u      0.000s      0.004w      6 calls
+HF: Form core H                     :      0.000u      0.000s      0.008w      5 calls
+JKGrad: ABx                         :      0.067u      0.000s      0.033w      6 calls
+JKGrad: Amnx                        :      0.733u      0.000s      0.436w      6 calls
+HF: Form S/X                        :      0.000u      0.000s      0.001w      5 calls
+Grad: XC                            :      0.000u      0.000s      0.000w      6 calls
+
+--------------------------------------------------------------------------------------
+HF: Guess                           :      0.333u      0.000s      0.207w      5 calls
+DFH: sparsity prep                  :      0.150u      0.017s      0.108w      6 calls
+| SAD Guess                           :      0.300u      0.000s      0.197w      5 calls
+Libint2ERI::Libint2ERI            :      0.100u      0.017s      0.070w      6 calls
+DFH: initialize()                   :      0.450u      0.033s      0.294w      6 calls
+HF: Form G                          :      0.000u      0.000s      0.011w     55 calls
+| Libint2ERI::Libint2ERI            :      0.083u      0.000s      0.058w     12 calls
+JK: D                               :      0.000u      0.000s      0.000w     55 calls
+| DFH: AO Construction              :      0.183u      0.000s      0.109w      6 calls
+| JK: USO2AO                          :      0.000u      0.000s      0.000w     55 calls
+DFH: AO-Met. Contraction          :      0.033u      0.000s      0.020w      6 calls
+JK: JK                              :      0.000u      0.000s      0.010w     55 calls
+HF: Form core H                     :      0.000u      0.017s      0.013w      6 calls
+HF: Form S/X                        :      0.000u      0.000s      0.002w      6 calls
+DFH: compute_JK()                   :      0.000u      0.000s      0.010w     55 calls
+HF: Guess                           :      0.433u      0.017s      0.289w      6 calls
+| DFH: Grabbing AOs                   :      0.000u      0.000s      0.000w     55 calls
+SAD Guess                         :      0.400u      0.017s      0.277w      6 calls
+HF: Form G                          :      0.167u      0.000s      0.059w     66 calls
+DFH: compute_J                      :      0.000u      0.000s      0.003w     55 calls
+| JK: D                             :      0.000u      0.000s      0.001w     66 calls
+DFH: compute_K                      :      0.000u      0.000s      0.005w     55 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w     66 calls
+JK: AO2USO                          :      0.000u      0.000s      0.000w     55 calls
+| JK: JK                            :      0.167u      0.000s      0.056w     66 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     55 calls
+| | HF: Form D                          :      0.000u      0.000s      0.000w     55 calls
+DFH: compute_JK()               :      0.167u      0.000s      0.055w     66 calls
+| | | DFH: Grabbing AOs             :      0.000u      0.000s      0.000w     66 calls
+HF: DIIS                            :      0.217u      0.000s      0.176w     50 calls
+| | | DFH: compute_J                :      0.017u      0.000s      0.012w     66 calls
+HF: Form C                          :      0.067u      0.000s      0.017w     50 calls
+| | | DFH: compute_K                :      0.133u      0.000s      0.040w     66 calls
+| Grad: V T Perturb                   :      0.000u      0.000s      0.002w      5 calls
+JK: AO2USO                        :      0.000u      0.000s      0.000w     66 calls
+Grad: S                             :      0.000u      0.000s      0.001w      5 calls
+HF: Form F                          :      0.000u      0.000s      0.001w     66 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     66 calls
+Grad: JK                            :      0.283u      0.000s      0.183w      5 calls
+HF: DIIS                            :      0.283u      0.000s      0.207w     60 calls
+JKGrad: Amn                         :      0.050u      0.000s      0.038w      5 calls
+HF: Form C                          :      0.117u      0.000s      0.029w     60 calls
+JKGrad: Awmn                        :      0.000u      0.000s      0.000w      5 calls
+Grad: V T Perturb                   :      0.017u      0.000s      0.009w      6 calls
+Grad: S                             :      0.000u      0.000s      0.002w      6 calls
+JKGrad: AB                          :      0.067u      0.000s      0.039w      5 calls
+Grad: JK                            :      1.283u      0.000s      0.811w      6 calls
+| JKGrad: UV                          :      0.000u      0.000s      0.001w      5 calls
+JKGrad: Amn                       :      0.350u      0.000s      0.211w      6 calls
+| | Libint2ERI::Libint2ERI          :      0.133u      0.000s      0.069w      6 calls
+JKGrad: ABx                         :      0.017u      0.000s      0.016w      5 calls
+| JKGrad: Awmn                      :      0.000u      0.000s      0.000w      6 calls
+| JKGrad: Amnx                        :      0.117u      0.000s      0.068w      5 calls
+JKGrad: AB                        :      0.133u      0.000s      0.100w      6 calls
+| | Libint2ERI::Libint2ERI          :      0.000u      0.000s      0.000w      6 calls
+Grad: XC                            :      0.000u      0.000s      0.000w      5 calls
+| JKGrad: UV                        :      0.000u      0.000s      0.004w      6 calls
+
+--------------------------------------------------------------------------------------
+| JKGrad: ABx                       :      0.067u      0.000s      0.033w      6 calls
+DFH: sparsity prep                  :      0.033u      0.000s      0.035w      5 calls
+| | Libint2ERI::Libint2ERI          :      0.000u      0.000s      0.000w      6 calls
+| | Libint2ERI::Libint2ERI            :      0.017u      0.000s      0.022w      5 calls
+JKGrad: Amnx                      :      0.733u      0.000s      0.436w      6 calls
+| | Libint2ERI::Libint2ERI          :      0.117u      0.000s      0.066w      6 calls
+DFH: initialize()                   :      0.117u      0.017s      0.082w      5 calls
+Grad: XC                            :      0.000u      0.000s      0.000w      6 calls
+
+**************************************************************************************
+| Libint2ERI::Libint2ERI            :      0.017u      0.017s      0.014w     10 calls
+| DFH: AO Construction              :      0.017u      0.000s      0.015w      5 calls
+| DFH: AO-Met. Contraction          :      0.017u      0.000s      0.002w      5 calls
+HF: Form core H                     :      0.000u      0.000s      0.008w      5 calls
+HF: Form S/X                        :      0.000u      0.000s      0.001w      5 calls
+HF: Guess                           :      0.333u      0.000s      0.207w      5 calls
+| SAD Guess                         :      0.300u      0.000s      0.197w      5 calls
+HF: Form G                          :      0.000u      0.000s      0.011w     55 calls
+| JK: D                             :      0.000u      0.000s      0.000w     55 calls
+| JK: USO2AO                        :      0.000u      0.000s      0.000w     55 calls
+| JK: JK                            :      0.000u      0.000s      0.010w     55 calls
+| | DFH: compute_JK()               :      0.000u      0.000s      0.010w     55 calls
+| | | DFH: Grabbing AOs             :      0.000u      0.000s      0.000w     55 calls
+| | | DFH: compute_J                :      0.000u      0.000s      0.003w     55 calls
+| | | DFH: compute_K                :      0.000u      0.000s      0.005w     55 calls
+| JK: AO2USO                        :      0.000u      0.000s      0.000w     55 calls
+HF: Form F                          :      0.000u      0.000s      0.000w     55 calls
+HF: Form D                          :      0.000u      0.000s      0.000w     55 calls
+HF: DIIS                            :      0.217u      0.000s      0.176w     50 calls
+HF: Form C                          :      0.067u      0.000s      0.017w     50 calls
+Grad: V T Perturb                   :      0.000u      0.000s      0.002w      5 calls
+Grad: S                             :      0.000u      0.000s      0.001w      5 calls
+Grad: JK                            :      0.283u      0.000s      0.183w      5 calls
+| JKGrad: Amn                       :      0.050u      0.000s      0.038w      5 calls
+| | Libint2ERI::Libint2ERI          :      0.017u      0.000s      0.013w      5 calls
+| JKGrad: Awmn                      :      0.000u      0.000s      0.000w      5 calls
+| JKGrad: AB                        :      0.067u      0.000s      0.039w      5 calls
+| | Libint2ERI::Libint2ERI          :      0.000u      0.000s      0.000w      5 calls
+| JKGrad: UV                        :      0.000u      0.000s      0.001w      5 calls
+| JKGrad: ABx                       :      0.017u      0.000s      0.016w      5 calls
+| | Libint2ERI::Libint2ERI          :      0.000u      0.000s      0.000w      5 calls
+| JKGrad: Amnx                      :      0.117u      0.000s      0.068w      5 calls
+| | Libint2ERI::Libint2ERI          :      0.033u      0.000s      0.013w      5 calls
+Grad: XC                            :      0.000u      0.000s      0.000w      5 calls
+
+**************************************************************************************

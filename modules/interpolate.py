@@ -5,7 +5,7 @@ import itertools
 
 from geometry import GeometryOps, Quaternion
 from molecule_class import Molecule
-from psi4_interface import Psi4Calculator, Config
+from cluster_generation.modules.class_test_results.psi4_interface import Psi4Calculator, Config
 
 
 class Interpolator:

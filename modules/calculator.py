@@ -23,6 +23,9 @@ from ase.calculators.psi4 import Psi4
 from ase.optimize import BFGS
 from ase.optimize import LBFGS
 
+# Import ASE Vibrational Analysis
+from ase.vibrations import Vibrations
+
 
 from typing import Optional, List, Tuple
 import numpy as np
@@ -140,7 +143,22 @@ class EnergyEvaluator:
         opt.run(fmax=0.05)  # Run optimization until max force is below 0.05 eV/Å
         optimized_molecule = Molecule.from_ase_atoms(atoms)
         return optimized_molecule
-    
+
+    def compute_hessian(self, molecule, delta=0.01):
+        """ 
+        Evaluate the vibrational properties and the return the 2D Hessian Matrix 
+        """ 
+        if self.backend == "psi4":
+            self._ensure_psi_scratch()
+
+        atoms = molecule.to_ase_atoms()
+        atoms.set_calculator(self.calculator)
+        vib = Vibrations(atoms, delta=delta)
+        vib.run()
+        vibrations = vib.get_vibrations() # Returns the VibrationsData Object
+        hessian = vibrations.get_hessian_2d() #[[at1x_at1x, at1x_at1y, at1x_at1z, at1x_at2x, ...], [...], ...]
+        return hessian
+        
  
 
     

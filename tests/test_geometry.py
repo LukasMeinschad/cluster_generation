@@ -164,6 +164,85 @@ def test_kabsch_rotation():
     P_rotated = P @ R
     assert np.allclose(P_rotated, Q)
 
+def test_find_optimal_correspondence():
+    """  
+    Tests the optimal correspondence function between two sets of coordinates P and Q using the
+    Hungarian algorithm to solve the linear assignment problem
+    """
+    P = np.array([[1.0,2.0,3.0], [4.0,5.0,6.0], [7.0,8.0,9.0]])
+    Q = P.copy()
+    result = GeometryOps.find_optimal_correspondence(P, Q)
+    # Since P and Q are the same, the optimal correspondence should be the identity mapping
+    assert np.allclose(result, P)
+
+def test_pairwise_distance_matrix():
+    """  
+    Test pairwise distance function 
+    """
+    # Computes the pairwise distance matrix for a set of points
+    points = np.array([[0.0, 0.0, 0.0],
+                       [1.0, 0.0, 0.0],
+                       [0.0, 1.0, 0.0]])
+    distance_matrix = GeometryOps.pairwise_distance_matrix(points)
+    expected_distance_matrix = np.array([[0.0, 1.0, 1.0],
+                                         [1.0, 0.0, np.sqrt(2)],
+                                         [1.0, np.sqrt(2), 0.0]])
+    assert np.allclose(distance_matrix, expected_distance_matrix)
+
+def test_normalize_vector():
+    """  
+    Test the normalization function of GeometryOps
+    """
+    vector = np.array([1.0, 1.0, 1.0])
+    normalized_vector = GeometryOps.normalize_vector(vector)
+    expected_normalized_vector = np.array([1/np.sqrt(3), 1/np.sqrt(3), 1/np.sqrt(3)])
+    assert np.allclose(normalized_vector, expected_normalized_vector)
+
+def test_rotation_matrix_rodrigues():
+    """   
+    Tests the construction of a rotation matrix using Rodrigues formula
+    """
+    axis = np.array([0.0, 0.0, 1.0])
+    angle = np.pi / 2
+    R = GeometryOps.rotation_matrix_rodrigues(axis, angle)
+    expected_R = np.array([[0.0, -1.0, 0.0],
+                           [1.0, 0.0, 0.0],
+                           [0.0, 0.0, 1.0]])  # 90 degree rotation around z-axis
+    assert np.allclose(R, expected_R)
+
+def test_compute_optimal_correspondence_rmsd():
+    """  
+    Tests the computation of the optimal correspondence RMSD between two sets of coordinates P and Q
+    """
+    P = np.array([[1.0, 0.0, 0.0],
+                  [0.0, 1.0, 0.0],
+                  [0.0, 0.0, 1.0]])
+    Q = np.array([[0.0, 1.0, 0.0],
+                  [-1.0, 0.0, 0.0],
+                  [0.0, 0.0, 1.0]])  # P rotated by 90 degrees around z-axis
+    rmsd = GeometryOps.compute_optimal_correspondence_rmsd(P, Q)
+    assert np.isclose(rmsd, 0.0)
+
+def test_align_vectors():
+    """  
+    Tests the alignment function using the Rodrigues formula for the rotation
+    """
+    v = np.array([1.0, 0.0, 0.0])
+    target = np.array([0.0, 1.0, 0.0])
+    R = GeometryOps.align_vectors(v, target)
+    v_aligned = R @ v
+    assert np.allclose(v_aligned, target)
+
+def test_distance():
+    """  
+    Tests the distance function between two points
+    """
+    p1 = np.array([1.0, 0.0, 0.0])
+    p2 = np.array([0.0, 1.0, 0.0])
+    distance = GeometryOps.distance(p1, p2)
+    expected_distance = np.sqrt(2)
+    assert np.isclose(distance, expected_distance)
+
 
 
 

@@ -344,7 +344,16 @@ class GeometryOps:
                          [Ixy, Iyy, Iyz],
                          [Ixz, Iyz, Izz]])
 
-
+    @staticmethod
+    def compute_optimal_correspondence_rmsd(P: np.ndarray, Q: np.ndarray) -> float:
+        """ 
+        Computes the optimal correspondence rsmd so first use
+        the hungarian algorithm to find the optimal assigment between the two sets of coordinates and then compute the RMSD based on the aligned coordinates 
+        """
+        Q_aligned = GeometryOps.find_optimal_correspondence(P, Q)
+        diff = P - Q_aligned
+        rmsd = np.sqrt(np.mean(np.sum(diff**2, axis=1)))
+        return rmsd
 
     @staticmethod
     def kabsch_rotation(P: np.ndarray, Q: np.ndarray) -> np.ndarray:

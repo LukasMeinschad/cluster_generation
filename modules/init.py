@@ -120,6 +120,44 @@ class ClusterInitializer:
         if self.logger:
            getattr(self.logger, level)(msg) 
 
+    def plot_energy_distribution_filtering(self, energies_before: List[float], energies_after: List[float], save_path: Optional[str] = None) -> None:
+        """  
+        Uses Seaborn to plot the energy distribution before and after filtering high-energy outliers. 
+        """
+        import seaborn as sns
+
+        # side by side plot
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+        sns.histplot(energies_before, bins=30, kde=False, ax=axes[0], color='blue')
+        # KDE plot + Mean and STD lines
+        sns.kdeplot(energies_before, ax=axes[0], color='blue', label='KDE')
+        mean_before = np.mean(energies_before)
+        std_before = np.std(energies_before)
+        axes[0].axvline(mean_before, color='red', linestyle='--', label=f'Mean: {mean_before:.2f}')
+        axes[0].axvline(mean_before + std_before, color='orange', linestyle='--', label=f'Mean + 1 STD: {mean_before + std_before:.2f}')
+        axes[0].axvline(mean_before - std_before, color='orange', linestyle='--', label=f'Mean - 1 STD: {mean_before - std_before:.2f}')
+        axes[0].set_title('Energy Distribution - Initialization (Before Z-Score Filtering)')
+        axes[0].set_xlabel('Energy (Hartree)')
+        axes[0].set_ylabel('Count')
+        axes[0].legend()
+        sns.histplot(energies_after, bins=30, kde=False, ax=axes[1], color='green')
+        # KDE plot + Mean and STD lines
+        sns.kdeplot(energies_after, ax=axes[1], color='green', label='KDE')
+        mean_after = np.mean(energies_after)
+        std_after = np.std(energies_after)
+        axes[1].axvline(mean_after, color='red', linestyle='--', label=f'Mean: {mean_after:.2f}')
+        axes[1].axvline(mean_after + std_after, color='orange', linestyle='--', label=f'Mean + 1 STD: {mean_after + std_after:.2f}')
+        axes[1].axvline(mean_after - std_after, color='orange', linestyle='--', label=f'Mean - 1 STD: {mean_after - std_after:.2f}')
+        axes[1].set_title('Energy Distribution - Initialization (After Z-Score Filtering)')
+        axes[1].set_xlabel('Energy (Hartree)')
+        axes[1].set_ylabel('Count')
+        axes[1].legend()
+        plt.tight_layout()
+        if save_path:
+            plt.savefig(save_path)
+        plt.close()
+
+
     # Helper Method for RMSD Computation
     @staticmethod
     def _calculate_rmsd(coords1: np.ndarray, coords2: np.ndarray) -> float:
@@ -127,6 +165,26 @@ class ClusterInitializer:
         coords_2_opt = GeometryOps.find_optimal_correspondence(coords1, coords2)
         diff = coords1 - coords_2_opt
         return float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
+    
+    def filter_high_energy_outliers(self, molecules: List[Molecule], energies: List[float], Z_threshold: float = 3.0) -> Tuple[List[Molecule], List[float]]:
+        """  
+        Peforms a filtering of unrealistic high-energy outliers based on the Z-score of the energy distribution.
+        Args:
+            molecules: List of candidate molecules
+            energies: Corresponding list of energies for the candidates
+            Z_threshold: Z-score threshold for filtering (default: 3.0)
+        """
+        energy_array = np.array(energies)
+        mean_energy = np.mean(energy_array)
+        std_energy = np.std(energy_array)
+        z_scores = (energy_array - mean_energy) / std_energy
+        filtered_molecules, filtered_energies = [], []
+        # Filter only the high energy outliers (Z > Z_threshold)
+        for mol, energy, z in zip(molecules, energies, z_scores):
+            if z <= Z_threshold:
+                filtered_molecules.append(mol)
+                filtered_energies.append(energy)
+        return filtered_molecules, filtered_energies
     
     
 
@@ -237,10 +295,23 @@ class ClusterInitializer:
         
         scored.sort(key=lambda x: x[0])
 
-        mols = [mol for _, mol in scored]
-        energies = [e for e, _ in scored]
-        e_min = energies[0]   # already sorted ascending
-        e_max = energies[-1]
+
+        # Obtain unfiltered energies and mols
+        mols_raw = [mol for _, mol in scored]
+        energies_raw = [e for e, _ in scored]
+        e_min, e_max = min(energies_raw), max(energies_raw)
+
+
+        # Filter high energy outliers based on Z-score
+        mols, energies = self.filter_high_energy_outliers(mols_raw, energies_raw, Z_threshold=3.0)
+
+        # Plot energy distribution before and after filtering
+        self.plot_energy_distribution_filtering(energies_before=energies_raw, energies_after=energies, save_path="figures/energy_distribution_filtering.png")
+
+
+        # Log how many configurations were filtered out as high-energy outliers
+        n_filtered = len(scored) - len(mols)
+        self._log(f"Filtered out {n_filtered} high-energy outliers based on Z-score thresholding.")
 
         # Build feature matrix and cluster candidates with k-means
         featurizer_config = FeaturizerConfig(descriptor_type="SOAP")

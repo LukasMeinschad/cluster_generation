@@ -13,11 +13,85 @@ Configuration:
   xTB Method (if applicable): GFN2-xTB
 
 
-[1/5] Loading molecule from test_molecules/water_clusters/h2o_dimer.xyz
- Loaded: 6 atoms
+[1/5] Loading molecule from test_molecules/h2o_n2.xyz
+ Loaded: 5 atoms
 
 [2/5] Fragmenting molecule into submolecules
  Found 2 submolecules:
-  Submolecule 1: 3 atoms
+  Submolecule 1: 2 atoms
   Submolecule 2: 3 atoms
 Workers: 2
+  Submolecule 1 optimized successfully
+  Submolecule 2 optimized successfully
+
+[4/5] Creating simulation box
+ Box type:  sphere
+ Radius: 2.59 Angstrom
+ Volume: 72.73 Angstrom^3
+
+Energy evaluation complete: 10000 successful, 0 failed
+Filtered out 202 high-energy outliers based on Z-score thresholding.
+
+Clustering evaluation metrics:
+  silhouette_score: 0.0874
+  davies_bouldin_score: 2.1960
+  calinski_harabasz_score: 898.6552
+Optimizing selected representative 1/10...
+ Optimization successful
+Optimizing selected representative 2/10...
+ Optimization successful
+Optimizing selected representative 3/10...
+ Optimization successful
+Optimizing selected representative 4/10...
+ Optimization successful
+Optimizing selected representative 5/10...
+ Optimization successful
+Optimizing selected representative 6/10...
+ Optimization successful
+Optimizing selected representative 7/10...
+ Optimization successful
+Optimizing selected representative 8/10...
+ Optimization successful
+Optimizing selected representative 9/10...
+ Optimization successful
+Optimizing selected representative 10/10...
+ Optimization successful
+
+Pre-screening completed: 10000 valid configurations out of 10000 generated.
+Statistics of scored configurations:
+  Energy range: -10.836273 to -10.788479 Hartree
+  Energy distribution: mean -10.834386, median -10.834714, std 0.001397 Hartree
+  Clusters formed: 10, Representatives selected: 10
+============================================================
+Initialization Complete!
+Total atoms: 5
+Submolecules: 2
+Simulation box type: sphere
+Candidates generated: 10000, Valid: 10000, Failed: 0
+Selected for workers: 10, Energy range: -10.836273 to -10.788479 Hartree
+Box radius: 2.59 Angstrom
+Box volume: 72.73 Angstrom^3
+Obtained 10 initial structures
+Wrote 10 structures to trajectories/initial_candidates.xyz
+Computed pairwise RMSD matrix
+========================================================================
+                    Phase A: Global PES Exploration                     
+========================================================================
+Configuration:
+  Workers: 10
+  Steps per worker: 500
+  Total steps: 5000
+  Method/Basis: hf/sto-3g
+  Temperature: 400.0 K
+  Adaptive operators: True
+  Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation, com_com_approach, com_com_separation
+  Independent initial configs: 10
+  Simulation Box: <modules.box.SimulationBox object at 0x7efcee3d9190>
+  Worker log: bhmc_workers.log
+Estimated single point time: 0.01 seconds (Energy: -10.834949 Hartree)
+Estimated Phase A time: 0.45 minutes
+Starting parallel BHMC chains...
+Profiling Results for Phase A:
+Current memory usage: 5.76 MB; Peak memory usage: 6.43 MB
+Phase A complete: 0 structures accepted
+No molecules provided to write to XYZ file.

@@ -5,12 +5,13 @@ This module provides a parallel BHMC implementation for exploring the potential
 energy surface of molecular clusters using various nonlocal transformation operators.
 """
 
-import numpy as np  
+import numpy as np
 import random
 import logging
 from typing import List, Optional, Tuple, Dict
 from dataclasses import dataclass
-from multiprocessing import Pool
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import copy
 from tqdm import tqdm
 import time
@@ -227,11 +228,16 @@ class MultiPhaseBHMC:
             ]
             
             self._log("Starting parallel BHMC chains...")
-            
-            with Pool(processes=n_processes) as pool:
-                
-                results_generator = pool.imap(_phase_a_worker, args_list)
-                results = list(tqdm(results_generator, total=n_processes, desc="Phase A Workers"))
+            ctx = multiprocessing.get_context("spawn")
+            results = [None] * n_processes
+            with ProcessPoolExecutor(max_workers=n_processes, mp_context=ctx) as executor:
+                future_to_wid = {
+                    executor.submit(_phase_a_worker, args): args[6]
+                    for args in args_list
+                }
+                for future in tqdm(as_completed(future_to_wid), total=n_processes, desc="Phase A Workers"):
+                    wid = future_to_wid[future]
+                    results[wid] = future.result()
 
             
             # Collect results and trajectories
@@ -408,9 +414,16 @@ class MultiPhaseBHMC:
             for worker_id, rep in enumerate(representatives)
         ]
         self._log("Starting parallel local refinement workers...")
-        with Pool(processes=n_processes) as pool:
-            results_generator = pool.imap(_phase_b_worker, args_list)
-            results = list(tqdm(results_generator, total=n_workers, desc="Phase B Workers"))
+        ctx = multiprocessing.get_context("spawn")
+        results = [None] * n_workers
+        with ProcessPoolExecutor(max_workers=n_processes, mp_context=ctx) as executor:
+            future_to_wid = {
+                executor.submit(_phase_b_worker, args): args[6]
+                for args in args_list
+            }
+            for future in tqdm(as_completed(future_to_wid), total=n_workers, desc="Phase B Workers"):
+                wid = future_to_wid[future]
+                results[wid] = future.result()
 
         # Collect results and trajectories
         self.phase_b_trajectories = {}
@@ -467,7 +480,11 @@ class MultiPhaseBHMC:
 
     def analyse_phase_a_results(
             self,
-            phase_a_structures: List[Tuple[Molecule, float]])
+            phase_a_structures: List[Tuple[Molecule, float]]):
+        """  
+        """
+        # TODO implement
+        pass
 
 
     def analyse_phase_b_results(self, 

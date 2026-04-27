@@ -9,6 +9,7 @@ from bhmc import MultiPhaseBHMC
 from bhmc_config import BHMCConfig
 from args import get_args
 from logger import Logger
+from struc_distinction import StructureAnalysis
 
 
 if __name__ == "__main__":
@@ -21,7 +22,7 @@ if __name__ == "__main__":
         backend="xtb",
         box_scale_factor=1.5,
         xtb_method="GFN2-xTB",
-        verbose=True,
+        verbose=False,
     )
 
     initializer = ClusterInitializer(config=init_config, logger=logger)
@@ -40,6 +41,11 @@ if __name__ == "__main__":
         filepath="trajectories/initial_candidates.xyz",
         energies=None,
     )
+
+    # Initialize the StructureAnalysis Class
+    structure_analysis = StructureAnalysis(logger=logger, mols=initial_molecules)
+    structure_analysis.compute_pairwise_rmsd()
+    structure_analysis.plot_pairwise_rmsd_heatmap(save_path="figures/initial_pairwise_rmsd_heatmap.png")
 
     # ── Phase A: Global PES Exploration ──────────────────────────────────────
     bhmc_config = BHMCConfig(

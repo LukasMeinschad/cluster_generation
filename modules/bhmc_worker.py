@@ -10,6 +10,8 @@ import io
 import tracemalloc
 
 
+
+
 from molecule_class import Molecule
 from operators import NonLocalOperators, LocalOperators
 from box import SimulationBox
@@ -164,15 +166,30 @@ def _phase_a_worker(args: Tuple) -> Dict:
     """  
     Worker function for parallel BHMC Phase A exploration 
     """
+    import os
+    import tempfile
+    from pathlib import Path
     # Enable the profiler at the start of the worker function 
     pr = cProfile.Profile()
     pr.enable()
     tracemalloc.start()  # Start memory tracking
 
-    try:
-         (initial_molecule, submolecule_indices, n_structures,
-          operator_list, config_dict, worker_id, sim_box_dict, worker_log_file) = args
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ["MKL_NUM_THREADS"] = "1"
+    os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
+    (initial_molecule, submolecule_indices, n_structures,
+     operator_list, config_dict, worker_id, sim_box_dict, worker_log_file) = args
+
+    # Unique Scratch per Task
+    base = Path.cwd() / ".psi_scratch"
+    base.mkdir(parents=True, exist_ok=True)
+    task_scratch = Path(tempfile.mkdtemp(prefix=f"worker_{worker_id}_", dir=base))
+    os.environ["PSI_SCRATCH"] = str(task_scratch)
+
+    result = {'accepted_structures': [], 'energy_trajectory': [], 'box_updates': [], 'worker_id': worker_id, 'operator_acceptance_rates': {}}
+
+    try:
          logger = _get_worker_logger(worker_log_file, worker_id)
 
          def _log(msg: str, level: str = "info") -> None:

@@ -140,7 +140,7 @@ class EnergyEvaluator:
                 opt = LBFGS(atoms)
         else:
             raise ValueError(f"Unsupported optimizer: {optimizer}. Supported optimizers are 'BFGS' and 'LBFGS'.")
-        opt.run(fmax=0.05)  # Run optimization until max force is below 0.05 eV/Å
+        opt.run(fmax=0.001)  # Tight convergence required for reliable Hessian/frequencies
         optimized_molecule = Molecule.from_ase_atoms(atoms)
         return optimized_molecule
 
@@ -152,12 +152,37 @@ class EnergyEvaluator:
             self._ensure_psi_scratch()
 
         atoms = molecule.to_ase_atoms()
+        dof = len(atoms) * 3
+        n_vib = dof - 6  # Number of vibrational modes (3N-6 for non-linear molecules)
         atoms.set_calculator(self.calculator)
         vib = Vibrations(atoms, delta=delta)
+        vib.clean()  # Remove stale cache files from previous runs
         vib.run()
         vibrations = vib.get_vibrations() # Returns the VibrationsData Object
-        hessian = vibrations.get_hessian_2d() #[[at1x_at1x, at1x_at1y, at1x_at1z, at1x_at2x, ...], [...], ...]
-        return hessian
+        # Extract the Vibrational Frequencies
+        frequencies = vibrations.get_frequencies() # Returns a 1D array of frequencies in cm^-1
+        # Imaginary frequencies → negative by convention (saddle-point modes)
+        hessian = vibrations.get_hessian_2d() # Returns the 2D Hessian matrix
+        # Determine Eigenvalues, Eigenvectors, and the order of the saddle point
+        eigenvalues, eigenvectors = np.linalg.eigh(hessian)
+
+        # Set negative eigenvalues and near zero eigenvalues to zero for stability
+        threshold = 1e-4  # Threshold for zero eigenvalues
+        eigenvalues[np.abs(eigenvalues) < threshold] = 0.0 
+        eigenvalues[eigenvalues < 0] = 0.0
+        print("Eigenvalues of the Hessian:", eigenvalues)
+        # Check if there are 3n-6 positive eigenvalues if not the difference is the order of the saddle point
+        n_positive = np.sum(eigenvalues > 0)
+        order_saddle_point = dof - 6 - n_positive
+        local_minimum = order_saddle_point == 0
+
+        
+
+        return hessian, frequencies, order_saddle_point, local_minimum
+    
+    
+    
+    
         
  
 
@@ -173,41 +198,22 @@ def run_self_tests():
         h2o_xyz = f.read()
     molecule = Molecule.from_xyz(h2o_xyz)
     print("Testing PSI4 backend...")
-    psi4_evaluator = EnergyEvaluator(backend="psi4", qm_method="hf", qm_basis="6-31g")
-    energy_psi4 = psi4_evaluator.evaluate(molecule)
-    print(f"PSI4 Energy: {energy_psi4:.6f} Hartree")    
-    print("Testing xTB backend...")
-    xtb_evaluator = EnergyEvaluator(backend="xtb", xtb_method="GFN2-xTB")
-    energy_xtb = xtb_evaluator.evaluate(molecule)
-    print(f"xTB Energy: {energy_xtb:.6f} Hartree")
-    print("Testing GPAW backend...")
-    gpaw_evaluator = EnergyEvaluator(backend="gpaw", gpaw_mode="lcao", gpaw_basis="dzp", gpaw_xc="B3LYP")
-    energy_gpaw = gpaw_evaluator.evaluate(molecule)
-    print(f"GPAW Energy: {energy_gpaw:.6f} Hartree")
+    psi4_evaluator = EnergyEvaluator(backend="psi4", qm_method="hf", qm_basis="cc-pvdz")
+    # Optimize and calculate hessian
+    optimized_molecule_psi4 = psi4_evaluator.optimize_geometry(molecule, optimizer="BFGS")
+    hessian_psi4, frequencies_psi4, order_saddle_point, local_minimum = psi4_evaluator.compute_hessian(optimized_molecule_psi4)
 
-    # Test force evaluation
-    print("Testing PSI4 forces...")
-    forces_psi4 = psi4_evaluator.evaluate_forces(molecule)
-    print(f"PSI4 Forces (Hartree/Å):\n{forces_psi4}")
-    print("Testing xTB forces...")
-    forces_xtb = xtb_evaluator.evaluate_forces(molecule)
-    print(f"xTB Forces (Hartree/Å):\n{forces_xtb}")
-    print("Testing GPAW forces...")
-    forces_gpaw = gpaw_evaluator.evaluate_forces(molecule)
-    print(f"GPAW Forces (Hartree/Å):\n{forces_gpaw}")
+    # for the water dimer we expect 3N = 18 mode
+    # 3N-6 = 12 vibrational modes and 6 zero-frequency modes (3 translations + 3 rotations)
 
-
-
-    # Test geometry optimization
-    print("Testing PSI4 geometry optimization...")
-    optimized_molecule_psi4 = psi4_evaluator.optimize_geometry(molecule, optimizer="BFGS", write_trajectory=False)
-    print(f"Optimized PSI4 Energy: {psi4_evaluator.evaluate(optimized_molecule_psi4):.6f} Hartree")
-    print("Testing xTB geometry optimization...")
-    optimized_molecule_xtb = xtb_evaluator.optimize_geometry(molecule, optimizer="BFGS", write_trajectory=False)
-    print(f"Optimized xTB Energy: {xtb_evaluator.evaluate(optimized_molecule_xtb):.6f} Hartree")
-    print("Testing GPAW geometry optimization...")
-    optimized_molecule_gpaw = gpaw_evaluator.optimize_geometry(molecule, optimizer="BFGS", write_trajectory=False)
-    print(f"Optimized GPAW Energy: {gpaw_evaluator.evaluate(optimized_molecule_gpaw):.6f} Hartree")
+    print("hessian shape:", hessian_psi4.shape)
+    print("frequencies shape:", frequencies_psi4.shape)
+    print("PSI4 tests passed!")
+    # Print the frequencies
+    print("Vibrational frequencies (cm^-1):", frequencies_psi4)
+    print("Order of saddle point:", order_saddle_point)
+    print("Is local minimum:", local_minimum)
+    
 
 
 

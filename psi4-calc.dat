@@ -1,5 +1,5 @@
 
-Scratch directory: /media/storage_6/lme/master_thesis/cluster_generation/.psi4_scratch/task_0_482c5hz4/
+Scratch directory: /tmp/
 gradient() will perform analytic gradient computation.
    => Libint2 <=
 
@@ -9,15 +9,15 @@ gradient() will perform analytic gradient computation.
     Solid Harmonics ordering:            Gaussian
 
 *** tstart() called on sv1-c724
-*** at Sun Apr 26 10:06:58 2026
+*** at Tue Apr 28 13:25:08 2026
 
    => Loading Basis Set <=
 
     Name: CC-PVDZ
     Role: ORBITAL
     Keyword: BASIS
-    atoms 1   entry C          line   138 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz.gbs 
-    atoms 2-3 entry O          line   198 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz.gbs 
+    atoms 1, 4     entry O          line   198 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz.gbs 
+    atoms 2-3, 5-6 entry H          line    22 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz.gbs 
 
 
          ---------------------------------------------------------
@@ -31,27 +31,30 @@ gradient() will perform analytic gradient computation.
   ==> Geometry <==
 
     Molecular point group: c1
-    Full point group: C_inf_v
+    Full point group: C1
 
     Geometry (in Angstrom), charge = 0, multiplicity = 1:
 
        Center              X                  Y                   Z               Mass       
     ------------   -----------------  -----------------  -----------------  -----------------
-         C           -0.000065945180    -0.000038011350     0.000001729774    12.000000000000
-         O           -0.941893274288    -0.642808287325    -0.000005416182    15.994914619570
-         O            0.941942748898     0.642836804901     0.000004118439    15.994914619570
+         O           -1.471606184322    -0.357701586922    -0.229749164195    15.994914619570
+         H           -0.562227117138    -0.134060812437    -0.067909293946     1.007825032230
+         H           -1.881835891992    -0.304487818617     0.620799665852     1.007825032230
+         O            1.396726327296     0.339430935311     0.216651269450    15.994914619570
+         H            1.657669358639     1.088897818307    -0.300630646055     1.007825032230
+         H            1.974791320275    -0.360380687555    -0.044386631364     1.007825032230
 
   Running in c1 symmetry.
 
-  Rotational constants: A = ************  B =      0.40523  C =      0.40523 [cm^-1]
-  Rotational constants: A = ************  B =  12148.37458  C =  12148.37458 [MHz]
-  Nuclear repulsion =   59.397416277122836
+  Rotational constants: A =      7.46989  B =      0.20386  C =      0.20378 [cm^-1]
+  Rotational constants: A = 223941.63884  B =   6111.51355  C =   6109.07238 [MHz]
+  Nuclear repulsion =   36.408973511410537
 
   Charge       = 0
   Multiplicity = 1
-  Electrons    = 22
-  Nalpha       = 11
-  Nbeta        = 11
+  Electrons    = 20
+  Nalpha       = 10
+  Nbeta        = 10
 
   ==> Algorithm <==
 
@@ -68,9 +71,9 @@ gradient() will perform analytic gradient computation.
 
   Basis Set: CC-PVDZ
     Blend: CC-PVDZ
-    Number of shells: 18
-    Number of basis functions: 42
-    Number of Cartesian functions: 45
+    Number of shells: 24
+    Number of basis functions: 48
+    Number of Cartesian functions: 50
     Spherical Harmonics?: true
     Max angular momentum: 2
 
@@ -79,12 +82,12 @@ gradient() will perform analytic gradient computation.
     Name: (CC-PVDZ AUX)
     Role: JKFIT
     Keyword: DF_BASIS_SCF
-    atoms 1   entry C          line   121 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz-jkfit.gbs 
-    atoms 2-3 entry O          line   221 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz-jkfit.gbs 
+    atoms 1, 4     entry O          line   221 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz-jkfit.gbs 
+    atoms 2-3, 5-6 entry H          line    51 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz-jkfit.gbs 
 
   ==> Integral Setup <==
 
-  DFHelper Memory: AOs need 0.003 GiB; user supplied 0.366 GiB. 
+  DFHelper Memory: AOs need 0.005 GiB; user supplied 0.366 GiB. 
   Using in-core AOs.
 
   ==> MemDFJK: Density-Fitted J/K Matrices <==
@@ -103,14 +106,14 @@ gradient() will perform analytic gradient computation.
 
   Basis Set: (CC-PVDZ AUX)
     Blend: CC-PVDZ-JKFIT
-    Number of shells: 72
-    Number of basis functions: 210
-    Number of Cartesian functions: 243
+    Number of shells: 84
+    Number of basis functions: 232
+    Number of Cartesian functions: 262
     Spherical Harmonics?: true
     Max angular momentum: 3
 
-  Minimum eigenvalue in the overlap matrix is 1.7521175005E-02.
-  Reciprocal condition number of the overlap matrix is 5.1825107150E-03.
+  Minimum eigenvalue in the overlap matrix is 3.0036044198E-02.
+  Reciprocal condition number of the overlap matrix is 7.6234022315E-03.
     Using symmetric orthogonalization.
 
   ==> Pre-Iterations <==
@@ -120,26 +123,27 @@ gradient() will perform analytic gradient computation.
    -------------------------
     Irrep   Nso     Nmo    
    -------------------------
-     A         42      42 
+     A         48      48 
    -------------------------
-    Total      42      42
+    Total      48      48
    -------------------------
 
   ==> Iterations <==
 
                            Total Energy        Delta E     RMS |[F,P]|
 
-   @DF-RHF iter SAD:  -186.93355730775647   -1.86934e+02   0.00000e+00 
-   @DF-RHF iter   1:  -187.57567344771007   -6.42116e-01   1.12304e-02 ADIIS/DIIS
-   @DF-RHF iter   2:  -187.61700415742604   -4.13307e-02   7.62156e-03 ADIIS/DIIS
-   @DF-RHF iter   3:  -187.65232192029018   -3.53178e-02   4.83554e-04 ADIIS/DIIS
-   @DF-RHF iter   4:  -187.65250341223006   -1.81492e-04   7.01668e-05 DIIS
-   @DF-RHF iter   5:  -187.65250869512278   -5.28289e-06   1.81013e-05 DIIS
-   @DF-RHF iter   6:  -187.65250913855482   -4.43432e-07   3.13781e-06 DIIS
-   @DF-RHF iter   7:  -187.65250915370763   -1.51528e-08   9.87739e-07 DIIS
-   @DF-RHF iter   8:  -187.65250915449099   -7.83359e-10   4.98140e-07 DIIS
-   @DF-RHF iter   9:  -187.65250915467269   -1.81700e-10   3.40872e-08 DIIS
-   @DF-RHF iter  10:  -187.65250915467379   -1.10845e-12   2.45478e-09 DIIS
+   @DF-RHF iter SAD:  -151.09639926850326   -1.51096e+02   0.00000e+00 
+   @DF-RHF iter   1:  -151.93055270177445   -8.34153e-01   1.18507e-02 ADIIS/DIIS
+   @DF-RHF iter   2:  -152.02938842838392   -9.88357e-02   6.54779e-03 ADIIS/DIIS
+   @DF-RHF iter   3:  -152.06239996696598   -3.30115e-02   6.84739e-04 ADIIS/DIIS
+   @DF-RHF iter   4:  -152.06319485848479   -7.94892e-04   1.36297e-04 ADIIS/DIIS
+   @DF-RHF iter   5:  -152.06322855933610   -3.37009e-05   3.37665e-05 DIIS
+   @DF-RHF iter   6:  -152.06323077868188   -2.21935e-06   1.40527e-05 DIIS
+   @DF-RHF iter   7:  -152.06323104659711   -2.67915e-07   2.42701e-06 DIIS
+   @DF-RHF iter   8:  -152.06323106162375   -1.50266e-08   3.33545e-07 DIIS
+   @DF-RHF iter   9:  -152.06323106194728   -3.23524e-10   7.57248e-08 DIIS
+   @DF-RHF iter  10:  -152.06323106196479   -1.75078e-11   1.54392e-08 DIIS
+   @DF-RHF iter  11:  -152.06323106196533   -5.40012e-13   2.22735e-09 DIIS
   Energy and wave function converged.
 
 
@@ -150,39 +154,41 @@ gradient() will perform analytic gradient computation.
 
     Doubly Occupied:                                                      
 
-       1A    -20.646152     2A    -20.646076     3A    -11.459345  
-       4A     -1.540757     5A     -1.486877     6A     -0.792235  
-       7A     -0.740188     8A     -0.717240     9A     -0.717240  
-      10A     -0.537067    11A     -0.537067  
+       1A    -20.579635     2A    -20.516093     3A     -1.372663  
+       4A     -1.311326     5A     -0.736697     6A     -0.679840  
+       7A     -0.599800     8A     -0.543367     9A     -0.517750  
+      10A     -0.464713  
 
     Virtual:                                                              
 
-      12A      0.233333    13A      0.233333    14A      0.258167  
-      15A      0.488121    16A      0.599615    17A      0.599615  
-      18A      0.792273    19A      0.997057    20A      1.051833  
-      21A      1.116307    22A      1.116307    23A      1.256976  
-      24A      1.256976    25A      1.382274    26A      1.382274  
-      27A      1.515010    28A      1.611118    29A      1.611118  
-      30A      1.876944    31A      2.319325    32A      2.871326  
-      33A      2.871326    34A      3.026810    35A      3.026810  
-      36A      3.147584    37A      3.147584    38A      3.202784  
-      39A      3.767290    40A      3.917399    41A      3.917399  
-      42A      3.979753  
+      11A      0.165784    12A      0.232439    13A      0.242368  
+      14A      0.372703    15A      0.773769    16A      0.816639  
+      17A      0.852969    18A      0.882128    19A      1.132423  
+      20A      1.198867    21A      1.208775    22A      1.235258  
+      23A      1.259480    24A      1.321931    25A      1.452397  
+      26A      1.458630    27A      1.487683    28A      1.518281  
+      29A      1.690023    30A      1.707853    31A      1.818881  
+      32A      1.930075    33A      1.981387    34A      2.031719  
+      35A      2.457072    36A      2.487394    37A      2.526575  
+      38A      2.697904    39A      3.259894    40A      3.317435  
+      41A      3.330066    42A      3.379945    43A      3.502145  
+      44A      3.557280    45A      3.866991    46A      3.915381  
+      47A      4.132456    48A      4.204681  
 
     Final Occupation by Irrep:
               A 
-    DOCC [    11 ]
-    NA   [    11 ]
-    NB   [    11 ]
+    DOCC [    10 ]
+    NA   [    10 ]
+    NB   [    10 ]
 
-  @DF-RHF Final Energy:  -187.65250915467379
+  @DF-RHF Final Energy:  -152.06323106196533
 
    => Energetics <=
 
-    Nuclear Repulsion Energy =             59.3974162771228364
-    One-Electron Energy =                -374.4593650166212342
-    Two-Electron Energy =                 127.4094395848246108
-    Total Energy =                       -187.6525091546737940
+    Nuclear Repulsion Energy =             36.4089735114105366
+    One-Electron Energy =                -282.3006407334075902
+    Two-Electron Energy =                  93.8284361600317425
+    Total Energy =                       -152.0632310619653254
 
 Computation Completed
 
@@ -199,25 +205,25 @@ Properties computed using the SCF density matrix
  ------------------------------------------------------------------------------------
 
  L = 1.  Multiply by 2.5417464519 to convert [e a0] to [Debye]
- Dipole X            :         -0.0005035            0.0000002           -0.0005033
- Dipole Y            :         -0.0003296            0.0000001           -0.0003295
- Dipole Z            :          0.0000035           -0.0000000            0.0000035
- Magnitude           :                                                    0.0006016
+ Dipole X            :          0.0190188            1.1137267            1.1327455
+ Dipole Y            :         -0.0006556            0.2717488            0.2710932
+ Dipole Z            :         -0.0276350            0.1948117            0.1671767
+ Magnitude           :                                                    1.1766699
 
  ------------------------------------------------------------------------------------
 
-*** tstop() called on sv1-c724 at Sun Apr 26 10:06:58 2026
+*** tstop() called on sv1-c724 at Tue Apr 28 13:25:08 2026
 Module time:
-	user time   =       0.29 seconds =       0.00 minutes
-	system time =       0.01 seconds =       0.00 minutes
+	user time   =       0.40 seconds =       0.01 minutes
+	system time =       0.00 seconds =       0.00 minutes
 	total time  =          0 seconds =       0.00 minutes
 Total time:
-	user time   =       2.78 seconds =       0.05 minutes
-	system time =       0.06 seconds =       0.00 minutes
-	total time  =          3 seconds =       0.05 minutes
+	user time   =      45.04 seconds =       0.75 minutes
+	system time =       0.64 seconds =       0.01 minutes
+	total time  =         46 seconds =       0.77 minutes
 
 *** tstart() called on sv1-c724
-*** at Sun Apr 26 10:06:58 2026
+*** at Tue Apr 28 13:25:08 2026
 
 
          ------------------------------------------------------------
@@ -229,25 +235,28 @@ Total time:
   ==> Geometry <==
 
     Molecular point group: c1
-    Full point group: C_inf_v
+    Full point group: C1
 
     Geometry (in Angstrom), charge = 0, multiplicity = 1:
 
        Center              X                  Y                   Z               Mass       
     ------------   -----------------  -----------------  -----------------  -----------------
-         C           -0.000065945180    -0.000038011350     0.000001729774    12.000000000000
-         O           -0.941893274288    -0.642808287325    -0.000005416182    15.994914619570
-         O            0.941942748898     0.642836804901     0.000004118439    15.994914619570
+         O           -1.471606184322    -0.357701586922    -0.229749164195    15.994914619570
+         H           -0.562227117138    -0.134060812437    -0.067909293946     1.007825032230
+         H           -1.881835891992    -0.304487818617     0.620799665852     1.007825032230
+         O            1.396726327296     0.339430935311     0.216651269450    15.994914619570
+         H            1.657669358639     1.088897818307    -0.300630646055     1.007825032230
+         H            1.974791320275    -0.360380687555    -0.044386631364     1.007825032230
 
-  Nuclear repulsion =   59.397416277122836
+  Nuclear repulsion =   36.408973511410537
 
   ==> Basis Set <==
 
   Basis Set: CC-PVDZ
     Blend: CC-PVDZ
-    Number of shells: 18
-    Number of basis functions: 42
-    Number of Cartesian functions: 45
+    Number of shells: 24
+    Number of basis functions: 48
+    Number of Cartesian functions: 50
     Spherical Harmonics?: true
     Max angular momentum: 2
 
@@ -267,9 +276,9 @@ Total time:
 
   Basis Set: (CC-PVDZ AUX)
     Blend: CC-PVDZ-JKFIT
-    Number of shells: 72
-    Number of basis functions: 210
-    Number of Cartesian functions: 243
+    Number of shells: 84
+    Number of basis functions: 232
+    Number of Cartesian functions: 262
     Spherical Harmonics?: true
     Max angular momentum: 3
 
@@ -277,19 +286,22 @@ Total time:
   -Total Gradient:
      Atom            X                  Y                   Z
     ------   -----------------  -----------------  -----------------
-       1       -0.000360320461    -0.000242431668     0.000000857351
-       2        0.000584903126     0.000397438863    -0.000000426213
-       3       -0.000224582667    -0.000155007194    -0.000000431138
+       1        0.000002668959     0.000004479409     0.000001397158
+       2       -0.000022650880     0.000002569929     0.000008767612
+       3        0.000011851603    -0.000003664925    -0.000008715513
+       4        0.002547591427    -0.002460434955    -0.001386423053
+       5       -0.000361120380     0.000502814185     0.000134064882
+       6       -0.002178340729     0.001954236356     0.001250908915
 
 
-*** tstop() called on sv1-c724 at Sun Apr 26 10:06:58 2026
+*** tstop() called on sv1-c724 at Tue Apr 28 13:25:09 2026
 Module time:
-	user time   =       0.11 seconds =       0.00 minutes
+	user time   =       0.14 seconds =       0.00 minutes
 	system time =       0.00 seconds =       0.00 minutes
-	total time  =          0 seconds =       0.00 minutes
+	total time  =          1 seconds =       0.02 minutes
 Total time:
-	user time   =       2.90 seconds =       0.05 minutes
-	system time =       0.06 seconds =       0.00 minutes
-	total time  =          3 seconds =       0.05 minutes
+	user time   =      45.19 seconds =       0.75 minutes
+	system time =       0.64 seconds =       0.01 minutes
+	total time  =         47 seconds =       0.78 minutes
 !ASE Information
-{"parameters": {"basis": "cc-pvdz", "method": "hf", "symmetry": "c1", "ignore_bad_restart": false, "command": null}, "results": {"energy": -5106.284865048937, "forces": [[0.018528422899386242, 0.012466337499968044, -4.408674499125419e-05], [-0.030076927808464306, -0.020437127867960904, 2.19167618981833e-05], [0.011548504979309183, 0.007970790344182617, 2.216998309285392e-05]]}, "atoms": "{\"1\": {\n \"cell\": {\"__ndarray__\": [[3, 3], \"float64\", [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]},\n \"ctime\": 26.31726172645902,\n \"mtime\": 26.31726172645902,\n \"numbers\": {\"__ndarray__\": [[3], \"int64\", [6, 8, 8]]},\n \"pbc\": {\"__ndarray__\": [[3], \"bool\", [false, false, false]]},\n \"positions\": {\"__ndarray__\": [[3, 3], \"float64\", [-4.137754121657013, 1.6335368199082214, -1.7747569880052658e-05, -5.079581450764847, 0.9907665439332202, -2.489352584479775e-05, -3.195745427578609, 2.276411636159726, -1.5358904275144742e-05]]},\n \"unique_id\": \"c07c842cccb0406b844eb0802e280f49\",\n \"user\": \"lme\"},\n\"ids\": [1],\n\"nextid\": 2}\n"}!
+{"parameters": {"basis": "cc-pvdz", "method": "hf", "symmetry": "c1", "ignore_bad_restart": false, "command": null}, "results": {"energy": -4137.85128053969, "forces": [[-0.00013724336905665852, -0.00023034048612327856, -7.184475130813642e-05], [0.0011647550608494042, -0.0001321510490185107, -0.000450848724218489], [-0.0006094339285230395, 0.00018845800025276877, 0.0004481697065837217], [-0.13100241725702738, 0.12652065131595952, 0.07129273926355506], [0.018569556406489735, -0.02585574477868951, -0.006893893363456014], [0.11201478308822278, -0.1004908730084434, -0.06432432213260694]]}, "atoms": "{\"1\": {\n \"cell\": {\"__ndarray__\": [[3, 3], \"float64\", [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]},\n \"ctime\": 26.32311421278896,\n \"mtime\": 26.32311421278896,\n \"numbers\": {\"__ndarray__\": [[6], \"int64\", [8, 1, 1, 8, 1, 1]]},\n \"pbc\": {\"__ndarray__\": [[3], \"bool\", [false, false, false]]},\n \"positions\": {\"__ndarray__\": [[6, 3], \"float64\", [0.18249318018879668, -0.15298456158351106, -0.3834146974449766, 1.091872247372485, 0.07065621290156715, -0.22157482719586558, -0.22773652748088824, -0.0997707932785272, 0.4671341326019457, 3.0508256918068, 0.5441479606498155, 0.06298573619959788, 3.311768723149235, 1.2936148436456576, -0.4542961793049959, 3.628890684785306, -0.15566366221607092, -0.19805216461436145]]},\n \"unique_id\": \"8c8f268c257949099b618c77eef323dc\",\n \"user\": \"lme\"},\n\"ids\": [1],\n\"nextid\": 2}\n"}!

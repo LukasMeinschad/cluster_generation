@@ -46,6 +46,8 @@ if __name__ == "__main__":
     structure_analysis = StructureAnalysis(logger=logger, mols=initial_molecules)
     structure_analysis.compute_pairwise_rmsd()
     structure_analysis.plot_pairwise_rmsd_heatmap(save_path="figures/initial_pairwise_rmsd_heatmap.png")
+    structure_analysis.analyze_hessians(n_workers=10)
+
 
     # ── Phase A: Global PES Exploration ──────────────────────────────────────
     bhmc_config = BHMCConfig(

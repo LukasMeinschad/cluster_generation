@@ -149,8 +149,11 @@ class StructureAnalysis:
                     optimized_mol = future.result()
                     optimized_mols.append(optimized_mol)
                 except Exception as e:
+                    msg = f"Error optimizing geometry for molecule: {e}"
                     if self.logger:
-                        self._log(f"Error optimizing geometry for molecule: {e}")
+                        self._log(msg)
+                    else:
+                        print(msg)
         if self.logger:
             self._log("Completed geometry optimization for all structures")
         # Update the mols with the optimized geometries
@@ -178,58 +181,45 @@ class StructureAnalysis:
         
 
     def analyze_hessians(self, n_workers: int = 4):
-        """  
-        Computes the Hessian for each structure and analyzes its eigenvalues to determine if the structure is a local minimum
         """
-        results = []
-        ctx = multiprocessing.get_context("spawn")
-        with ProcessPoolExecutor(max_workers=n_workers, mp_context=ctx) as executor:
-            futures = {executor.submit(self._analyze_hessian_worker, mol, self.config): mol for mol in self.mols}
-            for future in as_completed(futures):
-                mol = futures[future]
-                try:
-                    result = future.result()
-                    results.append((mol, result))
-                except Exception as e:
-                    if self.logger:
-                        self._log(f"Error analyzing Hessian for molecule: {e}")
+        Computes the Hessian for each structure in parallel and analyzes eigenvalues to
+        determine if each structure is a local minimum.
+        """
+        results, errors = self.calculator.compute_hessians_parallel(self.mols, n_workers)
+        for mol, e in errors:
+            msg = f"Error analyzing Hessian for molecule: {e}"
+            if self.logger:
+                self._log(msg)
+            else:
+                print(msg)
         if self.logger:
             self._log("Completed Hessian analysis for all structures")
-        self.hessian_analysis_results = results
-        # Log the Hessian analysis results
-        if self.logger:
             for mol, analysis in results:
-                self._log(f"Molecule: {mol.name} Ha: {analysis['n_negative']} negative, {analysis['n_zero']} zero, {analysis['n_positive']} positive eigenvalues")
-                # Log the frequencies
+                self._log(f"Molecule: {mol.name} order_stationary_point={analysis['order_stationary_point']} global_minimum={analysis['global_minimum']}")
                 self._log(f"Molecule: {mol.name} Frequencies (cm^-1): {analysis['frequencies']}")
-
+        self.hessian_analysis_results = results
         return results
-
-    @staticmethod
-    def _analyze_hessian_worker(mol: Molecule, calculator_config: StructureAnalysisConfig):
+    
+    def plot_hessian_matrix(self, save_path: str = "figures/hessian_matrix.png"):
         """ 
-        Worker function for multiprocessing to compute the Hessian and analyze its eigenvalues for a given molecule
-        """  
-        
-        # Setup the Calculator 
-        calculator = EnergyEvaluator(
-            backend=calculator_config.calculator_backend,
-            qm_method=calculator_config.calculator_qm_method,
-            qm_basis=calculator_config.calculator_qm_basis,
-            xtb_method=calculator_config.calculator_xtb_method,
-            gpaw_mode=calculator_config.calculator_gpaw_mode,
-            gpaw_basis=calculator_config.calculator_gpaw_basis,
-            gpaw_xc=calculator_config.calculator_gpaw_xc,
-        )
-        # Compute the hessian
-        hessian, frequencies, order_saddle_point, local_minimum = calculator.compute_hessian(mol)
-
-        # Return the order of the saddle point wether it is a minimum and the frequencies
-        return {
-            "order_saddle_point": order_saddle_point,
-            "local_minimum": local_minimum,
-            "frequencies": frequencies,
-        } 
+        Helper function to plot all the hessian matrices of the analyzed structures in a grid
+        """
+        import matplotlib.pyplot as plt
+        n = len(self.hessian_analysis_results)
+        n_cols = 3
+        n_rows = (n + n_cols - 1) // n_cols
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 5 * n_rows))
+        for i, (mol, analysis) in enumerate(self.hessian_analysis_results):
+            row = i // n_cols
+            col = i % n_cols
+            ax = axes[row, col] if n_rows > 1 else axes[col]
+            hessian = analysis["hessian"]
+            im = ax.imshow(hessian, cmap="viridis")
+            ax.set_title(f"{mol.name} Hessian")
+            fig.colorbar(im, ax=ax)
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300)
+        plt.close()
 
     
 
@@ -260,8 +250,8 @@ if __name__ == "__main__":
     """
     Run small self test to ensure that the StructureAnalysis class is working correctly
     """
-    #xyz_traj_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_dimer_local_minima/h2o_2_traj.xyz"
-    xyz_traj_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_dimer_local_minima/h2o_2_globalmin.xyz"
+    xyz_traj_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_dimer_local_minima/h2o_2_traj.xyz"
+    #xyz_traj_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_dimer_local_minima/h2o_2_globalmin.xyz"
     struc_config = StructureAnalysisConfig(
         calculator_backend="psi4",
         calculator_qm_method="mp2",
@@ -274,10 +264,13 @@ if __name__ == "__main__":
     )
     structure_analysis = StructureAnalysis(logger=None, config=struc_config)
     mols = structure_analysis.load_mols_from_xyz(xyz_traj_path)
+    print(f"Loaded {len(mols)} molecules from trajectory")
     # Optimize
-    optimized_mols = structure_analysis.optimize_geometries(n_workers=1)
+    optimized_mols = structure_analysis.optimize_geometries(n_workers=4)
     # Analyze Hessians
-    results = structure_analysis.analyze_hessians(n_workers=1)
+    results = structure_analysis.analyze_hessians(n_workers=4)
 
     for mol, analysis in results:
-        print(f"Molecule: {mol.name} Order of saddle point: {analysis['order_saddle_point']} Local minimum: {analysis['local_minimum']} Frequencies (cm^-1): {analysis['frequencies']}")  
+        print(f"Molecule: {mol.name} order_stationary_point={analysis['order_stationary_point']} global_minimum={analysis['global_minimum']}")
+
+    structure_analysis.plot_hessian_matrix(save_path="figures/hessian_matrices.png")

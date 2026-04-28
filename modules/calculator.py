@@ -13,6 +13,12 @@ from ase import Atoms
 from xtb.ase.calculator import XTB
 from ase.calculators.emt import EMT
 
+# Import ase io for write
+from ase.io import write
+
+# Import read for Hessian matrix analysis
+from ase.io import read
+
 # Import GPAW for DFT calculations
 from gpaw import GPAW
 
@@ -26,12 +32,19 @@ from ase.optimize import LBFGS
 # Import ASE Vibrational Analysis
 from ase.vibrations import Vibrations
 
+# Multiprocessing for parallel Hessian evaluation
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import multiprocessing
+
+# Seaborn and mpl for plotting stuff
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from typing import Optional, List, Tuple
 import numpy as np
 import os
 import tempfile
-from pathlib import Path 
+from pathlib import Path
 
 class EnergyEvaluator:
     """  
@@ -54,7 +67,10 @@ class EnergyEvaluator:
         self.backend = backend.lower()
         self.qm_method = qm_method
         self.qm_basis = qm_basis
-        self.xtb_method = xtb_method   
+        self.xtb_method = xtb_method
+        self.gpaw_mode = gpaw_mode
+        self.gpaw_basis = gpaw_basis
+        self.gpaw_xc = gpaw_xc
         self.calculator = None
 
         if self.backend == "xtb":
@@ -116,7 +132,7 @@ class EnergyEvaluator:
     
     def optimize_geometry(self, molecule: Molecule,
                             optimizer: str = "BFGS",
-                            write_trajectory: bool = False) -> Molecule:
+                            trajectory_fp: Optional = None) -> Molecule:
         """  
         Helper function to optimize the geometry of a molecule using the specified optimizer
         """
@@ -125,95 +141,179 @@ class EnergyEvaluator:
         atoms = molecule.to_ase_atoms()
         atoms.set_calculator(self.calculator)
 
-        
+        def write_xyz():
+            if trajectory_fp is not None:
+                write(trajectory_fp, atoms, append=True)
+            
+        if trajectory_fp is not None:
+            # Clear the trajectory file if it already exists
+            with open(trajectory_fp, "w") as f:
+                f.write("")  # Clear the file contents
 
         # Select the optimizer
         if optimizer.lower() == "bfgs":
-            if write_trajectory:
-                opt = BFGS(atoms, trajectory="optimization.traj")
-            else:
-                opt = BFGS(atoms)
+            opt = BFGS(atoms)
         elif optimizer.lower() == "lbfgs":
-            if write_trajectory:
-                opt = LBFGS(atoms, trajectory="optimization.traj")
-            else:
-                opt = LBFGS(atoms)
+            opt = LBFGS(atoms)
         else:
             raise ValueError(f"Unsupported optimizer: {optimizer}. Supported optimizers are 'BFGS' and 'LBFGS'.")
+        opt.attach(write_xyz, interval=1)
         opt.run(fmax=0.001)  # Tight convergence required for reliable Hessian/frequencies
         optimized_molecule = Molecule.from_ase_atoms(atoms)
         return optimized_molecule
 
     def compute_hessian(self, molecule, delta=0.01):
-        """ 
-        Evaluate the vibrational properties and the return the 2D Hessian Matrix 
-        """ 
-        if self.backend == "psi4":
-            self._ensure_psi_scratch()
-
+        """
+        Evaluate vibrational properties and return the 2D Hessian.
+        Strips rotational/translational modes before classifying eigenvalues.
+        Returns (hessian, frequencies, order_stationary_point, global_minimum).
+        """
         atoms = molecule.to_ase_atoms()
-        dof = len(atoms) * 3
-        n_vib = dof - 6  # Number of vibrational modes (3N-6 for non-linear molecules)
-        atoms.set_calculator(self.calculator)
-        vib = Vibrations(atoms, delta=delta)
-        vib.clean()  # Remove stale cache files from previous runs
-        vib.run()
-        vibrations = vib.get_vibrations() # Returns the VibrationsData Object
-        # Extract the Vibrational Frequencies
-        frequencies = vibrations.get_frequencies() # Returns a 1D array of frequencies in cm^-1
-        # Imaginary frequencies → negative by convention (saddle-point modes)
-        hessian = vibrations.get_hessian_2d() # Returns the 2D Hessian matrix
-        # Determine Eigenvalues, Eigenvectors, and the order of the saddle point
-        eigenvalues, eigenvectors = np.linalg.eigh(hessian)
 
-        # Set negative eigenvalues and near zero eigenvalues to zero for stability
-        threshold = 1e-4  # Threshold for zero eigenvalues
-        eigenvalues[np.abs(eigenvalues) < threshold] = 0.0 
-        eigenvalues[eigenvalues < 0] = 0.0
-        print("Eigenvalues of the Hessian:", eigenvalues)
-        # Check if there are 3n-6 positive eigenvalues if not the difference is the order of the saddle point
-        n_positive = np.sum(eigenvalues > 0)
-        order_saddle_point = dof - 6 - n_positive
-        local_minimum = order_saddle_point == 0
+        dof_total = 3 * len(atoms)
+        dof_rot_trans = 6  # 3 translations + 3 rotations for a non-linear molecule
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            if self.backend == "psi4":
+                # Ensure psi4 scratch is set for the subprocess
+                self._ensure_psi_scratch()
+                # Create a new calculator instance for the subprocess to avoid issues with shared state
+                calc = Psi4(method=self.qm_method, basis=self.qm_basis)
+            else:
+                calc = self.calculator
+            atoms.set_calculator(calc)
+            vib_name = os.path.join(tmpdir, "vib")
+            vib = Vibrations(atoms, name=vib_name, delta=delta)
+            vib.run()
+            vibrations = vib.get_vibrations()
+            frequencies = vibrations.get_frequencies()
+            hessian = vibrations.get_hessian_2d()
+
+
+        eigenvalues, _ = np.linalg.eigh(hessian)
+        # Sort eigenvalues from negative to positive
+        eigenvalues_sorted = np.sort(eigenvalues)
+        # The six lowest eigenvalues correspond to the 6 rotational + translational modes
+        vibrational_eigenvalues = eigenvalues_sorted[dof_rot_trans:] 
+        threshold = 1e-2 # Threshold to classify zero eigenvalues
+        order_stationary_point = np.sum(np.abs(vibrational_eigenvalues) < threshold)
+        global_minimum = order_stationary_point == 0
+        
+        return hessian, frequencies, order_stationary_point, global_minimum
 
         
 
-        return hessian, frequencies, order_saddle_point, local_minimum
-    
-    
-    
-    
-        
- 
+    def compute_hessians_parallel(self, molecules: List[Molecule], n_workers: int = 4):
+        """
+        Compute Hessians for a list of molecules in parallel using multiprocessing.
+        Returns (results, errors) where results is a list of (mol, analysis_dict) tuples
+        and errors is a list of (mol, exception) tuples for any failed molecules.
+        """
+        calculator_kwargs = {
+            "backend": self.backend,
+            "qm_method": self.qm_method,
+            "qm_basis": self.qm_basis,
+            "xtb_method": self.xtb_method,
+            "gpaw_mode": self.gpaw_mode,
+            "gpaw_basis": self.gpaw_basis,
+            "gpaw_xc": self.gpaw_xc,
+        }
+        results = []
+        errors = []
+        ctx = multiprocessing.get_context("spawn")
+        with ProcessPoolExecutor(max_workers=n_workers, mp_context=ctx) as executor:
+            futures = {
+                executor.submit(EnergyEvaluator._hessian_worker, mol, calculator_kwargs): mol
+                for mol in molecules
+            }
+            for future in as_completed(futures):
+                mol = futures[future]
+                try:
+                    results.append((mol, future.result()))
+                except Exception as e:
+                    errors.append((mol, e))
+        return results, errors
 
+    @staticmethod
+    def _hessian_worker(mol: Molecule, calculator_kwargs: dict) -> dict:
+        """Worker function for parallel Hessian computation (runs in subprocess)."""
+        calc = EnergyEvaluator(**calculator_kwargs)
+        hessian, frequencies, order_stationary_point, global_minimum = calc.compute_hessian(mol)
+        return {
+            "order_stationary_point": order_stationary_point,
+            "global_minimum": global_minimum,
+            "frequencies": frequencies,
+            "hessian": hessian,
+        }
     
+    def plot_hessian_matrix_trajectory(self, trajectory_fp: str, save_path: str, n_workers: int = 4):
+        """  
+        Computes and Plots the Hessian matrices for each frame in a trajectory file. 
+        """
+        traj = read(trajectory_fp, index=":")
+        molecules = [Molecule.from_ase_atoms(frame) for frame in traj]
+        results, errors = self.compute_hessians_parallel(molecules, n_workers=n_workers)
+        if errors:
+            print(f"Warning: {len(errors)} molecules failed during Hessian computation. Check errors for details.")
+            for mol, e in errors:
+                print(f"Failed molecule: {mol.name}, error: {e}")
+
+        # Plot the Hessian Matrices in a grid
+        n_frames = len(results)
+        if n_frames == 0:
+            print("No Hessian results to plot.")
+            return
+        n_cols = min(4, n_frames)
+        n_rows = (n_frames + n_cols - 1) // n_cols
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
+        # Normalise axes to always be a flat list
+        axes_flat = np.array(axes).flatten()
+        for i, (mol, analysis) in enumerate(results):
+            ax = axes_flat[i]
+            sns.heatmap(analysis["hessian"], cmap="viridis", cbar=False, ax=ax)
+            ax.set_title(f"Frame {i}")
+            ax.set_xlabel("Coordinate Index")
+            ax.set_ylabel("Coordinate Index")
+        # Hide any unused subplot axes
+        for j in range(n_frames, len(axes_flat)):
+            axes_flat[j].set_visible(False)
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.tight_layout()
+        fig.savefig(save_path, dpi=100, bbox_inches="tight")
+        plt.close(fig)
+        
+
+
 
 def run_self_tests():
     """ 
     Run the self tests of the EnergyEvaluator class to ensure that all backends are functioning correctly
     """ 
     h2o_dimer_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_clusters/h2o_dimer.xyz"
+    #h2o_dimer_path = "/media/storage_6/lme/master_thesis/molpro_calcs/h2o_dimer/cyclic_c2/h2o_2_cyclic_c2.xyz"
+    #h2o_dimer_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_clusters/h2o_timer.xyz"
+    #h2o_dimer_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o.xyz"
     h2o_xyz = []
     with open(h2o_dimer_path, "r") as f:
         h2o_xyz = f.read()
     molecule = Molecule.from_xyz(h2o_xyz)
     print("Testing PSI4 backend...")
-    psi4_evaluator = EnergyEvaluator(backend="psi4", qm_method="hf", qm_basis="cc-pvdz")
+    psi4_evaluator = EnergyEvaluator(backend="psi4", qm_method="mp2", qm_basis="cc-pvdz")
     # Optimize and calculate hessian
-    optimized_molecule_psi4 = psi4_evaluator.optimize_geometry(molecule, optimizer="BFGS")
-    hessian_psi4, frequencies_psi4, order_saddle_point, local_minimum = psi4_evaluator.compute_hessian(optimized_molecule_psi4)
-
-    # for the water dimer we expect 3N = 18 mode
-    # 3N-6 = 12 vibrational modes and 6 zero-frequency modes (3 translations + 3 rotations)
+    optimized_molecule_psi4 = psi4_evaluator.optimize_geometry(molecule, optimizer="LBFGS", trajectory_fp="test_molecules/h2o_opt.xyz")
+    hessian_psi4, frequencies_psi4, order_stationary_point, global_minimum = psi4_evaluator.compute_hessian(optimized_molecule_psi4)
 
     print("hessian shape:", hessian_psi4.shape)
     print("frequencies shape:", frequencies_psi4.shape)
     print("PSI4 tests passed!")
-    # Print the frequencies
     print("Vibrational frequencies (cm^-1):", frequencies_psi4)
-    print("Order of saddle point:", order_saddle_point)
-    print("Is local minimum:", local_minimum)
-    
+    print("Order of stationary point:", order_stationary_point)
+    print("Global minimum:", global_minimum)
+
+    # Read in the trajectory and plot Hessian matrices for each frame
+    print("Testing Hessian matrix plotting for trajectory...")
+    psi4_evaluator.plot_hessian_matrix_trajectory(trajectory_fp="test_molecules/h2o_opt.xyz", save_path="figures/h2o_hessian_matrices.png", n_workers=2)
+
 
 
 

@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+import numpy as np
 
 module_dir = Path(__file__).parent / "modules"
 sys.path.insert(0, str(module_dir))
@@ -71,7 +72,7 @@ if __name__ == "__main__":
         qm_method="hf",
         qm_basis="sto-3g",
         temperature=400.0,
-        verbose=True,
+        verbose=False,
         adaptive_operators=True,
         adaptive_box=True,
         box_update_interval=10,
@@ -92,7 +93,7 @@ if __name__ == "__main__":
     phase_a_structures = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=500,
+        n_structures_per_worker=20000,
         n_processes=len(initial_molecules),
     )
 
@@ -106,6 +107,10 @@ if __name__ == "__main__":
         filepath="trajectories/phase_a_structures.xyz",
         energies=phase_a_energies,
     )
+    # Save the phase_a_molecules and energies as a numpy object for analysis
+    np.save("phase_a_long_traj.npy", np.array(phase_a_structures, dtype=object))
+
+
     bhmc_sampler.analyse_phase_a_results(phase_a_structures=phase_a_structures)
 
 

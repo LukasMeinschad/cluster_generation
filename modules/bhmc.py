@@ -15,6 +15,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import copy
 from tqdm import tqdm
 import time
+import os
 
 # Matplotlib
 import matplotlib
@@ -29,7 +30,11 @@ import tracemalloc
 import sys
 
 # Module imports
-from modules.molecule_class import Molecule
+try:
+    from modules.molecule_class import Molecule
+except ImportError:
+    from molecule_class import Molecule
+
 from modules.operators import NonLocalOperators, LocalOperators
 
 # Clustering and Feature Matrix Generation
@@ -502,22 +507,38 @@ class MultiPhaseBHMC:
             self._log("No Phase A structures provided for analysis, using internal storage", level="warning")
             phase_a_structures = self.phase_a_structures
 
-
+        import time
+        time_start = time.time()
         # Configure the Featurizer and Clustering
         featurizer_config = FeaturizerConfig(
             descriptor_type="SOAP",
             soap_rcut = 6,
             soap_nmax = 12,
-            soap_lmax = 6,
+            soap_lmax = 8,
             soap_sigma = 0.5,
         )
+        time_end = time.time()
+        print(f"Featurizer configuration time: {time_end - time_start:.2f} seconds")    
         featurizer = Featurizer(config=featurizer_config)
         mols, energies = zip(*phase_a_structures)
+
+        time_start = time.time()
         feature_mat = featurizer.build_feature_matrix(mols, energies=energies, include_hbonds=True)
+        time_end = time.time()
+        print(f"Feature matrix computation time: {time_end - time_start:.2f} seconds")
+
+
         self._log(f"Computed feature matrix for {len(mols)} structures with shape {feature_mat.shape}")
+    
+        time_start = time.time()
         clustering = Clustering(feature_matrix=feature_mat, normalize=True, logger=self.logger)
+        time_end = time.time()
+        print(f"Clustering initialization time: {time_end - time_start:.2f}")
         # Benchmark the clustering operations per sample for algorithm selection
+        time_start = time.time()
         _, best_algorithm_complexity = clustering.benchmark_operations_per_sample()
+        time_end = time.time()
+        print(f"Clustering operation benchmarking time: {time.time() - time_start:.2f} seconds")
         print(f"Best clustering algorithm based on complexity: {best_algorithm_complexity}")  
 
         if best_algorithm_complexity == "dbscan_avg" or best_algorithm_complexity == "dbscan_worst":
@@ -797,37 +818,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import numpy as np 
 
-    module_dir = Path(__file__).parent / "modules"
-    sys.path.insert(0, str(module_dir))
 
-    from molecule_class import Molecule
-    from cluster import StructureData
-    from transformations import LocalOperators
-    from box import SimulationBox
-    from init import ClusterInitializer, InitializationConfig
-    from bhmc import MultiPhaseBHMC, BHMCConfig
-    from logger import Logger 
-
-
-
-    mp.set_start_method('spawn', force=True)
-    
-
-    xyz_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o_2_nonopt.xyz"
-
-    init_config = InitializationConfig(
-        method="hf",
-        basis="cc-pvdz",
-        box_type="sphere",
-        box_scale_factor=3,
-        min_distance=1.5,
-        optimize_submolecules=True,
-        verbose=False
-    )
-    initializer = ClusterInitializer(config=init_config)
-    initial_molecules, submol_indices, simulation_box = initializer.initialize_from_xyz(
-        xyz_path, n_configurations=1
-    )
     bhmc_config = BHMCConfig(
         temperature=1,
         qm_method="hf",
@@ -842,41 +833,16 @@ if __name__ == "__main__":
         box_max_scale = 4.0,
         box_stable_windows = 3
     )
+    # load in structures from file
+    phase_a_structures = np.load("phase_a_long_traj.npy", allow_pickle=True).tolist()
+    print(f"Loaded {len(phase_a_structures)} structures from Phase A trajectory")   
+    # Create bhmc instance
+    bhmc = MultiPhaseBHMC(config=bhmc_config, logger=None)
+    # Analyse phase a results
+    bhmc.analyse_phase_a_results(phase_a_structures=phase_a_structures)
 
-    bhmc_sampler = MultiPhaseBHMC(
-        config=bhmc_config,
-        simulation_box=simulation_box,
-        worker_log_file="bhmc_workers.log"
-    )
-    # Initialize StuctureData with one molecule
-    initial_structure = StructureData(
-        molecule=initial_molecules[0],
-        energy=0.0,
-        dipole_magnitude=0.0,
-        phase="initial" 
-    )
-    representatives = [initial_structure]
-    submolecule_indices = submol_indices
-    phase_b_results = bhmc_sampler.run_phase_b(
-        representatives=representatives,
-        submolecule_indices=submolecule_indices,
-        n_steps_per_worker=300,
-        local_operators=None,
-        n_processes=1
-    )
-    # Get best structures from results
-    best_structures = [r["best_structure"] for r in phase_b_results if r["best_structure"] is not None]
-    # write best structures to xyz
 
-    # Get the trajectory
-    trajectory = bhmc_sampler.phase_b_structures
-
-    # 
     
-    for i, best in enumerate(best_structures):
-        mol, energy = best
-        mol.write_xyz(f"best_structure_worker_{i}.xyz")
-        print(f"Worker {i}: Best energy = {energy:.6f} Ha")
     
     
 

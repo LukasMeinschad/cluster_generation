@@ -31,42 +31,42 @@ Workers: 2
  Volume: 72.73 Angstrom^3
 [5/5] Sampling 100 configurations on each of 10 workers (total: 1000)...
   Worker 0: 100 configurations generated
-  Worker 2: 100 configurations generated
-  Worker 4: 100 configurations generated
   Worker 3: 100 configurations generated
+  Worker 2: 100 configurations generated
   Worker 1: 100 configurations generated
-  Worker 8: 100 configurations generated
-  Worker 5: 100 configurations generated
-  Worker 7: 100 configurations generated
+  Worker 4: 100 configurations generated
   Worker 6: 100 configurations generated
+  Worker 5: 100 configurations generated
   Worker 9: 100 configurations generated
+  Worker 7: 100 configurations generated
+  Worker 8: 100 configurations generated
   Total configurations collected: 1000
 
 Energy prescreening: distributing 1000 candidates across 10 workers...
   Worker 1: 100/100 evaluations successful
+  Worker 3: 100/100 evaluations successful
   Worker 0: 100/100 evaluations successful
   Worker 2: 100/100 evaluations successful
   Worker 4: 100/100 evaluations successful
-  Worker 3: 100/100 evaluations successful
   Worker 5: 100/100 evaluations successful
   Worker 6: 100/100 evaluations successful
   Worker 7: 100/100 evaluations successful
-  Worker 8: 100/100 evaluations successful
   Worker 9: 100/100 evaluations successful
+  Worker 8: 100/100 evaluations successful
 
 Energy evaluation complete: 1000 successful, 0 failed
-Filtered out 23 high-energy outliers based on Z-score thresholding.
+Filtered out 29 high-energy outliers based on Z-score thresholding.
 
 Clustering evaluation metrics:
-  silhouette_score: 0.0883
-  davies_bouldin_score: 2.1433
-  calinski_harabasz_score: 88.6300
+  silhouette_score: 0.0898
+  davies_bouldin_score: 2.1671
+  calinski_harabasz_score: 93.4134
 Skipping optimization of selected representatives as per configuration.
 
 Pre-screening completed: 1000 valid configurations out of 1000 generated (10 workers × 100 each).
 Statistics of scored configurations:
-  Energy range: -10.836177 to -10.814032 Hartree
-  Energy distribution: mean -10.834445, median -10.834728, std 0.001292 Hartree
+  Energy range: -10.836137 to -10.809094 Hartree
+  Energy distribution: mean -10.834354, median -10.834692, std 0.001490 Hartree
   Clusters formed: 10, Representatives selected: 10
 ============================================================
 Initialization Complete!
@@ -74,7 +74,7 @@ Total atoms: 5
 Submolecules: 2
 Simulation box type: sphere
 Candidates generated: 1000 (10w × 100), Valid: 1000, Failed: 0
-Selected for workers: 10, Energy range: -10.836177 to -10.814032 Hartree
+Selected for workers: 10, Energy range: -10.836137 to -10.809094 Hartree
 Box radius: 2.59 Angstrom
 Box volume: 72.73 Angstrom^3
 Obtained 10 initial structures
@@ -84,106 +84,44 @@ Wrote 10 structures to trajectories/initial_candidates.xyz
 ========================================================================
 Configuration:
   Workers: 10
-  Steps per worker: 500
-  Total steps: 5000
+  Steps per worker: 20000
+  Total steps: 200000
   Method/Basis: hf/sto-3g
   Temperature: 400.0 K
   Adaptive operators: True
   Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation, com_com_approach, com_com_separation
   Independent initial configs: 10
-  Simulation Box: <modules.box.SimulationBox object at 0x7fa0425d57f0>
+  Simulation Box: <modules.box.SimulationBox object at 0x7fa1567f4c10>
   Worker log: bhmc_workers.log
-Estimated single point time: 0.01 seconds (Energy: -10.834678 Hartree)
-Estimated Phase A time: 0.50 minutes
+Estimated single point time: 0.01 seconds (Energy: -10.834303 Hartree)
+Estimated Phase A time: 28.02 minutes
 Starting parallel BHMC chains...
-  Worker 0: 295 structures accepted, 501 trajectory points, 38 box updates  Operator acceptance rates: twist: 44.8%, large_displacement: 62.8%, mirror: 46.4%, roto_reflection: 24.4%, exchange: 54.8%, random_so3: 82.9%, principal_axis_rotation: 70.7%, com_com_approach: 88.5%, com_com_separation: 96.0%
-  Worker 1: 278 structures accepted, 501 trajectory points, 28 box updates  Operator acceptance rates: twist: 39.8%, large_displacement: 56.0%, mirror: 50.0%, roto_reflection: 15.3%, exchange: 61.9%, random_so3: 80.0%, principal_axis_rotation: 72.5%, com_com_approach: 89.1%, com_com_separation: 94.4%
-  Worker 2: 266 structures accepted, 501 trajectory points, 35 box updates  Operator acceptance rates: twist: 41.4%, large_displacement: 60.8%, mirror: 40.0%, roto_reflection: 17.2%, exchange: 52.2%, random_so3: 66.7%, principal_axis_rotation: 67.9%, com_com_approach: 95.2%, com_com_separation: 92.9%
-  Worker 3: 285 structures accepted, 501 trajectory points, 37 box updates  Operator acceptance rates: twist: 44.0%, large_displacement: 52.3%, mirror: 61.9%, roto_reflection: 32.2%, exchange: 57.8%, random_so3: 67.6%, principal_axis_rotation: 49.0%, com_com_approach: 88.7%, com_com_separation: 100.0%
-  Worker 4: 303 structures accepted, 501 trajectory points, 42 box updates  Operator acceptance rates: twist: 57.0%, large_displacement: 66.7%, mirror: 50.0%, roto_reflection: 29.3%, exchange: 62.0%, random_so3: 80.0%, principal_axis_rotation: 55.8%, com_com_approach: 88.7%, com_com_separation: 100.0%
-  Worker 5: 178 structures accepted, 501 trajectory points, 19 box updates  Operator acceptance rates: twist: 20.4%, large_displacement: 34.7%, mirror: 32.4%, roto_reflection: 7.8%, exchange: 48.8%, random_so3: 42.5%, principal_axis_rotation: 51.9%, com_com_approach: 73.8%, com_com_separation: 50.0%
-  Worker 6: 311 structures accepted, 501 trajectory points, 44 box updates  Operator acceptance rates: twist: 56.2%, large_displacement: 58.9%, mirror: 55.0%, roto_reflection: 30.9%, exchange: 66.7%, random_so3: 71.2%, principal_axis_rotation: 66.0%, com_com_approach: 89.4%, com_com_separation: 100.0%
-  Worker 7: 295 structures accepted, 501 trajectory points, 38 box updates  Operator acceptance rates: twist: 40.4%, large_displacement: 68.7%, mirror: 58.8%, roto_reflection: 25.0%, exchange: 71.1%, random_so3: 59.0%, principal_axis_rotation: 67.6%, com_com_approach: 85.7%, com_com_separation: 100.0%
-  Worker 8: 274 structures accepted, 501 trajectory points, 32 box updates  Operator acceptance rates: twist: 45.2%, large_displacement: 62.5%, mirror: 43.9%, roto_reflection: 25.0%, exchange: 48.0%, random_so3: 64.9%, principal_axis_rotation: 57.4%, com_com_approach: 89.4%, com_com_separation: 91.7%
-  Worker 9: 272 structures accepted, 501 trajectory points, 33 box updates  Operator acceptance rates: twist: 39.4%, large_displacement: 57.1%, mirror: 45.0%, roto_reflection: 14.0%, exchange: 56.8%, random_so3: 71.0%, principal_axis_rotation: 70.2%, com_com_approach: 91.2%, com_com_separation: 100.0%
-Size of accepted structures (Phase A): 0.02 MB
+  Worker 0: 15807 structures accepted, 20001 trajectory points, 1743 box updates  Operator acceptance rates: twist: 75.5%, large_displacement: 85.3%, mirror: 74.4%, roto_reflection: 60.2%, exchange: 75.1%, random_so3: 84.4%, principal_axis_rotation: 74.3%, com_com_approach: 97.1%, com_com_separation: 99.4%
+  Worker 1: 15440 structures accepted, 20001 trajectory points, 1655 box updates  Operator acceptance rates: twist: 69.5%, large_displacement: 88.2%, mirror: 68.0%, roto_reflection: 53.0%, exchange: 79.3%, random_so3: 87.0%, principal_axis_rotation: 74.6%, com_com_approach: 98.0%, com_com_separation: 99.4%
+  Worker 2: 0 structures accepted, 20001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 3: 16183 structures accepted, 20001 trajectory points, 1757 box updates  Operator acceptance rates: twist: 75.8%, large_displacement: 89.7%, mirror: 75.9%, roto_reflection: 62.7%, exchange: 79.5%, random_so3: 86.9%, principal_axis_rotation: 73.7%, com_com_approach: 98.3%, com_com_separation: 99.9%
+  Worker 4: 15703 structures accepted, 20001 trajectory points, 1732 box updates  Operator acceptance rates: twist: 73.2%, large_displacement: 86.8%, mirror: 74.5%, roto_reflection: 60.1%, exchange: 75.7%, random_so3: 82.3%, principal_axis_rotation: 73.3%, com_com_approach: 97.3%, com_com_separation: 99.3%
+  Worker 5: 15967 structures accepted, 20001 trajectory points, 1779 box updates  Operator acceptance rates: twist: 77.5%, large_displacement: 85.7%, mirror: 78.1%, roto_reflection: 64.0%, exchange: 73.3%, random_so3: 82.5%, principal_axis_rotation: 74.1%, com_com_approach: 96.3%, com_com_separation: 98.9%
+  Worker 6: 15551 structures accepted, 20001 trajectory points, 1696 box updates  Operator acceptance rates: twist: 71.0%, large_displacement: 87.2%, mirror: 71.8%, roto_reflection: 54.2%, exchange: 79.2%, random_so3: 84.8%, principal_axis_rotation: 74.5%, com_com_approach: 96.6%, com_com_separation: 100.0%
+  Worker 7: 16162 structures accepted, 20001 trajectory points, 1808 box updates  Operator acceptance rates: twist: 79.0%, large_displacement: 87.3%, mirror: 79.5%, roto_reflection: 65.7%, exchange: 73.6%, random_so3: 82.3%, principal_axis_rotation: 74.3%, com_com_approach: 97.5%, com_com_separation: 99.4%
+  Worker 8: 15912 structures accepted, 20001 trajectory points, 1721 box updates  Operator acceptance rates: twist: 75.6%, large_displacement: 88.0%, mirror: 75.4%, roto_reflection: 59.7%, exchange: 77.0%, random_so3: 86.4%, principal_axis_rotation: 73.0%, com_com_approach: 97.5%, com_com_separation: 99.0%
+  Worker 9: 15825 structures accepted, 20001 trajectory points, 1698 box updates  Operator acceptance rates: twist: 73.5%, large_displacement: 89.0%, mirror: 72.1%, roto_reflection: 56.5%, exchange: 79.4%, random_so3: 85.0%, principal_axis_rotation: 75.1%, com_com_approach: 98.1%, com_com_separation: 98.9%
+Size of accepted structures (Phase A): 1.28 MB
 ------------------------------------------------------------------------
 Phase A Results
 ------------------------------------------------------------------------
-Total steps: 5000
-Total accepted: 2757
-Overall acceptance rate: 55.14%
+Total steps: 200000
+Total accepted: 142550
+Overall acceptance rate: 71.28%
 Energy Statistics (Hartree):
-  Min:  -10.836173
-  Max:  -10.830658
-  Mean: -10.834851
-  Std:  0.000620
+  Min:  -10.836302
+  Max:  -10.823196
+  Mean: -10.834713
+  Std:  0.000508
 Profiling Results for Phase A:
-Current memory usage: 20.83 MB; Peak memory usage: 21.06 MB
-Phase A complete: 2757 structures accepted
-Wrote 2757 structures to trajectories/phase_a_structures.xyz
+Current memory usage: 394.82 MB; Peak memory usage: 457.18 MB
+Phase A complete: 142550 structures accepted
+Wrote 142550 structures to trajectories/phase_a_structures.xyz
 ========================================================================
                             Phase A Analysis                            
 ========================================================================
-Computed feature matrix for 2757 structures with shape (2757, 4666)
-Feature matrix normalized: mean ~ 0.0000, std ~ 0.9997
---- Benchmarking Clustering Algorithms Complexity ---
-Operation Benchmark start (n=2757, m=4666, k_values=(2, 3, 5, 10, 20, 50))
---- k=2 ---
-dbscan_avg      : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-hdbscan_avg     : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-kmeans          : Total Ops = 7.72e+09, Ops/Sample = 2.80e+06
-agglomerative   : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-dbscan_worst    : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-Lowest Ops/Sample for k=2: dbscan_avg with 5.33e+04 ops/sample
---- End of Clustering Operation Benchmark ---
-
---- k=3 ---
-dbscan_avg      : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-hdbscan_avg     : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-kmeans          : Total Ops = 1.16e+10, Ops/Sample = 4.20e+06
-agglomerative   : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-dbscan_worst    : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-Lowest Ops/Sample for k=3: dbscan_avg with 5.33e+04 ops/sample
---- End of Clustering Operation Benchmark ---
-
---- k=5 ---
-dbscan_avg      : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-hdbscan_avg     : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-kmeans          : Total Ops = 1.93e+10, Ops/Sample = 7.00e+06
-agglomerative   : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-dbscan_worst    : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-Lowest Ops/Sample for k=5: dbscan_avg with 5.33e+04 ops/sample
---- End of Clustering Operation Benchmark ---
-
---- k=10 ---
-dbscan_avg      : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-hdbscan_avg     : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-agglomerative   : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-dbscan_worst    : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-kmeans          : Total Ops = 3.86e+10, Ops/Sample = 1.40e+07
-Lowest Ops/Sample for k=10: dbscan_avg with 5.33e+04 ops/sample
---- End of Clustering Operation Benchmark ---
-
---- k=20 ---
-dbscan_avg      : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-hdbscan_avg     : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-agglomerative   : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-dbscan_worst    : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-kmeans          : Total Ops = 7.72e+10, Ops/Sample = 2.80e+07
-Lowest Ops/Sample for k=20: dbscan_avg with 5.33e+04 ops/sample
---- End of Clustering Operation Benchmark ---
-
---- k=50 ---
-dbscan_avg      : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-hdbscan_avg     : Total Ops = 1.47e+08, Ops/Sample = 5.33e+04
-agglomerative   : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-dbscan_worst    : Total Ops = 3.55e+10, Ops/Sample = 1.29e+07
-kmeans          : Total Ops = 1.93e+11, Ops/Sample = 7.00e+07
-Lowest Ops/Sample for k=50: dbscan_avg with 5.33e+04 ops/sample
---- End of Clustering Operation Benchmark ---
-
-Most suited algorithm across k values: dbscan_avg
-Clustering with method: dbscan (no n_clusters needed)
-DBSCAN clustering completed: eps=0.5, min_samples=20, n_clusters=0, n_noise=2757
-UMAP completed: n_components=2, n_neighbors=15, min_dist=0.1

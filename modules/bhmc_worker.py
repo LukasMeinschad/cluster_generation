@@ -12,11 +12,11 @@ import tracemalloc
 
 
 
-from molecule_class import Molecule
-from operators import NonLocalOperators, LocalOperators
-from box import SimulationBox
-from calculator import EnergyEvaluator
-from logger import Logger
+from modules.molecule_class import Molecule
+from modules.operators import NonLocalOperators, LocalOperators
+from modules.box import SimulationBox
+from modules.calculator import EnergyEvaluator
+from modules.logger import Logger
 
 # Constants
 K_B = 8.617333262145e-5  # Boltzmann constant in eV/K

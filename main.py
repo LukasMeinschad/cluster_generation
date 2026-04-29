@@ -9,7 +9,7 @@ from bhmc import MultiPhaseBHMC
 from bhmc_config import BHMCConfig
 from args import get_args
 from logger import Logger
-from struc_distinction import StructureAnalysis
+from struc_distinction import StructureAnalysis, StructureAnalysisConfig
 
 
 if __name__ == "__main__":
@@ -29,7 +29,8 @@ if __name__ == "__main__":
     initial_molecules, submol_indices, simulation_box = initializer.initialize_from_xyz(
         args.i[0],
         n_workers=10,
-        n_configurations=10000,
+        n_configurations=100,
+        n_sampling_workers=10,
         placing_method="sobol",
         energy_backend="xtb",
         energy_xtb_method="GFN2-xTB",
@@ -43,10 +44,24 @@ if __name__ == "__main__":
     )
 
     # Initialize the StructureAnalysis Class
-    structure_analysis = StructureAnalysis(logger=logger, mols=initial_molecules)
-    structure_analysis.compute_pairwise_rmsd()
-    structure_analysis.plot_pairwise_rmsd_heatmap(save_path="figures/initial_pairwise_rmsd_heatmap.png")
-    structure_analysis.analyze_hessians(n_workers=10)
+
+    StructureAnalysisConfig = StructureAnalysisConfig(
+        calculator_backend="psi4",
+        calculator_qm_method="mp2",
+        calculator_qm_basis="cc-pvdz",
+        calculator_xtb_method="GFN2-xTB",
+        calculator_gpaw_mode="lcao",
+        calculator_gpaw_basis="dzp",
+        calculator_gpaw_xc="B3LYP",
+        rmsd_threshold=0.5,
+    )
+
+
+   
+   # structure_analysis = StructureAnalysis(logger=logger, mols=initial_molecules, config=StructureAnalysisConfig)
+   # structure_analysis.compute_pairwise_rmsd()
+   # structure_analysis.plot_pairwise_rmsd_heatmap(save_path="figures/initial_pairwise_rmsd_heatmap.png")
+   # structure_analysis.analyze_hessians(n_workers=10)
 
 
     # ── Phase A: Global PES Exploration ──────────────────────────────────────
@@ -91,5 +106,7 @@ if __name__ == "__main__":
         filepath="trajectories/phase_a_structures.xyz",
         energies=phase_a_energies,
     )
+    bhmc_sampler.analyse_phase_a_results(phase_a_structures=phase_a_structures)
+
 
     

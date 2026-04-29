@@ -9,7 +9,7 @@ from scipy.optimize import linear_sum_assignment
 
 # Module import
 
-from geometry import ReferenceFrame, GeometryOps, Quaternion
+from modules.geometry import ReferenceFrame, GeometryOps, Quaternion
 
 
 

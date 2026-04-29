@@ -18,6 +18,10 @@ import multiprocessing
 # import dataclass
 from dataclasses import dataclass
 
+# Plotting 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 @dataclass
 class StructureAnalysisConfig:
     """  
@@ -33,6 +37,7 @@ class StructureAnalysisConfig:
 
     # rmsd threshold for considering two structures as similar
     rmsd_threshold: float = 0.5  # in Angstrom
+    sparsity_zero_threshold: float = 1e-1 # Threshold to consider a element in the hessian as zero
     
     
 
@@ -113,7 +118,31 @@ class StructureAnalysis:
         self._log("Computed pairwise RMSD matrix")
         # store rmsd matris
         self.rmsd_matrix = rmsd_matrix
-    
+
+    def identify_unique_structures(self) -> List[Tuple[int, int]]:
+        """  
+        Identifies unique structures based on the pairwise RMSD matrix and the specified threshold in the configuration.
+        """    
+        if not hasattr(self, 'rmsd_matrix'):
+            self._log("Pairwise RMSD matrix not computed yet. Computing now...")
+            self.compute_pairwise_rmsd()
+
+        n = len(self.mols)
+        unique_structures = []
+        for i in range(n):
+            is_unique = True
+            for j in range(i):
+                if self.rmsd_matrix[i, j] < self.config.rmsd_threshold:
+                    is_unique = False
+                    break
+            if is_unique:
+                unique_structures.append(i)
+        self._log(f"Identified {len(unique_structures)} unique structures based on RMSD threshold of {self.config.rmsd_threshold} Å")
+        # Filter the mols to only keep the unique structures
+        self.mols = [self.mols[i] for i in unique_structures]
+        return unique_structures
+
+
     def plot_pairwise_rmsd_heatmap(self, save_path: str = "figures/pairwise_rmsd_heatmap.png"):
         """  
         Plots a heatmap of the pairwise RMSD matrix
@@ -126,7 +155,8 @@ class StructureAnalysis:
             self.compute_pairwise_rmsd()
 
         plt.figure(figsize=(10, 8))
-        sns.heatmap(self.rmsd_matrix, cmap="viridis", xticklabels=False, yticklabels=False, annot=True, fmt=".2f")
+        # Annote x and y with indices
+        sns.heatmap(self.rmsd_matrix, cmap="viridis", xticklabels=np.arange(len(self.mols)), yticklabels=np.arange(len(self.mols)), annot=True, fmt=".2f")
         plt.title("Pairwise RMSD Heatmap")
         plt.xlabel("Structure Index")
         plt.ylabel("Structure Index")
@@ -176,7 +206,7 @@ class StructureAnalysis:
             gpaw_basis=calculator_config.calculator_gpaw_basis,
             gpaw_xc=calculator_config.calculator_gpaw_xc,
         )
-        optimized_mol = calculator.optimize_geometry(mol)
+        optimized_mol = calculator.optimize_geometry(mol, optimizer="LBFGS")
         return optimized_mol
         
 
@@ -199,26 +229,70 @@ class StructureAnalysis:
                 self._log(f"Molecule: {mol.name} Frequencies (cm^-1): {analysis['frequencies']}")
         self.hessian_analysis_results = results
         return results
+
+    def analyze_hessian_sparsity(self, n_workers: int = 4, save_path: str = "figures/hessian_sparsity.png"):
+        """  
+        Determines the sparsity of the hessian matrices of the analyzed structures and plots a histogram
+        """
+        if not hasattr(self, 'hessian_analysis_results'):
+            self._log("Hessian analysis results not computed yet. Computing now...")
+            self.analyze_hessians(n_workers=n_workers)
+        
+        sparsity_values = []
+        for mol, analysis in self.hessian_analysis_results:
+            hessian = analysis["hessian"]
+            n_elements = hessian.size
+            n_zero_elements = np.sum(np.abs(hessian) < self.config.sparsity_zero_threshold)
+            sparsity = n_zero_elements / n_elements
+            sparsity_values.append(sparsity)
+        self._log("Computed sparsity values for Hessian matrices")
+        self._log(f"Sparsity values: {sparsity_values}")
+        plt.figure(figsize=(8, 6))
+        sns.histplot(sparsity_values, bins=20, kde=True)
+        plt.title("Sparsity of Hessian Matrices")
+        plt.xlabel("Sparsity (Fraction of Near-Zero Elements)")
+        plt.ylabel("Frequency")
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300)
+        plt.close()
     
     def plot_hessian_matrix(self, save_path: str = "figures/hessian_matrix.png"):
         """ 
         Helper function to plot all the hessian matrices of the analyzed structures in a grid
         """
-        import matplotlib.pyplot as plt
         n = len(self.hessian_analysis_results)
-        n_cols = 3
+        if n == 0:
+            self._log("No Hessian analysis results to plot.")
+            return
+        n_cols = 4
         n_rows = (n + n_cols - 1) // n_cols
+        sns.set_theme(style="white")
+
+        
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 5 * n_rows))
+        axes_flat = axes.flatten() if n_rows > 1 else [axes]
+
         for i, (mol, analysis) in enumerate(self.hessian_analysis_results):
-            row = i // n_cols
-            col = i % n_cols
-            ax = axes[row, col] if n_rows > 1 else axes[col]
+            ax = axes_flat[i]
             hessian = analysis["hessian"]
-            im = ax.imshow(hessian, cmap="viridis")
-            ax.set_title(f"{mol.name} Hessian")
-            fig.colorbar(im, ax=ax)
+
+            sns.heatmap(
+                hessian,
+                ax=ax,
+                cmap = "viridis",
+                square=True,
+                cbar=True,
+                xticklabels=False,
+                yticklabels=False,
+            )
+            ax.set_title(f"Structure {i} Hessian", fontsize=14)
+
+        # remove empty subplots
+        for j in range(i + 1, n_rows * n_cols):
+            fig.delaxes(axes_flat[j])
+
         plt.tight_layout()
-        plt.savefig(save_path, dpi=300)
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")   
         plt.close()
 
     

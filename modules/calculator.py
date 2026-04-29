@@ -248,41 +248,71 @@ class EnergyEvaluator:
     
     def plot_hessian_matrix_trajectory(self, trajectory_fp: str, save_path: str, n_workers: int = 4):
         """  
-        Computes and Plots the Hessian matrices for each frame in a trajectory file. 
+        Computes and Plots the Hessian matrices for each frame with a shared global colorbar. 
         """
         traj = read(trajectory_fp, index=":")
         molecules = [Molecule.from_ase_atoms(frame) for frame in traj]
         results, errors = self.compute_hessians_parallel(molecules, n_workers=n_workers)
-        if errors:
-            print(f"Warning: {len(errors)} molecules failed during Hessian computation. Check errors for details.")
-            for mol, e in errors:
-                print(f"Failed molecule: {mol.name}, error: {e}")
 
-        # Plot the Hessian Matrices in a grid
+        if errors:
+            print(f"Warning: {len(errors)} molecules failed. Check logs.")
+
         n_frames = len(results)
         if n_frames == 0:
-            print("No Hessian results to plot.")
-            return
+            return results, errors
+
+        # 1. Find global min/max for a consistent color scale
+        all_values = [analysis["hessian"] for _, analysis in results]
+        vmin = min(h.min() for h in all_values)
+        vmax = max(h.max() for h in all_values)
+
         n_cols = min(4, n_frames)
         n_rows = (n_frames + n_cols - 1) // n_cols
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
-        # Normalise axes to always be a flat list
+
+        # Increase figsize slightly to accommodate the global colorbar on the right
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols + 1, 4 * n_rows))
         axes_flat = np.array(axes).flatten()
+
         for i, (mol, analysis) in enumerate(results):
             ax = axes_flat[i]
-            sns.heatmap(analysis["hessian"], cmap="viridis", cbar=False, ax=ax)
+            # 2. Use vmin/vmax so the colors are comparable across frames
+            sns.heatmap(
+                analysis["hessian"], 
+                cmap="viridis", 
+                cbar=False, 
+                ax=ax, 
+                vmin=vmin, 
+                vmax=vmax,
+                square=True
+            )
             ax.set_title(f"Frame {i}")
-            ax.set_xlabel("Coordinate Index")
-            ax.set_ylabel("Coordinate Index")
-        # Hide any unused subplot axes
+            ax.set_xlabel("Coord Index")
+            ax.set_ylabel("Coord Index")
+
+        # Hide unused axes
         for j in range(n_frames, len(axes_flat)):
             axes_flat[j].set_visible(False)
+
+        # 3. Create the global colorbar
+        # We create a scalar mappable for the colorbar using the same cmap and limits
+        sm = plt.cm.ScalarMappable(cmap="viridis", norm=plt.Normalize(vmin=vmin, vmax=vmax))
+        sm.set_array([]) # Empty array for the mappable
+
+        # Add colorbar to the figure, specifying the axes it should reference
+        # 'ax' can be the flattened list; 'shrink' helps it fit vertically
+        cbar = fig.colorbar(sm, ax=axes_flat, orientation='vertical', fraction=0.02, pad=0.04)
+        cbar.set_label('Hessian Value Units', rotation=270, labelpad=15)
+
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        # Note: tight_layout sometimes struggles with global colorbars; 
+        # if it looks cramped, try fig.subplots_adjust(right=0.85)
         fig.tight_layout()
         fig.savefig(save_path, dpi=100, bbox_inches="tight")
         plt.close(fig)
-        
 
+        return results, errors
+
+    
 
 
 def run_self_tests():
@@ -290,6 +320,7 @@ def run_self_tests():
     Run the self tests of the EnergyEvaluator class to ensure that all backends are functioning correctly
     """ 
     h2o_dimer_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_clusters/h2o_dimer.xyz"
+    #h2o_dimer_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/old/h2o_2_nonopt.xyz"
     #h2o_dimer_path = "/media/storage_6/lme/master_thesis/molpro_calcs/h2o_dimer/cyclic_c2/h2o_2_cyclic_c2.xyz"
     #h2o_dimer_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_clusters/h2o_timer.xyz"
     #h2o_dimer_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/h2o.xyz"
@@ -302,8 +333,12 @@ def run_self_tests():
     # Optimize and calculate hessian
     optimized_molecule_psi4 = psi4_evaluator.optimize_geometry(molecule, optimizer="LBFGS", trajectory_fp="test_molecules/h2o_opt.xyz")
     hessian_psi4, frequencies_psi4, order_stationary_point, global_minimum = psi4_evaluator.compute_hessian(optimized_molecule_psi4)
+     
+
 
     print("hessian shape:", hessian_psi4.shape)
+    print("hessian:", hessian_psi4)
+    
     print("frequencies shape:", frequencies_psi4.shape)
     print("PSI4 tests passed!")
     print("Vibrational frequencies (cm^-1):", frequencies_psi4)
@@ -312,7 +347,7 @@ def run_self_tests():
 
     # Read in the trajectory and plot Hessian matrices for each frame
     print("Testing Hessian matrix plotting for trajectory...")
-    psi4_evaluator.plot_hessian_matrix_trajectory(trajectory_fp="test_molecules/h2o_opt.xyz", save_path="figures/h2o_hessian_matrices.png", n_workers=2)
+    psi4_evaluator.plot_hessian_matrix_trajectory(trajectory_fp="test_molecules/h2o_opt.xyz", save_path="figures/h2o_hessian_matrices.png", n_workers=20)
 
 
 

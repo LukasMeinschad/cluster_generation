@@ -221,7 +221,7 @@ class Clustering:
         self._log(f"T-SNE completed: n_components={n_components}, perplexity={perpelxity}, n_iter={n_iter}")
         return embedding
     
-    def umap(self, n_components: int=2, n_neighbors: int=15, min_dist: float=0.1, random_state: int = 42) -> np.ndarray:
+    def umap(self, n_components: int=2, n_neighbors: int=15, min_dist: float=0.1, random_state: Optional = None) -> np.ndarray:
         """  
         Applies a UMAP Dimensionality Reduction
         """
@@ -498,16 +498,15 @@ class Clustering:
 
     def benchmark_operations_per_sample(
         self,
-        k_values: Tuple[int, ...] = (2, 5, 10, 20, 50, 100),
-        phase: Optional[str] = None,
+        k_values: Tuple[int, ...] = (2, 3, 5, 10, 20, 50),
         algorithms: Optional[List[str]] = None,
         n_iter_kmeans: int = 300,) -> Dict[int, List[Dict[str,float]]]:
-        """ 
+        """
         Compute and rank operations per sample for each algorithm and each k:
         Similar Implementation see:
 
         https://doi.org/10.48550/arXiv.2106.12792
-        
+
 
         Routine:
         1) Determine dataset size (n,m)
@@ -516,17 +515,11 @@ class Clustering:
         """
         self._log("--- Benchmarking Clustering Algorithms Complexity ---")
 
-        if phase:
-            structures = self.phases[phase]
-        else:
-            structures = self.structures
-        n = len(structures)
+        feature_mat = self._fm()
+        n, m = feature_mat.shape
         if n == 0:
-            self._log(f"No structures found for phase: {phase}", level="warning")
+            self._log("No structures in feature matrix.")
             return {}
-        # m = feature dimension used by clustering
-        feature_mat = self.feature_matrix(normalize=True)
-        m = feature_mat.shape[1]
 
         registry = self._algorithm_complexity_registry()
         selected_algorithms = algorithms if algorithms is not None else list(registry.keys())
@@ -535,11 +528,11 @@ class Clustering:
         unknown = [a for a in selected_algorithms if a not in registry]
         if unknown:
             raise ValueError(f"Unknown algorithms specified: {unknown}. Valid options are: {list(registry.keys())}")
-        
+
         results_by_k: Dict[int, List[Dict[str, float]]] = {}
 
-        self._log(f"Operation Benchmark start (phase = {phase if phase else 'all'}, n={n}, m={m}, k_values={k_values})")
-        
+        self._log(f"Operation Benchmark start (n={n}, m={m}, k_values={k_values})")
+
         for k in k_values:
             steps: List[Dict[str, float]] = []
 
@@ -558,12 +551,12 @@ class Clustering:
 
             steps.sort(key=lambda x: x["ops_per_sample"])
             results_by_k[int(k)] = steps
-            
+
             # Write to the logger
             self._log(f"--- k={k} ---")
             for step in steps:
                 self._log(f"{step['algorithm']:<15} : Total Ops = {step['ops_total']:.2e}, Ops/Sample = {step['ops_per_sample']:.2e}")
-        
+
             # Search for algorithm with lowest ops/sample per k and log it
             for step in steps:
                 if step["ops_per_sample"] == steps[0]["ops_per_sample"]:
@@ -571,8 +564,15 @@ class Clustering:
                     break
 
             self._log(f"--- End of Clustering Operation Benchmark ---\n")
-        
-        return results_by_k
+
+        # Use the highest k value to determine the most suited algorithm
+        best_algorithms = []
+        for k in sorted(results_by_k.keys()):
+            best_algorithms.append(results_by_k[k][0]["algorithm"])
+        best_algorithm_overall = max(set(best_algorithms), key=best_algorithms.count)
+        self._log(f"Most suited algorithm across k values: {best_algorithm_overall}")
+
+        return results_by_k, best_algorithm_overall
 
 
 @dataclass

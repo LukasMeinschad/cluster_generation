@@ -29,14 +29,18 @@ import tracemalloc
 import sys
 
 # Module imports
-from molecule_class import Molecule
-from operators import NonLocalOperators, LocalOperators
-from cluster import BHMCAnalyzer
-from box import SimulationBox
-from bhmc_config import BHMCConfig
-from calculator import EnergyEvaluator
-from logger import Logger
-from bhmc_worker import _phase_a_worker, _phase_b_worker
+from modules.molecule_class import Molecule
+from modules.operators import NonLocalOperators, LocalOperators
+
+# Clustering and Feature Matrix Generation
+from modules.featurizer import Featurizer, FeaturizerConfig
+from modules.cluster import Clustering
+
+from modules.box import SimulationBox
+from modules.bhmc_config import BHMCConfig
+from modules.calculator import EnergyEvaluator
+from modules.logger import Logger
+from modules.bhmc_worker import _phase_a_worker, _phase_b_worker
 
 
 
@@ -232,7 +236,7 @@ class MultiPhaseBHMC:
             results = [None] * n_processes
             with ProcessPoolExecutor(max_workers=n_processes, mp_context=ctx) as executor:
                 future_to_wid = {
-                    executor.submit(_phase_a_worker, args): args[6]
+                    executor.submit(_phase_a_worker, args): args[5]
                     for args in args_list
                 }
                 for future in tqdm(as_completed(future_to_wid), total=n_processes, desc="Phase A Workers"):
@@ -295,6 +299,11 @@ class MultiPhaseBHMC:
             self.plot_adaptive_box_updates()
             self.plot_worker_operator_acceptance()
 
+        except Exception as exc:
+            self._log(f"Phase A failed with exception: {exc}", level="error")
+            import traceback
+            self._log(traceback.format_exc(), level="error")
+            raise
         finally:
             pr.disable()
             current, peak = tracemalloc.get_traced_memory()
@@ -306,15 +315,16 @@ class MultiPhaseBHMC:
             self._log(f"Profiling Results for Phase A:")
             self._log(f"Current memory usage: {current / 10**6:.2f} MB; Peak memory usage: {peak / 10**6:.2f} MB")
 
-            # TODO move this to an log file etc
             # Write profiling results to an out file
+            from pathlib import Path
+            Path("profiling").mkdir(parents=True, exist_ok=True)
             with open("profiling/phase_a_profile.txt", 'w') as f:
                 f.write(f"--- Profiling Results for Phase A ---\n")
                 f.write(s.getvalue())
                 f.write(f"\n--- Memory Usage for Phase A ---\n")
                 f.write(f"Current memory usage: {current / 10**6:.2f} MB; Peak memory usage: {peak / 10**6:.2f} MB\n")
 
-            return self.phase_a_structures
+        return self.phase_a_structures
     
     def run_phase_b(self,
                     representatives: List["StructureData"],
@@ -480,11 +490,46 @@ class MultiPhaseBHMC:
 
     def analyse_phase_a_results(
             self,
-            phase_a_structures: List[Tuple[Molecule, float]]):
-        """  
+            phase_a_structures: Optional[List[Tuple[Molecule, float]]] = None):
         """
-        # TODO implement
-        pass
+        Applies Clustering to the Structures obtained from Phase A to select representative structures for Phase B local refinement  
+        """
+        if self.logger:
+            self.logger.header("Phase A Analysis")
+
+        if not phase_a_structures:
+            # Use self.phase_a_structures if no argument provided
+            self._log("No Phase A structures provided for analysis, using internal storage", level="warning")
+            phase_a_structures = self.phase_a_structures
+
+
+        # Configure the Featurizer and Clustering
+        featurizer_config = FeaturizerConfig(
+            descriptor_type="SOAP",
+            soap_rcut = 6,
+            soap_nmax = 12,
+            soap_lmax = 6,
+            soap_sigma = 0.5,
+        )
+        featurizer = Featurizer(config=featurizer_config)
+        mols, energies = zip(*phase_a_structures)
+        feature_mat = featurizer.build_feature_matrix(mols, energies=energies, include_hbonds=True)
+        self._log(f"Computed feature matrix for {len(mols)} structures with shape {feature_mat.shape}")
+        clustering = Clustering(feature_matrix=feature_mat, normalize=True, logger=self.logger)
+        # Benchmark the clustering operations per sample for algorithm selection
+        _, best_algorithm_complexity = clustering.benchmark_operations_per_sample()
+        print(f"Best clustering algorithm based on complexity: {best_algorithm_complexity}")  
+
+        if best_algorithm_complexity == "dbscan_avg" or best_algorithm_complexity == "dbscan_worst":
+            clustering.cluster(method="dbscan", eps=0.5, min_samples=20)
+        
+        embedding = clustering.umap(n_components=2)
+        clustering.plot_embedding(embedding, title="Phase A Clustering Embedding", save_path="figures/phase_a_clustering_embedding.png")
+
+
+        
+        
+        
 
 
     def analyse_phase_b_results(self, 
@@ -502,6 +547,7 @@ class MultiPhaseBHMC:
             self.logger.header("Phase B Analysis")
 
         # Initialize an analyzer
+
         
        
         
@@ -659,7 +705,7 @@ class MultiPhaseBHMC:
         """ 
         import matplotlib.pyplot as plt
         from pathlib import Path
-        ncols = len(self.worker_operator_acceptance) // 4 
+        ncols = max(1, min(4, len(self.worker_operator_acceptance)))
         nrows = (len(self.worker_operator_acceptance) + ncols - 1) // ncols
         fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), sharey=True)
         axes = axes.flatten() if len(self.worker_operator_acceptance) > 1 else [axes]

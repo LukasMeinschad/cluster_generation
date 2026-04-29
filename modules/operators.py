@@ -2,8 +2,8 @@ import numpy as np
 from typing import List, Tuple, Optional, Dict, Any
 import random
 
-from transformations import Transformation
-from geometry import GeometryOps, Quaternion, ReferenceFrame
+from modules.transformations import Transformation
+from modules.geometry import GeometryOps, Quaternion, ReferenceFrame
 from scipy.spatial.distance import pdist, squareform
 
 
@@ -308,17 +308,24 @@ class LocalOperators(MolecularOperators):
 
         n_select = random.randint(2, len(submolecule_indices))
         selected = random.sample(submolecule_indices, n_select)
+        #print(f"Selected {n_select} submolecules for correlated displacement: {selected}")  
         if adaptive:
             scale = self._compute_scaling_factor(molecule, operator_type="local")
             effective_range = (delta_range[0] * scale, delta_range[1] * scale)
         else:
             effective_range = delta_range
-        magnitude = random.uniform(*effective_range)
-
-        direction = self._random_unit_vetor()
-        displacement = direction * magnitude
+        # for each selected submolecule sample a random displacement and apply to the submolecule
+        random_displacements = []
         for submol_idx in selected:
+            direction = self._random_unit_vetor()
+            magnitude = random.uniform(*effective_range)
+            displacement = direction * magnitude
+            random_displacements.append(displacement)
             mol_copy.coordinates[submol_idx] += displacement
+        
+        # Check for inter-submolecule clashes and reject if any are found
+        if self._has_inter_submolecule_clashes(mol_copy, submolecule_indices):
+            return molecule.copy()  # Reject move by returning original
         return self._apply_box_constraints(mol_copy, molecule)
 
     def small_principal_axis_rotation(

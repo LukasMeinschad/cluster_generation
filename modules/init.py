@@ -56,6 +56,7 @@ class InitializationConfig:
     max_placement_attempts: int = 1000  # Max attempts to place molecules
     optimize_submolecules: bool = True  # Whether to optimize submolecules 
     optimize_parallel: bool = True  # Wether ot optimize the submolecules in parallel
+    optimize_cluster_representatives: bool = False # Wether to apply a local optimization step to the selected representatives after clustering
     verbose: bool = True
 
 
@@ -193,6 +194,7 @@ class ClusterInitializer:
         xyz_file: str,
         n_workers: int = 1,
         n_configurations: int = 10000,
+        n_sampling_workers: int = 1,
         placing_method: str = "random",
         grid_spacing: Optional[str] = "sobol",
         n_theta: Optional[int] = None,
@@ -228,7 +230,8 @@ class ClusterInitializer:
                 f"  Simulation Box Type: {self.config.box_type}\n"
                 f"  Simulation Box Scale Factor: {self.config.box_scale_factor}\n"
                 f"  Minimum Distance Between Submolecules: {self.config.min_distance} Angstrom\n"
-                f"  Candidate configurations generated: {n_configurations}\n"
+                f"  Configurations per sampling worker: {n_configurations}\n"
+                f"  Sampling workers: {n_sampling_workers} (total pool: {n_sampling_workers * n_configurations})\n"
                 f"  Workers (n_keep) for energy ranking: {n_workers}\n"
                 f"  Energy Evaluation Backend: {energy_backend}\n"
                 f"  xTB Method (if applicable): {energy_xtb_method}\n"
@@ -262,6 +265,7 @@ class ClusterInitializer:
             n_theta = n_theta,
             n_phi = n_phi,
             n_r = n_r,
+            n_sampling_workers = n_sampling_workers,
         )
 
         # Step 5b: Energy prescreening and ranking via the shared calculator wrapper
@@ -277,13 +281,64 @@ class ClusterInitializer:
 
         scored: List[Tuple[float, Molecule]] = []
         failed = 0
-        for mol in initial_molecules:
-            try:
-                e = self.energy_evaluator.evaluate(mol)
-                scored.append((e, mol))
-            except Exception as exc:
-                self._log(f"Energy evaluation failed for one candidate: {exc}", level="error")
-                failed += 1
+
+        if n_sampling_workers > 1:
+            self._log(f"\nEnergy prescreening: distributing {len(initial_molecules)} candidates across {n_sampling_workers} workers...")
+
+            # Serialize molecules for inter-process transfer
+            all_labels = [m.atom_labels.tolist() for m in initial_molecules]
+            all_coords = [m.coordinates.tolist() for m in initial_molecules]
+
+            # Split indices into n_sampling_workers roughly equal chunks
+            indices = list(range(len(initial_molecules)))
+            chunk_size = max(1, len(indices) // n_sampling_workers)
+            chunks = [indices[i:i + chunk_size] for i in range(0, len(indices), chunk_size)]
+
+            ctx = multiprocessing.get_context("spawn")
+            energy_by_idx: dict = {}
+            with ProcessPoolExecutor(max_workers=n_sampling_workers, mp_context=ctx) as executor:
+                futures = {
+                    executor.submit(
+                        ClusterInitializer._evaluate_batch_static,
+                        chunk,
+                        [all_labels[i] for i in chunk],
+                        [all_coords[i] for i in chunk],
+                        energy_backend,
+                        self.config.qm_method,
+                        self.config.qm_basis,
+                        energy_xtb_method,
+                        self.config.gpaw_mode,
+                        self.config.gpaw_basis,
+                        self.config.gpaw_xc,
+                        worker_id,
+                    ): worker_id
+                    for worker_id, chunk in enumerate(chunks)
+                }
+                for future in as_completed(futures):
+                    worker_id = futures[future]
+                    try:
+                        batch_results = future.result()
+                        ok = sum(1 for _, e in batch_results if e is not None)
+                        self._log(f"  Worker {worker_id}: {ok}/{len(batch_results)} evaluations successful")
+                        energy_by_idx.update({idx: e for idx, e in batch_results})
+                    except Exception as exc:
+                        self._log(f"  Worker {worker_id} batch failed: {exc}", level="error")
+
+            for i, mol in enumerate(initial_molecules):
+                e = energy_by_idx.get(i)
+                if e is not None:
+                    scored.append((e, mol))
+                else:
+                    failed += 1
+        else:
+            for mol in initial_molecules:
+                try:
+                    e = self.energy_evaluator.evaluate(mol)
+                    scored.append((e, mol))
+                except Exception as exc:
+                    self._log(f"Energy evaluation failed for one candidate: {exc}", level="error")
+                    failed += 1
+
         self._log(f"\nEnergy evaluation complete: {len(scored)} successful, {failed} failed")
         
         if len(scored) == 0:
@@ -336,18 +391,21 @@ class ClusterInitializer:
         selected_molecules = [mols[i] for i in rep_indices.values()]
 
         # Locally Optimize the selected representatives to ensure they are at least in a local minimum before starting BHMC
-        for i, mol in enumerate(selected_molecules):
-            self._log(f"Optimizing selected representative {i+1}/{len(selected_molecules)}...")
-            try:
-                optimized = self.energy_evaluator.optimize_geometry(mol, optimizer="BFGS", write_trajectory=False)
-                selected_molecules[i] = optimized
-                self._log(f" Optimization successful")
-            except Exception as exc:
-                self._log(f" Optimization failed: {exc}", level="error")
-                # Keep original if optimization fails
-        
+        if self.config.optimize_cluster_representatives:
+            for i, mol in enumerate(selected_molecules):
+                self._log(f"Optimizing selected representative {i+1}/{len(selected_molecules)}...")
+                try:
+                    optimized = self.energy_evaluator.optimize_geometry(mol, optimizer="BFGS", write_trajectory=False)
+                    selected_molecules[i] = optimized
+                    self._log(f" Optimization successful")
+                except Exception as exc:
+                    self._log(f" Optimization failed: {exc}", level="error")
+        else:
+            self._log("Skipping optimization of selected representatives as per configuration.")
+         
 
-        self._log(f"\nPre-screening completed: {len(scored)} valid configurations out of {n_configurations} generated.")
+        total_generated = n_sampling_workers * n_configurations
+        self._log(f"\nPre-screening completed: {len(scored)} valid configurations out of {total_generated} generated ({n_sampling_workers} workers × {n_configurations} each).")
         self._log(f"Statistics of scored configurations:")
         self._log(f"  Energy range: {e_min:.6f} to {e_max:.6f} Hartree")
         self._log(f"  Energy distribution: mean {np.mean(energies):.6f}, median {np.median(energies):.6f}, std {np.std(energies):.6f} Hartree")
@@ -359,7 +417,7 @@ class ClusterInitializer:
             f"Total atoms: {len(initial_molecules[0].coordinates)}",
             f"Submolecules: {len(submolecules)}",
             f"Simulation box type: {simulation_box.box_type}",
-            f"Candidates generated: {n_configurations}, Valid: {len(scored)}, Failed: {failed}",
+            f"Candidates generated: {n_sampling_workers * n_configurations} ({n_sampling_workers}w × {n_configurations}), Valid: {len(scored)}, Failed: {failed}",
             f"Selected for workers: {len(selected_molecules)}, Energy range: {e_min:.6f} to {e_max:.6f} Hartree",
         ]
         if simulation_box.box_type == "sphere":
@@ -384,18 +442,21 @@ class ClusterInitializer:
             n_theta: Optional[int] = None,
             n_phi: Optional[int] = None,
             n_r: Optional[int] = None,
+            n_sampling_workers: int = 1,
         ) -> List[Molecule]:
         """Generate multiple initial configurations inside the simulation box.
 
         Args:
             submolecules: List of submolecules to place.
             simulation_box: Simulation box used for placement.
-            n_configurations: Number of candidate configurations to generate.
+            n_configurations: Number of candidate configurations to generate per worker.
             placing_method: Placement method ("random", "sobol", or "grid").
             grid_spacing: Grid spacing strategy for grid mode.
             n_theta: Number of angular theta grid points (grid mode).
             n_phi: Number of angular phi grid points (grid mode).
             n_r: Number of radial grid points (grid mode).
+            n_sampling_workers: Number of parallel workers. Each generates n_configurations
+                independently; results are pooled (total = n_sampling_workers * n_configurations).
 
         Returns:
             List of generated candidate molecules.
@@ -422,6 +483,46 @@ class ClusterInitializer:
         else:
             spacing = n_theta = n_phi = n_r = None
 
+        # Parallel sampling: each worker independently generates n_configurations
+        if n_sampling_workers > 1:
+            self._log(f"[5/5] Sampling {n_configurations} configurations on each of {n_sampling_workers} workers (total: {n_sampling_workers * n_configurations})...")
+            submol_labels = [s.atom_labels.tolist() for s in submolecules]
+            submol_coords = [s.coordinates.tolist() for s in submolecules]
+
+            ctx = multiprocessing.get_context("spawn")
+            all_configs: List[Molecule] = []
+            with ProcessPoolExecutor(max_workers=n_sampling_workers, mp_context=ctx) as executor:
+                futures = {
+                    executor.submit(
+                        ClusterInitializer._generate_batch_static,
+                        submol_labels,
+                        submol_coords,
+                        simulation_box,
+                        n_configurations,
+                        method,
+                        spacing,
+                        n_theta,
+                        n_phi,
+                        n_r,
+                        self.config.min_distance,
+                        self.config.max_placement_attempts,
+                        worker_id,          # used as numpy seed
+                    ): worker_id
+                    for worker_id in range(n_sampling_workers)
+                }
+                for future in as_completed(futures):
+                    worker_id = futures[future]
+                    try:
+                        batch = future.result()
+                        all_configs.extend(batch)
+                        self._log(f"  Worker {worker_id}: {len(batch)} configurations generated")
+                    except Exception as exc:
+                        self._log(f"  Worker {worker_id} failed: {exc}", level="error")
+            self._log(f"  Total configurations collected: {len(all_configs)}")
+            return all_configs
+
+        # Sequential fallback
+        self._log(f"[5/5] Sampling {n_configurations} configurations sequentially...")
         configurations: List[Molecule] = []
         for _ in range(n_configurations):
             mol = self._generate_configuration(
@@ -437,6 +538,215 @@ class ClusterInitializer:
         return configurations
         
 
+
+    @staticmethod
+    def _generate_batch_static(
+        submol_labels: List[List[str]],
+        submol_coords: List[List],
+        simulation_box,
+        n_configurations: int,
+        placing_method: str,
+        grid_spacing: Optional[str],
+        n_theta: Optional[int],
+        n_phi: Optional[int],
+        n_r: Optional[int],
+        min_distance: float,
+        max_placement_attempts: int,
+        seed: int,
+    ) -> List[Molecule]:
+        """Generate a batch of configurations in an isolated worker process.
+
+        Fully self-contained (no self) so it can be pickled by ProcessPoolExecutor.
+        Failed individual placements are skipped rather than raising, so the returned
+        list may be shorter than n_configurations in degenerate cases.
+        """
+        import numpy as np
+        from scipy.stats import qmc
+        from modules.molecule_class import Molecule
+        from modules.init import ClusterInitializer
+
+        np.random.seed(seed)
+
+        submolecules = [
+            Molecule.from_labels_and_coords(labels, np.asarray(coords, dtype=np.float64))
+            for labels, coords in zip(submol_labels, submol_coords)
+        ]
+
+        method = placing_method
+        spacing = grid_spacing
+
+        # Pre-compute partition points once for the whole batch (grid mode only)
+        batch_partition_points = None
+        if method == "grid":
+            batch_partition_points = ClusterInitializer.generate_partition_points(
+                center=simulation_box.center,
+                radius=simulation_box.radius,
+                n_partitions=len(submolecules),
+                n_theta=n_theta,
+                n_phi=n_phi,
+                n_r=n_r,
+                spacing=spacing,
+                sobol_scramble=True,
+                sobol_seed=None,
+            )
+
+        def _rotation_matrix_from_u(u):
+            q = np.array([
+                np.sqrt(1 - u[0]) * np.sin(2 * np.pi * u[1]),
+                np.sqrt(1 - u[0]) * np.cos(2 * np.pi * u[1]),
+                np.sqrt(u[0])     * np.sin(2 * np.pi * u[2]),
+                np.sqrt(u[0])     * np.cos(2 * np.pi * u[2]),
+            ])
+            q0, q1, q2, q3 = q
+            return np.array([
+                [1 - 2*(q2**2 + q3**2), 2*(q1*q2 - q0*q3),     2*(q1*q3 + q0*q2)],
+                [2*(q1*q2 + q0*q3),     1 - 2*(q1**2 + q3**2), 2*(q2*q3 - q0*q1)],
+                [2*(q1*q3 - q0*q2),     2*(q2*q3 + q0*q1),     1 - 2*(q1**2 + q2**2)],
+            ])
+
+        def _check_dist(new_coords, placed_coords):
+            diff = new_coords[:, np.newaxis, :] - placed_coords[np.newaxis, :, :]
+            return np.all(np.linalg.norm(diff, axis=2) >= min_distance)
+
+        configurations: List[Molecule] = []
+
+        for _ in range(n_configurations):
+            sobol_pos = qmc.Sobol(d=3, scramble=True) if method == "sobol" else None
+            sobol_rot = qmc.Sobol(d=3, scramble=True) if method == "sobol" else None
+
+            partition_perm = None
+            partition_ptr = None
+            if method == "grid":
+                partition_perm = [np.random.permutation(len(pts)) for pts in batch_partition_points]
+                partition_ptr  = [0] * len(submolecules)
+
+            placed_coords = np.empty((0, 3))
+            placed_atoms: List[str] = []
+            success = True
+
+            for i, submol in enumerate(submolecules):
+                com = np.average(submol.coordinates, axis=0, weights=submol.masses)
+                centered = submol.coordinates - com
+
+                placed = False
+                for _ in range(max_placement_attempts):
+                    # --- position ---
+                    if method == "random":
+                        position = simulation_box.get_random_position(n_points=1)
+
+                    elif method == "sobol":
+                        u = sobol_pos.random(n=1)[0]
+                        if simulation_box.box_type == "cube":
+                            half = simulation_box.box_dimensions / 2.0
+                            position = simulation_box.center + (2.0 * u - 1.0) * half
+                        else:  # sphere
+                            r = simulation_box.radius * (u[0] ** (1.0 / 3.0))
+                            cos_t = 2.0 * u[1] - 1.0
+                            sin_t = np.sqrt(max(0.0, 1.0 - cos_t**2))
+                            phi   = 2.0 * np.pi * u[2]
+                            position = simulation_box.center + r * np.array([
+                                sin_t * np.cos(phi), sin_t * np.sin(phi), cos_t
+                            ])
+
+                    else:  # grid
+                        perm = partition_perm[i]
+                        ptr  = partition_ptr[i]
+                        if ptr >= len(perm):
+                            break
+                        position = batch_partition_points[i][perm[ptr]]
+                        partition_ptr[i] = ptr + 1
+
+                    # --- rotation ---
+                    if method == "sobol":
+                        rot = _rotation_matrix_from_u(sobol_rot.random(n=1)[0])
+                    else:
+                        rot = _rotation_matrix_from_u(np.random.rand(3))
+
+                    new_coords = (rot @ centered.T).T + position
+
+                    if i == 0 or _check_dist(new_coords, placed_coords):
+                        placed_coords = np.vstack([placed_coords, new_coords])
+                        placed_atoms.extend(submol.atom_labels.tolist())
+                        placed = True
+                        break
+
+                if not placed:
+                    success = False
+                    break
+
+            if success:
+                configurations.append(
+                    Molecule.from_labels_and_coords(
+                        atom_labels=placed_atoms,
+                        coordinates=placed_coords.copy(),
+                    )
+                )
+
+        return configurations
+
+    @staticmethod
+    def _evaluate_batch_static(
+        mol_indices: List[int],
+        mol_labels: List[List[str]],
+        mol_coords: List[List],
+        backend: str,
+        qm_method: str,
+        qm_basis: str,
+        xtb_method: str,
+        gpaw_mode: str,
+        gpaw_basis: str,
+        gpaw_xc: str,
+        worker_id: int,
+    ) -> List[Tuple[int, Optional[float]]]:
+        """Evaluate energies for a batch of molecules in an isolated worker process.
+
+        Returns a list of (original_index, energy) pairs where energy is None on failure.
+        """
+        import os
+        import tempfile
+        from pathlib import Path
+        import numpy as np
+        from modules.molecule_class import Molecule
+        from modules.calculator import EnergyEvaluator
+
+        os.environ["OMP_NUM_THREADS"] = "1"
+        os.environ["MKL_NUM_THREADS"] = "1"
+        os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
+        # Unique psi4 scratch dir per worker (no-op for other backends)
+        base = Path.cwd() / ".psi4_scratch"
+        base.mkdir(parents=True, exist_ok=True)
+        task_scratch = Path(tempfile.mkdtemp(prefix=f"eval_{worker_id}_", dir=str(base)))
+        os.environ["PSI_SCRATCH"] = str(task_scratch)
+
+        evaluator = EnergyEvaluator(
+            backend=backend,
+            qm_method=qm_method,
+            qm_basis=qm_basis,
+            xtb_method=xtb_method,
+            gpaw_mode=gpaw_mode,
+            gpaw_basis=gpaw_basis,
+            gpaw_xc=gpaw_xc,
+        )
+
+        results: List[Tuple[int, Optional[float]]] = []
+        for idx, labels, coords in zip(mol_indices, mol_labels, mol_coords):
+            try:
+                mol = Molecule.from_labels_and_coords(labels, np.asarray(coords, dtype=np.float64))
+                e = evaluator.evaluate(mol)
+                results.append((idx, e))
+            except Exception:
+                results.append((idx, None))
+
+        # Clean up scratch
+        try:
+            import shutil
+            if task_scratch.exists():
+                shutil.rmtree(task_scratch, ignore_errors=True)
+        except Exception:
+            pass
+
+        return results
 
     def _load_molecule(self, xyz_file: str) -> Molecule:
         """Load molecule from XYZ file."""
@@ -595,7 +905,7 @@ class ClusterInitializer:
                 gpaw_basis=gpaw_basis,
                 gpaw_xc=gpaw_xc,
             )
-            optimized_submol = calc.optimize_geometry(submol, optimizer="BFGS", write_trajectory=False)
+            optimized_submol = calc.optimize_geometry(submol, optimizer="BFGS")
             return optimized_submol
         except Exception as exc:
             traceback.print_exc()
@@ -1180,6 +1490,7 @@ if __name__ == "__main__":
         xyz_file=xyz_file,
         n_workers=4,
         n_configurations=5000,
+        n_sampling_workers=4,   # each of the 4 workers generates 5000 → 20000 total
         placing_method="sobol",
     )
     

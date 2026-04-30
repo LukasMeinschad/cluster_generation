@@ -372,8 +372,28 @@ class ClusterInitializer:
         featurizer_config = FeaturizerConfig(descriptor_type="SOAP")
         featurizer = Featurizer(featurizer_config)
         feature_mat = featurizer.build_feature_matrix(mols, energies=energies, include_hbonds=True)
+        # Log Shape of Feature Matrix
+        self._log(f"Constructed feature matrix with shape: {feature_mat.shape} (samples: {feature_mat.shape[0]}, features: {feature_mat.shape[1]})")    
+
+
         n_clusters = min(n_workers, len(mols))
         clustering = Clustering(feature_matrix=feature_mat, normalize=True)
+
+
+        # Calculate spearman correlation and filter
+        corr = clustering.spearman_correlation()
+        clustering.filter_correlation_spearman(threshold=0.9)
+        # Log after spearman filtering
+        self._log(f"Feature matrix shape after Spearman correlation filtering: {clustering._feature_matrix_normalized.shape}")
+        # Perform UMAP Embedding for Different Parameters
+        embedding1 = clustering.umap(n_components=2, n_neighbors=15, min_dist=0.1)
+        embedding2 = clustering.umap(n_components=2, n_neighbors=30, min_dist=0.5)
+        embedding3 = clustering.umap(n_components=2, n_neighbors=50, min_dist=0.9)
+        # Plot UMAP embeddings with different parameters
+        clustering.plot_embedding(embedding1, title="UMAP (n_neighbors=15, min_dist=0.1)", save_path="figures/umap_n15_d01.png")
+        clustering.plot_embedding(embedding2, title="UMAP (n_neighbors=30, min_dist=0.5)", save_path="figures/umap_n30_d05.png")
+        clustering.plot_embedding(embedding3, title="UMAP (n_neighbors=50, min_dist=0.9)", save_path="figures/umap_n50_d09.png")
+
         labels = clustering.kmeans_clustering(n_clusters=n_clusters)
 
         # Plot UMAP embedding (labels are stored on the clustering object after kmeans)

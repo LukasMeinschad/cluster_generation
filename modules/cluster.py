@@ -254,6 +254,128 @@ class Clustering:
             plt.savefig(f"figures/{title.replace(' ', '_').lower()}.png")
         plt.close()
     
+    # ------ Correlation Analysis of Features -----
+    def spearman_correlation(self) -> np.ndarray:
+        """ 
+        Computes the Spearman rank correlation matrix of the features in the feature matrix
+        """
+        import pandas as pd
+        from scipy.stats import spearmanr
+
+        fm = self._fm()
+        # fm is expected to be 2D: (n_samples, n_features)
+        if fm is None or fm.size == 0:
+            self._log("Feature matrix is empty; cannot compute Spearman correlation.", )
+            return np.array([])
+
+        if fm.ndim == 1:
+            # Single feature only — correlation matrix is trivial
+            self._log("Feature matrix is 1-D (single feature); returning trivial correlation.")
+            return np.array([[1.0]])
+
+        # Compute Spearman correlation across features (columns).
+        # Use pandas which handles shapes and constant columns more gracefully.
+        try:
+            df = pd.DataFrame(fm)
+            corr_df = df.corr(method='spearman')
+            corr = corr_df.values
+        except Exception:
+            # Fallback to scipy spearmanr: ensure we pass columns (features)
+            try:
+                # spearmanr on 2D returns correlation matrix for columns when axis=0
+                res = spearmanr(fm, axis=0)
+                corr = res.correlation if hasattr(res, 'correlation') else res[0]
+            except Exception as exc:
+                self._log(f"Failed to compute Spearman correlation: {exc}", )
+                return np.array([])
+
+        # Ensure corr is 2D square matrix
+        if corr.ndim == 0:
+            self._log("Spearman returned scalar; insufficient data for correlation matrix.")
+            return np.array([])
+        # Remove NaNs and Infs
+        corr = np.nan_to_num(corr, nan=0.0, posinf=1.0, neginf=-1.0)
+        # Visualize the correlation matrix
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(corr, fmt=".2f", cmap='coolwarm', square=True)
+        plt.title("Spearman Rank Correlation Matrix of Features")
+        plt.savefig("figures/feature_correlation_matrix.png")
+        plt.close()
+
+        self.corr_matrix = corr
+        return corr
+    
+    def filter_correlation_spearman(self, threshold: float = 0.9) -> List[int]:
+        """  
+        Filter features based on the spearman correlation matrix
+        1. Get the upper triangle of the correlation matrix (excluding the diagonal)
+        2. Find pairs of features with absolute correlation above the threshold
+        3. Identify features to drop and keep one representative from each highly correlated group
+        4. Update the feature matrix to only include the selected features and log the results
+        """
+        if not hasattr(self, 'corr_matrix'):
+            self._log("Correlation matrix not computed. Please run spearman_correlation() first.", )
+            return []
+        corr = self.corr_matrix
+        n_features = corr.shape[0]
+        
+        upper_tri_indices = np.triu_indices(n_features, k=1)
+        # Find where the absolute correlation exceeds the threshold
+        high_corr_mask = np.abs(corr[upper_tri_indices]) > threshold
+
+        # Identify which columns to drop
+        cols_to_drop = np.unique(upper_tri_indices[1][high_corr_mask])
+
+        # Keep the features that are not in cols_to_drop
+        selected_indices = [i for i in range(n_features) if i not in cols_to_drop]
+        self._feature_matrix_normalized = self._fm()[:, selected_indices]
+        self._log(f"Filtered features based on Spearman correlation: threshold={threshold}, dropped {len(cols_to_drop)} features, kept {len(selected_indices)} features.")
+        
+        # Update the correlation matrix to only include the selected features
+        self.corr_matrix = corr[np.ix_(selected_indices, selected_indices)]
+        
+        return selected_indices
+
+    def determine_distance_metric(self) -> str:
+        """
+        Helper function to find the best distance metric for clustering later on.
+        
+        https://www.statology.org/choosing-the-right-distance-metric-for-clustering-a-decision-tree-approach/
+
+        Algorithm
+        1. We first check again the correlation density
+        2. If this is > 0.5 we use the Mahalanobis Distance
+        3. If we are below 0.5 we analyze the spatial distribution, for this we calculate a contrast ratio
+           
+        C_R = D_max - D_min / D_mean
+
+        + If C_R_Manhatten > C_R Euclidean we use the Manhattan distance, otherwise we use the Euclidean distance        
+        """
+        # Determine the correlation density
+        if not hasattr(self, 'corr_matrix'):
+            self._log("Correlation matrix not computed. Please run spearman_correlation() first.", )
+            return "euclidean"
+        corr = self.corr_matrix
+        # We calculate the average absolute correlation (excluding the diagonal)
+        avg_cor = np.mean(np.abs(corr[np.triu_indices_from(corr, k=1)]))
+
+        # If the average correlation is high, we use Mahalanobis distance
+        if avg_cor > 0.5:
+            self._log(f"Average feature correlation is high (avg_cor={avg_cor:.4f}), using Mahalanobis distance.")
+            return "mahalanobis"
+        # Otherwise we analyze the spatial distribution using contrast ratio
+        else:
+            results = {}
+            for m in ["cityblock", "euclidean", "cosine"]:
+                dists = pdist(self._fm(), metric=m)
+                results[m] = (np.max(dists) - np.min(dists)) / np.mean(dists)
+            best_metric = max(results, key=results.get)
+            self._log(f"Average feature correlation is low (avg_cor={avg_cor:.4f}), using {best_metric} distance based on contrast ratio analysis: {results}")
+            self.best_distance_metric = best_metric
+            return best_metric
+        
+    
+
 
     
     # ----- Evaluation and Assessment -----
@@ -398,6 +520,45 @@ class Clustering:
         plt.savefig(save_path)
         plt.close()
         return best_k, scores 
+    
+    # ------ Hyperparameter Estimation for Density-Based Clustering Methods ----
+    def estimate_dbscan_eps(self, min_samples, metric='euclidean'):
+        """ 
+        Calculates the k = min_samples nearest neighbor distances and plots this distances from each point to its k-th nearest neighbor sorted in ascending order. The 'elbow' point in this curve is a heuristic for the optimal eps parameter for DBSCAN.
+        """
+        from sklearn.neighbors import NearestNeighbors
+        from kneed import KneeLocator
+        neigh = NearestNeighbors(n_neighbors=min_samples, metric=metric)
+        # Fit the model to the feature matrix and compute the distances to the nearest neighbors
+        neighbors_fit = neigh.fit(self._fm())
+
+        # Get the distances to the nearest neighbors
+        distances, indices = neighbors_fit.kneighbors(self._fm())
+        # Sort the distances to find the nee
+        # Take the last column which corresponds to the distance to the k-th nearest neighbor
+        k_distances = np.sort(distances[:, -1])
+        # Plot the k-distance graph
+
+        # Determine the knee
+        kl = KneeLocator(range(len(k_distances)), k_distances, curve='convex', direction='increasing')
+        optimal_eps = k_distances[kl.knee] if kl.knee is not None else None
+        self._log(f"Estimated optimal eps for DBSCAN: {optimal_eps:.4f} (knee at index {kl.knee})")
+
+
+        plt.figure(figsize=(8, 5))
+        plt.plot(k_distances, marker='o', linestyle='-', color='blue')
+        plt.axvline(x=kl.knee, color='red', linestyle='--', label=f'Knee at index {kl.knee}, eps={optimal_eps:.4f}')
+        plt.title(f'k-Distance Graph for DBSCAN (k={min_samples})')
+        plt.xlabel('Points sorted by distance to k-th nearest neighbor')
+        plt.ylabel(f'Distance to {min_samples}-th nearest neighbor')
+        plt.grid(True)
+        plt.savefig("figures/dbscan_k_distance_graph.png")
+        plt.close()
+        self.optimal_dbscan_eps = optimal_eps
+        return optimal_eps
+
+
+
 
     # ----- Obtain cluster representatives -----
     def get_cluster_representatives(self, labels: Optional[np.ndarray] = None, method: str = "centroid") -> Dict[int, int]:
@@ -573,6 +734,89 @@ class Clustering:
         self._log(f"Most suited algorithm across k values: {best_algorithm_overall}")
 
         return results_by_k, best_algorithm_overall
+
+# ------ Testing and Validation of Algorithm Design for Phase A
+
+def algorithm_test_phase_a_clustering():
+    """ 
+    Tests the proposed algorithm for the clustering of the phase a structures
+    For this we perform the following statistical analysis
+
+    1) Normalize the Feature Matrix --> done in init
+    2) Use Spearman correlation to identify highly correlated features
+    """
+    from sklearn.datasets import load_digits
+    from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score, homogeneity_completeness_v_measure
+    X, true_labels = load_digits(return_X_y=True)
+    # This "feature matrix" is used as a test for the algorithm
+    print(f"Testing algorithm on Digits datatest feature matrix with shape: {X.shape}")
+    # Plot the histograms of the 5 first features to visuaize their distributions
+    plt.figure(figsize=(12, 8))
+    for i in range(5):
+        plt.subplot(2, 3, i+1)
+        sns.histplot(X[:, i], bins=20, kde=True)
+        plt.title(f"Feature {i} Distribution")
+    plt.tight_layout()
+    plt.savefig("figures/feature_distributions.png")
+    plt.close()
+    Cluster = Clustering(feature_matrix=X)
+    Cluster.spearman_correlation()
+    # Determine which cluster algorithm to use
+    results = Cluster.benchmark_operations_per_sample(k_values=(2, 3, 5, 10), algorithms=["agglomerative", "kmeans", "dbscan_avg", "hdbscan_avg"])
+    print("Clustering Algorithm Complexity Benchmark:")
+    for k, algos in results[0].items():
+        print(f"  k={k}:")
+        for algo in algos:
+            print(f"    {algo['algorithm']:<15} : Total Ops = {algo['ops_total']:.2e}, Ops/Sample = {algo['ops_per_sample']:.2e}")
+    print(f"Most suited algorithm across k values: {results[1]}")
+ 
+    # Filter According to Spearman correlation with a threshold of 0.9
+    selected_indices = Cluster.filter_correlation_spearman(threshold=0.9)
+    print(f"Length of selected features after filtering: {len(selected_indices)}")
+
+    # Reduce to 2D with UMAP first — DBSCAN works in this space where clusters are visible
+    embedding = Cluster.umap(n_components=2, n_neighbors=15, min_dist=0.1, random_state=42)
+
+    # Swap the feature matrix to the UMAP embedding so all subsequent methods operate on it
+    Cluster._feature_matrix_normalized = embedding
+
+    # Run benchmark again
+    results = Cluster.benchmark_operations_per_sample(k_values=(2, 3, 5, 10), algorithms=["agglomerative", "kmeans", "dbscan_avg", "hdbscan_avg"])
+    print("Clustering Algorithm Complexity Benchmark after UMAP embedding:") 
+    for k, algos in results[0].items():
+        print(f"  k={k}:")
+        for algo in algos:
+            print(f"    {algo['algorithm']:<15} : Total Ops = {algo['ops_total']:.2e}, Ops/Sample = {algo['ops_per_sample']:.2e}")
+    print(f"Most suited algorithm across k values after UMAP embedding: {results[1]}")
+
+
+    # Hyperparameter estimation in 2D embedding space (curse of dimensionality avoided)
+    min_poins = 5  # standard heuristic for 2D: ~2 * n_dims + 1
+    optimal_eps = Cluster.estimate_dbscan_eps(min_samples=min_poins, metric='euclidean')
+    print(f"Estimated optimal eps for DBSCAN (on UMAP embedding): {optimal_eps:.4f} with min_samples={min_poins}")
+
+    # Run DBSCAN on the embedding
+    pred_labels = Cluster.dbscan_clustering(eps=optimal_eps, min_samples=min_poins)
+
+    # Evaluate clustering against ground truth (noise points labeled -1 are excluded)
+    mask = pred_labels != -1
+    ari = adjusted_rand_score(true_labels[mask], pred_labels[mask])
+    nmi = normalized_mutual_info_score(true_labels[mask], pred_labels[mask])
+    hom, com, vmes = homogeneity_completeness_v_measure(true_labels[mask], pred_labels[mask])
+    n_noise = np.sum(~mask)
+    n_clusters = len(set(pred_labels[mask]))
+    print(f"\n--- Clustering Evaluation (noise points excluded: {n_noise}/{len(pred_labels)}) ---")
+    print(f"  Clusters found:      {n_clusters}  (true: 10)")
+    print(f"  Adjusted Rand Index: {ari:.4f}  (1.0 = perfect)")
+    print(f"  Norm. Mutual Info:   {nmi:.4f}  (1.0 = perfect)")
+    print(f"  Homogeneity:         {hom:.4f}")
+    print(f"  Completeness:        {com:.4f}")
+    print(f"  V-measure:           {vmes:.4f}")
+
+    # Plot UMAP embedding colored by DBSCAN cluster labels
+    Cluster.plot_embedding(embedding, title="UMAP Embedding with DBSCAN Clusters", save_path="figures/umap_embedding_dbscan.png")
+
+
 
 
 @dataclass
@@ -2370,4 +2614,6 @@ class BHMCAnalyzer:
         plt.savefig("figures/chunksize_effect.png", dpi=200)
         plt.close()
 
-        
+if __name__ == "__main__":
+    # Run the algorithm test
+    algorithm_test_phase_a_clustering()

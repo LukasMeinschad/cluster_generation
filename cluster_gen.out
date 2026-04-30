@@ -30,43 +30,45 @@ Workers: 2
  Radius: 2.59 Angstrom
  Volume: 72.73 Angstrom^3
 [5/5] Sampling 100 configurations on each of 10 workers (total: 1000)...
-  Worker 0: 100 configurations generated
-  Worker 3: 100 configurations generated
-  Worker 2: 100 configurations generated
   Worker 1: 100 configurations generated
+  Worker 0: 100 configurations generated
+  Worker 2: 100 configurations generated
+  Worker 3: 100 configurations generated
   Worker 4: 100 configurations generated
-  Worker 6: 100 configurations generated
   Worker 5: 100 configurations generated
+  Worker 6: 100 configurations generated
+  Worker 8: 100 configurations generated
   Worker 9: 100 configurations generated
   Worker 7: 100 configurations generated
-  Worker 8: 100 configurations generated
   Total configurations collected: 1000
 
 Energy prescreening: distributing 1000 candidates across 10 workers...
-  Worker 1: 100/100 evaluations successful
-  Worker 3: 100/100 evaluations successful
   Worker 0: 100/100 evaluations successful
+  Worker 1: 100/100 evaluations successful
   Worker 2: 100/100 evaluations successful
   Worker 4: 100/100 evaluations successful
+  Worker 3: 100/100 evaluations successful
+  Worker 7: 100/100 evaluations successful
   Worker 5: 100/100 evaluations successful
   Worker 6: 100/100 evaluations successful
-  Worker 7: 100/100 evaluations successful
-  Worker 9: 100/100 evaluations successful
   Worker 8: 100/100 evaluations successful
+  Worker 9: 100/100 evaluations successful
 
 Energy evaluation complete: 1000 successful, 0 failed
-Filtered out 29 high-energy outliers based on Z-score thresholding.
+Filtered out 22 high-energy outliers based on Z-score thresholding.
+Constructed feature matrix with shape: (978, 5998) (samples: 978, features: 5998)
+Feature matrix shape after Spearman correlation filtering: (978, 1773)
 
 Clustering evaluation metrics:
-  silhouette_score: 0.0898
-  davies_bouldin_score: 2.1671
-  calinski_harabasz_score: 93.4134
+  silhouette_score: 0.0553
+  davies_bouldin_score: 2.2002
+  calinski_harabasz_score: 66.4065
 Skipping optimization of selected representatives as per configuration.
 
 Pre-screening completed: 1000 valid configurations out of 1000 generated (10 workers × 100 each).
 Statistics of scored configurations:
-  Energy range: -10.836137 to -10.809094 Hartree
-  Energy distribution: mean -10.834354, median -10.834692, std 0.001490 Hartree
+  Energy range: -10.836124 to -10.810484 Hartree
+  Energy distribution: mean -10.834375, median -10.834740, std 0.001518 Hartree
   Clusters formed: 10, Representatives selected: 10
 ============================================================
 Initialization Complete!
@@ -74,7 +76,7 @@ Total atoms: 5
 Submolecules: 2
 Simulation box type: sphere
 Candidates generated: 1000 (10w × 100), Valid: 1000, Failed: 0
-Selected for workers: 10, Energy range: -10.836137 to -10.809094 Hartree
+Selected for workers: 10, Energy range: -10.836124 to -10.810484 Hartree
 Box radius: 2.59 Angstrom
 Box volume: 72.73 Angstrom^3
 Obtained 10 initial structures
@@ -91,37 +93,8 @@ Configuration:
   Adaptive operators: True
   Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation, com_com_approach, com_com_separation
   Independent initial configs: 10
-  Simulation Box: <modules.box.SimulationBox object at 0x7fa1567f4c10>
+  Simulation Box: <modules.box.SimulationBox object at 0x7f403330c1c0>
   Worker log: bhmc_workers.log
-Estimated single point time: 0.01 seconds (Energy: -10.834303 Hartree)
-Estimated Phase A time: 28.02 minutes
+Estimated single point time: 0.01 seconds (Energy: -10.832275 Hartree)
+Estimated Phase A time: 22.23 minutes
 Starting parallel BHMC chains...
-  Worker 0: 15807 structures accepted, 20001 trajectory points, 1743 box updates  Operator acceptance rates: twist: 75.5%, large_displacement: 85.3%, mirror: 74.4%, roto_reflection: 60.2%, exchange: 75.1%, random_so3: 84.4%, principal_axis_rotation: 74.3%, com_com_approach: 97.1%, com_com_separation: 99.4%
-  Worker 1: 15440 structures accepted, 20001 trajectory points, 1655 box updates  Operator acceptance rates: twist: 69.5%, large_displacement: 88.2%, mirror: 68.0%, roto_reflection: 53.0%, exchange: 79.3%, random_so3: 87.0%, principal_axis_rotation: 74.6%, com_com_approach: 98.0%, com_com_separation: 99.4%
-  Worker 2: 0 structures accepted, 20001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
-  Worker 3: 16183 structures accepted, 20001 trajectory points, 1757 box updates  Operator acceptance rates: twist: 75.8%, large_displacement: 89.7%, mirror: 75.9%, roto_reflection: 62.7%, exchange: 79.5%, random_so3: 86.9%, principal_axis_rotation: 73.7%, com_com_approach: 98.3%, com_com_separation: 99.9%
-  Worker 4: 15703 structures accepted, 20001 trajectory points, 1732 box updates  Operator acceptance rates: twist: 73.2%, large_displacement: 86.8%, mirror: 74.5%, roto_reflection: 60.1%, exchange: 75.7%, random_so3: 82.3%, principal_axis_rotation: 73.3%, com_com_approach: 97.3%, com_com_separation: 99.3%
-  Worker 5: 15967 structures accepted, 20001 trajectory points, 1779 box updates  Operator acceptance rates: twist: 77.5%, large_displacement: 85.7%, mirror: 78.1%, roto_reflection: 64.0%, exchange: 73.3%, random_so3: 82.5%, principal_axis_rotation: 74.1%, com_com_approach: 96.3%, com_com_separation: 98.9%
-  Worker 6: 15551 structures accepted, 20001 trajectory points, 1696 box updates  Operator acceptance rates: twist: 71.0%, large_displacement: 87.2%, mirror: 71.8%, roto_reflection: 54.2%, exchange: 79.2%, random_so3: 84.8%, principal_axis_rotation: 74.5%, com_com_approach: 96.6%, com_com_separation: 100.0%
-  Worker 7: 16162 structures accepted, 20001 trajectory points, 1808 box updates  Operator acceptance rates: twist: 79.0%, large_displacement: 87.3%, mirror: 79.5%, roto_reflection: 65.7%, exchange: 73.6%, random_so3: 82.3%, principal_axis_rotation: 74.3%, com_com_approach: 97.5%, com_com_separation: 99.4%
-  Worker 8: 15912 structures accepted, 20001 trajectory points, 1721 box updates  Operator acceptance rates: twist: 75.6%, large_displacement: 88.0%, mirror: 75.4%, roto_reflection: 59.7%, exchange: 77.0%, random_so3: 86.4%, principal_axis_rotation: 73.0%, com_com_approach: 97.5%, com_com_separation: 99.0%
-  Worker 9: 15825 structures accepted, 20001 trajectory points, 1698 box updates  Operator acceptance rates: twist: 73.5%, large_displacement: 89.0%, mirror: 72.1%, roto_reflection: 56.5%, exchange: 79.4%, random_so3: 85.0%, principal_axis_rotation: 75.1%, com_com_approach: 98.1%, com_com_separation: 98.9%
-Size of accepted structures (Phase A): 1.28 MB
-------------------------------------------------------------------------
-Phase A Results
-------------------------------------------------------------------------
-Total steps: 200000
-Total accepted: 142550
-Overall acceptance rate: 71.28%
-Energy Statistics (Hartree):
-  Min:  -10.836302
-  Max:  -10.823196
-  Mean: -10.834713
-  Std:  0.000508
-Profiling Results for Phase A:
-Current memory usage: 394.82 MB; Peak memory usage: 457.18 MB
-Phase A complete: 142550 structures accepted
-Wrote 142550 structures to trajectories/phase_a_structures.xyz
-========================================================================
-                            Phase A Analysis                            
-========================================================================

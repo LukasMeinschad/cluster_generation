@@ -525,7 +525,24 @@ class MultiPhaseBHMC:
         time_start = time.time()
         feature_mat = featurizer.build_feature_matrix(mols, energies=energies, include_hbonds=True)
         time_end = time.time()
+
+        
         print(f"Feature matrix computation time: {time_end - time_start:.2f} seconds")
+        # Compute RAM usage of feature matrix
+        feature_mat_size = sys.getsizeof(feature_mat) / 10**6  # in MB
+        self._log(f"Feature matrix shape: {feature_mat.shape}, size: {feature_mat_size:.2f} MB")
+
+        # If the length of mols is >= 100 000 we split into two batches to avoid computation time issues of clustering
+        if len(mols) >= 100000:
+            self._log(f"Large number of structures ({len(mols)}), splitting into two batches for clustering")
+            mid = len(mols) // 2
+            feature_mat_1 = feature_mat[:mid]
+            feature_mat_2 = feature_mat[mid:]
+        
+    
+
+        
+       
 
 
         self._log(f"Computed feature matrix for {len(mols)} structures with shape {feature_mat.shape}")
@@ -548,6 +565,17 @@ class MultiPhaseBHMC:
         clustering.plot_embedding(embedding, title="Phase A Clustering Embedding", save_path="figures/phase_a_clustering_embedding.png")
 
 
+        
+    @staticmethod
+    def analyze_phase_a_results_worker(
+        feature_mat: np.ndarray,
+        method: str,
+        **kwargs
+        ):
+        """ 
+        Worker function for the clustering analysis of the Phase A results
+        We take one single feature matrix and perform a clustering analysis with the subset of the data
+        """
         
         
         

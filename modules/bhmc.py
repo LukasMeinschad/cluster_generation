@@ -493,92 +493,89 @@ class MultiPhaseBHMC:
 
         return results
 
-    def analyse_phase_a_results(
+    def analyze_phase_a_results(
             self,
-            phase_a_structures: Optional[List[Tuple[Molecule, float]]] = None):
+            umap_model,
+            knn_model,
+            phase_a_structures: Optional[List[Tuple[Molecule, float]]] = None,
+    ) -> List[Tuple[Molecule, float, int]]:
         """
-        Applies Clustering to the Structures obtained from Phase A to select representative structures for Phase B local refinement  
-        """
-        if self.logger:
-            self.logger.header("Phase A Analysis")
+        Analyse Phase A structures by running them through the same outlier-removal
+        pipeline used during initialization, then project into the initialization
+        UMAP space and assign cluster labels via the pre-trained KNN.
 
-        if not phase_a_structures:
-            # Use self.phase_a_structures if no argument provided
-            self._log("No Phase A structures provided for analysis, using internal storage", level="warning")
+        Args:
+            umap_model: Fitted UMAP model returned by ClusterInitializer.initialize_from_xyz.
+            knn_model:  Fitted KNN model returned by ClusterInitializer.initialize_from_xyz.
+            phase_a_structures: List of (Molecule, energy) pairs. Defaults to self.phase_a_structures.
+
+        Returns:
+            List of (Molecule, energy, cluster_label) for each surviving structure.
+        """
+        if phase_a_structures is None:
             phase_a_structures = self.phase_a_structures
 
-        import time
-        time_start = time.time()
-        # Configure the Featurizer and Clustering
-        featurizer_config = FeaturizerConfig(
-            descriptor_type="SOAP",
-            soap_rcut = 6,
-            soap_nmax = 12,
-            soap_lmax = 8,
-            soap_sigma = 0.5,
-        )
-        time_end = time.time()
-        print(f"Featurizer configuration time: {time_end - time_start:.2f} seconds")    
-        featurizer = Featurizer(config=featurizer_config)
-        mols, energies = zip(*phase_a_structures)
+        if not phase_a_structures:
+            self._log("No Phase A structures to analyse.", level="warning")
+            return []
 
-        time_start = time.time()
-        feature_mat = featurizer.build_feature_matrix(mols, energies=energies, include_hbonds=True)
-        time_end = time.time()
+        mols = [mol for mol, energy in phase_a_structures]
+        energies = [energy for _, energy in phase_a_structures]
 
+        # --- Energy-level Z-score filtering (high-energy outliers) ---
+        energy_arr = np.array(energies)
+        z_e = (energy_arr - energy_arr.mean()) / (energy_arr.std() + 1e-12)
+        mols = [m for m, z in zip(mols, z_e) if z <= 3.0]
+        energies = [e for e, z in zip(energies, z_e) if z <= 3.0]
+        self._log(f"Phase A energy Z-score filtering: {len(mols)} structures remain")
+
+        if not mols:
+            self._log("All Phase A structures filtered as high-energy outliers.", level="warning")
+            return []
+
+        # --- SOAP feature matrix ---
+        featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
+        feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
+        self._log(f"SOAP feature matrix: {feature_mat.shape[0]} structures × {feature_mat.shape[1]} features")
+
+        clustering = Clustering(feature_matrix=feature_mat, energies=energies, metric="cityblock", normalize=False,logger=self.logger)
+
+        # --- Feature-level Z-score filtering ---
+        zscore_idx = clustering.z_score_filtering()
+        mols = [mols[i] for i in zscore_idx]
+        energies = [energies[i] for i in zscore_idx]
+        self._log(f"After feature Z-score filtering: {len(mols)} structures remain")
+
+        # --- Isolation Forest ---
+        iforest_idx = clustering.isolation_forest_outlier(contamination=0.4)
+        mols = [mols[i] for i in iforest_idx]
+        energies = [energies[i] for i in iforest_idx]
+        self._log(f"After Isolation Forest: {len(mols)} structures remain")
+
+        if not mols:
+            self._log("No structures remain after outlier filtering.", level="warning")
+            return []
+
+        # clustering._feature_matrix_normalized now contains only the surviving rows
+        embedding = umap_model.transform(clustering._feature_matrix_normalized)
+        self._log(f"UMAP transform complete: embedding shape {embedding.shape}")
+
+        labels = knn_model.predict(embedding)
+        proba = clustering.KN_predict_probabilities(x_test=embedding, knn=knn_model)
+
+                
+        # Log the cluster label distribution
+        self._log(f"Cluster label distribution: {np.bincount(labels)}")
+        # Convert to list of string labels for plotting
+        labels_str = [f"Cluster {l}" for l in labels]
+
+
+        clustering.plot_KN_probabilities(embedding=embedding, probabilities=proba, labels=labels_str, save_path="figures/phase_a_knn_probabilities.png")
+        self._log(f"KNN labels assigned: {len(set(labels.tolist()))} unique clusters")
+        # Plot the Embedding with cluster labels
+        clustering.plot_embedding(embedding=embedding, labels=labels_str, save_path="figures/phase_a_embedding.png")    
         
-        print(f"Feature matrix computation time: {time_end - time_start:.2f} seconds")
-        # Compute RAM usage of feature matrix
-        feature_mat_size = sys.getsizeof(feature_mat) / 10**6  # in MB
-        self._log(f"Feature matrix shape: {feature_mat.shape}, size: {feature_mat_size:.2f} MB")
 
-        # If the length of mols is >= 100 000 we split into two batches to avoid computation time issues of clustering
-        if len(mols) >= 100000:
-            self._log(f"Large number of structures ({len(mols)}), splitting into two batches for clustering")
-            mid = len(mols) // 2
-            feature_mat_1 = feature_mat[:mid]
-            feature_mat_2 = feature_mat[mid:]
-        
-    
-
-        
-       
-
-
-        self._log(f"Computed feature matrix for {len(mols)} structures with shape {feature_mat.shape}")
-    
-        time_start = time.time()
-        clustering = Clustering(feature_matrix=feature_mat, normalize=True, logger=self.logger)
-        time_end = time.time()
-        print(f"Clustering initialization time: {time_end - time_start:.2f}")
-        # Benchmark the clustering operations per sample for algorithm selection
-        time_start = time.time()
-        _, best_algorithm_complexity = clustering.benchmark_operations_per_sample()
-        time_end = time.time()
-        print(f"Clustering operation benchmarking time: {time.time() - time_start:.2f} seconds")
-        print(f"Best clustering algorithm based on complexity: {best_algorithm_complexity}")  
-
-        if best_algorithm_complexity == "dbscan_avg" or best_algorithm_complexity == "dbscan_worst":
-            clustering.cluster(method="dbscan", eps=0.5, min_samples=20)
-        
-        embedding = clustering.umap(n_components=2)
-        clustering.plot_embedding(embedding, title="Phase A Clustering Embedding", save_path="figures/phase_a_clustering_embedding.png")
-
-
-        
-    @staticmethod
-    def analyze_phase_a_results_worker(
-        feature_mat: np.ndarray,
-        method: str,
-        **kwargs
-        ):
-        """ 
-        Worker function for the clustering analysis of the Phase A results
-        We take one single feature matrix and perform a clustering analysis with the subset of the data
-        """
-        
-        
-        
 
 
     def analyse_phase_b_results(self, 

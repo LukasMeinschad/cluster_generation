@@ -7,78 +7,86 @@ Configuration:
   Simulation Box Type: sphere
   Simulation Box Scale Factor: 1.5
   Minimum Distance Between Submolecules: 2.0 Angstrom
-  Configurations per sampling worker: 100
-  Sampling workers: 10 (total pool: 1000)
+  Configurations per sampling worker: 10
+  Sampling workers: 10 (total pool: 100)
   Workers (n_keep) for energy ranking: 10
   Energy Evaluation Backend: xtb
   xTB Method (if applicable): GFN2-xTB
 
 
-[1/5] Loading molecule from test_molecules/h2o_n2.xyz
- Loaded: 5 atoms
+[1/5] Loading molecule from test_molecules/water_clusters/h2o_4.xyz
+ Loaded: 12 atoms
 
 [2/5] Fragmenting molecule into submolecules
- Found 2 submolecules:
-  Submolecule 1: 2 atoms
+ Found 4 submolecules:
+  Submolecule 1: 3 atoms
   Submolecule 2: 3 atoms
-Workers: 2
+  Submolecule 3: 3 atoms
+  Submolecule 4: 3 atoms
+Workers: 4
   Submolecule 1 optimized successfully
+  Submolecule 3 optimized successfully
+  Submolecule 4 optimized successfully
   Submolecule 2 optimized successfully
 
 [4/5] Creating simulation box
  Box type:  sphere
- Radius: 2.59 Angstrom
- Volume: 72.73 Angstrom^3
-[5/5] Sampling 100 configurations on each of 10 workers (total: 1000)...
-  Worker 1: 100 configurations generated
-  Worker 0: 100 configurations generated
-  Worker 2: 100 configurations generated
-  Worker 3: 100 configurations generated
-  Worker 4: 100 configurations generated
-  Worker 5: 100 configurations generated
-  Worker 6: 100 configurations generated
-  Worker 8: 100 configurations generated
-  Worker 9: 100 configurations generated
-  Worker 7: 100 configurations generated
-  Total configurations collected: 1000
+ Radius: 3.21 Angstrom
+ Volume: 138.11 Angstrom^3
+[5/5] Sampling 10 configurations on each of 10 workers (total: 100)...
+  Worker 0: 10 configurations generated
+  Worker 1: 10 configurations generated
+  Worker 2: 10 configurations generated
+  Worker 4: 10 configurations generated
+  Worker 6: 10 configurations generated
+  Worker 8: 10 configurations generated
+  Worker 3: 10 configurations generated
+  Worker 5: 10 configurations generated
+  Worker 7: 10 configurations generated
+  Worker 9: 10 configurations generated
+  Total configurations collected: 100
 
-Energy prescreening: distributing 1000 candidates across 10 workers...
-  Worker 0: 100/100 evaluations successful
-  Worker 1: 100/100 evaluations successful
-  Worker 2: 100/100 evaluations successful
-  Worker 4: 100/100 evaluations successful
-  Worker 3: 100/100 evaluations successful
-  Worker 7: 100/100 evaluations successful
-  Worker 5: 100/100 evaluations successful
-  Worker 6: 100/100 evaluations successful
-  Worker 8: 100/100 evaluations successful
-  Worker 9: 100/100 evaluations successful
+Energy prescreening: distributing 100 candidates across 10 workers...
+  Worker 1: 10/10 evaluations successful
+  Worker 0: 10/10 evaluations successful
+  Worker 2: 10/10 evaluations successful
+  Worker 3: 10/10 evaluations successful
+  Worker 5: 10/10 evaluations successful
+  Worker 6: 10/10 evaluations successful
+  Worker 7: 10/10 evaluations successful
+  Worker 8: 10/10 evaluations successful
+  Worker 4: 10/10 evaluations successful
+  Worker 9: 10/10 evaluations successful
 
-Energy evaluation complete: 1000 successful, 0 failed
-Filtered out 22 high-energy outliers based on Z-score thresholding.
-Constructed feature matrix with shape: (978, 5998) (samples: 978, features: 5998)
-Feature matrix shape after Spearman correlation filtering: (978, 1773)
+Energy evaluation complete: 100 successful, 0 failed
+Wrote 100 structures to trajectories/initialization_trajectory.xyz
+Filtered out 1 high-energy outliers based on Z-score thresholding.
+SOAP feature matrix: 99 structures × 2700 features
+After Z-score filtering: 28 structures remain
+After Isolation Forest: 17 structures remain
+UMAP embedding shape: (17, 10)
+After LOF cleanup: 12 structures remain
 
 Clustering evaluation metrics:
-  silhouette_score: 0.0553
-  davies_bouldin_score: 2.2002
-  calinski_harabasz_score: 66.4065
+  silhouette_score: 0.0794
+  davies_bouldin_score: 0.3443
+  calinski_harabasz_score: 7.5516
 Skipping optimization of selected representatives as per configuration.
 
-Pre-screening completed: 1000 valid configurations out of 1000 generated (10 workers × 100 each).
+Pre-screening completed: 100 valid configurations out of 100 generated (10 workers × 10 each).
 Statistics of scored configurations:
-  Energy range: -10.836124 to -10.810484 Hartree
-  Energy distribution: mean -10.834375, median -10.834740, std 0.001518 Hartree
+  Energy range: -20.296489 to -20.245594 Hartree
+  Energy distribution: mean -20.284524, median -20.285374, std 0.006706 Hartree
   Clusters formed: 10, Representatives selected: 10
 ============================================================
 Initialization Complete!
-Total atoms: 5
-Submolecules: 2
+Total atoms: 12
+Submolecules: 4
 Simulation box type: sphere
-Candidates generated: 1000 (10w × 100), Valid: 1000, Failed: 0
-Selected for workers: 10, Energy range: -10.836124 to -10.810484 Hartree
-Box radius: 2.59 Angstrom
-Box volume: 72.73 Angstrom^3
+Candidates generated: 100 (10w × 10), Valid: 100, Failed: 0
+Selected for workers: 10, Energy range: -20.296489 to -20.245594 Hartree
+Box radius: 3.21 Angstrom
+Box volume: 138.11 Angstrom^3
 Obtained 10 initial structures
 Wrote 10 structures to trajectories/initial_candidates.xyz
 ========================================================================
@@ -86,15 +94,53 @@ Wrote 10 structures to trajectories/initial_candidates.xyz
 ========================================================================
 Configuration:
   Workers: 10
-  Steps per worker: 20000
-  Total steps: 200000
+  Steps per worker: 8000
+  Total steps: 80000
   Method/Basis: hf/sto-3g
   Temperature: 400.0 K
   Adaptive operators: True
   Operators: twist, large_displacement, mirror, roto_reflection, exchange, random_so3, principal_axis_rotation, com_com_approach, com_com_separation
   Independent initial configs: 10
-  Simulation Box: <modules.box.SimulationBox object at 0x7f403330c1c0>
+  Simulation Box: <modules.box.SimulationBox object at 0x14e5bb9a65e0>
   Worker log: bhmc_workers.log
-Estimated single point time: 0.01 seconds (Energy: -10.832275 Hartree)
-Estimated Phase A time: 22.23 minutes
+Estimated single point time: 0.01 seconds (Energy: -20.288838 Hartree)
+Estimated Phase A time: 13.56 minutes
 Starting parallel BHMC chains...
+  Worker 0: 0 structures accepted, 8001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 1: 2216 structures accepted, 8001 trajectory points, 634 box updates  Operator acceptance rates: twist: 15.0%, large_displacement: 29.7%, mirror: 13.2%, roto_reflection: 4.5%, exchange: 6.8%, random_so3: 21.7%, principal_axis_rotation: 35.6%, com_com_approach: 84.1%, com_com_separation: 93.8%
+  Worker 2: 0 structures accepted, 8001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 3: 0 structures accepted, 8001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 4: 2261 structures accepted, 8001 trajectory points, 627 box updates  Operator acceptance rates: twist: 15.8%, large_displacement: 31.2%, mirror: 13.4%, roto_reflection: 4.6%, exchange: 8.3%, random_so3: 21.3%, principal_axis_rotation: 35.0%, com_com_approach: 85.5%, com_com_separation: 89.5%
+  Worker 5: 0 structures accepted, 8001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 6: 2465 structures accepted, 8001 trajectory points, 612 box updates  Operator acceptance rates: twist: 16.3%, large_displacement: 32.4%, mirror: 15.5%, roto_reflection: 5.2%, exchange: 13.1%, random_so3: 26.3%, principal_axis_rotation: 38.8%, com_com_approach: 87.2%, com_com_separation: 91.9%
+  Worker 7: 0 structures accepted, 8001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 8: 0 structures accepted, 8001 trajectory points, 1 box updates  Operator acceptance rates: twist: 0.0%, large_displacement: 0.0%, mirror: 0.0%, roto_reflection: 0.0%, exchange: 0.0%, random_so3: 0.0%, principal_axis_rotation: 0.0%, com_com_approach: 0.0%, com_com_separation: 0.0%
+  Worker 9: 2105 structures accepted, 8001 trajectory points, 541 box updates  Operator acceptance rates: twist: 15.7%, large_displacement: 26.5%, mirror: 11.7%, roto_reflection: 4.8%, exchange: 9.5%, random_so3: 23.0%, principal_axis_rotation: 31.7%, com_com_approach: 76.9%, com_com_separation: 85.4%
+Size of accepted structures (Phase A): 0.07 MB
+------------------------------------------------------------------------
+Phase A Results
+------------------------------------------------------------------------
+Total steps: 80000
+Total accepted: 9047
+Overall acceptance rate: 11.31%
+Energy Statistics (Hartree):
+  Min:  -20.312759
+  Max:  -20.278938
+  Mean: -20.295482
+  Std:  0.006226
+Profiling Results for Phase A:
+Current memory usage: 49.84 MB; Peak memory usage: 50.05 MB
+Phase A complete: 9047 structures accepted
+Wrote 9047 structures to trajectories/phase_a_structures.xyz
+Phase A energy Z-score filtering: 9047 structures remain
+SOAP feature matrix: 9047 structures × 2700 features
+Z-score filtering applied: threshold=3.0, removed 6740 outliers, kept 2307 samples.
+After feature Z-score filtering: 2307 structures remain
+Isolation Forest outlier detection applied: contamination=0.4, removed 923 outliers, kept 1384 samples.
+After Isolation Forest: 1384 structures remain
+UMAP transform complete: embedding shape (1384, 10)
+KNN classifier probability prediction completed: n_neighbors=12, metric=cityblock
+Average entropy of cluster probabilities across molecules: 2.2539 (lower is more confident, higher is more uncertain)
+Max probability across clusters - mean: 0.1667, std: 0.0000
+Cluster label distribution: [   0 1384]
+KNN labels assigned: 1 unique clusters

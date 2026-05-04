@@ -23,19 +23,22 @@ if __name__ == "__main__":
         backend="xtb",
         box_scale_factor=1.5,
         xtb_method="GFN2-xTB",
+        optimize_cluster_representatives=False, 
         verbose=False,
     )
 
     initializer = ClusterInitializer(config=init_config, logger=logger)
-    initial_molecules, submol_indices, simulation_box = initializer.initialize_from_xyz(
+    initial_molecules, submol_indices, simulation_box, umap_model, knn_model = initializer.initialize_from_xyz(
         args.i[0],
         n_workers=10,
-        n_configurations=100,
+        n_configurations=10,
         n_sampling_workers=10,
         placing_method="sobol",
         energy_backend="xtb",
         energy_xtb_method="GFN2-xTB",
     )
+    print(f"Obtained {len(initial_molecules)} initial structures")
+
 
     logger.info(f"Obtained {len(initial_molecules)} initial structures")
     logger.write_xyz_trajectory(
@@ -79,7 +82,7 @@ if __name__ == "__main__":
         box_target_acceptance=0.6,
         box_acceptance_window=0.05,
         box_growth_max=1.15,
-        box_max_scale=4.0,
+        box_max_scale=2.0,
         box_stable_windows=3,
     )
 
@@ -93,7 +96,7 @@ if __name__ == "__main__":
     phase_a_structures = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=20000,
+        n_structures_per_worker=8000,
         n_processes=len(initial_molecules),
     )
 
@@ -107,11 +110,11 @@ if __name__ == "__main__":
         filepath="trajectories/phase_a_structures.xyz",
         energies=phase_a_energies,
     )
-    # Save the phase_a_molecules and energies as a numpy object for analysis
-    np.save("phase_a_long_traj.npy", np.array(phase_a_structures, dtype=object))
+
+    # Run the phase A analysis
+    bhmc_sampler.analyze_phase_a_results(umap_model=umap_model, knn_model=knn_model, phase_a_structures=phase_a_structures)
 
 
-    bhmc_sampler.analyse_phase_a_results(phase_a_structures=phase_a_structures)
 
 
     

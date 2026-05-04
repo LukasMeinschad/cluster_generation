@@ -25,6 +25,13 @@ from sklearn.cluster import KMeans, DBSCAN
 from scipy.spatial.distance import cdist, pdist
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.neighbors import KNeighborsClassifier
+from scipy.stats import entropy
+
+
+from scipy.stats import zscore
 from multiprocessing import Pool, cpu_count
 
 import time
@@ -83,18 +90,26 @@ class Clustering:
     """
     def __init__(self,
                  feature_matrix: np.ndarray,
+                 energies: Optional[List[float]] = None,
+                 metric: str = "cityblock",
                  logger: Optional[Logger] = None,
                  normalize: bool = True,
     ):
         if not isinstance(feature_matrix, np.ndarray):
             raise ValueError("Feature matrix must be a numpy array")
         self.feature_matrix_raw = feature_matrix
+        self.energies = np.array(energies, dtype=float) if energies is not None else None
+        self.metric = metric
         self.logger = logger
         self.labels: Optional[np.ndarray] = None
         self._feature_matrix_normalized = None
         self.scaler: Optional[StandardScaler] = None
         if normalize:
             self._normalize()
+
+    def _umap_metric(self) -> str:
+        """UMAP uses 'manhattan' where scipy/sklearn use 'cityblock'."""
+        return "manhattan" if self.metric == "cityblock" else self.metric
 
     def _log(self, msg: str)-> None:
         if self.logger:
@@ -175,11 +190,11 @@ class Clustering:
             eps: The maximum distance between two samples for one to be considered as in the neighborhood of the other. This is not a maximum bound on the distances of points within a cluster. This is the most important DBSCAN parameter to choose appropriately for your data set and distance function.
             min_samples: The number of samples (or total weight) in a neighborhood for a point to be considered as a core point. This includes the point itself.
         """
-        dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+        dbscan = DBSCAN(eps=eps, min_samples=min_samples, metric=self.metric)
         self.labels = dbscan.fit_predict(self._fm())
         n_clusters = len(set(self.labels)) - (1 if -1 in self.labels else 0)
         n_noise = list(self.labels).count(-1)
-        self._log(f"DBSCAN clustering completed: eps={eps}, min_samples={min_samples}, n_clusters={n_clusters}, n_noise={n_noise}")
+        self._log(f"DBSCAN clustering completed: eps={eps}, min_samples={min_samples}, metric={self.metric}, n_clusters={n_clusters}, n_noise={n_noise}")
         return self.labels
         
     def hdbscan_clustering(self, min_cluster_size: int = 5, min_samples: Optional[int] = None) -> np.ndarray:
@@ -192,11 +207,11 @@ class Clustering:
         """
         if HDBSCAN is None:
             raise ImportError("HDBSCAN is not installed. Please install it with `pip install hdbscan` to use this method.")
-        hdbscan = HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples)
+        hdbscan = HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples, metric=self.metric)
         self.labels = hdbscan.fit_predict(self._fm())
         n_clusters = len(set(self.labels)) - (1 if -1 in self.labels else 0)
         n_noise = list(self.labels).count(-1)
-        self._log(f"HDBSCAN clustering completed: min_cluster_size={min_cluster_size}, min_samples={min_samples}, n_clusters={n_clusters}, n_noise={n_noise}")
+        self._log(f"HDBSCAN clustering completed: min_cluster_size={min_cluster_size}, min_samples={min_samples}, metric={self.metric}, n_clusters={n_clusters}, n_noise={n_noise}")
         return self.labels
 
     # ---- Dimensionality reduction ------------
@@ -211,6 +226,12 @@ class Clustering:
         embedding = p.fit_transform(self._fm())
         self._log(f"PCA completed: n_components={n_components}, explained_variance_ratio={p.explained_variance_ratio_}")
         return embedding, p.explained_variance_ratio_
+    
+    def kernel_based_pca(self, n_components: None = 2, kernel: str = "rbf", gamma: Optional[float] = None, n_jobs: int = -1):
+        """
+        Perofrms a kernel-based PCA dimensionality reduction
+        
+        """         
 
     def tsne(self, n_components: int=2, perpelxity: float = 30.0, n_iter: int=1000, random_state: int = 42) -> np.ndarray:
         """  
@@ -222,28 +243,180 @@ class Clustering:
         return embedding
     
     def umap(self, n_components: int=2, n_neighbors: int=15, min_dist: float=0.1, random_state: Optional = None) -> np.ndarray:
-        """  
-        Applies a UMAP Dimensionality Reduction
+        """
+        Applies a UMAP Dimensionality Reduction. Stores the fitted model in self._umap_model for later transform calls.
         """
         if UMAP is None:
             raise ImportError("UMAP is not installed. Please install it with `pip install umap-learn` to use this method.")
-        umap = UMAP(n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, random_state=random_state)
-        embedding = umap.fit_transform(self._fm())
-        self._log(f"UMAP completed: n_components={n_components}, n_neighbors={n_neighbors}, min_dist={min_dist}")
+        umap_model = UMAP(n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, metric=self._umap_metric(), random_state=random_state)
+        embedding = umap_model.fit_transform(self._fm())
+        self._umap_model = umap_model
+        self._log(f"UMAP completed: n_components={n_components}, n_neighbors={n_neighbors}, min_dist={min_dist}, metric={self._umap_metric()}")
         return embedding
+
+    def umap_densmap(self, n_components: int=2, n_neighbors: int=15, min_dist: float=0.1, dens_lambda: float =0.8, random_state: Optional = None) -> np.ndarray:
+        """ 
+        Uses DensMAP
+        https://www.biorxiv.org/content/10.1101/2020.05.12.077776v1
+        This is a variant of UMAP that actively considers local density in the embedding
+        """
+        if UMAP is None:
+            raise ImportError("UMAP is not installed. Please install it with `pip install umap-learn` to use this method.")
+        densmap_ump = UMAP(densmap=True, dens_lambda=dens_lambda, n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, metric=self._umap_metric(), random_state=random_state)
+        embedding = densmap_ump.fit_transform(self._fm())
+        self._log(f"DensMAP completed: n_components={n_components}, n_neighbors={n_neighbors}, min_dist={min_dist}, dens_lambda={dens_lambda}, metric={self._umap_metric()}")
+        return embedding
+
+    def umap_metric_learning(self, x_train, y_train, n_components: int=10, n_neighbors: int=15):
+        """  
+        Fits a UMAP embedding to training data and stores the trained embedding
+        Attr:
+            x_train: Training data features (n_samples, n_features)
+            y_train: Training data labels (n_samples,)
+            n_components: Number of dimensions for the UMAP embedding
+            n_neighbors: Number of neighbors to consider for UMAP
+        """
+        mapper = UMAP(
+            n_neighbors=n_neighbors,
+            n_components=n_components,
+            metric=self._umap_metric(),
+        ).fit(x_train, y=y_train)
+        self._log(f"UMAP metric learning completed: n_components={n_components}, n_neighbors={n_neighbors}, metric={self._umap_metric()}")
+        self.trained_emb = mapper.embedding_
+    
+    def umap_transform(self,  X_test) -> np.ndarray:
+        """ 
+        Transforms provided data using the pre-trained UMAP embedding
+        """
+        if not hasattr(self, 'trained_emb'):
+            raise ValueError("UMAP embedding not trained. Please run umap_metric_learning() first.")
+        # Note: UMAP does not have a built-in transform method, so we need to fit a new UMAP on the test data using the same metric and parameters
+        umap = UMAP(n_components=self.trained_emb.shape[1], n_neighbors=15, min_dist=0.1, metric=self._umap_metric(), random_state=42)
+        embedding = umap.fit_transform(X_test)
+        self._log(f"UMAP transform completed: n_components={embedding.shape[1]}, n_neighbors=15, min_dist=0.1, metric={self._umap_metric()}")
+        return embedding
+
+    # ----- Supervised Learning Methods -----
+    def KN_classifier_training(self, x_train, y_train, n_neighbors: int = 15) -> KNeighborsClassifier:
+        """  
+        Trains a K-Nearest Neighbors classifier on the provided training data
+        """
+        knn = KNeighborsClassifier(n_neighbors=n_neighbors, metric=self.metric)
+        knn.fit(x_train, y_train)
+        self._log(f"KNN classifier training completed: n_neighbors={n_neighbors}, metric={self.metric}")
+        return knn
+    def KN_classifier_predict(self, knn: KNeighborsClassifier, x_test) -> np.ndarray:
+        """  
+        Uses the trained KNN classifier to predict labels for the provided test data
+        """
+        if knn is None:
+            raise ValueError("KNN classifier not trained. Please run KN_classifier_training() first.")
+        predictions = knn.predict(x_test)
+        self._log(f"KNN classifier prediction completed: n_neighbors={knn.n_neighbors}, metric={knn.metric}")
+        return predictions
+
+    def KN_predict_probabilities(self, knn: KNeighborsClassifier, x_test) -> np.ndarray:
+        """  
+        Function to compute the probabilities for each point to be in the cluster
+        Outputs an rray of shape (n_samples, n_clusters) with the probabilities for each point to be in each cluster
+        """
+        if knn is None:
+            raise ValueError("KNN classifier not trained. Please run KN_classifier_training() first.")
+        probabilities = knn.predict_proba(x_test)
+        # Probabilities are of shape (n_samples, n_clusters)
+        # Axis=1 calculates entropy across the cluster probabilities for each molecule
+        molecule_entropies = entropy(probabilities, axis=1)
+        # Calculate the average entropies across all molecules
+        avg_entropy = np.mean(molecule_entropies)
+
+        # Determine mean and std of max probabilities across all samples
+        max_probabilities = np.max(probabilities, axis=1)
+        mean_max_prob = np.mean(max_probabilities)  
+        std_max_prob = np.std(max_probabilities)
+
+
+        self._log(f"KNN classifier probability prediction completed: n_neighbors={knn.n_neighbors}, metric={knn.metric}")
+        self._log(f"Average entropy of cluster probabilities across molecules: {avg_entropy:.4f} (lower is more confident, higher is more uncertain)")
+        self._log(f"Max probability across clusters - mean: {mean_max_prob:.4f}, std: {std_max_prob:.4f}")
+
+        self.knn_probabilities = probabilities
+        return probabilities
+
+    def plot_KN_probabilities(self, embedding: np.ndarray, probabilities: np.ndarray,
+                              labels: Optional[np.ndarray]= None, title: str = "KNN Cluster Probabilities", save_path: Optional[str] = None) -> None:
+        """  
+        Plots the embedding where point size/alpha reflect the model's certainty
+
+        Args:            embedding: The 2D embedding to plot (n_samples, 2)
+            probabilities: The predicted probabilities for each cluster (n_samples, n_clusters)
+            labels: Optional true cluster labels for coloring the points
+            title: Title of the plot
+            save_path: Optional path to save the figure. If None, saves to "figures/{title}.png"
+        """
+        x, y = embedding[:, 0], embedding[:, 1]
+        confidences = np.max(probabilities, axis=1)
+        sizes = 10 + 90 * confidences  # scale 10 → 100
+
+        fig, ax = plt.subplots(figsize=(10, 8))
+
+        if labels is not None:
+            unique_labels = sorted(set(labels))
+            palette = sns.color_palette('tab10', len(unique_labels))
+            color_map = {lbl: palette[i] for i, lbl in enumerate(unique_labels)}
+
+            # Build per-point RGBA: confidence drives the alpha channel
+            rgba = np.array([(*color_map[lbl], float(conf))
+                             for lbl, conf in zip(labels, confidences)])
+            ax.scatter(x, y, c=rgba, s=sizes)
+
+            handles = [plt.Line2D([0], [0], marker='o', color='w',
+                                  markerfacecolor=color_map[lbl], markersize=8, label=lbl)
+                       for lbl in unique_labels]
+            ax.legend(handles=handles, title="Cluster")
+        else:
+            rgba = np.array([(0.12, 0.47, 0.71, float(c)) for c in confidences])
+            ax.scatter(x, y, c=rgba, s=sizes)
+
+        ax.set_title(f"{title}\n(size & alpha = prediction confidence)")
+        ax.set_xlabel("Component 1")
+        ax.set_ylabel("Component 2")
+        ax.grid(True)
+        if save_path:
+            fig.savefig(save_path, dpi=150, bbox_inches='tight')
+        else:
+            fig.savefig(f"figures/{title.replace(' ', '_').lower()}.png", dpi=150, bbox_inches='tight')
+        plt.close(fig)
+
+    
+
+    
+
+        
+
 
     # ---- Plotting of Dimensionality Reduction Methods -----
     
-    def plot_embedding(self, embedding: np.ndarray, title: str = "Embedding", save_path: Optional[str] = None) -> None:
-        """  
-        Helper function to plot a 2D embedding with cluster labels if available
+    def plot_embedding(self, embedding: np.ndarray, title: str = "Embedding", labels: Optional[str] = None , save_path: Optional[str] = None) -> None:
         """
+        Helper function to plot a 2D embedding with cluster labels if available.
+        If the embedding has more than 2 dimensions, the first two are used for plotting.
+
+        Args:
+            embedding: The embedding to plot (n_samples, n_components)
+            title: Title of the plot
+            labels: Optional cluster labels for coloring the points
+            save_path: Optional path to save the figure. If None, saves to "figures/{title}.png"
+        """
+        x, y = embedding[:, 0], embedding[:, 1]
         plt.figure(figsize=(8, 6))
-        if self.labels is not None:
-            sns.scatterplot(x=embedding[:, 0], y=embedding[:, 1], hue=self.labels, palette='tab10', s=100, alpha=0.7)
+        if labels is not None:
+            sns.scatterplot(x=x, y=y, hue=labels, palette='tab10', s=100, alpha=0.7)
+            plt.legend(title="Cluster")
+        elif self.labels is not None:
+            sns.scatterplot(x=x, y=y, hue=self.labels, palette='tab10', s=100, alpha=0.7)
             plt.legend(title="Cluster")
         else:
-            sns.scatterplot(x=embedding[:, 0], y=embedding[:, 1], color='blue', s=100, alpha=0.7)
+            sns.scatterplot(x=x, y=y, color='blue', s=100, alpha=0.7)
         plt.title(title)
         plt.xlabel("Component 1")
         plt.ylabel("Component 2")
@@ -255,49 +428,32 @@ class Clustering:
         plt.close()
     
     # ------ Correlation Analysis of Features -----
-    def spearman_correlation(self) -> np.ndarray:
-        """ 
-        Computes the Spearman rank correlation matrix of the features in the feature matrix
+    def spearman_correlation(self, plot: bool = False) -> np.ndarray:
         """
-        import pandas as pd
-        from scipy.stats import spearmanr
+        Computes the Spearman rank correlation matrix of the features in the feature matrix.
+
+        Uses rank-transform + np.corrcoef (BLAS-backed) instead of pandas .corr(),
+        which is column-by-column Python and extremely slow for large SOAP matrices.
+        """
+        from scipy.stats import rankdata
 
         fm = self._fm()
-        # fm is expected to be 2D: (n_samples, n_features)
         if fm is None or fm.size == 0:
-            self._log("Feature matrix is empty; cannot compute Spearman correlation.", )
+            self._log("Feature matrix is empty; cannot compute Spearman correlation.")
             return np.array([])
-
         if fm.ndim == 1:
-            # Single feature only — correlation matrix is trivial
             self._log("Feature matrix is 1-D (single feature); returning trivial correlation.")
             return np.array([[1.0]])
 
-        # Compute Spearman correlation across features (columns).
-        # Use pandas which handles shapes and constant columns more gracefully.
-        try:
-            df = pd.DataFrame(fm)
-            corr_df = df.corr(method='spearman')
-            corr = corr_df.values
-        except Exception:
-            # Fallback to scipy spearmanr: ensure we pass columns (features)
-            try:
-                # spearmanr on 2D returns correlation matrix for columns when axis=0
-                res = spearmanr(fm, axis=0)
-                corr = res.correlation if hasattr(res, 'correlation') else res[0]
-            except Exception as exc:
-                self._log(f"Failed to compute Spearman correlation: {exc}", )
-                return np.array([])
-
-        # Ensure corr is 2D square matrix
-        if corr.ndim == 0:
-            self._log("Spearman returned scalar; insufficient data for correlation matrix.")
-            return np.array([])
-        # Remove NaNs and Infs
+        # Rank each column, then Pearson on ranks == Spearman
+        ranked = np.apply_along_axis(rankdata, 0, fm)
+        corr = np.corrcoef(ranked, rowvar=False)
         corr = np.nan_to_num(corr, nan=0.0, posinf=1.0, neginf=-1.0)
-        # Visualize the correlation matrix
+
+        # Skip per-cell annotations for large matrices — unreadable and very slow to render
         plt.figure(figsize=(10, 8))
-        sns.heatmap(corr, fmt=".2f", cmap='coolwarm', square=True)
+        annot = corr.shape[0] <= 50
+        sns.heatmap(corr, annot=annot, fmt=".2f" if annot else "", cmap='coolwarm', square=True)
         plt.title("Spearman Rank Correlation Matrix of Features")
         plt.savefig("figures/feature_correlation_matrix.png")
         plt.close()
@@ -486,6 +642,80 @@ class Clustering:
         plt.close()
         # Return the inertia values for each k
         return inertias
+
+    def calculate_wcss_per_cluster(self, labels: Optional[np.ndarray]):
+        """  
+        Calculates the within-cluster-sum-of-squares (WCSS) for each cluster which is defined as
+
+        WCSS = sum_i=1^n (x_i - mu)^2 
+        
+        where x_i are the points in the cluster and mu is the centroid of the cluster. This can be used to identify which clusters are more compact and which are more dispersed, and can also be used to identify potential outliers within clusters (points with high distance to the centroid).
+        """
+        lbl = self._resolve_labels(labels)
+        fm, lbl = self._mask_noise(lbl)
+        unique_labels = set(lbl)
+        wcss_per_cluster = {}
+        for cluster in unique_labels:
+            cluster_points = fm[lbl == cluster]
+            if len(cluster_points) == 0:
+                wcss_per_cluster[cluster] = 0.0
+                continue
+            centroid = np.mean(cluster_points, axis=0)
+            wcss = np.sum(np.linalg.norm(cluster_points - centroid, axis=1) ** 2)
+            wcss_per_cluster[cluster] = wcss
+            self._log(f"Cluster {cluster}: WCSS={wcss:.4f}, n_points={len(cluster_points)}")
+        return wcss_per_cluster
+
+
+    # ------------- Filtering and Outlier Detection -------------
+
+    def z_score_filtering(self, threshold: float = 3.0) -> List[int]:
+        """
+        Filter out samples that have any feature with a z-score above the given threshold
+        This is used for the first data cleanup before clustering
+        """
+        fm = self._fm()
+        z_scores = np.abs(zscore(fm, nan_policy='omit'))
+        outlier_mask = np.any(z_scores > threshold, axis=1)
+        filtered_indices = np.where(~outlier_mask)[0]
+        self._feature_matrix_normalized = fm[filtered_indices]
+        # Filter energies if available
+        if self.energies is not None:
+            self.energies = self.energies[filtered_indices]
+        self._log(f"Z-score filtering applied: threshold={threshold}, removed {np.sum(outlier_mask)} outliers, kept {len(filtered_indices)} samples.")
+        return filtered_indices
+    
+    def isolation_forest_outlier(self, contamination: float = 0.4) -> List[int]:
+        """  
+        Uses an IsolationForest to identify outliers in the feature space 
+        and clean up the feature_matrix and energies accordingly
+        """
+        fm = self._fm()
+        iso = IsolationForest(contamination=contamination)
+        outlier_mask = iso.fit_predict(fm) == -1
+        filtered_indices = np.where(~outlier_mask)[0]
+        self._feature_matrix_normalized = fm[filtered_indices]
+        if self.energies is not None:
+            self.energies = self.energies[filtered_indices]
+        self._log(f"Isolation Forest outlier detection applied: contamination={contamination}, removed {np.sum(outlier_mask)} outliers, kept {len(filtered_indices)} samples.")
+        return filtered_indices
+    
+    def local_outlier_factor(self, contamination: float = 0.3) -> List[int]:
+        """ 
+        Uses a local outlier factor to identify based on density the outliers
+        This workes best in an already embedded space
+        """
+        fm = self._fm()
+        lof = LocalOutlierFactor(contamination=contamination)
+        outlier_mask = lof.fit_predict(fm) == -1
+        filtered_indices = np.where(~outlier_mask)[0]
+        self._feature_matrix_normalized = fm[filtered_indices]
+        if self.energies is not None:
+            self.energies = self.energies[filtered_indices]
+        self._log(f"Local Outlier Factor applied: contamination={contamination}, removed {np.sum(outlier_mask)} outliers, kept {len(filtered_indices)} samples.")
+        return filtered_indices
+    
+
     
     def silhouette_analysis(
         self,
@@ -522,13 +752,13 @@ class Clustering:
         return best_k, scores 
     
     # ------ Hyperparameter Estimation for Density-Based Clustering Methods ----
-    def estimate_dbscan_eps(self, min_samples, metric='euclidean'):
+    def estimate_dbscan_eps(self, min_samples, metric: Optional[str] = None):
         """ 
         Calculates the k = min_samples nearest neighbor distances and plots this distances from each point to its k-th nearest neighbor sorted in ascending order. The 'elbow' point in this curve is a heuristic for the optimal eps parameter for DBSCAN.
         """
         from sklearn.neighbors import NearestNeighbors
         from kneed import KneeLocator
-        neigh = NearestNeighbors(n_neighbors=min_samples, metric=metric)
+        neigh = NearestNeighbors(n_neighbors=min_samples, metric=metric or self.metric)
         # Fit the model to the feature matrix and compute the distances to the nearest neighbors
         neighbors_fit = neigh.fit(self._fm())
 
@@ -569,7 +799,9 @@ class Clustering:
             labels: Cluster label array. If None uses self.labels (run clustering first).
             method: "centroid" picks the point closest to the cluster mean in feature space;
                     "medoid" picks the point with the smallest average pairwise distance to all
-                    cluster members (slower but more robust to non-convex clusters).
+                    cluster members (slower but more robust to non-convex clusters);
+                    "lowest_energy" picks the structure with the lowest energy per cluster
+                    (requires energies to be passed at construction time).
 
         Returns:
             Dict mapping cluster_label -> index into the original data (rows of feature_matrix).
@@ -578,6 +810,9 @@ class Clustering:
         lbl = labels if labels is not None else self.labels
         if lbl is None:
             raise ValueError("No cluster labels available. Run clustering first or pass labels.")
+
+        if method == "lowest_energy" and self.energies is None:
+            raise ValueError("method='lowest_energy' requires energies to be provided at construction time.")
 
         fm = self._fm()
         representatives: Dict[int, int] = {}
@@ -593,10 +828,12 @@ class Clustering:
                 centroid = cluster_features.mean(axis=0)
                 local_idx = int(np.argmin(np.linalg.norm(cluster_features - centroid, axis=1)))
             elif method == "medoid":
-                dists = cdist(cluster_features, cluster_features)
+                dists = cdist(cluster_features, cluster_features, metric=self.metric)
                 local_idx = int(np.argmin(np.mean(dists, axis=1)))
+            elif method == "lowest_energy":
+                local_idx = int(np.argmin(self.energies[cluster_indices]))
             else:
-                raise ValueError(f"Unknown method '{method}'. Choose 'centroid' or 'medoid'.")
+                raise ValueError(f"Unknown method '{method}'. Choose 'centroid', 'medoid', or 'lowest_energy'.")
 
             representatives[int(label)] = int(cluster_indices[local_idx])
 

@@ -9,7 +9,7 @@ The module provides a complete initialization workflow:
 """
 
 import numpy as np
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Any
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
 
@@ -202,7 +202,7 @@ class ClusterInitializer:
         n_r: Optional[int] = None,
         energy_backend: str= "xtb",
         energy_xtb_method: str = "GFN2-xTB",
-    ) -> Tuple[List[Molecule], List[List[int]], SimulationBox]:
+    ) -> Tuple[List[Molecule], List[List[int]], SimulationBox, Any, Any]:
         """
         Run the full initialization workflow from an XYZ structure.
 
@@ -356,6 +356,12 @@ class ClusterInitializer:
         energies_raw = [e for e, _ in scored]
         e_min, e_max = min(energies_raw), max(energies_raw)
 
+        if self.logger:
+            self.logger.write_xyz_trajectory(
+                molecules=mols_raw,
+                filepath="trajectories/initialization_trajectory.xyz",
+                energies=energies_raw,
+            )
 
         # Filter high energy outliers based on Z-score
         mols, energies = self.filter_high_energy_outliers(mols_raw, energies_raw, Z_threshold=3.0)
@@ -368,54 +374,68 @@ class ClusterInitializer:
         n_filtered = len(scored) - len(mols)
         self._log(f"Filtered out {n_filtered} high-energy outliers based on Z-score thresholding.")
 
-        # Build feature matrix and cluster candidates with k-means
+        # --- Clustering pipeline ---
+
+        # Build SOAP-only feature matrix; energies are tracked separately in Clustering
         featurizer_config = FeaturizerConfig(descriptor_type="SOAP")
         featurizer = Featurizer(featurizer_config)
-        feature_mat = featurizer.build_feature_matrix(mols, energies=energies, include_hbonds=True)
-        # Log Shape of Feature Matrix
-        self._log(f"Constructed feature matrix with shape: {feature_mat.shape} (samples: {feature_mat.shape[0]}, features: {feature_mat.shape[1]})")    
+        feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
+        self._log(f"SOAP feature matrix: {feature_mat.shape[0]} structures × {feature_mat.shape[1]} features")
 
+        # Intiialize clustering object, already averaged features do not need normalization
+        clustering = Clustering(feature_matrix=feature_mat, energies=energies, metric="cityblock", normalize=False)
 
+        # Step 1 – Z-score filtering (removes structures with extreme feature values)
+        zscore_idx = clustering.z_score_filtering()
+        mols = [mols[i] for i in zscore_idx]
+        self._log(f"After Z-score filtering: {len(mols)} structures remain")
+
+        # Step 3 – Isolation Forest cleanup (contamination=0.4)
+        iforest_idx = clustering.isolation_forest_outlier(contamination=0.4)
+        mols = [mols[i] for i in iforest_idx]
+        self._log(f"After Isolation Forest: {len(mols)} structures remain")
+
+        # Step 4 – UMAP dimensionality reduction to 10 components
+        embedding_10d = clustering.umap(n_components=10, n_neighbors=15, min_dist=0.1)
+        clustering._feature_matrix_normalized = embedding_10d
+        self._log(f"UMAP embedding shape: {embedding_10d.shape}")
+
+        # Step 5 – Local Outlier Factor cleanup on the UMAP embedding (contamination=0.3)
+        lof_idx = clustering.local_outlier_factor(contamination=0.3)
+        mols = [mols[i] for i in lof_idx]
+        embedding_10d = clustering._feature_matrix_normalized  # capture filtered embedding
+        self._log(f"After LOF cleanup: {len(mols)} structures remain")
+
+        # Step 6 – KMeans clustering on the cleaned 10D embedding
         n_clusters = min(n_workers, len(mols))
-        clustering = Clustering(feature_matrix=feature_mat, normalize=True)
-
-
-        # Calculate spearman correlation and filter
-        corr = clustering.spearman_correlation()
-        clustering.filter_correlation_spearman(threshold=0.9)
-        # Log after spearman filtering
-        self._log(f"Feature matrix shape after Spearman correlation filtering: {clustering._feature_matrix_normalized.shape}")
-        # Perform UMAP Embedding for Different Parameters
-        embedding1 = clustering.umap(n_components=2, n_neighbors=15, min_dist=0.1)
-        embedding2 = clustering.umap(n_components=2, n_neighbors=30, min_dist=0.5)
-        embedding3 = clustering.umap(n_components=2, n_neighbors=50, min_dist=0.9)
-        # Plot UMAP embeddings with different parameters
-        clustering.plot_embedding(embedding1, title="UMAP (n_neighbors=15, min_dist=0.1)", save_path="figures/umap_n15_d01.png")
-        clustering.plot_embedding(embedding2, title="UMAP (n_neighbors=30, min_dist=0.5)", save_path="figures/umap_n30_d05.png")
-        clustering.plot_embedding(embedding3, title="UMAP (n_neighbors=50, min_dist=0.9)", save_path="figures/umap_n50_d09.png")
-
         labels = clustering.kmeans_clustering(n_clusters=n_clusters)
 
-        # Plot UMAP embedding (labels are stored on the clustering object after kmeans)
-        embedding = clustering.umap(n_components=2)
-        clustering.plot_embedding(embedding, title="Initialization UMAP", save_path="figures/initialization_umap.png")
+        # Step 6b – Train KNN on the UMAP embedding to classify future structures
+        knn_model = clustering.KN_classifier_training(embedding_10d, labels, n_neighbors=min(50, len(mols)))
+        umap_model = clustering._umap_model
 
-        # Evaluate and log clustering quality metrics
+        # Visualize: plot first two components of the 10D embedding (components 1 & 2)
+        clustering.plot_embedding(embedding_10d, title="Initialization UMAP", save_path="figures/initialization_umap.png")
+
+        # Step 7 – Pick lowest-energy representative per cluster
+        rep_indices = clustering.get_cluster_representatives(labels=labels, method="lowest_energy")
+        selected_molecules = [mols[i] for i in rep_indices.values()]
+
+        # Step 8 – Evaluate clustering quality
         metrics = clustering.evaluate(labels)
+        # Use the labels to calculate WCSS 
+        wcss = clustering.calculate_wcss_per_cluster(labels)
+        
         self._log(f"\nClustering evaluation metrics:")
         for metric_name, metric_value in metrics.items():
             self._log(f"  {metric_name}: {metric_value:.4f}")
-
-        # Pick one representative per cluster → these become the MC starting structures
-        rep_indices = clustering.get_cluster_representatives(labels=labels, method="centroid")
-        selected_molecules = [mols[i] for i in rep_indices.values()]
 
         # Locally Optimize the selected representatives to ensure they are at least in a local minimum before starting BHMC
         if self.config.optimize_cluster_representatives:
             for i, mol in enumerate(selected_molecules):
                 self._log(f"Optimizing selected representative {i+1}/{len(selected_molecules)}...")
                 try:
-                    optimized = self.energy_evaluator.optimize_geometry(mol, optimizer="BFGS", write_trajectory=False)
+                    optimized = self.energy_evaluator.optimize_geometry(mol, optimizer="LBFGS", trajectory_fp=None)
                     selected_molecules[i] = optimized
                     self._log(f" Optimization successful")
                 except Exception as exc:
@@ -450,7 +470,7 @@ class ClusterInitializer:
         summary = "\n".join(summary_lines)
         self._log(summary)
 
-        return selected_molecules, submol_indices, simulation_box
+        return selected_molecules, submol_indices, simulation_box, umap_model, knn_model
 
     def _generate_random_configurations(
             self,

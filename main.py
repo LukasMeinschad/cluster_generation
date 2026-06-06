@@ -11,36 +11,65 @@ from bhmc_config import BHMCConfig
 from args import get_args
 from logger import Logger
 from struc_distinction import StructureAnalysis, StructureAnalysisConfig
+from molecule_class import Molecule
+from calculator import EnergyEvaluator
+import time
+import warnings
 
+# Silence Warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="networkx")
+warnings.filterwarnings("ignore", category=UserWarning, module="pyfiglet")
 
 if __name__ == "__main__":
     args = get_args()
 
     logger = Logger(name="cluster_gen", log_file="cluster_gen.out", file_mode="w")
+    logger.program_header()
+
+
+
+
+    # ------------------------------------------------------------------
+    # Step 1: Initial SP Estimation
+    # ------------------------------------------------------------------
+    # Open input xyz
+    with open(args.i[0], "r") as f:
+        content = f.read()
+    # Parse Molecule
+    mol = Molecule.from_xyz(content)
+    
+    calc_sp = EnergyEvaluator(backend="xtb", xtb_method="GFN2-xTB")
+    timer_start = time.time()
+    sp_energy = calc_sp.evaluate(mol)
+    timer_end = time.time()
+    logger.info(f"Initial SP Energy: {sp_energy:.4f} eV (Calculated in {timer_end - timer_start:.2f} seconds)")
+
+
+    # ------------------------------------------------------------------
+    # Step 2: Initialization
+    # ------------------------------------------------------------------
 
     # ── Initialization ────────────────────────────────────────────────────────
     init_config = InitializationConfig(
         backend="xtb",
-        box_scale_factor=1.5,
+        box_scale_factor=1.0,
         xtb_method="GFN2-xTB",
         optimize_cluster_representatives=False, 
         verbose=False,
     )
 
     initializer = ClusterInitializer(config=init_config, logger=logger)
-    initial_molecules, submol_indices, simulation_box, umap_model, knn_model = initializer.initialize_from_xyz(
+    initial_molecules, submol_indices, simulation_box, umap_model, svm_model = initializer.initialize_from_xyz(
         args.i[0],
-        n_workers=10,
-        n_configurations=10,
-        n_sampling_workers=10,
+        n_workers=20,
+        n_configurations=1000,
+        n_sampling_workers=20,
         placing_method="sobol",
         energy_backend="xtb",
         energy_xtb_method="GFN2-xTB",
+        classifier_backend="svm",
     )
-    print(f"Obtained {len(initial_molecules)} initial structures")
-
-
-    logger.info(f"Obtained {len(initial_molecules)} initial structures")
+     
     logger.write_xyz_trajectory(
         molecules=initial_molecules,
         filepath="trajectories/initial_candidates.xyz",
@@ -50,7 +79,7 @@ if __name__ == "__main__":
     # Initialize the StructureAnalysis Class
 
     StructureAnalysisConfig = StructureAnalysisConfig(
-        calculator_backend="psi4",
+        calculator_backend="xtb",
         calculator_qm_method="mp2",
         calculator_qm_basis="cc-pvdz",
         calculator_xtb_method="GFN2-xTB",
@@ -62,11 +91,17 @@ if __name__ == "__main__":
 
 
    
-   # structure_analysis = StructureAnalysis(logger=logger, mols=initial_molecules, config=StructureAnalysisConfig)
-   # structure_analysis.compute_pairwise_rmsd()
-   # structure_analysis.plot_pairwise_rmsd_heatmap(save_path="figures/initial_pairwise_rmsd_heatmap.png")
-   # structure_analysis.analyze_hessians(n_workers=10)
-
+    structure_analysis = StructureAnalysis(logger=logger, mols=initial_molecules, config=StructureAnalysisConfig)
+    structure_analysis.plot_pairwise_rmsd_heatmap()
+    
+    
+    # Optimize the initial structures and write to xyz
+    optimized_mols = structure_analysis.optimize_geometries(n_workers=20)
+    logger.write_xyz_trajectory(
+        molecules=optimized_mols,
+        filepath="trajectories/optimized_initial_candidates.xyz",
+        energies=None,
+    )
 
     # ── Phase A: Global PES Exploration ──────────────────────────────────────
     bhmc_config = BHMCConfig(
@@ -82,7 +117,7 @@ if __name__ == "__main__":
         box_target_acceptance=0.6,
         box_acceptance_window=0.05,
         box_growth_max=1.15,
-        box_max_scale=2.0,
+        box_max_scale=5.0,
         box_stable_windows=3,
     )
 
@@ -96,7 +131,7 @@ if __name__ == "__main__":
     phase_a_structures = bhmc_sampler.run_phase_a(
         initial_molecules=initial_molecules,
         submolecule_indices=submol_indices,
-        n_structures_per_worker=8000,
+        n_structures_per_worker=1000,
         n_processes=len(initial_molecules),
     )
 
@@ -112,7 +147,7 @@ if __name__ == "__main__":
     )
 
     # Run the phase A analysis
-    bhmc_sampler.analyze_phase_a_results(umap_model=umap_model, knn_model=knn_model, phase_a_structures=phase_a_structures)
+    bhmc_sampler.analyze_phase_a_results(umap_model=umap_model, classifier=svm_model, phase_a_structures=phase_a_structures)
 
 
 

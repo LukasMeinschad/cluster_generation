@@ -5,6 +5,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 from contextlib import contextmanager
+import pyfiglet
+import pkg_resources
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="pyfiglet")
 
 
 class Logger:
@@ -80,6 +84,22 @@ class Logger:
         self._logger.critical(msg)
 
     # ======================== Sections & Separators ==============================
+    def program_header(self) -> None:
+        """ 
+        Writes a Custom Header with the Program Name and Metadata
+        """
+        self._logger.info("=" * 80)
+        ascii_title = pyfiglet.figlet_format("ML-BHOP", font="slant")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        explanation = "A Machine Learning assisted Basin Hopping Optimization for Molecular Cluster Generation"
+        programmer1 = "Made by: Lukas Meinschad"
+        assistance = "Assisted by Jonas Schlagin, Klaus R. Liedl at University of Innsbruck, Liedl Lab"
+        self._logger.info(ascii_title)
+        self._logger.info(f"{explanation}")
+        self._logger.info(f"{timestamp}")
+        self._logger.info(f"{programmer1}")
+        self._logger.info(f"{assistance}")
+        self._logger.info("=" * 80)
 
     def separator(self, char: str = "-", width: int = 72) -> None:
         """   

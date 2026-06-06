@@ -21,6 +21,11 @@ import os
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend for plotting
 
+# For instance checking
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+
+
 
 # Profiling and Memory Tracking
 import cProfile
@@ -496,17 +501,17 @@ class MultiPhaseBHMC:
     def analyze_phase_a_results(
             self,
             umap_model,
-            knn_model,
+            classifier,
             phase_a_structures: Optional[List[Tuple[Molecule, float]]] = None,
     ) -> List[Tuple[Molecule, float, int]]:
         """
         Analyse Phase A structures by running them through the same outlier-removal
         pipeline used during initialization, then project into the initialization
-        UMAP space and assign cluster labels via the pre-trained KNN.
+        UMAP space and assign cluster labels via the pre-trained classifier.
 
         Args:
-            umap_model: Fitted UMAP model returned by ClusterInitializer.initialize_from_xyz.
-            knn_model:  Fitted KNN model returned by ClusterInitializer.initialize_from_xyz.
+            umap_model:  Fitted UMAP model returned by ClusterInitializer.initialize_from_xyz.
+            classifier:  Fitted classifier (SVM, KNN, …) returned by ClusterInitializer.initialize_from_xyz.
             phase_a_structures: List of (Molecule, energy) pairs. Defaults to self.phase_a_structures.
 
         Returns:
@@ -560,21 +565,33 @@ class MultiPhaseBHMC:
         embedding = umap_model.transform(clustering._feature_matrix_normalized)
         self._log(f"UMAP transform complete: embedding shape {embedding.shape}")
 
-        labels = knn_model.predict(embedding)
-        proba = clustering.KN_predict_probabilities(x_test=embedding, knn=knn_model)
 
-                
-        # Log the cluster label distribution
+        labels = classifier.predict(embedding)
         self._log(f"Cluster label distribution: {np.bincount(labels)}")
-        # Convert to list of string labels for plotting
         labels_str = [f"Cluster {l}" for l in labels]
 
+        if isinstance(classifier, KNeighborsClassifier):
+            proba = clustering.KN_predict_probabilities(x_test=embedding, knn=classifier)
+            clustering.plot_KN_probabilities(
+                embedding=embedding, probabilities=proba, labels=labels_str,
+                save_path="figures/phase_a_knn_probabilities.png"
+            )
+        elif isinstance(classifier, SVC):
+            proba = clustering.SVM_predict_probabilities(svm=classifier, x_test=embedding)
+            clustering.plot_SVM_probabilities(
+                embedding=embedding, probabilities=proba, labels=labels_str,
+                save_path="figures/phase_a_svm_probabilities.png"
+            )
+        else:
+            self._log(f"Unknown classifier type {type(classifier).__name__}, skipping probability plot.", level="warning")
 
-        clustering.plot_KN_probabilities(embedding=embedding, probabilities=proba, labels=labels_str, save_path="figures/phase_a_knn_probabilities.png")
-        self._log(f"KNN labels assigned: {len(set(labels.tolist()))} unique clusters")
-        # Plot the Embedding with cluster labels
-        clustering.plot_embedding(embedding=embedding, labels=labels_str, save_path="figures/phase_a_embedding.png")    
-        
+        self._log(f"Classifier labels assigned: {len(set(labels.tolist()))} unique clusters")
+        clustering.plot_embedding(embedding=embedding, labels=labels_str, save_path="figures/phase_a_embedding.png")
+
+        # Select points with lower 25 of max probability
+        low_confidence_indices = clustering.select_low_confidence_points_25(self,proba)
+
+        # If  
 
 
 

@@ -19,6 +19,9 @@ from modules.box import SimulationBox
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 
+import datetime
+import time
+
 # Import sobol sequence generator
 from scipy.stats import qmc
 
@@ -49,6 +52,11 @@ class InitializationConfig:
     gpaw_mode: str = "lcao"
     gpaw_basis: str = "dzp"
     gpaw_xc: str = "B3LYP"
+
+    # Setting for classifier trainign
+    classifier_backend: str = "knn" # Classifier for selecting representatives after clustering ("knn" or "svm")
+    classifier_kwargs: Optional[dict] = None # Additional keyword arguments for the classifier training (e.g. n_neighbors for KNN)
+
 
     box_type: str = "sphere"        # "sphere" or "cube"
     box_scale_factor: float = 2.5   # Scaling factor for box size
@@ -186,8 +194,33 @@ class ClusterInitializer:
                 filtered_molecules.append(mol)
                 filtered_energies.append(energy)
         return filtered_molecules, filtered_energies
-    
-    
+
+    def filter_duplicates_rmsd(self, molecules: List[Molecule], rmsd_threshold: float = 0.5) -> Tuple[List[Molecule], List[int]]:
+        """ 
+        Filter duplicate structures based on pairwise RMSD.
+        Args:
+            molecules: List of candidate molecules
+            rmsd_threshold: RMSD threshold for considering two structures as duplicates (default is 0.5 Angstrom)
+
+        Returns:
+         a list of unique molecules + the indices of the duplicates that were filtered out
+        """
+        unique_molecules = []
+        duplicate_indices = []
+        for i, mol in enumerate(molecules):
+            is_duplicate = False
+            for umol in unique_molecules:
+                rmsd = ClusterInitializer._calculate_rmsd(mol.coordinates, umol.coordinates)
+                if rmsd < rmsd_threshold:
+                    is_duplicate = True
+                    duplicate_indices.append(i)
+                    break
+            if not is_duplicate:
+                unique_molecules.append(mol)
+        if duplicate_indices:
+            self._log(f"Filtered out {len(duplicate_indices)} duplicate structures based on RMSD < {rmsd_threshold} Å")
+        return unique_molecules, duplicate_indices        
+
 
     def initialize_from_xyz(
         self,
@@ -202,6 +235,8 @@ class ClusterInitializer:
         n_r: Optional[int] = None,
         energy_backend: str= "xtb",
         energy_xtb_method: str = "GFN2-xTB",
+        classifier_backend: str = "knn",
+        classifier_kwargs: Optional[dict] = None,
     ) -> Tuple[List[Molecule], List[List[int]], SimulationBox, Any, Any]:
         """
         Run the full initialization workflow from an XYZ structure.
@@ -217,26 +252,40 @@ class ClusterInitializer:
             n_r: Number of radial grid points (grid mode)
             energy_backend: Backend for prescreening energies ("xtb", "ase_emt", or "psi4")
             energy_xtb_method: xTB method if the backend uses xTB
-
+            classifier_backend: Backend for clustering classifier ("knn" or "svm")
+            classifier_kwargs: Additional keyword arguments for the classifier training (e.g. n_neighbors for KNN)
         Returns:
             Tuple of (selected_molecules, submolecule_indices, simulation_box)
         """
+        # Track time for initialization process
+        time_start = time.time() 
         if self.logger:
             self.logger.header("Cluster Initialization")
+            # print timestamp
+            self.logger.info(f"Initialization started at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             msg = (
                 f"Configuration:\n"
-                f"  QM Method (Optimization): {self.config.qm_method}\n"
-                f"  Basis Set (Optimization): {self.config.qm_basis}\n"
-                f"  Simulation Box Type: {self.config.box_type}\n"
-                f"  Simulation Box Scale Factor: {self.config.box_scale_factor}\n"
-                f"  Minimum Distance Between Submolecules: {self.config.min_distance} Angstrom\n"
-                f"  Configurations per sampling worker: {n_configurations}\n"
-                f"  Sampling workers: {n_sampling_workers} (total pool: {n_sampling_workers * n_configurations})\n"
-                f"  Workers (n_keep) for energy ranking: {n_workers}\n"
-                f"  Energy Evaluation Backend: {energy_backend}\n"
-                f"  xTB Method (if applicable): {energy_xtb_method}\n"
+                f"  XYZ file: {xyz_file}\n"
+                f"  n_workers: {n_workers}\n"
+                f"  n_configurations: {n_configurations}\n"
+                f"  Total candidates: {n_workers * n_configurations}\n"
+                f"  placing_method: {placing_method}\n"
             )
+            if placing_method == "grid":
+                msg += f"  grid_spacing: {grid_spacing}\n  n_theta: {n_theta}\n  n_phi: {n_phi}\n  n_r: {n_r}\n"
+            if energy_backend == "xtb":
+                msg += f"  energy_backend: {energy_backend} ({energy_xtb_method})\n"
+            if classifier_backend:
+                msg += f"  classifier_backend: {classifier_backend}\n"
+                if classifier_kwargs:
+                    msg += f"  classifier_kwargs: {classifier_kwargs}\n"
+            if self.config.optimize_submolecules:
+                msg += "  optimize_submolecules: True\n"
+            if self.config.optimize_cluster_representatives:
+                msg += "  optimize_cluster_representatives: True\n"
+            
             self.logger.info(msg)
+
 
         
         # Step 1: Load molecule
@@ -363,8 +412,12 @@ class ClusterInitializer:
                 energies=energies_raw,
             )
 
-        # Filter high energy outliers based on Z-score
+        self.logger.separator()
+        self.logger.section("Filtering and Data Preperation for Clustering")
+        self._log("Performing Z-score filtering to remove high-energy outliers...")
+        self._log(f"Energy statistics before filtering: mean={np.mean(energies_raw):.6f}, std={np.std(energies_raw):.6f}, min={e_min:.6f}, max={e_max:.6f} Hartree")  
         mols, energies = self.filter_high_energy_outliers(mols_raw, energies_raw, Z_threshold=3.0)
+        self._log(f"Energy statistics after filtering: mean={np.mean(energies):.6f}, std={np.std(energies):.6f}, min={min(energies):.6f}, max={max(energies):.6f} Hartree")
 
         # Plot energy distribution before and after filtering
         self.plot_energy_distribution_filtering(energies_before=energies_raw, energies_after=energies, save_path="figures/energy_distribution_filtering.png")
@@ -380,39 +433,72 @@ class ClusterInitializer:
         featurizer_config = FeaturizerConfig(descriptor_type="SOAP")
         featurizer = Featurizer(featurizer_config)
         feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
-        self._log(f"SOAP feature matrix: {feature_mat.shape[0]} structures × {feature_mat.shape[1]} features")
+    
 
         # Intiialize clustering object, already averaged features do not need normalization
         clustering = Clustering(feature_matrix=feature_mat, energies=energies, metric="cityblock", normalize=False)
 
-        # Step 1 – Z-score filtering (removes structures with extreme feature values)
-        zscore_idx = clustering.z_score_filtering()
-        mols = [mols[i] for i in zscore_idx]
-        self._log(f"After Z-score filtering: {len(mols)} structures remain")
+        # Can be uncommented to look at the feature statistics
+    #    feature_stats = clustering.feature_statistics()
+    #    # Feature matrix statistic are a dictionary [feature_index] -> {"mean": mean_value, "std": std_value}
+    #    for idx, stats in feature_stats.items():
+    #        self._log(f"Feature {idx}: mean={stats['mean']:.4f}, std={stats['std']:.4f}")
 
-        # Step 3 – Isolation Forest cleanup (contamination=0.4)
+
+        # Step 1 - Filter low variance features 
+        clustering.filter_low_variance_features(threshold=0.0005)
+        self._log(f"After low variance filtering: feature matrix shape is {clustering._feature_matrix_normalized.shape}, retained {clustering._feature_matrix_normalized.shape[1]} features")  
+
+
+        # Step 2 – Isolation Forest cleanup (contamination=0.4)
         iforest_idx = clustering.isolation_forest_outlier(contamination=0.4)
         mols = [mols[i] for i in iforest_idx]
         self._log(f"After Isolation Forest: {len(mols)} structures remain")
 
-        # Step 4 – UMAP dimensionality reduction to 10 components
+        # Step 3 – UMAP dimensionality reduction to 10 components
         embedding_10d = clustering.umap(n_components=10, n_neighbors=15, min_dist=0.1)
         clustering._feature_matrix_normalized = embedding_10d
         self._log(f"UMAP embedding shape: {embedding_10d.shape}")
 
-        # Step 5 – Local Outlier Factor cleanup on the UMAP embedding (contamination=0.3)
+        # Step 4 – Local Outlier Factor cleanup on the UMAP embedding (contamination=0.3)
         lof_idx = clustering.local_outlier_factor(contamination=0.3)
         mols = [mols[i] for i in lof_idx]
         embedding_10d = clustering._feature_matrix_normalized  # capture filtered embedding
         self._log(f"After LOF cleanup: {len(mols)} structures remain")
 
-        # Step 6 – KMeans clustering on the cleaned 10D embedding
+        # Step 5 – KMeans clustering on the cleaned 10D embedding
         n_clusters = min(n_workers, len(mols))
         labels = clustering.kmeans_clustering(n_clusters=n_clusters)
 
-        # Step 6b – Train KNN on the UMAP embedding to classify future structures
-        knn_model = clustering.KN_classifier_training(embedding_10d, labels, n_neighbors=min(50, len(mols)))
+        # Step 6c – KMeans noise robustness assessment on the 10D UMAP embedding
+        _, noise_robustness = clustering.kmeans_noise_robustness(
+            n_clusters=n_clusters,
+            noise_levels=(0.0, 0.01, 0.02, 0.05),
+            n_runs=5,
+        )
+        self._log(f"\nKMeans noise robustness (ARI vs baseline):")
+        for sigma, stats in noise_robustness.items():
+            self._log(f"  sigma={sigma}: mean_ARI={stats['mean_ari']:.4f} ± {stats['std_ari']:.4f}")
+        
+        # Select the classifier
+        kwargs = classifier_kwargs or {}
+        if classifier_backend.lower() == "knn":
+            self._log("\nTraining KNN classifier on the 10D UMAP embedding...")
+            n_neighbors = kwargs.get("n_neighbors", min(50, len(mols)))
+            classifier_model = clustering.KN_classifier_training(embedding_10d, labels, n_neighbors=n_neighbors)
+        elif classifier_backend.lower() == "svm":
+            self._log("\nTraining SVM classifier on the 10D UMAP embedding...")
+            classifier_model = clustering.SVM_classifier_training(
+                embedding_10d, labels,
+                kernel=kwargs.get("kernel", "rbf"),
+                gamma=kwargs.get("gamma", "scale"),
+                probability=kwargs.get("probability", True),
+            )
+        else:
+            raise ValueError(f"Unknown classifier_backend: {classifier_backend!r}. Choose 'knn' or 'svm'.")
+
         umap_model = clustering._umap_model
+
 
         # Visualize: plot first two components of the 10D embedding (components 1 & 2)
         clustering.plot_embedding(embedding_10d, title="Initialization UMAP", save_path="figures/initialization_umap.png")
@@ -420,6 +506,20 @@ class ClusterInitializer:
         # Step 7 – Pick lowest-energy representative per cluster
         rep_indices = clustering.get_cluster_representatives(labels=labels, method="lowest_energy")
         selected_molecules = [mols[i] for i in rep_indices.values()]
+
+        # Check for uniqueness of structures via RMSD and fallback to centroid if duplicates are found
+        unique_molecules, duplicate_indices = self.filter_duplicates_rmsd(selected_molecules, rmsd_threshold=0.5)
+        if duplicate_indices:
+            self._log(f"\n Found {len(duplicate_indices)} duplicate representatives based on RMSD < 0.5 Å. Applying fallback to cluster centroids for these cases.")
+            cluster_keys = list(rep_indices.keys())
+            centroid_reps = clustering.get_cluster_representatives(labels=labels, method="centroid")
+            for idx in duplicate_indices:
+                cluster_label = cluster_keys[idx]
+                centroid_idx = centroid_reps[cluster_label]
+                unique_molecules.append(mols[centroid_idx])
+                self._log(f"  Cluster {cluster_label}: Replaced duplicate representative with centroid (index {centroid_idx})")
+        selected_molecules = unique_molecules
+
 
         # Step 8 – Evaluate clustering quality
         metrics = clustering.evaluate(labels)
@@ -444,12 +544,7 @@ class ClusterInitializer:
             self._log("Skipping optimization of selected representatives as per configuration.")
          
 
-        total_generated = n_sampling_workers * n_configurations
-        self._log(f"\nPre-screening completed: {len(scored)} valid configurations out of {total_generated} generated ({n_sampling_workers} workers × {n_configurations} each).")
-        self._log(f"Statistics of scored configurations:")
-        self._log(f"  Energy range: {e_min:.6f} to {e_max:.6f} Hartree")
-        self._log(f"  Energy distribution: mean {np.mean(energies):.6f}, median {np.median(energies):.6f}, std {np.std(energies):.6f} Hartree")
-        self._log(f"  Clusters formed: {n_clusters}, Representatives selected: {len(selected_molecules)}")
+
 
         summary_lines = [
             f"{'='*60}",
@@ -469,8 +564,12 @@ class ClusterInitializer:
 
         summary = "\n".join(summary_lines)
         self._log(summary)
+        time_end = time.time()
+        elapsed = time_end - time_start
+        self._log(f"Total initialization time: {elapsed:.2f} seconds")
+        self.logger.separator()
 
-        return selected_molecules, submol_indices, simulation_box, umap_model, knn_model
+        return selected_molecules, submol_indices, simulation_box, umap_model, classifier_model
 
     def _generate_random_configurations(
             self,
@@ -799,6 +898,7 @@ class ClusterInitializer:
         molecule = Molecule.from_xyz(xyz_content)
 
         self._log(f" Loaded: {len(molecule.coordinates)} atoms")
+        self._log(f" Atom types: {set(molecule.atom_labels)}")
         
         return molecule
     
@@ -806,8 +906,11 @@ class ClusterInitializer:
         """Fragment molecule into connected components."""
         self._log(f"\n[2/5] Fragmenting molecule into submolecules")
         
-
+        
         molecule.compute_bonds()
+        # Log the found bonds and hydrogen bonds
+        self._log(f" Found {len(molecule._covalent_bonds)} covalent bonds and {len(molecule._hydrogen_bonds)} hydrogen bonds")
+         
         submolecules = molecule.fragment_by_connectivity()
         
         self._log(f" Found {len(submolecules)} submolecules:")
@@ -884,7 +987,6 @@ class ClusterInitializer:
                     self._log(f"  Submolecule {idx+1} optimization failed: {e}", level="error")
                     # Fall back to original submolecule
                     optimized[idx] = submolecules[idx]
-    
         return optimized
 
     @staticmethod
@@ -969,19 +1071,29 @@ class ClusterInitializer:
         
         # Collect all covalent radii
         all_cov_radii = []
+        all_vdw_radii = []
         total_atoms = 0
         
         for submol in submolecules:
             all_cov_radii.extend(submol.covalent_radii)
+            all_vdw_radii.extend(submol.vdw_radii)
             total_atoms += len(submol.coordinates)
         
-        # Create box
-        simulation_box = SimulationBox.from_covalent_radii(
-            covalent_radii=all_cov_radii,
-            n_atoms=total_atoms,
-            box_type=self.config.box_type,
-            scale_factor=self.config.box_scale_factor
+        # Create box -> VDW
+        simulation_box = SimulationBox.from_vdw_radii(
+            vdw_radii = all_vdw_radii,
+            n_atoms = total_atoms,
+            box_type = self.config.box_type,
+            eta_factor = 4 # Standard is 0.4
         )
+
+
+    #    simulation_box = SimulationBox.from_covalent_radii(
+    #        covalent_radii=all_cov_radii,
+    #        n_atoms=total_atoms,
+    #        box_type=self.config.box_type,
+    #        scale_factor=self.config.box_scale_factor
+    #    )
         self._log(f" Box type:  {simulation_box.box_type}")
         if simulation_box.box_type == "sphere":
             self._log(f" Radius: {simulation_box.radius:.2f} Angstrom")
@@ -1505,33 +1617,127 @@ def test_submolecule_partition_mapping(
                     print(f"  Configuration {cfg_idx+1}, Submolecule {sub_idx+1}: theta={theta:.4f} not in [{start:.4f}, {end:.4f})")
         return len(failures) == 0
 
+def plot_placement_comparison(
+    R: float = 5.0,
+    N: int = 500,
+    save_path: str = "figures/placement_comparison.png",
+) -> None:
+    """
+    Produce a 2×3 thesis figure comparing the three placement methods
+    (random, Sobol, equal-volume grid) for a spherical simulation box.
+
+    Rows    – projections: XY (top view) and XZ (side view)
+    Columns – placement method: pseudo-random | Sobol | equal-volume grid
+    """
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+    from scipy.stats import qmc
+
+    rng = np.random.default_rng(42)
+
+    # ── Method 1: Pseudo-random (inverse-CDF) ──────────────────────────────
+    u   = rng.uniform(0, 1, N)
+    phi = rng.uniform(0, 2 * np.pi, N)
+    cos_t = rng.uniform(-1, 1, N)
+    sin_t = np.sqrt(1.0 - cos_t ** 2)
+    r_rnd = R * np.cbrt(u)
+    rand_pts = np.column_stack([
+        r_rnd * sin_t * np.cos(phi),
+        r_rnd * sin_t * np.sin(phi),
+        r_rnd * cos_t,
+    ])
+
+    # ── Method 2: Sobol quasi-random (scrambled, seed fixed for reproducibility) ─
+    engine = qmc.Sobol(d=3, scramble=True, seed=42)
+    sv = engine.random(N)          # shape (N, 3), all in [0, 1]
+    r_sob = R * np.cbrt(sv[:, 0])
+    cos_t_s = 2.0 * sv[:, 1] - 1.0
+    sin_t_s = np.sqrt(np.clip(1.0 - cos_t_s ** 2, 0.0, 1.0))
+    phi_s = 2.0 * np.pi * sv[:, 2]
+    sobol_pts = np.column_stack([
+        r_sob * sin_t_s * np.cos(phi_s),
+        r_sob * sin_t_s * np.sin(phi_s),
+        r_sob * cos_t_s,
+    ])
+
+    # ── Method 3: Equal-volume grid (deterministic) ────────────────────────
+    # Choose n_r, n_phi, n_theta so that n_r * n_phi * n_theta ≈ N
+    n_side = max(1, int(np.round(N ** (1.0 / 3.0))))
+    n_r_g, n_phi_g, n_th_g = n_side, n_side, n_side
+    grid_pts = []
+    for k in range(n_r_g):
+        r_g = R * ((k + 0.5) / n_r_g) ** (1.0 / 3.0)   # equal-volume shells
+        for i in range(n_phi_g):
+            cos_phi_g = -1.0 + 2.0 * (i + 0.5) / n_phi_g  # equal-area latitude bands
+            sin_phi_g = np.sqrt(max(0.0, 1.0 - cos_phi_g ** 2))
+            for j in range(n_th_g):
+                theta_g = 2.0 * np.pi * j / n_th_g
+                grid_pts.append([
+                    r_g * sin_phi_g * np.cos(theta_g),
+                    r_g * sin_phi_g * np.sin(theta_g),
+                    r_g * cos_phi_g,
+                ])
+    grid_pts = np.array(grid_pts)
+
+    # ── Plot ───────────────────────────────────────────────────────────────
+    methods = [
+        (rand_pts,  "Random Uniform\n(Inverse-CDF)",         "#2878B5"),
+        (sobol_pts, "Sobol Sequence\n(Low-Discrepancy)", "#E07B39"),
+        (grid_pts,  "Grid-Based\n(Deterministic)",    "#3BAA4A"),
+    ]
+    proj_pairs = [
+        (0, 1, "x (Å)", "y (Å)", "XY projection"),
+        (0, 2, "x (Å)", "z (Å)", "XZ projection"),
+    ]
+
+    fig, axes = plt.subplots(2, 3, figsize=(13, 8.5))
+    #fig.suptitle("Placement Method Comparison — Spherical Simulation Box",
+    #             fontsize=14, fontweight="bold", y=1.01)
+
+    circle_t = np.linspace(0, 2 * np.pi, 300)
+
+    for row_idx, (xi, yi, xlabel, ylabel, proj_label) in enumerate(proj_pairs):
+        for col_idx, (pts, title, color) in enumerate(methods):
+            ax = axes[row_idx, col_idx]
+
+            ax.scatter(pts[:, xi], pts[:, yi],
+                       s=7, alpha=0.55, color=color, linewidths=0)
+
+            # Sphere boundary circle
+            ax.plot(R * np.cos(circle_t), R * np.sin(circle_t),
+                    color="black", linewidth=1.2, zorder=5)
+
+            ax.set_aspect("equal")
+            ax.set_xlim(-R * 1.15, R * 1.15)
+            ax.set_ylim(-R * 1.15, R * 1.15)
+            ax.set_xlabel(xlabel, fontsize=10)
+            ax.set_ylabel(ylabel, fontsize=10)
+            ax.tick_params(labelsize=9)
+
+            if row_idx == 0:
+                ax.set_title(title, fontsize=11, fontweight="bold", pad=8)
+
+            ax.text(0.03, 0.97, proj_label,
+                    transform=ax.transAxes, va="top", ha="left",
+                    fontsize=8, color="dimgray")
+            ax.text(0.97, 0.97, f"N = {len(pts)}",
+                    transform=ax.transAxes, va="top", ha="right",
+                    fontsize=8, color="dimgray")
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=200, bbox_inches="tight")
+    plt.close()
+    print(f"Placement comparison figure saved to {save_path}")
+
+
 if __name__ == "__main__":
-    """  
+    """
     Run test when module is executed directly
     """
     xyz_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/co2_h2o.xyz"
     
 
 
-    init_config = InitializationConfig(
-        backend="xtb",
-        qm_method="hf",
-        qm_basis="cc-pvdz",
-        optimize_submolecules=True,
-        optimize_parallel=True,
-        box_type="sphere",
-        box_scale_factor=2.5,
-        min_distance=2.0,
-        verbose=True,
-        max_placement_attempts=1000
-    ) 
-    initializer = ClusterInitializer(config=init_config)
-    initial_molecules, submol_indices, simulation_box = initializer.initialize_from_xyz(
-        xyz_file=xyz_file,
-        n_workers=4,
-        n_configurations=5000,
-        n_sampling_workers=4,   # each of the 4 workers generates 5000 → 20000 total
-        placing_method="sobol",
-    )
+    plot_placement_comparison(R=5.0, N=500, save_path="figures/placement_comparison.png")
     
 

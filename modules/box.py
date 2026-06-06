@@ -6,6 +6,8 @@ import numpy as np
 from typing import Optional, List, Tuple, Union
 import matplotlib.pyplot as plt
 
+
+
 class SimulationBox:
     """   
     Defines a simulation box to constrain molecular structures during BHMC
@@ -73,6 +75,30 @@ class SimulationBox:
             return SimulationBox(box_type="cube", box_dimensions=dimensions)
         else:
             raise ValueError("box_type must be 'sphere' or 'cube'")
+        
+    @staticmethod
+    def from_vdw_radii(vdw_radii: Union[List[float], np.ndarray],
+                       n_atoms: int,
+                       box_type: str = "sphere",
+                       eta_factor: float = 0.4) -> 'SimulationBox':
+        """  
+        Generates a Simulation Box based on vdW Sphere Packing
+
+        V_vdw = sum_i^N (4/3 * pi * R_vdw_i^3)
+        R_eff = (V_vdw / eta)^(1/3)
+        """
+        R_vdw = np.array(vdw_radii)
+        V_vdw = np.sum((4.0 / 3.0) * np.pi * R_vdw**3)
+        R_eff = (V_vdw / eta_factor)**(1/3)
+        if box_type.lower() == "sphere":
+            return SimulationBox(box_type="sphere", radius=R_eff)
+        elif box_type.lower() == "cube":
+            side_length = (V_vdw / eta_factor)**(1/3)
+            dimensions = np.array([side_length, side_length, side_length])
+            return SimulationBox(box_type="cube", box_dimensions=dimensions)
+        else:
+            raise ValueError("box_type must be 'sphere' or 'cube'")
+        
         
     def is_inside(self, coordinates: np.ndarray) -> bool:
         """   
@@ -383,4 +409,34 @@ def _run_box_self_tests() -> None:
     plt.savefig("figures/simulation_box_reflection_test.png", dpi=300)
 
 if __name__ == "__main__":
+
+
+    # Compute the Box Size for several molecules and print the results
+    from modules.molecule_class import Molecule
+    from modules.calculator import EnergyEvaluator
+
+    h2o_dimer_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_clusters/h2o_dimer.xyz"
+    h2o_trimer_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_clusters/h2o_timer.xyz"
+    h2o_tetramer_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_clusters/h2o_4.xyz"
+    h2o_pentamer_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_clusters/tip4p_literature/TIP4P-5.xyz"
+    co2_dimer_file  = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/co2_co2.xyz"
+    formic_acid_dimer = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/fad.xyz"
+
+    # Load molecules and compute box sizes
+    for file in [h2o_dimer_file, h2o_trimer_file, h2o_tetramer_file, h2o_pentamer_file, co2_dimer_file, formic_acid_dimer]:
+        with open(file, "r") as f:
+            content = f.read()
+        mol = Molecule.from_xyz(content)
+        box = SimulationBox.from_covalent_radii(covalent_radii=mol.covalent_radii, n_atoms=len(mol.atom_labels), box_type="sphere", scale_factor=1.0)
+        print(f"File: {file.split('/')[-1]}, Atoms: {mol.atom_labels}, Box Radius: {box.radius:.2f} Å, Volume: {box.get_volume():.2f} Å³")
+    print("\n" + "=" * 70)
+    # Load molecules and compute box sizes using vdW radii
+    for file in [h2o_dimer_file, h2o_trimer_file, h2o_tetramer_file, h2o_pentamer_file, co2_dimer_file, formic_acid_dimer]:
+        with open(file, "r") as f:
+            content = f.read()
+        mol = Molecule.from_xyz(content)
+        box = SimulationBox.from_vdw_radii(vdw_radii=mol.vdw_radii, n_atoms=len(mol.atom_labels), box_type="sphere", eta_factor=0.4)
+        print(f"File: {file.split('/')[-1]}, Atoms: {mol.atom_labels}, Box Radius: {box.radius:.2f} Å, Volume: {box.get_volume():.2f} Å³")
+
+
     _run_box_self_tests()

@@ -27,8 +27,11 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier # K-Nearest Neighbors Classifier for metric learning
 from scipy.stats import entropy
+from sklearn.svm import SVC # Support Vector Classifier for metric learning
+from sklearn.metrics import adjusted_rand_score
+
 
 
 from scipy.stats import zscore
@@ -148,6 +151,25 @@ class Clustering:
         else:
             self._log(f"Clustering with method: {method} (no n_clusters needed)")
             self.labels = fn(**kwargs)
+
+    def feature_statistics(self) -> Dict[str, Any]:
+        """ 
+        Helper Function to compute and log basic statistics of the obtained feature matrix
+
+        Statistics include:
+        - Number of samples and features
+        - Mean and standard deviation of each feature
+        """
+        fm = self._fm()
+        n_samples, n_features = fm.shape
+        self._log(f"Feature matrix statistics: {n_samples} samples, {n_features} features")
+        feature_stats = {}
+        for i in range(n_features):
+            mean = np.mean(fm[:, i])
+            std = np.std(fm[:, i])
+            feature_stats[f"feature_{i}"] = {"mean": mean, "std": std}
+            self._log(f"Feature {i}: mean={mean:.4f}, std={std:.4f}")
+        return feature_stats
 
     def kmeans_clustering(self, n_clusters: int = 5, n_init: int = 10,
                           max_iter: int=300, random_state: int = 42) -> np.ndarray:
@@ -283,18 +305,20 @@ class Clustering:
         ).fit(x_train, y=y_train)
         self._log(f"UMAP metric learning completed: n_components={n_components}, n_neighbors={n_neighbors}, metric={self._umap_metric()}")
         self.trained_emb = mapper.embedding_
+        self.mapper = mapper 
+        self._log(f"UMAP embedding shape: {self.trained_emb.shape}")
     
     def umap_transform(self,  X_test) -> np.ndarray:
         """ 
         Transforms provided data using the pre-trained UMAP embedding
         """
-        if not hasattr(self, 'trained_emb'):
-            raise ValueError("UMAP embedding not trained. Please run umap_metric_learning() first.")
-        # Note: UMAP does not have a built-in transform method, so we need to fit a new UMAP on the test data using the same metric and parameters
-        umap = UMAP(n_components=self.trained_emb.shape[1], n_neighbors=15, min_dist=0.1, metric=self._umap_metric(), random_state=42)
-        embedding = umap.fit_transform(X_test)
-        self._log(f"UMAP transform completed: n_components={embedding.shape[1]}, n_neighbors=15, min_dist=0.1, metric={self._umap_metric()}")
+        if not hasattr(self, 'mapper'):
+            raise ValueError("UMAP model not trained. Please run umap_metric_learning() first.")
+        embedding = self.mapper.transform(X_test)
+        self._log(f"UMAP transform completed: input_shape={X_test.shape}, output_shape={embedding.shape}")
         return embedding
+
+
 
     # ----- Supervised Learning Methods -----
     def KN_classifier_training(self, x_train, y_train, n_neighbors: int = 15) -> KNeighborsClassifier:
@@ -342,6 +366,18 @@ class Clustering:
         self.knn_probabilities = probabilities
         return probabilities
 
+    def select_low_confidence_points_25(self, probabilities: np.ndarray) -> np.ndarray:
+        """  
+        Analyzes the predicted probabilities to select points with low confidende (lower 25 of max probabilities) for further analysis or sampling
+        """
+        if not hasattr(self, 'knn_probabilities'):
+            raise ValueError("KNN probabilities not computed. Please run KN_predict_probabilities() first.")
+        max_probabilities = np.max(probabilities, axis=1)
+        threshold = np.percentile(max_probabilities, 25)
+        low_confidence_indices = np.where(max_probabilities <= threshold)[0]
+        self._log(f"Selected {len(low_confidence_indices)} low-confidence points (lower 25% of max probabilities) for further analysis or sampling")
+        return low_confidence_indices
+
     def plot_KN_probabilities(self, embedding: np.ndarray, probabilities: np.ndarray,
                               labels: Optional[np.ndarray]= None, title: str = "KNN Cluster Probabilities", save_path: Optional[str] = None) -> None:
         """  
@@ -387,6 +423,68 @@ class Clustering:
             fig.savefig(f"figures/{title.replace(' ', '_').lower()}.png", dpi=150, bbox_inches='tight')
         plt.close(fig)
 
+    def SVM_classifier_training(self, x_train, y_train, kernel: str = "rbf", gamma: Optional[float] = 'scale', probability: bool = True) -> SVC: 
+        """
+        Trains a Support Vector Machine classifier on the provided training data on the embedding
+        """
+        svm = SVC(kernel=kernel, gamma=gamma, probability=probability)
+        svm.fit(x_train, y_train)
+        self._log(f"SVM classifier training completed: kernel={kernel}, gamma={gamma}, probability={probability}")
+        return svm
+
+    def SVM_classifier_predict(self, svm: SVC, x_test) -> np.ndarray:
+        """  
+        Uses the trained SVM classifier to predict labels for the provided test data
+        """
+        if svm is None:
+            raise ValueError("SVM classifier not trained. Please run SVM_classifier_training() first.")
+        predictions = svm.predict(x_test)
+        self._log(f"SVM classifier prediction completed: kernel={svm.kernel}, gamma={svm.gamma}, probability={svm.probability}")
+        return predictions
+    
+    def SVM_predict_probabilities(self, svm: SVC, x_test) -> np.ndarray:
+        """  
+        Predits the probabilities of the SVM classifier for the provided test data
+        """
+        if svm is None:
+            raise ValueError("SVM classifier not trained. Please run SVM_classifier_training() first.")
+        probabilities = svm.predict_proba(x_test)
+        self._log(f"SVM classifier probability prediction completed: kernel={svm.kernel}, gamma={svm.gamma}, probability={svm.probability}")
+        return probabilities
+    
+    def plot_SVM_probabilities(self, embedding: np.ndarray, probabilities: np.ndarray,
+                              labels: Optional[np.ndarray]= None, title: str = "SVM Cluster Probabilities", save_path: Optional[str] = None) -> None:
+        """
+        Similar to plot_KN_probabilities but for SVM predicted probabilities
+        """
+        x, y = embedding[:, 0], embedding[:, 1]
+        confidences = np.max(probabilities, axis=1)
+        sizes = 10 + 90 * confidences  # scale 10 → 100
+        fig, ax = plt.subplots(figsize=(10, 8))
+        if labels is not None:
+            unique_labels = sorted(set(labels))
+            palette = sns.color_palette('tab10', len(unique_labels))
+            color_map = {lbl: palette[i] for i, lbl in enumerate(unique_labels)}
+            rgba = np.array([(*color_map[lbl], float(conf)) for lbl, conf in zip(labels, confidences)])
+            ax.scatter(x, y, c=rgba, s=sizes)
+            handles = [plt.Line2D([0], [0], marker='o', color='w',
+                                  markerfacecolor=color_map[lbl], markersize=8, label=lbl)
+                       for lbl in unique_labels]
+            ax.legend(handles=handles, title="Cluster")
+        else:
+            rgba = np.array([(0.12, 0.47, 0.71, float(c)) for c in confidences])
+            ax.scatter(x, y, c=rgba, s=sizes)
+        ax.set_title(f"{title}\n(size & alpha = prediction confidence)")
+        ax.set_xlabel("Component 1")
+        ax.set_ylabel("Component 2")
+        ax.grid(True)
+        if save_path:
+            fig.savefig(save_path, dpi=150, bbox_inches='tight')
+        else:
+            fig.savefig(f"figures/{title.replace(' ', '_').lower()}.png", dpi=150, bbox_inches='tight')
+        plt.close(fig)
+
+    
     
 
     
@@ -461,6 +559,8 @@ class Clustering:
         self.corr_matrix = corr
         return corr
     
+
+
     def filter_correlation_spearman(self, threshold: float = 0.9) -> List[int]:
         """  
         Filter features based on the spearman correlation matrix
@@ -666,6 +766,38 @@ class Clustering:
             self._log(f"Cluster {cluster}: WCSS={wcss:.4f}, n_points={len(cluster_points)}")
         return wcss_per_cluster
 
+    def kmeans_noise_robustness(self, n_clusters: int = 5, noise_levels = (0.0, 0.01, 0.02, 0.05), n_runs = 5, random_state: int = 42) -> Dict[float, List[float]]:
+        """  
+        Evaluate the robustness of the K-Means clustering with the
+        effect of noise by adding different levels of Gaussian noise to the feature matrix
+        """
+        fm = self._fm()
+        rng = np.random.default_rng(random_state)
+        base_model = KMeans(
+            n_clusters=n_clusters, n_init = 10, random_state=random_state
+        )
+        base_labels = base_model.fit_predict(fm)
+        results = {}
+        feature_scale = fm.std(axis=0, keepdims=True) # scale the noise to the feature scale
+        feature_scale[feature_scale == 0] = 1.0 # avoid division by zero for constant features
+
+        for sigma in noise_levels:
+            aris = []
+            for run in range(n_runs):
+                noise = rng.normal(loc=0.0, scale=sigma, size=fm.shape) * feature_scale
+                fm_noisy = fm + noise
+                noisy_model = KMeans(
+                    n_clusters=n_clusters, n_init = 10, random_state=random_state + run + 1
+                )
+                noisy_labels = noisy_model.fit_predict(fm_noisy)
+                aris.append(adjusted_rand_score(base_labels, noisy_labels))
+            results[sigma] = {
+                "mean_ari": float(np.mean(aris)),
+                "std_ari": float(np.std(aris))
+            }
+        
+        return base_labels, results
+
 
     # ------------- Filtering and Outlier Detection -------------
 
@@ -684,7 +816,21 @@ class Clustering:
             self.energies = self.energies[filtered_indices]
         self._log(f"Z-score filtering applied: threshold={threshold}, removed {np.sum(outlier_mask)} outliers, kept {len(filtered_indices)} samples.")
         return filtered_indices
-    
+
+    def filter_low_variance_features(self, threshold: float = 0.01) -> List[int]:
+        """  
+        Filter out features that have a variance below the given threshold across the dataset
+        This is used for the first data cleanup before clustering
+        """
+        fm = self._fm()
+        variances = np.var(fm, axis=0)
+        feature_mask = variances > threshold
+        filtered_indices = np.where(feature_mask)[0]
+        self._feature_matrix_normalized = fm[:, filtered_indices]
+        self._log(f"Low variance feature filtering applied: threshold={threshold}, removed {np.sum(~feature_mask)} features, kept {len(filtered_indices)} features.")
+        return filtered_indices
+
+
     def isolation_forest_outlier(self, contamination: float = 0.4) -> List[int]:
         """  
         Uses an IsolationForest to identify outliers in the feature space 

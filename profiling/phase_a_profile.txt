@@ -1,22 +1,22 @@
 --- Profiling Results for Phase A ---
-         5746701 function calls (5593326 primitive calls) in 37.497 seconds
+         5610406 function calls (5460199 primitive calls) in 37.483 seconds
 
    Ordered by: cumulative time
    List reduced from 1995 to 10 due to restriction <10>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-      109   24.163    0.222   24.163    0.222 {method 'acquire' of '_thread.lock' objects}
-       21    0.000    0.000   22.941    1.092 /home/lme/.local/lib/python3.9/site-packages/tqdm/std.py:1160(__iter__)
-       21    0.001    0.000   22.929    1.092 /home/lme/.conda/envs/p4env/lib/python3.9/concurrent/futures/_base.py:201(as_completed)
-       22    0.000    0.000   22.929    1.042 /home/lme/.conda/envs/p4env/lib/python3.9/threading.py:563(wait)
-       22    0.000    0.000   22.929    1.042 /home/lme/.conda/envs/p4env/lib/python3.9/threading.py:280(wait)
-        3    0.000    0.000    9.142    3.047 /home/lme/.local/lib/python3.9/site-packages/matplotlib/pyplot.py:1129(savefig)
-        1    0.001    0.001    8.907    8.907 /media/storage_6/lme/master_thesis/cluster_generation/modules/bhmc.py:764(plot_worker_operator_acceptance)
-        3    0.000    0.000    6.927    2.309 /home/lme/.local/lib/python3.9/site-packages/matplotlib/figure.py:3234(savefig)
-        3    0.000    0.000    6.927    2.309 /home/lme/.local/lib/python3.9/site-packages/matplotlib/backend_bases.py:2052(print_figure)
-        9    0.000    0.000    6.559    0.729 /home/lme/.local/lib/python3.9/site-packages/matplotlib/artist.py:93(draw_wrapper)
+      109   24.467    0.224   24.467    0.224 {method 'acquire' of '_thread.lock' objects}
+       21    0.000    0.000   23.221    1.106 /home/lme/.local/lib/python3.9/site-packages/tqdm/std.py:1160(__iter__)
+       22    0.000    0.000   23.211    1.055 /home/lme/.conda/envs/p4env/lib/python3.9/threading.py:563(wait)
+       21    0.001    0.000   23.210    1.105 /home/lme/.conda/envs/p4env/lib/python3.9/concurrent/futures/_base.py:201(as_completed)
+       22    0.000    0.000   23.210    1.055 /home/lme/.conda/envs/p4env/lib/python3.9/threading.py:280(wait)
+        1    0.001    0.001    9.088    9.088 /media/storage_6/lme/master_thesis/cluster_generation/modules/bhmc.py:764(plot_worker_operator_acceptance)
+        3    0.000    0.000    8.805    2.935 /home/lme/.local/lib/python3.9/site-packages/matplotlib/pyplot.py:1129(savefig)
+        3    0.000    0.000    6.642    2.214 /home/lme/.local/lib/python3.9/site-packages/matplotlib/figure.py:3234(savefig)
+        3    0.000    0.000    6.642    2.214 /home/lme/.local/lib/python3.9/site-packages/matplotlib/backend_bases.py:2052(print_figure)
+        9    0.000    0.000    6.368    0.708 /home/lme/.local/lib/python3.9/site-packages/matplotlib/artist.py:93(draw_wrapper)
 
 
 
 --- Memory Usage for Phase A ---
-Current memory usage: 34.61 MB; Peak memory usage: 36.86 MB
+Current memory usage: 27.10 MB; Peak memory usage: 27.31 MB

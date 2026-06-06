@@ -16,6 +16,20 @@ def get_args():
         metavar=("file1"),
         help="Path to input XYZ file containing the molecular structure"
     )
+    
+    parser.add_argument(
+        "--s",
+        nargs=1,
+        metavar=("file2"),
+        help="Path to input file containing settings for the cluster generation process"
+    )
+
+    parser.add_argument(
+        "--o",
+        nargs=1,
+        metavar=("file3"),
+        help="Filepath of the operator distribution file to be used for the BHMC sampling"
+    )
 
     parser.add_argument(
         "--test",

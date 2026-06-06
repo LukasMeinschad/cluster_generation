@@ -27,7 +27,7 @@ class StructureAnalysisConfig:
     """  
     Configuration for the StructureAnalysis class
     """
-    calculator_backend: str = "psi"
+    calculator_backend: str = "psi4"
     calculator_qm_method: str = "mp2"
     calculator_qm_basis: str = "cc-pvdz"
     calculator_xtb_method: str = "GFN2-xTB"
@@ -48,8 +48,9 @@ class StructureAnalysis:
     """
     def __init__(self, logger, mols: Optional[List[Molecule]] = None, config: Optional[StructureAnalysisConfig] = None):
         self.logger = logger
-        self.geometry_ops = GeometryOps()  
-        self.mols = mols    
+        self.geometry_ops = GeometryOps()
+        self.mols = mols
+        self.mols_before_opt: Optional[List[Molecule]] = None
         self.config = config if config is not None else StructureAnalysisConfig()
 
         # Setup the calculator based on the configuration
@@ -119,28 +120,34 @@ class StructureAnalysis:
         # store rmsd matris
         self.rmsd_matrix = rmsd_matrix
 
-    def identify_unique_structures(self) -> List[Tuple[int, int]]:
-        """  
-        Identifies unique structures based on the pairwise RMSD matrix and the specified threshold in the configuration.
-        """    
-        if not hasattr(self, 'rmsd_matrix'):
-            self._log("Pairwise RMSD matrix not computed yet. Computing now...")
-            self.compute_pairwise_rmsd()
-
+    def get_unique_structures(self) -> Tuple[List[int], List[Molecule]]:
+        """
+        Returns unique structures from the current self.mols without modifying state.
+        Computes a fresh pairwise RMSD matrix on self.mols and filters by rmsd_threshold.
+        Returns (unique_indices, unique_mols).
+        """
         n = len(self.mols)
-        unique_structures = []
+        rmsd_matrix = np.zeros((n, n))
         for i in range(n):
-            is_unique = True
-            for j in range(i):
-                if self.rmsd_matrix[i, j] < self.config.rmsd_threshold:
-                    is_unique = False
-                    break
-            if is_unique:
-                unique_structures.append(i)
-        self._log(f"Identified {len(unique_structures)} unique structures based on RMSD threshold of {self.config.rmsd_threshold} Å")
-        # Filter the mols to only keep the unique structures
-        self.mols = [self.mols[i] for i in unique_structures]
-        return unique_structures
+            for j in range(i + 1, n):
+                r = self.geometry_ops.compute_optimal_correspondence_rmsd(
+                    self.mols[i].coordinates, self.mols[j].coordinates
+                )
+                rmsd_matrix[i, j] = r
+                rmsd_matrix[j, i] = r
+
+        unique_indices = []
+        for i in range(n):
+            if all(rmsd_matrix[i, j] >= self.config.rmsd_threshold for j in range(i)):
+                unique_indices.append(i)
+
+        unique_mols = [self.mols[i] for i in unique_indices]
+        self._log(
+            f"Found {len(unique_indices)} unique structures out of {n} "
+            f"(threshold={self.config.rmsd_threshold} Å)"
+        )
+        return unique_indices, unique_mols
+
 
 
     def plot_pairwise_rmsd_heatmap(self, save_path: str = "figures/pairwise_rmsd_heatmap.png"):
@@ -166,9 +173,10 @@ class StructureAnalysis:
         plt.close()
 
     def optimize_geometries(self, n_workers: int = 4):
-        """  
+        """
         Optimizes the geometries of all structures in parallel using multiprocessing
         """
+        self.mols_before_opt = list(self.mols)
         optimized_mols = []
         ctx = multiprocessing.get_context("spawn")
         with ProcessPoolExecutor(max_workers=n_workers, mp_context=ctx) as executor:
@@ -298,6 +306,70 @@ class StructureAnalysis:
     
 
                 
+
+    def plot_rmsd_comparison(self, save_path: str = "figures/rmsd_comparison.png"):
+        """
+        Plots pairwise RMSD heatmaps before and after geometry optimization side by side.
+        Requires optimize_geometries() to have been called first.
+        """
+        if self.mols_before_opt is None:
+            self._log("No pre-optimization structures stored. Run optimize_geometries() first.")
+            return
+
+        def _pairwise_rmsd(mols: List[Molecule]) -> np.ndarray:
+            n = len(mols)
+            mat = np.zeros((n, n))
+            for i in range(n):
+                for j in range(i + 1, n):
+                    r = self.geometry_ops.compute_optimal_correspondence_rmsd(
+                        mols[i].coordinates, mols[j].coordinates
+                    )
+                    mat[i, j] = r
+                    mat[j, i] = r
+            return mat
+
+        rmsd_before = _pairwise_rmsd(self.mols_before_opt)
+        rmsd_after  = _pairwise_rmsd(self.mols)
+
+        # format and log the RMSD matrices
+        self._log("Pairwise RMSD values before optimization:")
+        for i in range(len(self.mols_before_opt)):
+            row = "  ".join(f"{rmsd_before[i, j]:.2f}" for j in range(len(self.mols_before_opt)))
+            self._log(f"Structure {i}: {row}")
+        self._log("Pairwise RMSD values after optimization:")
+        for i in range(len(self.mols)):
+            row = "  ".join(f"{rmsd_after[i, j]:.2f}" for j in range(len(self.mols)))
+            self._log(f"Structure {i}: {row}")
+
+        n_before = len(self.mols_before_opt)
+        n_after  = len(self.mols)
+
+        fig, (ax_before, ax_after) = plt.subplots(1, 2, figsize=(16, 6))
+        sns.heatmap(
+            rmsd_before, ax=ax_before, cmap="viridis", annot=True, fmt=".1f",
+            annot_kws={"size": 8},
+            xticklabels=np.arange(n_before), yticklabels=np.arange(n_before),
+        )
+        ax_before.set_title("Pairwise RMSD — Before Optimization")
+        ax_before.set_xlabel("Structure Index")
+        ax_before.set_ylabel("Structure Index")
+
+        sns.heatmap(
+            rmsd_after, ax=ax_after, cmap="viridis", annot=True, fmt=".1f",
+            annot_kws={"size": 8},
+            xticklabels=np.arange(n_after), yticklabels=np.arange(n_after),
+        )
+        ax_after.set_title("Pairwise RMSD — After Optimization")
+        ax_after.set_xlabel("Structure Index")
+        ax_after.set_ylabel("Structure Index")
+
+        plt.tight_layout()
+        parent = os.path.dirname(save_path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close()
+        self._log(f"Saved RMSD comparison plot to {save_path}")
 
     @staticmethod
     def _split_xyz_frames(text: str) -> list[str]:

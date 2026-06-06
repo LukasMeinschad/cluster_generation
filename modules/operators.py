@@ -102,27 +102,26 @@ class MolecularOperators:
 
 
         # Get characteristic length
-        if self.simulation_box.box_type == "cubic":
-            box_length = self.simulation_box.box_dimensions
+        if self.simulation_box.box_type == "cube":
+            box_length = float(np.max(self.simulation_box.box_dimensions))
         elif self.simulation_box.box_type == "sphere":
             box_length = self.simulation_box.radius * 2
         else:
             raise ValueError(f"Unknown box type '{self.simulation_box.box_type}'")
-        
+
         free_space = max(box_length - effective_mol_size, 0.1)
         size_ratio = effective_mol_size / free_space
 
-
-
         if operator_type == "local":
-            # Here one can simply change scalings around
-            base_scale = 0.05
-            max_scale = 0.4
-            scale = base_scale + (max_scale - base_scale) * (1 - np.exp(-size_ratio))
-        if operator_type == "nonlocal":
             base_scale = 0.2
             max_scale = 0.8
+            scale = base_scale + (max_scale - base_scale) * (1 - np.exp(-size_ratio))
+        elif operator_type == "nonlocal":
+            base_scale = 0.3
+            max_scale = 1.0
             scale = base_scale + (max_scale - base_scale) * (1 - np.exp(-size_ratio * 0.5))
+        else:
+            scale = 1.0
         return np.clip(scale, base_scale, max_scale)
 
                                          

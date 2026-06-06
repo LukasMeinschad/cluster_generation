@@ -346,14 +346,20 @@ class GeometryOps:
 
     @staticmethod
     def compute_optimal_correspondence_rmsd(P: np.ndarray, Q: np.ndarray) -> float:
-        """ 
-        Computes the optimal correspondence rsmd so first use
-        the hungarian algorithm to find the optimal assigment between the two sets of coordinates and then compute the RMSD based on the aligned coordinates 
         """
-        Q_aligned = GeometryOps.find_optimal_correspondence(P, Q)
-        diff = P - Q_aligned
-        rmsd = np.sqrt(np.mean(np.sum(diff**2, axis=1)))
-        return rmsd
+        Computes the optimal-correspondence RMSD between two structures:
+        1. Center both (remove translation)
+        2. Hungarian assignment on centered coords (remove labelling ambiguity)
+        3. Kabsch rotation (remove rotation)
+        4. Compute RMSD on the aligned, reordered coords
+        """
+        P_c = P - P.mean(axis=0)
+        Q_c = Q - Q.mean(axis=0)
+        Q_reordered = GeometryOps.find_optimal_correspondence(P_c, Q_c)
+        R = GeometryOps.kabsch_rotation(P_c, Q_reordered)
+        Q_aligned = Q_reordered @ R.T
+        diff = P_c - Q_aligned
+        return np.sqrt(np.mean(np.sum(diff**2, axis=1)))
 
     @staticmethod
     def kabsch_rotation(P: np.ndarray, Q: np.ndarray) -> np.ndarray:

@@ -1,37 +1,52 @@
-import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List, Tuple
 
 
 @dataclass
 class BHMCConfig:
     """Configuration for Basin Hopping Monte Carlo sampling."""
-    temperature: float = 400.0   # Temperature in Kelvin
-    qm_method: str = "hf"        # Quantum chemistry method
-    qm_basis: str = "sto-3g"     # Basis set
-    backend: str = "psi4"        # Backend for energy evaluation
-    xtb_method: str = "GFN2-xTB" # Method for XTB if backend is set to xtb
-    gpaw_mode: str = "lcao"      # GPAW mode (lcao or fd)
-    gpaw_basis: str = "dzp"      # GPAW basis set
-    gpaw_xc: str = "B3LYP"      # GPAW exchange-correlation functional
-    
 
+    # Energy backend
+    backend: str = "psi4"
+    qm_method: str = "hf"
+    qm_basis: str = "sto-3g"
+    xtb_method: str = "GFN2-xTB"
+    gpaw_mode: str = "lcao"
+    gpaw_basis: str = "dzp"
+    gpaw_xc: str = "B3LYP"
 
-    verbose: bool = False       # Enable debug output in workers
-    adaptive_operators: bool = True  # Use adaptive scaling for operators
+    # Sampling
+    temperature: float = 400.0      # Metropolis temperature in Kelvin
+    verbose: bool = False
+    adaptive_operators: bool = True  # Pass adaptive=True to operators that support it
 
+    # Operator pool: list of (name, weight) for both local and non-local operators.
+    # Weights are relative; they are normalised inside the worker.
+    operators: List[Tuple[str, float]] = field(default_factory=lambda: [
+        # --- non-local (basin-hop moves) ---
+        ("twist",                    0.6),
+        ("large_displacement",       0.5),
+        ("mirror",                   0.4),
+        ("roto_reflection",          0.3),
+        ("exchange",                 0.3),
+        ("random_so3",               0.2),
+        ("principal_axis_rotation",  0.3),
+        ("com_com_approach",         0.3),
+        ("com_com_separation",       0.1),
+        # --- local (basin-exploration moves) ---
+        ("random_displacement",      3.0),
+        ("random_rotation",          2.5),
+        ("local_twist",              2.0),
+        ("correlated_displacement",  2.0),
+        ("small_principal_axis_rotation", 2.0),
+    ])
 
-    # In-worker adaptive box control (Phase) A
+    # Adaptive box control
     adaptive_box: bool = True
-    box_update_interval: int = 10  # Update every N steps
-    box_target_acceptance: float = 0.6 # Desired acceptance rate 
-    box_acceptance_window: float = 0.05 # no update of box rate inside [box_target_acceptance - window, box_target_acceptance + window]
-    box_growth_kp: float = 0.6 # propotional gain
-    box_growth_max: float = 1.15 # cap per update
-    box_max_scale: float = 2 # Relative to initial box size
-    box_stable_windows: int = 3 # stop growing after this many stable windows
-    
-    # Adaptive Temperature Control in Phase B
-    max_temperature: float = 50 
-
-
-
+    box_update_interval: int = 10
+    box_target_acceptance: float = 0.6
+    box_acceptance_window: float = 0.05
+    box_growth_kp: float = 0.6
+    box_growth_max: float = 1.15
+    box_max_scale: float = 2.0
+    box_stable_windows: int = 3

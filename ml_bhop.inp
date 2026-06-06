@@ -1,0 +1,69 @@
+------------------------------------------
+Parameter Input File for ML-BHOP Algorithm
+------------------------------------------
+
+InitialSPConfig:
++ backend = "XTB"
++ xtb_method = "GFN2-xTB"
+
+InitializationConfig:
++ backend = "xtb"
++ qm_method = "hf"
++ qm_basis = "sto-3g"
++ xtb_method = "GFN2-xTB"
++ gpaw_mode = "lcao"
++ gpaw_xc = "B3LYP"
++ classifier_backend = "knn"
++ classifier_kwargs = None
++ box_type = "sphere"
++ box_scale_factor = 1.0
++ eta_factor = 4.0
++ min_distance = 2.0
++ max_placement_attempts = 1000
++ optimize_submolecules = True
++ optimize_parallel = True
++ optimize_cluster_representatives = False 
++ verbose = False
+
+InitializeXYZ:
++ n_workers = 20
++ n_configurations = 100
++ n_sampling_workers = 20
++ placing_method = "sobol"
++ grid_spacing = "sobol"
++ n_theta = None
++ n_phi = None
++ n_r = None
+
+StructureAnalysisInt:
++ calculator_backend =  "xtb"
++ calculator_qm_method = "hf"
++ calculator_qm_basis =  "6-311g(d,p)"
++ calculator_xtb_method = "GFN2-xTB"
++ calculator_gpaw_mode = "lcao"
++ calculator_gpaw_basis = "dzp"
++ calculator_gpaw_xc = "B3LYP"
++ rmsd_threshold = 0.5
+
+BHMCConfig:
++ backend = "xtb"
++ qm_method = "hf"
++ qm_basis = "6-311g(d,p)"
++ xtb_method = "GFN2-xTB"
++ gpaw_mode = "lcao"
++ gpaw_basis = "dzp"
++ gpaw_xc = "B3LYP"
++ temperature = 600
++ verbose = False
++ adaptive_operators = True
++ adaptive_box  = True
++ box_update_interval = 10
++ box_target_acceptance = 0.6
++ box_acceptance_window = 0.05
++ box_growth_kp = 0.6
++ box_growth_max = 1.15
++ box_max_scale = 2.0
++ box_stable_windows = 3
++ n_workers = 20
++ n_steps_per_worker = 8000
+

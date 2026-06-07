@@ -2,7 +2,27 @@
 Operator Distribution for BHMC
 ---------------------------------------
 
-Non-Local Operators:
+NL-OpsTraining:
+ + twist = 2.0
+ + large_displacement = 2.0
+ + mirror = 1.0
+ + roto_reflection = 1.0
+ + exchange = 2.0
+ + random_so3 = 0.8
+ + principal_axis_rotation = 0.8
+ + com_com_approach = 0.5
+ + com_com_separation = 0.1
+
+L-OpsTraining:
+ + random_displacement = 1.0
+ + random_rotation = 1.0
+ + local_twist = 0.2
+ + correlated_displacement = 0.2
+ + small_principal_axis_rotation = 0.2 
+
+
+
+NL-OPsMain:
 + twist = 0.6
 + large_displacement = 0.5
 + mirror = 0.4
@@ -13,7 +33,7 @@ Non-Local Operators:
 + com_com_approach = 0.3
 + com_com_separation = 0.1
 
-Local Operators:
+L-OPsMain:
 + random_displacement = 4.0
 + random_rotation = 3.0
 + local_twist = 2.0

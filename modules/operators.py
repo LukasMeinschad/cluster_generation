@@ -537,7 +537,7 @@ class NonLocalOperators(MolecularOperators):
     def twist_operator(self,
                        molecule: "Molecule",
                        submolecule_indices: List[List[int]],
-                       rotation_angle_range: Tuple[float, float] = (0, 360),
+                       rotation_angle_range: Tuple[float, float] = (-20, 20),
                        adaptive: bool = True) -> "Molecule":
         """
         Twist operator: Rotate one submolecule relative to others

@@ -269,6 +269,58 @@ class BHMC:
         return self.accepted_structures
 
     # -------------------------------------------------------- structure analysis
+    def analyze_train(
+            self,
+            reference_clustering: Clustering,
+            structures: Optional[List[Tuple[Molecule, float]]] = None,
+    ):
+        """
+        Analyzes the initial training phase of the BHMC sampling.
+
+        Args:
+            reference_clustering: The fitted Clustering instance returned by
+                ClusterInitializer.initialize_from_xyz(). It carries the trained UMAP
+                embedding/mapper (`reference_clustering.mapper`), the cluster labels and
+                feature matrix it was trained on (`reference_clustering.labels`,
+                `reference_clustering._fm()`), and the trained classifier
+                (`reference_clustering.classifier_model`) — i.e. the whole reference model
+                as one object, ready to be used for embedding/flagging/refitting the newly
+                sampled structures (see Clustering.embed_new_structures,
+                flag_novel_structures, refit_with_augmented_data).
+            structures: Structures to analyze. Defaults to self.accepted_structures.
+        """
+        if structures is None:
+            structures = self.accepted_structures
+        # 1. Remove high energy outliers (Z-score > 3)
+        mols = [m for m, _ in structures]
+        energies = [e for _, e in structures]
+        energy_arr = np.array(energies)
+        z_e = (energy_arr - energy_arr.mean()) / (energy_arr.std() + 1e-12)
+        mols     = [m for m, z in zip(mols, z_e)     if z <= 3.0]
+        energies = [e for e, z in zip(energies, z_e) if z <= 3.0]
+        self._log(f"After energy Z-score filter: {len(mols)} structures remain")
+
+        # Log the energy distribution
+        if energies:
+            self._log(f"Energy (Ha) — min={min(energies):.6f}  max={max(energies):.6f}  "
+                      f"mean={np.mean(energies):.6f}  std={np.std(energies):.6f}")
+        else:
+            self._log("No structures remain after energy Z-score filter.", level="warning")
+            return
+        # 2. Featurize with SOAP
+        featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
+        feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
+        self._log(f"SOAP features: {feature_mat.shape[0]} × {feature_mat.shape[1]}")
+        
+        # 3. Embedd the new structures using the reference Mapper and find novel structures
+        novel_idx = reference_clustering.flag_novel_structures(feature_mat, threshold_percentile=25)
+        self._log(f"Novel structures flagged: {len(novel_idx)} / {len(mols)}")
+        
+        
+
+        
+
+
 
     def analyze_results(
         self,

@@ -146,7 +146,7 @@ class ClusterInitializer:
         n_theta: Optional[int] = None,
         n_phi: Optional[int] = None,
         n_r: Optional[int] = None,
-    ) -> Tuple[List[Molecule], List[List[int]], SimulationBox, Any, Any]:
+    ) -> Tuple[List[Molecule], List[List[int]], SimulationBox, "Clustering"]:
         """Run the full initialization workflow from an XYZ structure.
 
         Args:
@@ -161,8 +161,12 @@ class ClusterInitializer:
             n_r:                Radial grid points (grid mode only).
 
         Returns:
-            Tuple of (selected_molecules, submolecule_indices, simulation_box,
-                      umap_model, classifier_model).
+            Tuple of (selected_molecules, submolecule_indices, simulation_box, clustering).
+            `clustering` is the fitted Clustering instance from the initialization pipeline —
+            it carries the trained UMAP embedding/mapper, cluster labels, training feature
+            matrix, and the trained classifier (as `clustering.classifier_model`), so the
+            whole reference model can be passed around and reused (e.g. for incremental
+            refits during BHMC) as a single object.
         """
         time_start = time.time()
 
@@ -396,12 +400,12 @@ class ClusterInitializer:
         if self.config.classifier_backend.lower() == "knn":
             self._log("\nTraining KNN classifier on the 10D UMAP embedding...")
             n_neighbors = kwargs.get("n_neighbors", min(50, len(mols)))
-            classifier_model = clustering.KN_classifier_training(
+            clustering.KN_classifier_training(
                 embedding_10d, labels, n_neighbors=n_neighbors
             )
         elif self.config.classifier_backend.lower() == "svm":
             self._log("\nTraining SVM classifier on the 10D UMAP embedding...")
-            classifier_model = clustering.SVM_classifier_training(
+            clustering.SVM_classifier_training(
                 embedding_10d, labels,
                 kernel=kwargs.get("kernel", "rbf"),
                 gamma=kwargs.get("gamma", "scale"),
@@ -411,8 +415,6 @@ class ClusterInitializer:
             raise ValueError(
                 f"Unknown classifier_backend: {self.config.classifier_backend!r}. Choose 'knn' or 'svm'."
             )
-
-        umap_model = clustering._umap_model
 
         clustering.plot_embedding(
             embedding_10d,
@@ -492,7 +494,7 @@ class ClusterInitializer:
         if self.logger:
             self.logger.separator()
 
-        return selected_molecules, submol_indices, simulation_box, umap_model, classifier_model
+        return selected_molecules, submol_indices, simulation_box, clustering
 
     # ------------------------------------------------------------------
     # Filtering helpers
@@ -1434,7 +1436,7 @@ def test_initializer(
     )
     initializer = ClusterInitializer(config=config)
     try:
-        initial_molecules, submol_indices, simulation_box, _, _ = initializer.initialize_from_xyz(
+        initial_molecules, submol_indices, simulation_box, _ = initializer.initialize_from_xyz(
             xyz_file,
             n_configurations=n_configurations,
             placing_method=placing_method,

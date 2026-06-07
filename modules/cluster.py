@@ -23,7 +23,7 @@ from sklearn.cluster import AgglomerativeClustering as SklearnAgglomerativeClust
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans, DBSCAN
 from scipy.spatial.distance import cdist, pdist
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, KernelPCA
 from sklearn.manifold import TSNE
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
@@ -107,6 +107,7 @@ class Clustering:
         self.labels: Optional[np.ndarray] = None
         self._feature_matrix_normalized = None
         self.scaler: Optional[StandardScaler] = None
+        self.classifier_model: Optional[Union[KNeighborsClassifier, SVC]] = None
         if normalize:
             self._normalize()
 
@@ -249,11 +250,21 @@ class Clustering:
         self._log(f"PCA completed: n_components={n_components}, explained_variance_ratio={p.explained_variance_ratio_}")
         return embedding, p.explained_variance_ratio_
     
-    def kernel_based_pca(self, n_components: None = 2, kernel: str = "rbf", gamma: Optional[float] = None, n_jobs: int = -1):
+    def kernel_based_pca(self, n_components: int = 2, kernel: str = "rbf", gamma: Optional[float] = None, n_jobs: int = -1) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Perofrms a kernel-based PCA dimensionality reduction
-        
-        """         
+        Performs a kernel-based PCA dimensionality reduction.
+
+        Unlike linear PCA, Kernel PCA implicitly maps the data into a higher-dimensional
+        feature space via the chosen kernel before extracting principal components,
+        which lets it capture non-linear structure that linear PCA would miss.
+
+        returns (embedding, explained_variance_ratio)
+        """
+        kpca = KernelPCA(n_components=n_components, kernel=kernel, gamma=gamma, n_jobs=n_jobs)
+        embedding = kpca.fit_transform(self._fm())
+        explained_variance_ratio = kpca.eigenvalues_ / np.sum(kpca.eigenvalues_)
+        self._log(f"Kernel PCA completed: n_components={n_components}, kernel={kernel}, gamma={gamma}, explained_variance_ratio={explained_variance_ratio}")
+        return embedding, explained_variance_ratio
 
     def tsne(self, n_components: int=2, perpelxity: float = 30.0, n_iter: int=1000, random_state: int = 42) -> np.ndarray:
         """  
@@ -309,15 +320,149 @@ class Clustering:
         self._log(f"UMAP embedding shape: {self.trained_emb.shape}")
     
     def umap_transform(self,  X_test) -> np.ndarray:
-        """ 
-        Transforms provided data using the pre-trained UMAP embedding
         """
-        if not hasattr(self, 'mapper'):
-            raise ValueError("UMAP model not trained. Please run umap_metric_learning() first.")
-        embedding = self.mapper.transform(X_test)
+        Transforms provided data using the pre-trained UMAP embedding.
+
+        Uses the supervised metric-learning mapper (`self.mapper`) if available, otherwise
+        falls back to the plain unsupervised UMAP model (`self._umap_model`) — whichever
+        was actually used to build the trained embedding space.
+        """
+        umap_model = getattr(self, 'mapper', None) or getattr(self, '_umap_model', None)
+        if umap_model is None:
+            raise ValueError("UMAP model not trained. Please run umap() or umap_metric_learning() first.")
+        embedding = umap_model.transform(X_test)
         self._log(f"UMAP transform completed: input_shape={X_test.shape}, output_shape={embedding.shape}")
         return embedding
 
+
+    def embed_new_structures(self, X_new) -> np.ndarray:
+        """
+        Helper function that embeds new structures into an existing UMAP embedding space using the trained UMAP model.
+        This is essentially a wrapper around umap_transform but with additional logging and error handling specific to embedding new structures.
+        """
+        embedding = self.umap_transform(X_new)
+        self._log(f"Embedded {X_new.shape[0]} new structures into the existing UMAP space for novelty assessment.")
+        return embedding
+
+    def flag_novel_structures(self, X_new, classifier=None, threshold_percentile: float = 25) -> np.ndarray:
+        """
+        Embeds new structures into the existing UMAP space and uses the trained classifier's predicted
+        probabilities to flag those that are poorly explained by the current model (i.e. candidates for
+        "novel"/local structure not captured during initialization).
+
+        A structure is flagged as novel if its maximum predicted cluster-membership probability falls at
+        or below the given percentile of max probabilities across the new batch — mirroring the
+        thresholding approach used in select_low_confidence_points_25.
+
+        If `classifier` is not provided, falls back to the internally stored `self.classifier_model`
+        (set automatically by KN_classifier_training/SVM_classifier_training/refit_with_augmented_data).
+
+        Returns indices (into X_new) of the flagged novel structures.
+        """
+
+        if getattr(self, 'mapper', None) is None and getattr(self, '_umap_model', None) is None:
+            raise ValueError("UMAP model not trained. Please run umap() or umap_metric_learning() first.")
+
+        classifier = classifier if classifier is not None else self.classifier_model
+        if classifier is None:
+            raise ValueError("No classifier available. Train one first (e.g. KN_classifier_training/"
+                             "SVM_classifier_training) or pass `classifier` explicitly.")
+
+        embedding = self.embed_new_structures(X_new)
+
+        probabilities = classifier.predict_proba(embedding)
+        max_probabilities = np.max(probabilities, axis=1)
+        threshold = np.percentile(max_probabilities, threshold_percentile)
+        novel_indices = np.where(max_probabilities <= threshold)[0]
+        self._log(
+            f"Flagged {len(novel_indices)}/{len(X_new)} new structures as novel "
+            f"(max probability <= {threshold:.4f}, threshold_percentile={threshold_percentile})"
+        )
+        return novel_indices
+    
+    def refit_with_augmented_data(self, X_old, y_old, X_new, y_new,
+                                  keep_fraction: float = 0.5,
+                                  n_clusters: Optional[int] = None,
+                                  cluster_method: str = "kmeans",
+                                  classifier_backend: str = "knn",
+                                  classifier_kwargs: Optional[Dict[str, Any]] = None,
+                                  random_state: Optional[int] = None):
+        """
+        Incremental learning of metric
+
+        Keep a fraction of existing data, so that the model isnt drowned out by the new batch
+        and rerun -> clustering -> Umap metric learning 
+        
+        Stratified-subsamples the existing training data (keeping `keep_fraction` of each
+        cluster so the global structure the model already learned isn't drowned out by the
+        new batch), concatenates it with the newly observed data, and reruns the
+        clustering -> UMAP metric-learning -> classifier-training mini-pipeline on the union.
+        This replaces the model's mapper/labels with the refreshed ones in-place.
+
+        Args:
+            X_old: Raw feature matrix the current model was trained on (n_old, n_features)
+            y_old: Cluster labels for X_old
+            X_new: Raw feature matrix of newly observed structures (n_new, n_features)
+            y_new: Provisional labels for X_new (e.g. predictions from the current classifier);
+                   used only to seed the cluster count for re-clustering — final labels are
+                   determined fresh from the combined data, since the new points may represent
+                   structure the old labels don't cover
+            keep_fraction: Fraction of each existing cluster to retain when subsampling X_old
+            n_clusters: Number of clusters for the refreshed clustering. Defaults to the number
+                of unique labels across y_old and y_new
+            cluster_method: Clustering algorithm to rerun ("kmeans" or "agglomerative")
+            classifier_backend: Which classifier to retrain ("knn" or "svm")
+            classifier_kwargs: Extra kwargs forwarded to the classifier training method
+            random_state: Seed for the stratified subsampling of the old data
+
+        Returns:
+            Tuple of (mapper, classifier, labels) reflecting the refit model.
+        """
+        classifier_kwargs = classifier_kwargs or {}
+        rng = np.random.default_rng(random_state)
+
+        # --- Stratified subsample of the old data: keep `keep_fraction` of each cluster ---
+        keep_indices = []
+        for label in np.unique(y_old):
+            cluster_idx = np.where(y_old == label)[0]
+            n_keep = max(1, int(round(len(cluster_idx) * keep_fraction)))
+            keep_indices.append(rng.choice(cluster_idx, size=n_keep, replace=False))
+        keep_indices = np.concatenate(keep_indices)
+
+        X_old_sub, y_old_sub = X_old[keep_indices], y_old[keep_indices]
+        self._log(
+            f"Refit: kept {len(keep_indices)}/{len(X_old)} old structures "
+            f"(stratified, keep_fraction={keep_fraction}); combining with {len(X_new)} new structures."
+        )
+
+        X_combined = np.vstack([X_old_sub, X_new])
+        y_prior = np.concatenate([y_old_sub, y_new])
+        if n_clusters is None:
+            n_clusters = len(np.unique(y_prior))
+
+        # Re-cluster the combined raw data to obtain fresh labels (operate directly on X_combined)
+        self._feature_matrix_normalized = X_combined
+        self.cluster(method=cluster_method, n_clusters=n_clusters)
+        new_labels = self.labels
+        self._log(f"Refit: re-clustered {len(X_combined)} combined structures into {n_clusters} clusters.")
+
+        # Re-fit the supervised UMAP embedding on the combined, freshly-labeled data
+        n_components = self.trained_emb.shape[1] if hasattr(self, "trained_emb") else 10
+        self.umap_metric_learning(X_combined, new_labels, n_components=n_components)
+
+        # Retrain the classifier on the refreshed embedding
+        if classifier_backend.lower() == "knn":
+            new_classifier = self.KN_classifier_training(self.trained_emb, new_labels, **classifier_kwargs)
+        elif classifier_backend.lower() == "svm":
+            new_classifier = self.SVM_classifier_training(self.trained_emb, new_labels, **classifier_kwargs)
+        else:
+            raise ValueError(f"Unknown classifier_backend: {classifier_backend!r}. Choose 'knn' or 'svm'.")
+
+        self._log(
+            f"Refit complete: model retrained on {len(X_combined)} structures "
+            f"({len(keep_indices)} retained + {len(X_new)} new), {n_clusters} clusters."
+        )
+        return self.mapper, new_classifier, new_labels
 
 
     # ----- Supervised Learning Methods -----
@@ -328,6 +473,7 @@ class Clustering:
         knn = KNeighborsClassifier(n_neighbors=n_neighbors, metric=self.metric)
         knn.fit(x_train, y_train)
         self._log(f"KNN classifier training completed: n_neighbors={n_neighbors}, metric={self.metric}")
+        self.classifier_model = knn
         return knn
     def KN_classifier_predict(self, knn: KNeighborsClassifier, x_test) -> np.ndarray:
         """  
@@ -430,6 +576,7 @@ class Clustering:
         svm = SVC(kernel=kernel, gamma=gamma, probability=probability)
         svm.fit(x_train, y_train)
         self._log(f"SVM classifier training completed: kernel={kernel}, gamma={gamma}, probability={probability}")
+        self.classifier_model = svm
         return svm
 
     def SVM_classifier_predict(self, svm: SVC, x_test) -> np.ndarray:

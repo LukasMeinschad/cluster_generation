@@ -65,5 +65,5 @@ BHMCConfig:
 + box_max_scale = 2.0
 + box_stable_windows = 3
 + n_workers = 20
-+ n_steps_per_worker = 8000
-
++ training_frac = 0.25
++ n_steps_per_worker = 10000 

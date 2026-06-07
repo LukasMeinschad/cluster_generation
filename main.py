@@ -47,14 +47,23 @@ if __name__ == "__main__":
         operator_dist_path = args.o[0]
         logger.info(f"Reading operator distribution from: {operator_dist_path}")
         try:
-            operator_distribution = read_operator_distribution(operator_dist_path)
+            operator_dict = read_operator_distribution(operator_dist_path)
             logger.info("Operator distribution successfully read:")
-            for name, weight in operator_distribution:
-                logger.info(f"  {name}: {weight}")
+            for phase, operators in operator_dict.items():
+                logger.info(f"  [{phase}]")
+                for op, weight in operators.items():
+                    logger.info(f"    {op} = {weight}")
         except Exception as e:
             logger.error(f"Error reading operator distribution file: {e}")
             sys.exit(1)
         logger.separator()
+
+    # Get the operators for training
+    o_nl_train = operator_dict.get("NL-OpsTraining", {})
+    o_l_train = operator_dict.get("L-OpsTraining", {})
+    o_train = list({**o_nl_train, **o_l_train}.items())  # Combine into a list of (name, weight) tuples
+
+
     
 
     # ------------------------------------------------------------------
@@ -109,7 +118,7 @@ if __name__ == "__main__":
     # obtain settings for xyz initialization
     settings_xyz_init = settings.get("InitializeXYZ", {})
     
-    initial_molecules, submol_indices, simulation_box, umap_model, svm_model = initializer.initialize_from_xyz(
+    initial_molecules, submol_indices, simulation_box, init_clustering = initializer.initialize_from_xyz(
         args.i[0],
         n_workers=settings_xyz_init["n_workers"],
         n_configurations=settings_xyz_init["n_configurations"],
@@ -190,6 +199,13 @@ if __name__ == "__main__":
     else:
         logger.info(f"Using all {len(unique_mols)} unique molecules for BHMC sampling.")
 
+    # 4.a --> Start of with a higher change of picking non-local operators
+    # Then perform prediction and retraining of the operator distribution
+    # This are 25 % of total steps
+    n_training_steps = int(settings_bhmc["n_steps_per_worker"] * settings_bhmc["training_frac"])
+    logger.info(f"Starting BHMC sampling with {n_training_steps} training steps per worker (total steps: {settings_bhmc['n_steps_per_worker']})")
+    
+    
 
     bhmc_config = BHMCConfig(
         backend=settings_bhmc["backend"],
@@ -210,7 +226,7 @@ if __name__ == "__main__":
         box_growth_max = settings_bhmc["box_growth_max"],
         box_max_scale = settings_bhmc["box_max_scale"],
         box_stable_windows = settings_bhmc["box_stable_windows"],
-        operators = operator_distribution,  # Use the operator distribution read from the file
+        operators = o_train,
     )
 
 
@@ -220,23 +236,21 @@ if __name__ == "__main__":
         logger=logger,
         worker_log_file="bhmc_workers.log",
     )
-
+    # Run the training phase of BHMC sampling
     accepted_structures = bhmc_sampler.run(
         initial_molecules=unique_mols,
         submolecule_indices=submol_indices,
-        n_steps_per_worker=settings_bhmc["n_steps_per_worker"],
+        n_steps_per_worker=n_training_steps,
         n_processes=len(unique_mols),
     )
-
     logger.info(f"BHMC complete: {len(accepted_structures)} structures accepted")
-
     logger.write_xyz_trajectory(
         molecules=[m for m, _ in accepted_structures],
         filepath="trajectories/bhmc_structures.xyz",
         energies=[e for _, e in accepted_structures],
     )
+    bhmc_sampler.analyze_train(reference_clustering=init_clustering)
 
-    bhmc_sampler.analyze_results(umap_model=umap_model, classifier=svm_model)
 
 
 

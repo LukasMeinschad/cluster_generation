@@ -1,20 +1,20 @@
-         6857300 function calls (6663604 primitive calls) in 46.989 seconds
+         6873664 function calls (6679553 primitive calls) in 49.693 seconds
 
    Ordered by: cumulative time
    List reduced from 1865 to 10 due to restriction <10>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-      109   30.983    0.284   30.983    0.284 {method 'acquire' of '_thread.lock' objects}
-       21    0.000    0.000   29.864    1.422 /home/lme/.local/lib/python3.9/site-packages/tqdm/std.py:1160(__iter__)
-       21    0.001    0.000   29.849    1.421 /home/lme/.conda/envs/p4env/lib/python3.9/concurrent/futures/_base.py:201(as_completed)
-       22    0.000    0.000   29.849    1.357 /home/lme/.conda/envs/p4env/lib/python3.9/threading.py:563(wait)
-       22    0.000    0.000   29.848    1.357 /home/lme/.conda/envs/p4env/lib/python3.9/threading.py:280(wait)
-        1    0.001    0.001   11.285   11.285 /media/storage_6/lme/master_thesis/cluster_generation/modules/bhmc.py:495(plot_worker_operator_acceptance)
-        3    0.000    0.000   11.100    3.700 /home/lme/.local/lib/python3.9/site-packages/matplotlib/pyplot.py:1129(savefig)
-        9    0.000    0.000    8.389    0.932 /home/lme/.local/lib/python3.9/site-packages/matplotlib/artist.py:93(draw_wrapper)
-  10614/9    0.045    0.000    8.389    0.932 /home/lme/.local/lib/python3.9/site-packages/matplotlib/artist.py:54(draw_wrapper)
-        9    0.000    0.000    8.389    0.932 /home/lme/.local/lib/python3.9/site-packages/matplotlib/figure.py:3134(draw)
+      109   32.373    0.297   32.373    0.297 {method 'acquire' of '_thread.lock' objects}
+       21    0.000    0.000   31.198    1.486 /home/lme/.local/lib/python3.9/site-packages/tqdm/std.py:1160(__iter__)
+       22    0.000    0.000   31.182    1.417 /home/lme/.conda/envs/p4env/lib/python3.9/threading.py:563(wait)
+       22    0.000    0.000   31.181    1.417 /home/lme/.conda/envs/p4env/lib/python3.9/threading.py:280(wait)
+       21    0.001    0.000   31.181    1.485 /home/lme/.conda/envs/p4env/lib/python3.9/concurrent/futures/_base.py:201(as_completed)
+        1    0.001    0.001   12.119   12.119 /media/storage_6/lme/master_thesis/cluster_generation/modules/bhmc.py:513(plot_worker_operator_acceptance)
+        3    0.000    0.000   11.866    3.955 /home/lme/.local/lib/python3.9/site-packages/matplotlib/pyplot.py:1129(savefig)
+        3    0.000    0.000    8.926    2.975 /home/lme/.local/lib/python3.9/site-packages/matplotlib/figure.py:3234(savefig)
+        3    0.000    0.000    8.925    2.975 /home/lme/.local/lib/python3.9/site-packages/matplotlib/backend_bases.py:2052(print_figure)
+        9    0.000    0.000    8.916    0.991 /home/lme/.local/lib/python3.9/site-packages/matplotlib/artist.py:93(draw_wrapper)
 
 
 
-Peak memory: 90.85 MB
+Peak memory: 89.15 MB

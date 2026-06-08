@@ -397,24 +397,22 @@ class ClusterInitializer:
 
         # C7: Train classifier for online structure assignment during BHMC
         kwargs = self.config.classifier_kwargs or {}
-        if self.config.classifier_backend.lower() == "knn":
-            self._log("\nTraining KNN classifier on the 10D UMAP embedding...")
-            n_neighbors = kwargs.get("n_neighbors", min(50, len(mols)))
-            clustering.KN_classifier_training(
-                embedding_10d, labels, n_neighbors=n_neighbors
-            )
-        elif self.config.classifier_backend.lower() == "svm":
-            self._log("\nTraining SVM classifier on the 10D UMAP embedding...")
-            clustering.SVM_classifier_training(
-                embedding_10d, labels,
-                kernel=kwargs.get("kernel", "rbf"),
-                gamma=kwargs.get("gamma", "scale"),
-                probability=kwargs.get("probability", True),
-            )
-        else:
+
+        # Double Check if the model exists
+        if self.config.classifier_backend.lower() not in {"knn", "svm", "random_forest"}:
             raise ValueError(
-                f"Unknown classifier_backend: {self.config.classifier_backend!r}. Choose 'knn' or 'svm'."
+                f"Unknown classifier_backend: {self.config.classifier_backend!r}. "
+                "Choose 'knn', 'svm', or 'random_forest'."
             )
+
+        # Use the unified train_classifier method
+        self._log(f"\nTraining {self.config.classifier_backend.upper()} classifier on the 10D UMAP embedding...")
+        clustering.train_classifier(
+            model_str = self.config.classifier_backend.lower(),
+            x_train = embedding_10d,
+            y_train = labels,
+            **kwargs
+        )
 
         clustering.plot_embedding(
             embedding_10d,

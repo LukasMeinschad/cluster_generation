@@ -311,10 +311,29 @@ class BHMC:
         featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
         feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
         self._log(f"SOAP features: {feature_mat.shape[0]} × {feature_mat.shape[1]}")
-        
+
+
         # 3. Embedd the new structures using the reference Mapper and find novel structures
-        novel_idx = reference_clustering.flag_novel_structures(feature_mat, threshold_percentile=25)
-        self._log(f"Novel structures flagged: {len(novel_idx)} / {len(mols)}")
+        # 3.a Plot the Probabilities of in inside of the embedding space
+        if reference_clustering.classifier_model is not None:
+            embedding = reference_clustering.embed_new_structures(feature_mat)
+            self._log(f"Embedded new structures: {embedding.shape[0]} × {embedding.shape[1]}")
+            proba = reference_clustering.classifier_model.predict_proba(embedding)
+            if isinstance(reference_clustering.classifier_model, KNeighborsClassifier):
+                reference_clustering.plot_KN_probabilities(
+                    embedding=embedding, probabilities=proba, labels=reference_clustering.labels,
+                    title="KNN Probabilities for New Structures",
+                    save_path="figures/knn_probabilities_new_structures.png",
+                )
+            elif isinstance(reference_clustering.classifier_model, SVC):
+                reference_clustering.plot_SVM_probabilities(
+                    embedding=embedding, probabilities=proba, labels=reference_clustering.labels,
+                    title="SVM Probabilities for New Structures",
+                    save_path="figures/svm_probabilities_new_structures.png",
+                )
+            
+        
+        
         
         
 

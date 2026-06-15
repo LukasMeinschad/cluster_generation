@@ -21,14 +21,24 @@ def plot_embedding(
     x, y = embedding[:, 0], embedding[:, 1]
     plt.figure(figsize=(8, 6))
     
-    # Resolbe labels
-    lbl = labels if labels is not None else getattr(cluster_class, 'labels', None)
-
-    if lbl is not None:
-        sns.scatterplot(x=x, y=y, hue=lbl, palette='tab10', legend='full', s=50)
-        plt.legend(title="Cluster")
+    # Resolve the labels with dimensionality checks
+    if labels is not None:
+        lbl = labels
+        if len(lbl) != len(x):
+            raise ValueError(f"Length of labels ({len(lbl)}) does not match number of points in embedding ({len(x)}).")
     else:
-        sns.scatterplot(x=x, y=y, color='blue', s=50)
+        # Fallback to internal labels only if they perfectly match the embedding size
+        internal_labels = getattr(cluster_class, "labels", None)
+        if internal_labels is not None and len(internal_labels) == len(x):
+            lbl = internal_labels
+        else:
+            lbl = None
+
+    # Render plot based on resolved labels
+    if lbl is not None:
+        sns.scatterplot(x=x, y=y, hue=lbl, palette='tab10', legend='full', alpha=0.7)
+    else:
+        sns.scatterplot(x=x, y=y, color='blue', alpha=0.7)
 
     plt.title(title)
     plt.xlabel("Component 1")

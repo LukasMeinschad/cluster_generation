@@ -96,7 +96,7 @@ def umap(cluster_class: Any, n_components: int = 2, n_neighbors: int = 15, min_d
     cluster_class.umap_model = umap_model
     return embedding
 
-def umap_densmap(cluster_class: Any, n_neighbors: int = 15, min_dist: float= 0.1, dens_lambda: float = 0.8, random_state: Optional[int] = None) -> np.ndarray:
+def umap_densmap(cluster_class: Any, n_components: int = 2, n_neighbors: int = 15, min_dist: float= 0.1, dens_lambda: float = 0.8, random_state: Optional[int] = None) -> np.ndarray:
     """ 
     Runs DensMAP a density-preserving variant of UMAP that preserves local density
     variances from a high dimensional featuere matrix inside the low-dimensional embedding
@@ -104,7 +104,7 @@ def umap_densmap(cluster_class: Any, n_neighbors: int = 15, min_dist: float= 0.1
     _check_umap_availability()
     cluster_class.log(f"Applying DensMAP with n_neighbors={n_neighbors}, min_dist={min_dist}, dens_lambda={dens_lambda}, random_state={random_state}")
     umap_model = UMAP(
-        n_components=2,
+        n_components=n_components,
         n_neighbors=n_neighbors,
         min_dist=min_dist,
         dens_lambda=dens_lambda,
@@ -116,14 +116,14 @@ def umap_densmap(cluster_class: Any, n_neighbors: int = 15, min_dist: float= 0.1
     cluster_class.umap_model = umap_model
     return embedding
 
-def umap_metric_learning(cluster_class: Any, x_train: np.ndarray, y_train: np.ndarray, n_neighbors: int = 15) -> np.ndarray:
+def umap_metric_learning(cluster_class: Any, n_components: int, x_train: np.ndarray, y_train: np.ndarray, n_neighbors: int = 15) -> np.ndarray:
     """ 
     Fits a supervised UMAP space using categorical structural labels to force metric learning and enhance class separation in the embedding
     """
     _check_umap_availability()
     cluster_class.log(f"Applying supervised UMAP Metric Learning with (n_neighbors={n_neighbors}) on training data with {x_train.shape[0]} samples and {x_train.shape[1]} features.")
     umap_model = UMAP(
-        n_components=2,
+        n_components=n_components,
         n_neighbors=n_neighbors,
         metric=cluster_class.umap_metric,
     ).fit(x_train, y=y_train)
@@ -152,38 +152,42 @@ def embed_new_structures(cluster_class: Any, x_new: np.ndarray) -> np.ndarray:
     Helper wrapping umap_transform for checking/embedding new structures into an existing UMAP space
     """
     embedding = umap_transform(cluster_class, x_new)
-    cluster_class.log(f"Embedded {x_new.shape[0]} new structures into existing UMAP space.")
+    cluster_class.log(f"Embedded {x_new.shape[0]} new structures into existing UMAP space, resulting in shape {embedding.shape}.")
     return embedding
 
 def flag_novel_structures(
     context: Any, 
-    x_new: np.ndarray, 
-    classifier: Optional[Any] = None, 
+    embedding_new: np.ndarray,
+    classifier: Optional[Any] = None,
     threshold_percentile: float = 25.0
-) -> np.ndarray:
+    ) -> np.ndarray:
+    """  
+    Flags indices of new structures whose classification confidence falls below a percentile threshold, signaling highly unique/novel states
+    
+    Args:
+        context: The central Clustering context container
+        embedding_new: The UMAP embedding of the new structures to be evaluated
+        classifier: Optional trained classifier model for predicting probabilities. If None, uses context.classifier_model.
+        threshold_percentile: The percentile threshold below which structures are flagged as novel (e.g., 25.0 for bottom 25%)
     """
-    Embeds new structures and flags indices whose classification margins fall below a confidence 
-    percentile threshold, signaling highly unique/novel microstates.
-    """
-    active_classifier = classifier if classifier is not None else getattr(context, "classifier_model", None)
+    # Resolve classifier based on contex
+    active_classifier = classifier 
     if active_classifier is None:
-        raise ValueError("No valid classification model found in context. Train or provide one explicitly.")
+        active_classifier = getattr(context, 'classifier_model', None)
+        if active_classifier is None:
+            raise ValueError("No classifier model provided and no classifier_model found in context. Please provide a trained classifier for novelty detection.")
 
-    # Project coordinates into the persistent low-dimensional space
-    embedding = embed_new_structures(context, x_new)
-    
-    # Analyze output boundary profiles
-    probabilities = active_classifier.predict_proba(embedding)
+    # Compute predicted probabilities and determine confidence threshold
+    probabilities = active_classifier.predict_proba(embedding_new)
     max_probabilities = np.max(probabilities, axis=1)
-    
-    threshold = np.percentile(max_probabilities, threshold_percentile)
-    novel_indices = np.where(max_probabilities <= threshold)[0]
-    
-    context.log(
-        f"Novelty analysis: Flagged {len(novel_indices)}/{len(x_new)} arrays as novel configurations "
-        f"(Max Prediction confidence <= {threshold:.4f} at the {threshold_percentile}th percentile)"
-    )
+    threshold_value = np.percentile(max_probabilities, threshold_percentile)
+    context.log(f"Novelty detection threshold set at the {threshold_percentile} percentile of max probabilities: {threshold_value:.4f}")
+    novel_indices = np.where(max_probabilities < threshold_value)[0]
+
+    # Log results
+    context.log(f"Flagged {len(novel_indices)} novel structures out of {embedding_new.shape[0]} total new structures based on confidence threshold.")
     return novel_indices
+
 
 def _check_umap_availability() -> None:
     """Helper function guarding runtime imports"""

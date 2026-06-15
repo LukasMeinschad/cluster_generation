@@ -10,7 +10,7 @@ from bhmc import BHMC
 from bhmc_config import BHMCConfig
 from args import get_args
 from logger import Logger
-from struc_distinction import StructureAnalysis, StructureAnalysisConfig
+from struc_analysis import StructureAnalysis, StructureAnalysisConfig
 from molecule_class import Molecule
 from calculator import EnergyEvaluator
 from input_reader import read_ml_bhop_input, read_operator_distribution
@@ -165,7 +165,13 @@ if __name__ == "__main__":
         filepath="trajectories/optimized_initial_candidates.xyz",
         energies=None,
     )
+    # Plot RMSD comparison of initial vs optimized structures
     structure_analysis.plot_rmsd_comparison(save_path="figures/rmsd_comparison.png")
+    # Compute Eigenspectra of Coloumb matrix
+    structure_analysis.plot_eigenspectra_distance_heatmap(metric="euclidean", use_optimized=True, save_path="figures/eigenspectra_distance_heatmap.png")
+    # Compute Distance Matrix of Coloumb Matrix
+    structure_analysis.plot_distance_matrix_heatmap(metric="euclidean", use_optimized=True, save_path="figures/distance_matrix_heatmap.png")
+    # Cluster the optimized structures and obtain unique representatives
     unique_indices, unique_mols = structure_analysis.get_unique_structures()
     logger.info(f"Number of unique structures after optimization: {len(unique_mols)}")
 
@@ -183,8 +189,6 @@ if __name__ == "__main__":
     # Step 4: BHMC Sampling
     # ---------------------------------------------------------------------
     
-
-
     timer_start_bhmc = time.time()
     
     # Obtain settings for BHMC sampling
@@ -205,8 +209,6 @@ if __name__ == "__main__":
     n_training_steps = int(settings_bhmc["n_steps_per_worker"] * settings_bhmc["training_frac"])
     logger.info(f"Starting BHMC sampling with {n_training_steps} training steps per worker (total steps: {settings_bhmc['n_steps_per_worker']})")
     
-    
-
     bhmc_config = BHMCConfig(
         backend=settings_bhmc["backend"],
         qm_method = settings_bhmc["qm_method"],
@@ -249,7 +251,7 @@ if __name__ == "__main__":
         filepath="trajectories/bhmc_structures.xyz",
         energies=[e for _, e in accepted_structures],
     )
-    bhmc_sampler.analyze_train(reference_clustering=init_clustering)
+    bhmc_sampler.analyze_training_results(reference_clustering = init_clustering)
 
 
 

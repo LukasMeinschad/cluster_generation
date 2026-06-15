@@ -73,7 +73,31 @@ def evaluate_all_metrics(
     scores = {"silhouette": sil, "davies_bouldin": db, "calinski_harabasz": ch}
     cluster_class.clustering_metrics = scores
     return scores
-       
+
+
+def calculate_wcss_per_cluster(cluster_class, labels: Optional[np.ndarray] = None) -> Dict[int, float]:
+    """ 
+    Calculates the Within-cluster-sum-of-squares which is defined via
+
+    WCSS = sum(||x_i - c_k||^2) for all x_i in cluster k, where c_k is the centroid of cluster k
+    """ 
+    lbl = labels if labels is not None else getattr(cluster_class, 'labels', None)
+    X = cluster_class.feature_matrix
+    if lbl is None or X is None:
+        raise ValueError("Labels and feature matrix must be provided either as arguments or as attributes of the cluster_class.")
+    if X is None or X.size == 0:
+        raise ValueError("Feature matrix is empty or not set in the cluster_class.")
+    wcss_per_cluster = {}
+    for cluster_id in np.unique(lbl):
+        if cluster_id == -1:
+            continue  # Skip noise points
+        cluster_points = X[lbl == cluster_id]
+        centroid = np.mean(cluster_points, axis=0)
+        wcss = np.sum(np.linalg.norm(cluster_points - centroid, axis=1) ** 2)
+        wcss_per_cluster[cluster_id] = wcss
+        cluster_class.log(f"Cluster {cluster_id}: WCSS = {wcss:.4f} with {cluster_points.shape[0]} points.")
+    cluster_class.wcss_per_cluster = wcss_per_cluster
+    return wcss_per_cluster
 
 def _prepare_and_filter_labels(
     X: np.ndarray, 

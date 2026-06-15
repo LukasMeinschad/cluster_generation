@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.cluster import AgglomerativeClustering as SklearnAgglomerativeClustering
 import warnings
 from scipy.spatial.distance import cdist
+from scipy.spatial import ConvexHull
 
 
 try:
@@ -148,51 +149,32 @@ def hdbscan_clustering(
                
     return labels, metadata
 
-
 def run_clustering(
-    method: str,
-    feature_matrix: np.ndarray,
-    n_clusters: Optional[int] = None,
-    metric: str = "cityblock",
-    log_fn: Optional[Callable[[str], None]] = None,
+    cluster_class: Any,
+    method: str = "kmeans",
     **kwargs
-) -> Tuple[np.ndarray, Dict[str, Any]]:
+    ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """
-    Unified cluster dispatcher to easily run any supported algorithm.
-    
-    Args:
-        method: Choice of 'kmeans', 'agglomerative', 'dbscan', or 'hdbscan'.
-        feature_matrix: Array of shape (n_structures, n_features).
-        n_clusters: Targeted cluster count (used for kmeans/agglomerative).
-        metric: Distance metric string (used for density-based methods).
-        log_fn: Optional logging handler.
-        **kwargs: Forwarded directly to the underlying algorithm function.
+    Unified interface for the clustering class to run different clustering algorithms
+    with the context's feature matrix and logging method.
     """
-    dispatch = {
-        "kmeans": lambda fm, **kw: kmeans_clustering(fm, n_clusters=n_clusters or 5, log_fn=log_fn, **kw),
-        "agglomerative": lambda fm, **kw: agglomerative_clustering(fm, n_clusters=n_clusters or 5, log_fn=log_fn, **kw),
-        "dbscan": lambda fm, **kw: dbscan_clustering(fm, metric=metric, log_fn=log_fn, **kw),
-        "hdbscan": lambda fm, **kw: hdbscan_clustering(fm, metric=metric, log_fn=log_fn, **kw),
-    }
+    X = cluster_class.feature_matrix
+    log_fn = getattr(cluster_class, "log", None)
+    if method == "kmeans":
+        return kmeans_clustering(X, log_fn=log_fn, **kwargs)
+    elif method == "agglomerative":
+        return agglomerative_clustering(X, log_fn=log_fn, **kwargs)
+    elif method == "dbscan":
+        return dbscan_clustering(X, log_fn=log_fn, **kwargs)
+    elif method == "hdbscan":
+        return hdbscan_clustering(X, log_fn=log_fn, **kwargs)
+    else:
+        raise ValueError(f"Unknown clustering method '{method}'. Choose from 'kmeans', 'agglomerative', 'dbscan', or 'hdbscan'.")
     
-    method_lower = method.lower()
-    if method_lower not in dispatch:
-        raise ValueError(f"Invalid clustering method: {method}. Choose from {list(dispatch.keys())}")
-        
-    return dispatch[method_lower](feature_matrix, **kwargs)
 
-if __name__ == "__main__":
-    # Example usage with synthetic data
-    from sklearn.datasets import make_blobs
-    
-    X, _ = make_blobs(n_samples=300, centers=4, n_features=10, random_state=42)
-    
-    labels, metadata = run_clustering("kmeans", X, n_clusters=4, log_fn=print)
-    print(f"Cluster labels: {labels}")
-    print(f"Metadata: {metadata}")
 
 def get_cluster_representatives(
-    context: Any, 
+    cluster_class: Any, 
     labels: Optional[np.ndarray] = None, 
     method: str = "centroid"
 ) -> Dict[int, int]:
@@ -207,23 +189,25 @@ def get_cluster_representatives(
                 "medoid" -> picks the structure with the smallest average pairwise distance to 
                             all other group members (robust to non-convex descriptors).
                 "lowest_energy" -> picks the configuration with the absolute lowest potential energy.
+                "convex_hull" -> picks an extreme boundary configuration lying on the convex hull of the
+                                 cluster in the feature space
 
     Returns:
         Dict[int, int]: Mapping of cluster_label -> absolute row index in the original feature matrix.
                         Noise structures (label == -1) are skipped automatically.
     """
     # 1. Resolve label configuration
-    lbl = labels if labels is not None else getattr(context, "labels", None)
+    lbl = labels if labels is not None else getattr(cluster_class, "labels", None)
     if lbl is None:
         raise ValueError("No cluster labels available. Run a clustering algorithm first or pass labels explicitly.")
 
     # 2. Guard for energetic selections
-    energies = getattr(context, "energies", None)
+    energies = np.asarray(getattr(cluster_class, "energies", None)).flatten()
     if method == "lowest_energy" and energies is None:
         raise ValueError("method='lowest_energy' requires an energy array to be provided at context construction.")
 
-    fm = context.feature_matrix
-    metric = getattr(context, "metric", "cityblock")
+    fm = cluster_class.feature_matrix
+    metric = getattr(cluster_class, "metric", "cityblock")
     representatives: Dict[int, int] = {}
 
     # 3. Step through unique partition labels
@@ -245,14 +229,45 @@ def get_cluster_representatives(
             local_idx = int(np.argmin(np.mean(dists, axis=1)))
         elif method == "lowest_energy":
             local_idx = int(np.argmin(energies[cluster_indices]))
+        elif method == "convex_hull":
+            centroid = cluster_features.mean(axis=0)
+            n_samples, n_features = cluster_features.shape
+            # Use explicit convex hull if dimensionality is manageable
+            if n_features <= 6 and n_samples > n_features: 
+                try:
+                    hull = ConvexHull(cluster_features)
+                    hull_vertices = hull.vertices
+
+                    # Find which vertex is the furthest from the centroid
+                    distances_to_centroid = np.linalg.norm(cluster_features[hull_vertices] - centroid, axis=1)
+                    local_idx = int(hull_vertices[np.argmax(distances_to_centroid)])
+                except Exception as e:
+                    # Fallback to absolute maximum distance if Qhull encounters degeneracy
+                    local_idx = int(np.argmax(np.linalg.norm(cluster_features - centroid, axis=1)))
+            else:
+                # In the high dimensional case take the point maximizing the distance from the centroid
+                local_idx = int(np.argmax(np.linalg.norm(cluster_features - centroid, axis=1)))
+
+            # Use explicit convex hull if dimensionality allows it
+            
         else:
-            raise ValueError(f"Unknown method '{method}'. Choose 'centroid', 'medoid', or 'lowest_energy'.")
+            raise ValueError(f"Unknown method '{method}'. Choose 'centroid', 'medoid','lowest_enery', or 'convex_hull'.")
 
         # Map back to the absolute global matrix row coordinates
         representatives[int(label)] = int(cluster_indices[local_idx])
 
     # Cache target representative registers on the tracking context
-    context.representatives = representatives
-    context.log(f"Cluster representatives identified via '{method}' optimization: {representatives}")
+    cluster_class.representatives = representatives
+    cluster_class.log(f"Cluster representatives identified via '{method}' optimization: {representatives}")
     
     return representatives 
+
+if __name__ == "__main__":
+    # Example usage with synthetic data
+    from sklearn.datasets import make_blobs
+    
+    X, _ = make_blobs(n_samples=300, centers=4, n_features=10, random_state=42)
+    
+    labels, metadata = run_clustering("kmeans", X, n_clusters=4, log_fn=print)
+    print(f"Cluster labels: {labels}")
+    print(f"Metadata: {metadata}")

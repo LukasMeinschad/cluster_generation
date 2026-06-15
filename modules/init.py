@@ -59,6 +59,7 @@ class InitializationConfig:
     max_placement_attempts: int = 1000  # Max attempts per submolecule placement
 
     # --- Workflow switches ---
+    rmsd_threshold: float = 0.5                     # RMSD threshold for duplicate detection (Å)
     optimize_submolecules: bool = True              # Optimize each fragment before placement
     optimize_parallel: bool = True                  # Run fragment optimizations in parallel
     optimize_cluster_representatives: bool = False  # Local opt of selected representatives
@@ -351,49 +352,56 @@ class ClusterInitializer:
             save_path="figures/energy_distribution_filtering.png",
         )
 
+        self.logger.section("Initialization of Feature Matrix and Clustering")
         # --- Clustering pipeline ---
         featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
         feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
 
+
+        # INITIALIZATION OF THE CLUSTERING CLASS
         clustering = Clustering(
-            feature_matrix=feature_mat, energies=energies, metric="cityblock", normalize=False
+            feature_matrix=feature_mat, energies=energies, molecules=mols, metric="cityblock", normalize=False, logger=self.logger
         )
 
-        # C1: Remove low-variance features
+        self._log("\n ----- Feature Filtering and Outlier Removal ----- \n")
+
+        # C1 & C2: FEATURE FILTERING AND OUTLIER REMOVEL
+
         clustering.filter_low_variance_features(threshold=0.0005)
-        self._log(
-            f"After low-variance filtering: {clustering._feature_matrix_normalized.shape[1]} features retained"
-        )
 
         # C2: Isolation Forest outlier removal
-        iforest_idx = clustering.isolation_forest_outlier(contamination=0.4)
-        mols = [mols[i] for i in iforest_idx]
-        self._log(f"After Isolation Forest (contamination=0.4): {len(mols)} structures remain")
+        iforest_res = clustering.detect_outliers_isolation_forest(contamination=0.4, n_estimators=100)
 
-        # C3: UMAP dimensionality reduction
+        # STEP C3 and C4 UMAP and LOF Cleanup
         embedding_10d = clustering.umap(n_components=10, n_neighbors=15, min_dist=0.1)
-        clustering._feature_matrix_normalized = embedding_10d
-        self._log(f"UMAP embedding shape: {embedding_10d.shape}")
+        clustering._feature_matrix_normalized = embedding_10d  # Cache the 10D embedding for downstream steps
 
-        # C4: Local Outlier Factor cleanup on UMAP embedding
-        lof_idx = clustering.local_outlier_factor(contamination=0.3)
-        mols = [mols[i] for i in lof_idx]
+        lof_res = clustering.detect_outliers_local_outlier_factor(n_neighbors=20, contamination=0.3)
+
+        # Now that the cleanup is done we can extract the mols and energies from the class
+        mols = clustering.molecules
+        energies = clustering.energies
+        self._log(f"After filtering and outlier removal, {len(mols)} configurations remain for clustering.")
+
+        
+        # Get final feature matrix
         embedding_10d = clustering._feature_matrix_normalized
-        self._log(f"After LOF cleanup (contamination=0.3): {len(mols)} structures remain")
 
-        # C5: KMeans clustering
+        # STEP C5 Clustering and Noise Robustness Assessment
         n_clusters = min(n_workers, len(mols))
-        labels = clustering.kmeans_clustering(n_clusters=n_clusters)
+        labels, _ = clustering.run_clustering(method = "kmeans", n_clusters=n_clusters)
+        
+        # STEP C6: Evaluate all clustering metrics
+        metrics = clustering.evaluate_all_metrics(labels=labels, ignore_noise=True)
 
-        # C6: Noise robustness assessment
-        _, noise_robustness = clustering.kmeans_noise_robustness(
-            n_clusters=n_clusters,
-            noise_levels=(0.0, 0.01, 0.02, 0.05),
-            n_runs=5,
+        # STEP C7: Plot the Embedding with Cluster Labels
+        clustering.plot_embedding(
+            embedding_10d,
+            title="Initialization UMAP Embedding with Cluster Labels",
+            labels=labels,
+            save_path="figures/initialization_umap_clusters.png",
         )
-        self._log("\nKMeans noise robustness (ARI vs baseline):")
-        for sigma, stats in noise_robustness.items():
-            self._log(f"  sigma={sigma}: mean_ARI={stats['mean_ari']:.4f} ± {stats['std_ari']:.4f}")
+
 
         # C7: Train classifier for online structure assignment during BHMC
         kwargs = self.config.classifier_kwargs or {}
@@ -405,51 +413,82 @@ class ClusterInitializer:
                 "Choose 'knn', 'svm', or 'random_forest'."
             )
 
-        # Use the unified train_classifier method
         self._log(f"\nTraining {self.config.classifier_backend.upper()} classifier on the 10D UMAP embedding...")
         clustering.train_classifier(
-            model_str = self.config.classifier_backend.lower(),
+            model_type = self.config.classifier_backend.lower(),
             x_train = embedding_10d,
             y_train = labels,
             **kwargs
         )
 
-        clustering.plot_embedding(
-            embedding_10d,
-            title="Initialization UMAP",
-            save_path="figures/initialization_umap.png",
-        )
-
         # C8: Pick lowest-energy representative per cluster
-        rep_indices      = clustering.get_cluster_representatives(labels=labels, method="lowest_energy")
-        selected_molecules = [mols[i] for i in rep_indices.values()]
+        rep_indices = clustering.get_cluster_representatives(method="lowest_energy")
+        
+        
+        selected_molecules = [mols[rep_indices[cluster_id]] for cluster_id in sorted(rep_indices.keys())]
+        
 
-        # Uniqueness check via RMSD; fall back to centroid for duplicates
-        unique_molecules, duplicate_indices = self.filter_duplicates_rmsd(
-            selected_molecules, rmsd_threshold=0.5
-        )
-        if duplicate_indices:
-            self._log(
-                f"\nFound {len(duplicate_indices)} duplicate representatives (RMSD < 0.5 Å) — "
-                "replacing with cluster centroids."
-            )
-            cluster_keys  = list(rep_indices.keys())
-            centroid_reps = clustering.get_cluster_representatives(labels=labels, method="centroid")
-            for idx in duplicate_indices:
-                cluster_label = cluster_keys[idx]
-                centroid_idx  = centroid_reps[cluster_label]
-                unique_molecules.append(mols[centroid_idx])
-                self._log(
-                    f"  Cluster {cluster_label}: replaced duplicate with centroid (index {centroid_idx})"
-                )
-        selected_molecules = unique_molecules
+        # C9: Delete Duplicate Representative and fall back to centroids
+        self._log("RMSD Based Checking for Duplicate Representatives...") 
+        cluster_labels_arr = np.asarray(labels)
+        cluster_order = list(rep_indices.keys())
+        discarded_clusters = set()
 
-        # C9: Evaluate clustering quality
-        metrics = clustering.evaluate(labels)
-        clustering.calculate_wcss_per_cluster(labels)
-        self._log("\nClustering evaluation metrics:")
-        for metric_name, metric_value in metrics.items():
-            self._log(f"  {metric_name}: {metric_value:.4f}")
+        # Identify the duplicates
+        for i, cluster_i in enumerate(cluster_order):
+            if cluster_i in discarded_clusters:
+                continue
+            idx_i = rep_indices[cluster_i]
+            mol_i = selected_molecules[i]
+
+            for cluster_j in cluster_order[i+1:]:
+                if cluster_j in discarded_clusters:
+                    continue
+                idx_j = rep_indices[cluster_j]
+                mol_j = mols[idx_j] 
+
+                rmsd = self._calculate_rmsd(mol_i.coordinates, mol_j.coordinates) 
+                if rmsd < self.config.rmsd_threshold:
+                    # Eliminate the one with higher energy
+                    if energies[idx_i] < energies[idx_j]:
+                        discarded_clusters.add(cluster_j)
+                        self._log(f"Discarding cluster {cluster_j} (RMSD={rmsd:.3f} Å) in favor of cluster {cluster_i}")
+                    else:
+                        discarded_clusters.add(cluster_i)
+                        self._log(f"Discarding cluster {cluster_i} (RMSD={rmsd:.3f} Å) in favor of cluster {cluster_j}")
+                        break  # No need to compare cluster_i with others if it's discarded
+
+        selected_molecules = []
+        for cluster_id in cluster_order:
+            if cluster_id not in discarded_clusters:
+                # Keep the original globally lowest-energy cluster configuration
+                selected_molecules.append(mols[rep_indices[cluster_id]])
+            else:
+                # Fall back to picking closest to centroid if the representative was discarded
+                self._log(f"   Applying centroid fallback for cluster {cluster_id}...")
+                member_indices = np.where(cluster_labels_arr == cluster_id)[0]
+
+                # Exclude the duplicate configuration we just threw out
+                fallback_pool = [idx for idx in member_indices if idx != rep_indices[cluster_id]]
+
+                if not fallback_pool:
+                    self._log(f"   No valid fallback candidates for cluster {cluster_id}. Skipping this cluster.", level="warning")
+                    selected_molecules.append(mols[rep_indices[cluster_id]])  # Keep the original representative
+                    continue
+
+                # Compute centroid in feature space
+                cluster_embeddings = embedding_10d[cluster_labels_arr == cluster_id]
+                umap_centroid = np.mean(cluster_embeddings, axis=0)
+
+                best_fallback_idx = fallback_pool[0]
+                min_distance = float('inf')
+                for idx in fallback_pool:
+                    dist = np.linalg.norm(embedding_10d[idx] - umap_centroid)
+                    if dist < min_distance:
+                        min_distance = dist
+                        best_fallback_idx = idx
+                selected_molecules.append(mols[best_fallback_idx])
+                self._log(f"   Selected fallback representative for cluster {cluster_id} with UMAP distance {min_distance:.3f}")
 
         # C10: Optionally locally optimize the selected representatives
         if self.config.optimize_cluster_representatives:
@@ -488,6 +527,13 @@ class ClusterInitializer:
 
         self._log("\n".join(summary_lines))
         self._log(f"Total initialization time: {time.time() - time_start:.2f} s")
+
+        # Finally check if the clustering object has the classifier and the umap embedding
+        if not hasattr(clustering, "classifier_model") or clustering.classifier_model is None:
+            self._log("Warning: Classifier model is not set in the clustering object.", level="warning")
+        if not hasattr(clustering, "umap_model") or clustering.umap_model is None:
+            self._log("Warning: UMAP model is not set in the clustering object.", level="warning")
+
 
         if self.logger:
             self.logger.separator()
@@ -960,10 +1006,8 @@ class ClusterInitializer:
 
     @staticmethod
     def _calculate_rmsd(coords1: np.ndarray, coords2: np.ndarray) -> float:
-        """Return RMSD after optimal atom-correspondence alignment."""
-        coords_2_opt = GeometryOps.find_optimal_correspondence(coords1, coords2)
-        diff = coords1 - coords_2_opt
-        return float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))
+        """Return RMSD after optimal atom-correspondence alignment (Hungarian Algorithm)."""
+        return GeometryOps.compute_optimal_correspondence_rmsd(coords1, coords2)
 
     @staticmethod
     def _random_rotation_matrix() -> np.ndarray:

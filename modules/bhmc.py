@@ -269,160 +269,69 @@ class BHMC:
         return self.accepted_structures
 
     # -------------------------------------------------------- structure analysis
-    def analyze_train(
+    
+    def analyze_training_results(
             self,
             reference_clustering: Clustering,
             structures: Optional[List[Tuple[Molecule, float]]] = None,
-    ):
+        ) -> List[Tuple[Molecule, float, int]]:
+        """  
+        Runs an analysis on first 25 % of the BHMC run.
+        This method is mainly to test the stability of the classifier model in the reference clustering
+        and then predict the labels of the newly sampled structures in the embedding space
         """
-        Analyzes the initial training phase of the BHMC sampling.
-
-        Args:
-            reference_clustering: The fitted Clustering instance returned by
-                ClusterInitializer.initialize_from_xyz(). It carries the trained UMAP
-                embedding/mapper (`reference_clustering.mapper`), the cluster labels and
-                feature matrix it was trained on (`reference_clustering.labels`,
-                `reference_clustering._fm()`), and the trained classifier
-                (`reference_clustering.classifier_model`) — i.e. the whole reference model
-                as one object, ready to be used for embedding/flagging/refitting the newly
-                sampled structures (see Clustering.embed_new_structures,
-                flag_novel_structures, refit_with_augmented_data).
-            structures: Structures to analyze. Defaults to self.accepted_structures.
-        """
-        if structures is None:
-            structures = self.accepted_structures
-        # 1. Remove high energy outliers (Z-score > 3)
-        mols = [m for m, _ in structures]
-        energies = [e for _, e in structures]
-        energy_arr = np.array(energies)
-        z_e = (energy_arr - energy_arr.mean()) / (energy_arr.std() + 1e-12)
-        mols     = [m for m, z in zip(mols, z_e)     if z <= 3.0]
-        energies = [e for e, z in zip(energies, z_e) if z <= 3.0]
-        self._log(f"After energy Z-score filter: {len(mols)} structures remain")
-
-        # Log the energy distribution
-        if energies:
-            self._log(f"Energy (Ha) — min={min(energies):.6f}  max={max(energies):.6f}  "
-                      f"mean={np.mean(energies):.6f}  std={np.std(energies):.6f}")
-        else:
-            self._log("No structures remain after energy Z-score filter.", level="warning")
-            return
-        # 2. Featurize with SOAP
-        featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
-        feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
-        self._log(f"SOAP features: {feature_mat.shape[0]} × {feature_mat.shape[1]}")
-
-
-        # 3. Embedd the new structures using the reference Mapper and find novel structures
-        # 3.a Plot the Probabilities of in inside of the embedding space
-        if reference_clustering.classifier_model is not None:
-            embedding = reference_clustering.embed_new_structures(feature_mat)
-            self._log(f"Embedded new structures: {embedding.shape[0]} × {embedding.shape[1]}")
-            proba = reference_clustering.classifier_model.predict_proba(embedding)
-            if isinstance(reference_clustering.classifier_model, KNeighborsClassifier):
-                reference_clustering.plot_KN_probabilities(
-                    embedding=embedding, probabilities=proba, labels=reference_clustering.labels,
-                    title="KNN Probabilities for New Structures",
-                    save_path="figures/knn_probabilities_new_structures.png",
-                )
-            elif isinstance(reference_clustering.classifier_model, SVC):
-                reference_clustering.plot_SVM_probabilities(
-                    embedding=embedding, probabilities=proba, labels=reference_clustering.labels,
-                    title="SVM Probabilities for New Structures",
-                    save_path="figures/svm_probabilities_new_structures.png",
-                )
-            
-        
-        
-        
-        
-
-        
-
-
-
-    def analyze_results(
-        self,
-        umap_model,
-        classifier,
-        structures: Optional[List[Tuple[Molecule, float]]] = None,
-    ) -> List[Tuple[Molecule, float, int]]:
-        """
-        Run accepted structures through outlier removal, project into a pre-fitted
-        UMAP space, and assign cluster labels via a pre-trained classifier.
-
-        Returns list of (molecule, energy, cluster_label) for surviving structures.
-        """
+        self.logger.section("Analysis of BHMC Training Run")
         if structures is None:
             structures = self.accepted_structures
 
         if not structures:
             self._log("No structures to analyse.", level="warning")
             return []
-
+        
         mols = [m for m, _ in structures]
         energies = [e for _, e in structures]
-
-        # Energy Z-score filter
         energy_arr = np.array(energies)
         z_e = (energy_arr - energy_arr.mean()) / (energy_arr.std() + 1e-12)
         mols     = [m for m, z in zip(mols, z_e)     if z <= 3.0]
         energies = [e for e, z in zip(energies, z_e) if z <= 3.0]
         self._log(f"After energy Z-score filter: {len(mols)} structures remain")
-
         if not mols:
             self._log("All structures filtered as high-energy outliers.", level="warning")
             return []
-
+        
+        # Featurize with SOAP
         featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
         feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
         self._log(f"SOAP features: {feature_mat.shape[0]} × {feature_mat.shape[1]}")
+        
+        # Embed the new structures using the reference_clustering object
+        new_structures_embedding = reference_clustering.embed_new_structures(x_new = feature_mat)
+        # Predict cluster labels using the classifier model in the reference clustering
+        predicted_labels = reference_clustering.predict_labels(x_test = new_structures_embedding)
+        predicted_probabilities = reference_clustering.predict_probabilities(x_test = new_structures_embedding)
 
-        clustering = Clustering(
-            feature_matrix=feature_mat, energies=energies,
-            metric="cityblock", normalize=False, logger=self.logger,
+        # Plot the probabilities
+        reference_clustering.plot_probabilities(
+            embedding=new_structures_embedding,
+            probabilities=predicted_probabilities,
+            labels=predicted_labels,
+            title="BHMC Training Structures Cluster Probabilities",
+            save_path="figures/bhmc_training_cluster_probabilities.png",
         )
 
-        # Feature Z-score filter
-        idx = clustering.z_score_filtering()
-        mols     = [mols[i]     for i in idx]
-        energies = [energies[i] for i in idx]
-        self._log(f"After feature Z-score filter: {len(mols)} structures remain")
-
-        # Isolation forest
-        idx = clustering.isolation_forest_outlier(contamination=0.4)
-        mols     = [mols[i]     for i in idx]
-        energies = [energies[i] for i in idx]
-        self._log(f"After Isolation Forest: {len(mols)} structures remain")
-
-        if not mols:
-            self._log("No structures remain after outlier filtering.", level="warning")
-            return []
-
-        embedding = umap_model.transform(clustering._feature_matrix_normalized)
-        labels = classifier.predict(embedding)
-        labels_str = [f"Cluster {l}" for l in labels]
-        self._log(f"Cluster distribution: {np.bincount(labels)}")
-
-        if isinstance(classifier, KNeighborsClassifier):
-            proba = clustering.KN_predict_probabilities(x_test=embedding, knn=classifier)
-            clustering.plot_KN_probabilities(
-                embedding=embedding, probabilities=proba, labels=labels_str,
-                save_path="figures/knn_probabilities.png",
-            )
-        elif isinstance(classifier, SVC):
-            proba = clustering.SVM_predict_probabilities(svm=classifier, x_test=embedding)
-            clustering.plot_SVM_probabilities(
-                embedding=embedding, probabilities=proba, labels=labels_str,
-                save_path="figures/svm_probabilities.png",
-            )
-
-        clustering.plot_embedding(
-            embedding=embedding, labels=labels_str,
-            save_path="figures/bhmc_embedding.png",
+        # Flag Novel structures based on a 25% probability threshold
+        novel_indices = reference_clustering.flag_novel_structures(
+            embedding_new = new_structures_embedding,
+            threshold_percentile = 25.0
         )
 
-        return [(m, e, int(l)) for m, e, l in zip(mols, energies, labels)]
+
+
+
+
+
+
+
 
     # ----------------------------------------------------------------- plotting
 

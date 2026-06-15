@@ -30,6 +30,29 @@ def feature_statistics(cluster_class: Any) -> Dict[str, Dict[str, float]]:
     cluster_class.feature_stats = feature_stats
     return feature_stats
 
+def filter_low_variance_features(
+        cluster_class: Any,
+        threshold: float = 0.0005
+    ) -> List[int]:
+    """ 
+    Identifies and removes features with variance below the specified threshold to reduce noise and dimensionality
+    """
+    X = cluster_class.feature_matrix
+    variances = np.var(X, axis=0)
+    low_var_mask = variances < threshold
+    selected_features = [i for i in range(X.shape[1]) if not low_var_mask[i]]
+
+    # Mutate the context feature matrix in place
+    cluster_class.feature_matrix = X[:, selected_features]
+
+    # Cache protection
+    if hasattr(cluster_class, "_feature_matrix_normalized") and cluster_class._feature_matrix_normalized is not None:
+        cluster_class._feature_matrix_normalized = cluster_class._feature_matrix_normalized[:, selected_features]
+
+    
+    cluster_class.log(f"Filtered out {np.sum(low_var_mask)} low-variance features (threshold={threshold}). Remaining features: {len(selected_features)}.")
+    return selected_features
+
 def spearman_correlation(
         cluster_class: Any,
         plot: bool = False,

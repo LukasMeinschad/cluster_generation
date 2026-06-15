@@ -1,6 +1,7 @@
 
 Scratch directory: /tmp/
 gradient() will perform analytic gradient computation.
+    SCF Algorithm Type (re)set to DF.
    => Libint2 <=
 
     Primary   basis highest AM E, G, H:  6, 6, 3
@@ -9,15 +10,15 @@ gradient() will perform analytic gradient computation.
     Solid Harmonics ordering:            Gaussian
 
 *** tstart() called on sv1-c724
-*** at Sat Jun  6 21:24:45 2026
+*** at Mon Jun 15 10:43:09 2026
 
    => Loading Basis Set <=
 
-    Name: 6-311G(D,P)
+    Name: CC-PVDZ
     Role: ORBITAL
     Keyword: BASIS
-    atoms 1, 4     entry C          line   113 file /home/lme/.conda/envs/p4env/share/psi4/basis/6-311g_d_p_.gbs 
-    atoms 2-3, 5-6 entry O          line   151 file /home/lme/.conda/envs/p4env/share/psi4/basis/6-311g_d_p_.gbs 
+    atoms 1, 4     entry O          line   198 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz.gbs 
+    atoms 2-3, 5-6 entry H          line    22 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz.gbs 
 
 
          ---------------------------------------------------------
@@ -37,24 +38,24 @@ gradient() will perform analytic gradient computation.
 
        Center              X                  Y                   Z               Mass       
     ------------   -----------------  -----------------  -----------------  -----------------
-         C           -0.417726238002    -1.722317108775     0.829008070001    12.000000000000
-         O           -0.262961614515    -2.815471579004     0.570908050113    15.994914619570
-         O           -0.575321339857    -0.627731889973     1.092471777202    15.994914619570
-         C            0.417023217599     1.720098017642    -0.827775607255    12.000000000000
-         O            0.744413453225     0.817276071509    -1.435491912308    15.994914619570
-         O            0.094396934086     2.627592244967    -0.228812555950    15.994914619570
+         O            0.046780036390     1.359905946966    -0.433004652408    15.994914619570
+         H           -0.438937501203     1.233348370105    -1.259243306013     1.007825032230
+         H           -0.628483567249     1.741269244133     0.144086122792     1.007825032230
+         O           -0.039404173717    -1.406653407049     0.463596131087    15.994914619570
+         H            0.858452259545    -1.753779697685     0.418678836707     1.007825032230
+         H            0.091908515769    -0.478921801365     0.210969380261     1.007825032230
 
   Running in c1 symmetry.
 
-  Rotational constants: A =      0.33833  B =      0.04561  C =      0.04019 [cm^-1]
-  Rotational constants: A =  10142.83611  B =   1367.21046  C =   1204.81469 [MHz]
-  Nuclear repulsion =  184.288611175449148
+  Rotational constants: A =      6.64537  B =      0.21795  C =      0.21675 [cm^-1]
+  Rotational constants: A = 199223.09993  B =   6533.91557  C =   6498.02257 [MHz]
+  Nuclear repulsion =   36.688114619086683
 
   Charge       = 0
   Multiplicity = 1
-  Electrons    = 44
-  Nalpha       = 22
-  Nbeta        = 22
+  Electrons    = 20
+  Nalpha       = 10
+  Nbeta        = 10
 
   ==> Algorithm <==
 
@@ -63,25 +64,85 @@ gradient() will perform analytic gradient computation.
   MOM disabled.
   Fractional occupation disabled.
   Guess Type is SAD.
-  Energy threshold   = 1.00e-08
-  Density threshold  = 1.00e-08
+  Energy threshold   = 1.00e-10
+  Density threshold  = 1.00e-10
   Integral threshold = 1.00e-12
 
   ==> Primary Basis <==
 
-  Basis Set: 6-311G(D,P)
-    Blend: 6-311G(D,P)
-    Number of shells: 48
-    Number of basis functions: 108
-    Number of Cartesian functions: 114
+  Basis Set: CC-PVDZ
+    Blend: CC-PVDZ
+    Number of shells: 24
+    Number of basis functions: 48
+    Number of Cartesian functions: 50
     Spherical Harmonics?: true
     Max angular momentum: 2
 
    => Loading Basis Set <=
 
-    Name: (6-311G(D,P) AUX)
+    Name: (CC-PVDZ AUX)
     Role: JKFIT
     Keyword: DF_BASIS_SCF
-    atoms 1, 4     entry C          line   125 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvtz-jkfit.gbs 
-    atoms 2-3, 5-6 entry O          line   229 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvtz-jkfit.gbs 
+    atoms 1, 4     entry O          line   221 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz-jkfit.gbs 
+    atoms 2-3, 5-6 entry H          line    51 file /home/lme/.conda/envs/p4env/share/psi4/basis/cc-pvdz-jkfit.gbs 
 
+  ==> Integral Setup <==
+
+  DFHelper Memory: AOs need 0.005 GiB; user supplied 0.366 GiB. 
+  Using in-core AOs.
+
+  ==> MemDFJK: Density-Fitted J/K Matrices <==
+
+    J tasked:                   Yes
+    K tasked:                   Yes
+    wK tasked:                   No
+    OpenMP threads:               1
+    Memory [MiB]:               375
+    Algorithm:                 Core
+    Schwarz Cutoff:           1E-12
+    Mask sparsity (%):       0.0000
+    Fitting Condition:        1E-10
+
+   => Auxiliary Basis Set <=
+
+  Basis Set: (CC-PVDZ AUX)
+    Blend: CC-PVDZ-JKFIT
+    Number of shells: 84
+    Number of basis functions: 232
+    Number of Cartesian functions: 262
+    Spherical Harmonics?: true
+    Max angular momentum: 3
+
+  Minimum eigenvalue in the overlap matrix is 3.0590818668E-02.
+  Reciprocal condition number of the overlap matrix is 7.6223055880E-03.
+    Using symmetric orthogonalization.
+
+  ==> Pre-Iterations <==
+
+  SCF Guess: Superposition of Atomic Densities via on-the-fly atomic UHF (no occupation information).
+
+   -------------------------
+    Irrep   Nso     Nmo    
+   -------------------------
+     A         48      48 
+   -------------------------
+    Total      48      48
+   -------------------------
+
+  ==> Iterations <==
+
+                           Total Energy        Delta E     RMS |[F,P]|
+
+   @DF-RHF iter SAD:  -151.06759375712912   -1.51068e+02   0.00000e+00 
+   @DF-RHF iter   1:  -151.92705171414434   -8.59458e-01   1.17835e-02 ADIIS/DIIS
+   @DF-RHF iter   2:  -152.02601501058913   -9.89633e-02   6.64168e-03 ADIIS/DIIS
+   @DF-RHF iter   3:  -152.06015639185603   -3.41414e-02   7.02682e-04 ADIIS/DIIS
+   @DF-RHF iter   4:  -152.06102100379928   -8.64612e-04   1.52263e-04 ADIIS/DIIS
+   @DF-RHF iter   5:  -152.06106493299035   -4.39292e-05   4.16610e-05 DIIS
+   @DF-RHF iter   6:  -152.06106807136445   -3.13837e-06   1.73821e-05 DIIS
+   @DF-RHF iter   7:  -152.06106851632524   -4.44961e-07   2.67281e-06 DIIS
+   @DF-RHF iter   8:  -152.06106853469720   -1.83720e-08   3.89515e-07 DIIS
+   @DF-RHF iter   9:  -152.06106853518094   -4.83737e-10   8.96881e-08 DIIS
+   @DF-RHF iter  10:  -152.06106853520936   -2.84217e-11   1.57046e-08 DIIS
+   @DF-RHF iter  11:  -152.06106853521024   -8.81073e-13   3.74036e-09 DIIS
+   @DF-RHF iter  12:  -152.06106853521021    2.84217e-14   1.16126e-09 DIIS

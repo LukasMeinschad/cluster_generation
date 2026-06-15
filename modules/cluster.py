@@ -67,6 +67,7 @@ class Clustering:
     def __init__(self,
                  feature_matrix: np.ndarray,
                  energies: Optional[List[float]] = None,
+                 molecules: Optional[List[Any]] = None,
                  metric: str = "cityblock",
                  logger: Optional[Logger] = None,
                  normalize: bool = False,
@@ -76,20 +77,20 @@ class Clustering:
 
         # Core Data Attributes
         self.feature_matrix: np.ndarray = feature_matrix
+        self.molecules: Optional[List[Any]] = molecules
         self.energies: Optional[np.ndarray] = energies
         self.logger: Optional[Logger] = logger
 
 
         # Shared pipline context attributes (dynamically populated by various methods)
-        self.metric: str = "cityblock"  # Default distance metric for clustering and evaluation
+        self.metric: str = metric  # Distance metric for clustering and dimensionality reduction
         self.labels: Optional[np.ndarray] = None  # Cluster labels assigned to each structure
         self.corr_matrix: Optional[np.ndarray] = None  # Correlation matrix for feature analysis
         self.feature_stats: Dict[str, Any] = {}  # Dictionary to store feature statistics like mean and std
         self.outlier_models: Dict[str, Any] = {}  # Store fitted outlier detection models for reference
         self.representatives: Dict[int,int] = None  # Indices of representative structures for each cluster
         self.embedding: Optional[np.ndarray] = None  # Dimensionality reduction embedding for visualization and analysis
-
-
+        self.umap_model: Optional[Any] = None  # Fitted UMAP model for embedding new structures
 
         # Unsupervised State Variables 
         self.labels: Optional[np.ndarray] = None
@@ -178,7 +179,209 @@ class Clustering:
         """
         return fa.filter_correlation_spearman(self, threshold=threshold)
 
+    def filter_low_variance_features(self, threshold: float = 0.0005) -> List[int]:
+        """  
+        Identifies and removes features with variance below the specified threshold to reduce noise and dimensionality
+        """
+        return fa.filter_low_variance_features(self, threshold=threshold)
 
+    # =========================================================
+    # OUTLIER DETECTION INTERFACE --> modules/outlier_detection.py
+    # =========================================================
+
+    def detect_outliers_zscore(self, threshold: float = 3.0, prune: bool = True) -> List[int]:
+        """  
+        Wrapper for z-score outlier detection method in outlier_detection module
+        """
+        return od.z_score_outlier_detection(self, threshold=threshold, prune=prune)
+    
+    def detect_outliers_isolation_forest(
+            self,
+            contamination: float = 0.05,
+            n_estimators: int = 100,
+            bootstrap: bool = False,
+            prune: bool = True,
+            random_state: Optional[int] = None
+        ) -> np.ndarray:
+        """
+        Wrapper for Isolation Forest outlier detection method in outlier_detection module
+        """
+        return od.run_isolation_forest(
+            self,
+            contamination=contamination,
+            n_estimators=n_estimators,
+            bootstrap=bootstrap,
+            prune=prune,
+            random_state=random_state
+        )
+    
+    def detect_outliers_local_outlier_factor(
+            self,
+            contamination: float = 0.05,
+            n_neighbors: int = 20,
+            prune: bool = True,
+        ) -> np.ndarray:
+        """  
+        Wrapper for Local Outlier Factor detection method in outlier_detection module
+        """
+        return od.run_local_outlier_factor(
+            self,
+            contamination=contamination,
+            n_neighbors=n_neighbors,
+            prune=prune
+        )
+    
+    # =====================================================
+    # DIMENSIONALITY REDUCTION INTERFACE --> modules/dim_reduction.py
+    # =====================================================
+
+    def pca(self, n_components: int = 2, **kwargs) -> np.ndarray:
+        """  
+        Wrapper for PCA dimensionality reduction method in dim_reduction module
+        """
+        return dr.pca(self, n_components=n_components, **kwargs)
+    
+    def kernel_based_pca(self, n_components: int = 2, kernel: str = "rbf", gamma: Optional[float] = None, n_jobs: int = -1) -> np.ndarray:
+        """  
+        Wrapper for Kernel PCA dimensionality reduction method in dim_reduction module
+        """
+        return dr.kernel_based_pca(self, n_components=n_components, kernel=kernel, gamma=gamma, n_jobs=n_jobs)
+    
+    def tsne(self, n_components: int = 2, perplexity: float = 30.0, n_iter: int = 1000, random_state: Optional[int] = None) -> np.ndarray:
+        """  
+        Wrapper for t-SNE dimensionality reduction method in dim_reduction module
+        """
+        return dr.tsne(self, n_components=n_components, perplexity=perplexity, n_iter=n_iter, random_state=random_state)
+    
+    def umap(self, n_components: int = 2, n_neighbors: int = 15, min_dist: float = 0.1, random_state: Optional[int] = None) -> np.ndarray:
+        """  
+        Wrapper for UMAP dimensionality reduction method in dim_reduction module
+        """
+        if UMAP is None:
+            raise ImportError("UMAP is not installed. Run `pip install umap-learn` to use this method.")
+        return dr.umap(self, n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, random_state=random_state)
+    
+    def umap_densmap(self, n_components: int = 2, n_neighbors: int = 15, min_dist: float = 0.1, random_state: Optional[int] = None) -> np.ndarray:
+        """  
+        Wrapper for UMAP DensMAP dimensionality reduction method in dim_reduction module
+        """
+        if UMAP is None:
+            raise ImportError("UMAP is not installed. Run `pip install umap-learn` to use this method.")
+        return dr.umap_densmap(self, n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, random_state=random_state)
+    
+    def umap_metric_learning(self, n_components: int, x_train: np.ndarray, y_train: np.ndarray, n_neighbors: int) -> np.ndarray:
+        """  
+        Wrapper for UMAP metric learning dimensionality reduction method in dim_reduction module
+        """
+        if UMAP is None:
+            raise ImportError("UMAP is not installed. Run `pip install umap-learn` to use this method.")
+        return dr.umap_metric_learning(self, n_components=n_components, x_train=x_train, y_train=y_train, n_neighbors=n_neighbors)
+    
+    def embed_new_structures(self, x_new: np.ndarray) -> np.ndarray:
+        """
+        Wrapper for embedding new structures into an existing umap model
+        """
+        if UMAP is None:
+            raise ImportError("UMAP is not installed. Run `pip install umap-learn` to use this method.")
+        return dr.embed_new_structures(self, x_new)
+    
+    def flag_novel_structures(
+        self,
+        embedding_new: np.ndarray,
+        classifier: Optional[Any] = None,
+        threshold_percentile: float = 25.0
+        ) -> np.ndarray:
+        """ 
+        Wrapper for the flag_novel_structures function in the dim_reduction module, which identifies novel structures based on their distance in the embedding space to the nearest cluster centers or classifier decision boundaries.
+        """
+        return dr.flag_novel_structures(self, embedding_new, classifier=classifier, threshold_percentile=threshold_percentile)
+    
+
+    # ==================================================
+    # VISUALIZATION INTERFACE --> modules/cluster_vis.py
+    # ==================================================
+    def plot_embedding(self, embedding: np.ndarray, title: str = "Embedding", labels: Optional[np.ndarray] = None, save_path: Optional[str] = None) -> None:
+        """ 
+        Wrapper for the plot_embedding function in the cluster_vis module
+        """
+        vis.plot_embedding(self, embedding, title=title, labels=labels, save_path=save_path)
+
+    def plot_probabilities(self, embedding: np.ndarray, probabilities: np.ndarray, labels: Optional[np.ndarray] = None, title: str = "Classifier Assignment Probabilities", save_path: Optional[str] = None) -> None:
+        """  
+        Wrapper for the plot_probabilities function in the cluster_vis module
+        """
+        vis.plot_probabilities(self, embedding, probabilities, labels=labels, title=title, save_path=save_path)
+        
+
+    # =========================================================
+    # CLUSTERING ALGORITHMS INTERFACE --> modules/cluster_algs.py
+    # =========================================================
+       
+    def run_clustering(
+            self,
+            method: str = "kmeans",
+            **kwargs
+        ) -> Tuple[np.ndarray, Dict[str, Any]]:
+        """ 
+        Wrapper for the run_clustering function in the cluster_algs module
+
+        Kwargs are passed directly to the underlying clustering algorithm function. Supported methods include 'kmeans', 'agglomerative', 'dbscan', and 'hdbscan'.
+        """
+        # Save labels to cache
+        self.labels, metadata = algs.run_clustering(self, method=method, **kwargs)
+        return self.labels, metadata
+
+    def get_cluster_representatives(self, labels: Optional[np.ndarray] = None, method: str = "lowest_energy") -> Dict[int, int]:
+        """  
+        Wrapper method that extracts one representative molecular configuration per partition group
+        """
+        return algs.get_cluster_representatives(self, labels=labels, method=method)
+
+
+    # ========================================================
+    # CLASSIFICATION INTERFACE --> modules/classifiers.py
+    # ========================================================
+
+    def train_classifier(
+            self,
+            model_type: str,
+            x_train: np.ndarray,
+            y_train: np.ndarray,
+            save_path: Optional[str] = None,
+            **kwargs
+        ) -> Any:
+        """ 
+        Wrapper method that trains a classification model, saves it to the active Clustering context
+        """ 
+        return clfs.train_classifier(self, model_type=model_type, x_train=x_train, y_train=y_train, save_path=save_path, **kwargs)
+    
+    def predict_labels(self, x_test: np.ndarray) -> np.ndarray:
+        """ 
+        Wrapper method that uses the trained classifier model to predict labels for new data points
+        """
+        return clfs.predict_labels(self, x_test)
+    
+    def predict_probabilities(self, x_test: np.ndarray) -> np.ndarray:
+        """  
+        Wrapper method that uses the trained classifier model to predict class probabilities for new data points
+        """
+        return clfs.predict_probabilities(self, x_test)
+    
+    # =========================================================
+    # CLUSTER EVALUATION INTERFACE --> modules/cluster_metrics.py
+    # =========================================================
+    def evaluate_all_metrics(self, labels: Optional[np.ndarray] = None, ignore_noise: bool = True) -> Dict[str, float]:
+        """  
+        Wrapper method that evaluates all implemented clustering metrics in the cluster_metrics module and returns a dictionary of metric_name -> score
+        """
+        return met.evaluate_all_metrics(self, labels=labels, ignore_noise=ignore_noise)
+
+
+    def calculate_wccs(self, labels: Optional[np.ndarray] = None) -> float:
+        """ 
+        Wrapper method that calculates the WCSS for each cluster
+        """
+        return met.calculate_wcss_per_cluster(self, labels=labels)
 
 
     
@@ -234,28 +437,6 @@ class Clustering:
         # Return the inertia values for each k
         return inertias
 
-    def calculate_wcss_per_cluster(self, labels: Optional[np.ndarray]):
-        """  
-        Calculates the within-cluster-sum-of-squares (WCSS) for each cluster which is defined as
-
-        WCSS = sum_i=1^n (x_i - mu)^2 
-        
-        where x_i are the points in the cluster and mu is the centroid of the cluster. This can be used to identify which clusters are more compact and which are more dispersed, and can also be used to identify potential outliers within clusters (points with high distance to the centroid).
-        """
-        lbl = self._resolve_labels(labels)
-        fm, lbl = self._mask_noise(lbl)
-        unique_labels = set(lbl)
-        wcss_per_cluster = {}
-        for cluster in unique_labels:
-            cluster_points = fm[lbl == cluster]
-            if len(cluster_points) == 0:
-                wcss_per_cluster[cluster] = 0.0
-                continue
-            centroid = np.mean(cluster_points, axis=0)
-            wcss = np.sum(np.linalg.norm(cluster_points - centroid, axis=1) ** 2)
-            wcss_per_cluster[cluster] = wcss
-            self._log(f"Cluster {cluster}: WCSS={wcss:.4f}, n_points={len(cluster_points)}")
-        return wcss_per_cluster
 
     def kmeans_noise_robustness(self, n_clusters: int = 5, noise_levels = (0.0, 0.01, 0.02, 0.05), n_runs = 5, random_state: int = 42) -> Dict[float, List[float]]:
         """  
@@ -577,6 +758,41 @@ if __name__ == "__main__":
     # Initialize a full test class and try all the methods
     mock_feature_matrix = np.random.rand(100, 20)  # 100 samples, 20 features
     mock_cluster = Clustering(feature_matrix=mock_feature_matrix, energies=None, normalize=True)
+    # Run the feature analysis methods
     mock_cluster.compute_feature_stats()
     mock_cluster.compute_spearman(plot=True)
     mock_cluster.prune_features(threshold=0.8)
+    # Run outlier detection methods
+    mock_cluster.detect_outliers_zscore(threshold=3.0)
+    mock_cluster.detect_outliers_isolation_forest(contamination=0.1, prune=True)
+    mock_cluster.detect_outliers_local_outlier_factor(contamination=0.1, prune=True)
+    # Run clustering algorithms
+    mock_cluster.run_clustering(method="kmeans", n_clusters=5, n_init=10, random_state=42)
+    mock_cluster.run_clustering(method="agglomerative", n_clusters=5, linkage='ward')
+    mock_cluster.run_clustering(method="dbscan", eps=0.5, min_samples=5)
+    if HDBSCAN is not None:
+        mock_cluster.run_clustering(method="hdbscan", min_cluster_size=5, min_samples=5)
+    # Run dimensionality reduction methods
+    mock_cluster.pca(n_components=2)
+    mock_cluster.kernel_based_pca(n_components=2, kernel='rbf', gamma=None)
+    mock_cluster.tsne(n_components=2, perplexity=30.0, n_iter=1000, random_state=42)
+    if UMAP is not None:
+        mock_cluster.umap(n_components=2, n_neighbors=15, min_dist=0.1, random_state=42)
+        mock_cluster.umap_densmap(n_components=2, n_neighbors=15, min_dist=0.1, random_state=42)
+    # Run visualization methods
+    embedding = mock_cluster.umap(n_components=2, n_neighbors=15, min_dist=0.1, random_state=42)
+    mock_cluster.plot_embedding(embedding, title="UMAP Embedding", save_path="figures/umap_embedding.png")
+    mock_cluster.plot_probabilities(embedding, probabilities=np.random.rand(100, 5), title="Mock Classifier Probabilities", save_path="figures/mock_probabilities.png")
+    # Run classification methods
+    x_train = np.random.rand(80, 20)
+    y_train = np.random.randint(0, 5, size=80)
+    mock_cluster.train_classifier(model_type="rf", x_train=x_train, y_train=y_train)
+    x_test = np.random.rand(20, 20)
+    mock_cluster.predict_labels(x_test)
+    mock_cluster.predict_probabilities(x_test)
+    # Run cluster evaluation methods
+    mock_cluster.evaluate_all_metrics(labels=np.random.randint(0, 5, size=100))
+    
+    # Check all vars in the class
+    print("\n--- Clustering Class Variables ---")
+    print(vars(mock_cluster))

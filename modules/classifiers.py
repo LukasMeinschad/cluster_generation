@@ -10,9 +10,13 @@ from scipy.stats import entropy
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Import cluster class for testing
-from modules.cluster import Clustering
+from sklearn.base import clone
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import classification_report, confusion_matrix
+
 
 
 
@@ -104,6 +108,7 @@ def predict_probabilities(cluster_class: Any, x_test: np.ndarray) -> np.ndarray:
     return probabilities
 
 
+
     
 def _ensure_model_is_loaded(cluster_class: Any) -> None:
     """ 
@@ -113,6 +118,9 @@ def _ensure_model_is_loaded(cluster_class: Any) -> None:
         raise ValueError("No classifier model is currently loaded in the Clustering context. Please train or load a model before making predictions.")
 
 if __name__ == "__main__":
+    # Import cluster class for testing
+    from modules.cluster import Clustering
+
     # Testing of the classifier functons
     mock_features = np.random.rand(100, 10)  # 100 samples, 10 features
     mock_labels = np.random.randint(0, 5, size=100)  # 5 clusters

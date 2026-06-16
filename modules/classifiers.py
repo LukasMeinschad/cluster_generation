@@ -13,6 +13,7 @@ from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# Validation and evaluation utilities
 from sklearn.base import clone
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import classification_report, confusion_matrix
@@ -106,6 +107,79 @@ def predict_probabilities(cluster_class: Any, x_test: np.ndarray) -> np.ndarray:
     cluster_class.log(f"   -> Standard deviation of maximum predicted probabilities: {std_max_prob:.4f}")
 
     return probabilities
+
+
+def evaluate_classifier(
+        cluster_class: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        n_splits: int = 5,
+        save_dir: Optional[str] = None
+    ) -> None:
+    """  
+    Evaluates the performance of the stored classifier model using stratified k-fold cross-validation
+    
+    Args:        
+        cluster_class: The Clustering instance containing the classifier model to evaluate
+        x: The feature matrix for evaluation
+        y: The true labels for evaluation
+        n_splits: The number of folds for cross-validation
+        save_dir: Optional directory to save evaluation reports and confusion matrices
+    """
+    _ensure_model_is_loaded(cluster_class)
+    prod_model = cluster_class.classifier_model
+
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
+
+    # Arrays to store out-of-fold predictions and probabilities
+    oof_preds = np.zeros_like(y)
+    unique_classes = np.unique(y)
+    oof_probs = np.zeros((len(y), len(unique_classes)))
+
+    cluster_class.log(f"Starting {n_splits}-fold cross-validation for classifier evaluation...")
+
+    for fold, (train_idx, val_idx) in enumerate(skf.split(x,y)):
+        x_tr, x_val = x[train_idx], x[val_idx]
+        y_tr, y_val = y[train_idx], y[val_idx]
+
+        # clone() copies the hyperparameters (KNN Metrics or SVM kernels)
+        # without copying fitted weights
+        fold_model = clone(prod_model)
+        fold_model.fit(x_tr, y_tr)
+
+        oof_preds[val_idx] = fold_model.predict(x_val)
+        if hasattr(fold_model, "predict_proba"):
+            oof_probs[val_idx] = fold_model.predict_proba(x_val)
+        
+    # Compile scikit-learn performane dictionaries and printout text
+    report_dict = classification_report(y, oof_preds, output_dict=True)
+    report_text = classification_report(y, oof_preds)
+
+    cluster_class.log("\n-- Classifier Evaluation Report ---\n")
+    cluster_class.log(report_text)
+
+    # Profile boundary confidence margins if probabilities are available
+    if hasattr(prod_model, "predict_proba"):
+        max_probs = np.max(oof_probs, axis=1)
+        cluster_class.log(f"   -> Average Out-of-Fold prediction certainty (max probability): {np.mean(max_probs):.4f}")
+        cluster_class.log(f"   -> Structures below 60% confidence threshold: {np.sum(max_probs < 0.6)} / {len(max_probs)} ({np.mean(max_probs < 0.6) * 100:.2f}%)")
+
+    # Generate and Save Confusion matrix plot
+    cm = confusion_matrix(y, oof_preds)
+    plt.figure(figsize=(8,6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=unique_classes, yticklabels=unique_classes)
+    plt.title("Confusion Matrix")
+    plt.xlabel("Predicted Labels")
+    plt.ylabel("True Labels")
+
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+        cm_path = os.path.join(save_dir, "confusion_matrix.png")
+        plt.savefig(cm_path)
+        cluster_class.log(f"Confusion matrix saved to: {cm_path}")
+    plt.close()
+
+    return report_dict
 
 
 

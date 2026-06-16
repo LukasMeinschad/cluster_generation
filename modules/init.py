@@ -13,7 +13,7 @@ import time
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Any, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,6 +21,7 @@ from scipy.stats import qmc
 
 from modules.calculator import EnergyEvaluator
 from modules.cluster import Clustering
+from modules.cluster_algs import kmeans_clustering
 from modules.featurizer import Featurizer, FeaturizerConfig
 from modules.box import SimulationBox
 from modules.geometry import GeometryOps
@@ -48,6 +49,9 @@ class InitializationConfig:
     gpaw_xc: str = "B3LYP"
 
     # --- Clustering / classifier ---
+    clustering_method: str = "kmeans"       # "kmeans" | "dbscan" | "hdbscan"
+    clustering_kwargs: Optional[dict] = None  # Extra kwargs forwarded to the clustering function
+
     classifier_backend: str = "knn"          # "knn" | "svm"
     classifier_kwargs: Optional[dict] = None  # Extra kwargs forwarded to the classifier
 
@@ -89,6 +93,126 @@ class InitializationConfig:
                 continue
         scored.sort(key=lambda x: x[0])
         return scored[:n_keep]
+
+
+def run_clustering_and_classifier_pipeline(
+    feature_matrix: np.ndarray,
+    n_clusters: int,
+    molecules: Optional[List[Molecule]] = None,
+    energies: Optional[List[float]] = None,
+    clustering_method: str = "kmeans",
+    classifier_backend: str = "knn",
+    classifier_kwargs: Optional[dict] = None,
+    metric: str = "cityblock",
+    compute_representatives: bool = True,
+    logger: Optional[Logger] = None,
+    log_fn: Optional[Callable[[str], None]] = None,
+    embedding_plot_path: Optional[str] = None,
+    embedding_plot_title: str = "UMAP Embedding with Cluster Labels",
+    classifier_eval_dir: Optional[str] = "figures/classifier_evaluation",
+) -> Tuple[Clustering, np.ndarray, np.ndarray, Optional[Dict[int, int]]]:
+    """Clean a feature matrix and fit a clustering + classifier pipeline on it.
+
+    Steps: low-variance feature pruning, Isolation Forest outlier removal, 10D
+    UMAP embedding, Local Outlier Factor cleanup on the embedding, the
+    configured clustering algorithm, metric evaluation, perturbation
+    stability, an optional labeled embedding plot, and training/evaluating
+    the online structure-assignment classifier.
+
+    This is shared by `ClusterInitializer.initialize_from_xyz` (first build,
+    where `molecules`/`energies` are known and representatives are picked)
+    and `BHMC.analyze_training_results` (retraining on initial + novel
+    features after a BHMC run, where representatives aren't needed) so both
+    paths build their `Clustering` instance identically.
+
+    Args:
+        feature_matrix:          Descriptor matrix to clean and cluster.
+        n_clusters:               Target cluster count (clamped to the post-cleanup pool size).
+        molecules:                 Molecules aligned to feature_matrix rows, if available.
+        energies:                  Energies aligned to feature_matrix rows, if available.
+        clustering_method:         "kmeans" | "agglomerative" | "dbscan" | "hdbscan".
+        classifier_backend:        "knn" | "svm" | "random_forest".
+        classifier_kwargs:         Extra kwargs forwarded to the classifier constructor.
+        metric:                    Distance metric for clustering and classification.
+        compute_representatives:   Whether to pick a lowest-energy representative per
+                                    cluster (requires `energies` to be set).
+        logger:                    Optional Logger forwarded to the Clustering instance.
+        log_fn:                    Optional logging callback (defaults to `print`).
+        embedding_plot_path:       Where to save the labeled embedding plot, or None to skip.
+        embedding_plot_title:      Title for the embedding plot.
+        classifier_eval_dir:       Where to save classifier cross-validation diagnostics.
+
+    Returns:
+        (clustering, embedding_10d, labels, rep_indices) — rep_indices is None
+        unless compute_representatives is True.
+    """
+    log = log_fn or print
+    if classifier_backend.lower() not in {"knn", "svm", "random_forest"}:
+        raise ValueError(
+            f"Unknown classifier_backend: {classifier_backend!r}. "
+            "Choose 'knn', 'svm', or 'random_forest'."
+        )
+
+    clustering = Clustering(
+        feature_matrix=feature_matrix,
+        energies=energies,
+        molecules=molecules,
+        metric=metric,
+        normalize=False,
+        logger=logger,
+    )
+
+    log("\n ----- Feature Filtering and Outlier Removal ----- \n")
+    clustering.filter_low_variance_features(threshold=0.0005)
+    clustering.detect_outliers_isolation_forest(contamination=0.4, n_estimators=100)
+
+    embedding_10d = clustering.umap(n_components=10, n_neighbors=15, min_dist=0.1)
+    clustering._feature_matrix_normalized = embedding_10d  # Cache the 10D embedding for downstream steps
+    clustering.detect_outliers_local_outlier_factor(n_neighbors=20, contamination=0.3)
+
+    # Outlier removal may have pruned rows — pull the cleaned pool back from clustering
+    embedding_10d = clustering._feature_matrix_normalized
+    log(f"After filtering and outlier removal, {embedding_10d.shape[0]} configurations remain for clustering.")
+
+    n_clusters = min(n_clusters, embedding_10d.shape[0])
+    labels, _ = clustering.run_clustering(method=clustering_method, n_clusters=n_clusters)
+    clustering.evaluate_all_metrics(labels=labels, ignore_noise=True)
+
+    def stability_clustering_fn(X, n_clusters=n_clusters):
+        return kmeans_clustering(X, n_clusters=n_clusters, random_state=42)
+
+    clustering.compute_pertubation_stability(
+        clustering_fn=stability_clustering_fn,
+        n_repeats=5,
+        subsample_fraction=0.85,
+        random_seed=42,
+    )
+
+    if embedding_plot_path:
+        clustering.plot_embedding(
+            embedding_10d,
+            title=embedding_plot_title,
+            labels=labels,
+            save_path=embedding_plot_path,
+        )
+
+    rep_indices = None
+    if compute_representatives:
+        rep_indices = clustering.get_cluster_representatives(method="lowest_energy")
+
+    kwargs = classifier_kwargs or {}
+    log(f"\nTraining {classifier_backend.upper()} classifier on the 10D UMAP embedding...")
+    clustering.train_classifier(
+        model_type=classifier_backend.lower(),
+        x_train=embedding_10d,
+        y_train=labels,
+        **kwargs,
+    )
+    clustering.evaluate_classifier(
+        x=embedding_10d, y=labels, n_splits=5, save_dir=classifier_eval_dir
+    )
+
+    return clustering, embedding_10d, labels, rep_indices
 
 
 class ClusterInitializer:
@@ -147,7 +271,7 @@ class ClusterInitializer:
         n_theta: Optional[int] = None,
         n_phi: Optional[int] = None,
         n_r: Optional[int] = None,
-    ) -> Tuple[List[Molecule], List[List[int]], SimulationBox, "Clustering"]:
+    ) -> Tuple[List[Molecule], List[List[int]], SimulationBox, "Clustering", np.ndarray]:
         """Run the full initialization workflow from an XYZ structure.
 
         Args:
@@ -162,47 +286,25 @@ class ClusterInitializer:
             n_r:                Radial grid points (grid mode only).
 
         Returns:
-            Tuple of (selected_molecules, submolecule_indices, simulation_box, clustering).
-            `clustering` is the fitted Clustering instance from the initialization pipeline —
-            it carries the trained UMAP embedding/mapper, cluster labels, training feature
-            matrix, and the trained classifier (as `clustering.classifier_model`), so the
-            whole reference model can be passed around and reused (e.g. for incremental
+            Tuple of (selected_molecules, submolecule_indices, simulation_box,
+            clustering, raw_feature_matrix).
+
+            `clustering` is the fitted Clustering instance from the initialization
+            pipeline — it carries the trained UMAP embedding/mapper, cluster labels,
+            and the trained classifier (`clustering.classifier_model`), so the whole
+            reference model can be passed around and reused (e.g. for incremental
             refits during BHMC) as a single object.
+
+            `raw_feature_matrix` is the SOAP descriptor matrix built right after
+            Z-score energy filtering but before any clustering-side feature pruning
+            or outlier removal — keep it around to extend or retrain the model later
+            without recomputing features from scratch.
         """
         time_start = time.time()
-
-        if self.logger:
-            self.logger.header("Cluster Initialization")
-            self.logger.info(
-                f"Initialization started at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            )
-            backend_str = (
-                f"{self.config.backend} ({self.config.xtb_method})"
-                if self.config.backend == "xtb"
-                else self.config.backend
-            )
-            msg = (
-                f"Configuration:\n"
-                f"  XYZ file:              {xyz_file}\n"
-                f"  n_workers:             {n_workers}\n"
-                f"  n_configurations:      {n_configurations}\n"
-                f"  Total candidates:      {n_sampling_workers * n_configurations}\n"
-                f"  placing_method:        {placing_method}\n"
-                f"  energy_backend:        {backend_str}\n"
-                f"  classifier_backend:    {self.config.classifier_backend}\n"
-            )
-            if placing_method == "grid":
-                msg += (
-                    f"  grid_spacing:          {grid_spacing}\n"
-                    f"  n_theta={n_theta}  n_phi={n_phi}  n_r={n_r}\n"
-                )
-            if self.config.classifier_kwargs:
-                msg += f"  classifier_kwargs:     {self.config.classifier_kwargs}\n"
-            if self.config.optimize_submolecules:
-                msg += "  optimize_submolecules: True\n"
-            if self.config.optimize_cluster_representatives:
-                msg += "  optimize_cluster_representatives: True\n"
-            self.logger.info(msg)
+        self._log_run_configuration(
+            xyz_file, n_workers, n_configurations, n_sampling_workers,
+            placing_method, grid_spacing, n_theta, n_phi, n_r,
+        )
 
         # Step 1: Load molecule
         molecule = self._load_molecule(xyz_file)
@@ -233,17 +335,117 @@ class ClusterInitializer:
             n_sampling_workers=n_sampling_workers,
         )
 
-        # Step 6: Energy prescreening
-        self.energy_evaluator = EnergyEvaluator(
-            backend=self.config.backend,
-            qm_method=self.config.qm_method,
-            qm_basis=self.config.qm_basis,
-            xtb_method=self.config.xtb_method,
-            gpaw_mode=self.config.gpaw_mode,
-            gpaw_basis=self.config.gpaw_basis,
-            gpaw_xc=self.config.gpaw_xc,
+        # Step 6: Energy prescreening + Z-score filtering
+        scored, failed = self._prescreen_candidates(initial_molecules, n_sampling_workers)
+        mols_raw, energies_raw, e_min, e_max, n_workers = self._finalize_candidate_pool(
+            scored, failed, n_workers
+        )
+        mols, energies = self._apply_outlier_filtering(mols_raw, energies_raw)
+
+        # Step 7: Build the feature matrix and run the clustering pipeline
+        if self.logger:
+            self.logger.section("Initialization of Feature Matrix and Clustering")
+        feature_mat_raw = self._build_feature_matrix(mols)
+        clustering, embedding_10d, labels, rep_indices = run_clustering_and_classifier_pipeline(
+            feature_matrix=feature_mat_raw,
+            n_clusters=n_workers,
+            molecules=mols,
+            energies=energies,
+            clustering_method=self.config.clustering_method,
+            classifier_backend=self.config.classifier_backend,
+            classifier_kwargs=self.config.classifier_kwargs,
+            compute_representatives=True,
+            logger=self.logger,
+            log_fn=self._log,
+            embedding_plot_path="figures/initialization_umap_clusters.png",
+            embedding_plot_title="Initialization UMAP Embedding with Cluster Labels",
+        )
+        mols, energies = clustering.molecules, clustering.energies
+
+        # Step 9: Pick one representative per cluster and resolve RMSD duplicates
+        selected_molecules = self._select_unique_representatives(
+            rep_indices, mols, energies, labels, embedding_10d
         )
 
+        # Step 10: Optionally locally optimize the selected representatives
+        if self.config.optimize_cluster_representatives:
+            selected_molecules = self._optimize_representatives(selected_molecules)
+        else:
+            self._log("Skipping optimization of selected representatives (disabled in config).")
+
+        self._log_initialization_summary(
+            initial_molecules, submolecules, simulation_box, n_sampling_workers,
+            n_configurations, scored, failed, selected_molecules, e_min, e_max, time_start,
+        )
+        self._check_clustering_artifacts(clustering)
+
+        if self.logger:
+            self.logger.separator()
+
+        return selected_molecules, submol_indices, simulation_box, clustering, feature_mat_raw
+
+    # ------------------------------------------------------------------
+    # initialize_from_xyz: step helpers
+    # ------------------------------------------------------------------
+
+    def _log_run_configuration(
+        self,
+        xyz_file: str,
+        n_workers: int,
+        n_configurations: int,
+        n_sampling_workers: int,
+        placing_method: str,
+        grid_spacing: Optional[str],
+        n_theta: Optional[int],
+        n_phi: Optional[int],
+        n_r: Optional[int],
+    ) -> None:
+        """Log the initialization header and resolved run configuration (no-op without a logger)."""
+        if not self.logger:
+            return
+        self.logger.header("Cluster Initialization")
+        self.logger.info(
+            f"Initialization started at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+        backend_str = (
+            f"{self.config.backend} ({self.config.xtb_method})"
+            if self.config.backend == "xtb"
+            else self.config.backend
+        )
+        msg = (
+            f"Configuration:\n"
+            f"  XYZ file:              {xyz_file}\n"
+            f"  n_workers:             {n_workers}\n"
+            f"  n_configurations:      {n_configurations}\n"
+            f"  Total candidates:      {n_sampling_workers * n_configurations}\n"
+            f"  placing_method:        {placing_method}\n"
+            f"  energy_backend:        {backend_str}\n"
+            f"  classifier_backend:    {self.config.classifier_backend}\n"
+        )
+        if placing_method == "grid":
+            msg += (
+                f"  grid_spacing:          {grid_spacing}\n"
+                f"  n_theta={n_theta}  n_phi={n_phi}  n_r={n_r}\n"
+            )
+        if self.config.classifier_kwargs:
+            msg += f"  classifier_kwargs:     {self.config.classifier_kwargs}\n"
+        if self.config.optimize_submolecules:
+            msg += "  optimize_submolecules: True\n"
+        if self.config.optimize_cluster_representatives:
+            msg += "  optimize_cluster_representatives: True\n"
+        self.logger.info(msg)
+
+    def _prescreen_candidates(
+        self,
+        initial_molecules: List[Molecule],
+        n_sampling_workers: int,
+    ) -> Tuple[List[Tuple[float, Molecule]], int]:
+        """Evaluate the energy of every candidate, in parallel if n_sampling_workers > 1.
+
+        Returns:
+            (scored, failed) — scored is a list of (energy, molecule) pairs for
+            successful evaluations, failed is the count of failed evaluations.
+        """
         scored: List[Tuple[float, Molecule]] = []
         failed = 0
 
@@ -305,7 +507,20 @@ class ClusterInitializer:
                     failed += 1
 
         self._log(f"\nEnergy evaluation complete: {len(scored)} successful, {failed} failed")
+        return scored, failed
 
+    def _finalize_candidate_pool(
+        self,
+        scored: List[Tuple[float, Molecule]],
+        failed: int,
+        n_workers: int,
+    ) -> Tuple[List[Molecule], List[float], float, float, int]:
+        """Validate the scored pool, sort by energy, and write the initialization trajectory.
+
+        Returns:
+            (mols_raw, energies_raw, e_min, e_max, n_workers) — n_workers is
+            clamped down to len(scored) if fewer valid configurations were found.
+        """
         if len(scored) == 0:
             raise RuntimeError("All energy evaluations failed — cannot select initial configurations.")
 
@@ -331,11 +546,19 @@ class ClusterInitializer:
             self.logger.separator()
             self.logger.section("Filtering and Data Preparation for Clustering")
 
+        return mols_raw, energies_raw, e_min, e_max, n_workers
+
+    def _apply_outlier_filtering(
+        self,
+        mols_raw: List[Molecule],
+        energies_raw: List[float],
+    ) -> Tuple[List[Molecule], List[float]]:
+        """Remove high-energy outliers via Z-score filtering and plot the before/after distributions."""
         self._log("Performing Z-score filtering to remove high-energy outliers...")
         self._log(
             f"Energy statistics before filtering: "
             f"mean={np.mean(energies_raw):.6f}, std={np.std(energies_raw):.6f}, "
-            f"min={e_min:.6f}, max={e_max:.6f} Hartree"
+            f"min={min(energies_raw):.6f}, max={max(energies_raw):.6f} Hartree"
         )
         mols, energies = self.filter_high_energy_outliers(mols_raw, energies_raw, Z_threshold=3.0)
         self._log(
@@ -343,111 +566,52 @@ class ClusterInitializer:
             f"mean={np.mean(energies):.6f}, std={np.std(energies):.6f}, "
             f"min={min(energies):.6f}, max={max(energies):.6f} Hartree"
         )
-        n_filtered = len(scored) - len(mols)
-        self._log(f"Filtered out {n_filtered} high-energy outliers.")
+        self._log(f"Filtered out {len(mols_raw) - len(mols)} high-energy outliers.")
 
         self.plot_energy_distribution_filtering(
             energies_before=energies_raw,
             energies_after=energies,
             save_path="figures/energy_distribution_filtering.png",
         )
+        return mols, energies
 
-        self.logger.section("Initialization of Feature Matrix and Clustering")
-        # --- Clustering pipeline ---
+    def _build_feature_matrix(self, mols: List[Molecule]) -> np.ndarray:
+        """Build the SOAP descriptor feature matrix for the given molecules."""
         featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
-        feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
+        return featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
 
+    def _select_unique_representatives(
+        self,
+        rep_indices: Dict[int, int],
+        mols: List[Molecule],
+        energies: List[float],
+        labels: np.ndarray,
+        embedding_10d: np.ndarray,
+    ) -> List[Molecule]:
+        """Pick the lowest-energy representative per cluster and resolve RMSD near-duplicates.
 
-        # INITIALIZATION OF THE CLUSTERING CLASS
-        clustering = Clustering(
-            feature_matrix=feature_mat, energies=energies, molecules=mols, metric="cityblock", normalize=False, logger=self.logger
-        )
-
-        self._log("\n ----- Feature Filtering and Outlier Removal ----- \n")
-
-        # C1 & C2: FEATURE FILTERING AND OUTLIER REMOVEL
-
-        clustering.filter_low_variance_features(threshold=0.0005)
-
-        # C2: Isolation Forest outlier removal
-        iforest_res = clustering.detect_outliers_isolation_forest(contamination=0.4, n_estimators=100)
-
-        # STEP C3 and C4 UMAP and LOF Cleanup
-        embedding_10d = clustering.umap(n_components=10, n_neighbors=15, min_dist=0.1)
-        clustering._feature_matrix_normalized = embedding_10d  # Cache the 10D embedding for downstream steps
-
-        lof_res = clustering.detect_outliers_local_outlier_factor(n_neighbors=20, contamination=0.3)
-
-        # Now that the cleanup is done we can extract the mols and energies from the class
-        mols = clustering.molecules
-        energies = clustering.energies
-        self._log(f"After filtering and outlier removal, {len(mols)} configurations remain for clustering.")
-
-        
-        # Get final feature matrix
-        embedding_10d = clustering._feature_matrix_normalized
-
-        # STEP C5 Clustering and Noise Robustness Assessment
-        n_clusters = min(n_workers, len(mols))
-        labels, _ = clustering.run_clustering(method = "kmeans", n_clusters=n_clusters)
-        
-        # STEP C6: Evaluate all clustering metrics
-        metrics = clustering.evaluate_all_metrics(labels=labels, ignore_noise=True)
-
-        # STEP C7: Plot the Embedding with Cluster Labels
-        clustering.plot_embedding(
-            embedding_10d,
-            title="Initialization UMAP Embedding with Cluster Labels",
-            labels=labels,
-            save_path="figures/initialization_umap_clusters.png",
-        )
-
-
-        # C7: Train classifier for online structure assignment during BHMC
-        kwargs = self.config.classifier_kwargs or {}
-
-        # Double Check if the model exists
-        if self.config.classifier_backend.lower() not in {"knn", "svm", "random_forest"}:
-            raise ValueError(
-                f"Unknown classifier_backend: {self.config.classifier_backend!r}. "
-                "Choose 'knn', 'svm', or 'random_forest'."
-            )
-
-        self._log(f"\nTraining {self.config.classifier_backend.upper()} classifier on the 10D UMAP embedding...")
-        clustering.train_classifier(
-            model_type = self.config.classifier_backend.lower(),
-            x_train = embedding_10d,
-            y_train = labels,
-            **kwargs
-        )
-
-        # C8: Pick lowest-energy representative per cluster
-        rep_indices = clustering.get_cluster_representatives(method="lowest_energy")
-        
-        
-        selected_molecules = [mols[rep_indices[cluster_id]] for cluster_id in sorted(rep_indices.keys())]
-        
-
-        # C9: Delete Duplicate Representative and fall back to centroids
-        self._log("RMSD Based Checking for Duplicate Representatives...") 
-        cluster_labels_arr = np.asarray(labels)
+        If two representatives are within `rmsd_threshold` Å of each other, the
+        higher-energy one is discarded and replaced with the structure in its
+        cluster closest to the UMAP centroid (excluding the discarded index).
+        """
+        self._log("RMSD Based Checking for Duplicate Representatives...")
         cluster_order = list(rep_indices.keys())
+        cluster_labels_arr = np.asarray(labels)
         discarded_clusters = set()
 
-        # Identify the duplicates
         for i, cluster_i in enumerate(cluster_order):
             if cluster_i in discarded_clusters:
                 continue
             idx_i = rep_indices[cluster_i]
-            mol_i = selected_molecules[i]
+            mol_i = mols[idx_i]
 
-            for cluster_j in cluster_order[i+1:]:
+            for cluster_j in cluster_order[i + 1:]:
                 if cluster_j in discarded_clusters:
                     continue
                 idx_j = rep_indices[cluster_j]
-                mol_j = mols[idx_j] 
+                mol_j = mols[idx_j]
 
-                rmsd = self._calculate_rmsd(mol_i.coordinates, mol_j.coordinates) 
+                rmsd = self._calculate_rmsd(mol_i.coordinates, mol_j.coordinates)
                 if rmsd < self.config.rmsd_threshold:
                     # Eliminate the one with higher energy
                     if energies[idx_i] < energies[idx_j]:
@@ -463,50 +627,66 @@ class ClusterInitializer:
             if cluster_id not in discarded_clusters:
                 # Keep the original globally lowest-energy cluster configuration
                 selected_molecules.append(mols[rep_indices[cluster_id]])
-            else:
-                # Fall back to picking closest to centroid if the representative was discarded
-                self._log(f"   Applying centroid fallback for cluster {cluster_id}...")
-                member_indices = np.where(cluster_labels_arr == cluster_id)[0]
+                continue
 
-                # Exclude the duplicate configuration we just threw out
-                fallback_pool = [idx for idx in member_indices if idx != rep_indices[cluster_id]]
+            # Fall back to picking closest to centroid if the representative was discarded
+            self._log(f"   Applying centroid fallback for cluster {cluster_id}...")
+            member_indices = np.where(cluster_labels_arr == cluster_id)[0]
 
-                if not fallback_pool:
-                    self._log(f"   No valid fallback candidates for cluster {cluster_id}. Skipping this cluster.", level="warning")
-                    selected_molecules.append(mols[rep_indices[cluster_id]])  # Keep the original representative
-                    continue
+            # Exclude the duplicate configuration we just threw out
+            fallback_pool = [idx for idx in member_indices if idx != rep_indices[cluster_id]]
 
-                # Compute centroid in feature space
-                cluster_embeddings = embedding_10d[cluster_labels_arr == cluster_id]
-                umap_centroid = np.mean(cluster_embeddings, axis=0)
+            if not fallback_pool:
+                self._log(f"   No valid fallback candidates for cluster {cluster_id}. Skipping this cluster.", level="warning")
+                selected_molecules.append(mols[rep_indices[cluster_id]])  # Keep the original representative
+                continue
 
-                best_fallback_idx = fallback_pool[0]
-                min_distance = float('inf')
-                for idx in fallback_pool:
-                    dist = np.linalg.norm(embedding_10d[idx] - umap_centroid)
-                    if dist < min_distance:
-                        min_distance = dist
-                        best_fallback_idx = idx
-                selected_molecules.append(mols[best_fallback_idx])
-                self._log(f"   Selected fallback representative for cluster {cluster_id} with UMAP distance {min_distance:.3f}")
+            # Compute centroid in feature space
+            cluster_embeddings = embedding_10d[cluster_labels_arr == cluster_id]
+            umap_centroid = np.mean(cluster_embeddings, axis=0)
 
-        # C10: Optionally locally optimize the selected representatives
-        if self.config.optimize_cluster_representatives:
-            self._log(f"\nOptimizing {len(selected_molecules)} selected representatives...")
-            for i, mol in enumerate(selected_molecules):
-                self._log(f"  Representative {i + 1}/{len(selected_molecules)}...")
-                try:
-                    optimized = self.energy_evaluator.optimize_geometry(
-                        mol, optimizer="LBFGS", trajectory_fp=None
-                    )
-                    selected_molecules[i] = optimized
-                    self._log("    Optimization successful")
-                except Exception as exc:
-                    self._log(f"    Optimization failed: {exc}", level="error")
-        else:
-            self._log("Skipping optimization of selected representatives (disabled in config).")
+            best_fallback_idx = fallback_pool[0]
+            min_distance = float("inf")
+            for idx in fallback_pool:
+                dist = np.linalg.norm(embedding_10d[idx] - umap_centroid)
+                if dist < min_distance:
+                    min_distance = dist
+                    best_fallback_idx = idx
+            selected_molecules.append(mols[best_fallback_idx])
+            self._log(f"   Selected fallback representative for cluster {cluster_id} with UMAP distance {min_distance:.3f}")
 
-        # Summary
+        return selected_molecules
+
+    def _optimize_representatives(self, selected_molecules: List[Molecule]) -> List[Molecule]:
+        """Locally re-optimize each selected representative geometry."""
+        self._log(f"\nOptimizing {len(selected_molecules)} selected representatives...")
+        optimized_molecules = list(selected_molecules)
+        for i, mol in enumerate(optimized_molecules):
+            self._log(f"  Representative {i + 1}/{len(optimized_molecules)}...")
+            try:
+                optimized_molecules[i] = self.energy_evaluator.optimize_geometry(
+                    mol, optimizer="LBFGS", trajectory_fp=None
+                )
+                self._log("    Optimization successful")
+            except Exception as exc:
+                self._log(f"    Optimization failed: {exc}", level="error")
+        return optimized_molecules
+
+    def _log_initialization_summary(
+        self,
+        initial_molecules: List[Molecule],
+        submolecules: List[Molecule],
+        simulation_box: SimulationBox,
+        n_sampling_workers: int,
+        n_configurations: int,
+        scored: List[Tuple[float, Molecule]],
+        failed: int,
+        selected_molecules: List[Molecule],
+        e_min: float,
+        e_max: float,
+        time_start: float,
+    ) -> None:
+        """Log a summary of the completed initialization run."""
         summary_lines = [
             f"{'=' * 60}",
             "Initialization Complete!",
@@ -520,25 +700,19 @@ class ClusterInitializer:
         ]
         if simulation_box.box_type == "sphere":
             summary_lines.append(f"  Box radius:       {simulation_box.radius:.2f} Å")
-            summary_lines.append(f"  Box volume:       {simulation_box.get_volume():.2f} Å³")
         else:
             summary_lines.append(f"  Box dimensions:   {simulation_box.box_dimensions}")
-            summary_lines.append(f"  Box volume:       {simulation_box.get_volume():.2f} Å³")
+        summary_lines.append(f"  Box volume:       {simulation_box.get_volume():.2f} Å³")
 
         self._log("\n".join(summary_lines))
         self._log(f"Total initialization time: {time.time() - time_start:.2f} s")
 
-        # Finally check if the clustering object has the classifier and the umap embedding
-        if not hasattr(clustering, "classifier_model") or clustering.classifier_model is None:
+    def _check_clustering_artifacts(self, clustering: Clustering) -> None:
+        """Warn if the returned Clustering instance is missing its trained classifier or UMAP model."""
+        if getattr(clustering, "classifier_model", None) is None:
             self._log("Warning: Classifier model is not set in the clustering object.", level="warning")
-        if not hasattr(clustering, "umap_model") or clustering.umap_model is None:
+        if getattr(clustering, "umap_model", None) is None:
             self._log("Warning: UMAP model is not set in the clustering object.", level="warning")
-
-
-        if self.logger:
-            self.logger.separator()
-
-        return selected_molecules, submol_indices, simulation_box, clustering
 
     # ------------------------------------------------------------------
     # Filtering helpers
@@ -1478,7 +1652,7 @@ def test_initializer(
     )
     initializer = ClusterInitializer(config=config)
     try:
-        initial_molecules, submol_indices, simulation_box, _ = initializer.initialize_from_xyz(
+        initial_molecules, submol_indices, simulation_box, _, _ = initializer.initialize_from_xyz(
             xyz_file,
             n_configurations=n_configurations,
             placing_method=placing_method,

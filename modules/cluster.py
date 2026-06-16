@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import math
-from typing import List, Tuple, Optional, Dict, Any, Union
+from typing import List, Tuple, Optional, Dict, Any, Union, Callable
 from dataclasses import dataclass, field
 from collections import defaultdict
 
@@ -367,6 +367,12 @@ class Clustering:
         """
         return clfs.predict_probabilities(self, x_test)
     
+    def evaluate_classifier(self, x: np.ndarray, y: np.ndarray, n_splits: int = 5, save_dir: Optional[str] = None) -> Dict[str, Any]:
+        """ 
+        Wrapper method that evaluates the classifier model using stratified k-fold cross-validation
+        """
+        return clfs.evaluate_classifier(self, x=x, y=y, n_splits=n_splits, save_dir=save_dir)
+    
     # =========================================================
     # CLUSTER EVALUATION INTERFACE --> modules/cluster_metrics.py
     # =========================================================
@@ -382,7 +388,12 @@ class Clustering:
         Wrapper method that calculates the WCSS for each cluster
         """
         return met.calculate_wcss_per_cluster(self, labels=labels)
-
+    
+    def compute_pertubation_stability(self, clustering_fn: Callable, n_repeats: int = 10, subsample_fraction: float = 0.85, random_seed: int = 42, **clustering_kwargs) -> Dict[str, Any]:
+        """  
+        Wrapper method that computes the perturbation stability of the clustering using the function in cluster_metrics module
+        """
+        return met.compute_pertubation_stability(self, clustering_fn=clustering_fn, n_repeats=n_repeats, subsample_fraction=subsample_fraction, random_seed=random_seed, **clustering_kwargs)
 
     
     # ----- Evaluation and Assessment -----

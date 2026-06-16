@@ -3,8 +3,9 @@ Clustering performance metrics and evaluation
 Handles noise-aware computations for Silhouette Score, Davies-Bouldin Index, and Calinski-Harabasz Index
 """
 import numpy as np
-from typing import Optional, Any, Tuple, Dict
-from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
+from typing import Optional, Any, Tuple, Dict, Callable
+from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score, adjusted_rand_score
+
 
 def evaluate_all_metrics(
         cluster_class: Any,
@@ -74,6 +75,71 @@ def evaluate_all_metrics(
     cluster_class.clustering_metrics = scores
     return scores
 
+def compute_pertubation_stability(
+        cluster_class: Any,
+        clustering_fn: Callable[..., tuple],
+        n_repeats: int = 10,
+        subsample_fraction: float = 0.85,
+        random_seed: int = 42,
+        **clustering_kwargs
+    ) -> Dict[str, float]:
+    """  
+    Measures the structural stability of the unsupervised clustering boundaries.
+    Repeatedly subsets the data, reclusters and evaluates parition consistency via ARI index
+
+    Args:
+        cluster_class: The Clustering instance containing the feature matrix and labels to be evaluated
+        clustering_fn: The clustering function to apply on the subsampled data (e.g. kmeans_clustering)
+        n_repeats: The number of perturbation repeats to perform
+        subsample_fraction: The fraction of data to include in each subsample (e.g. 0.85 for 85%)
+        random_seed: Random seed for reproducibility of subsampling
+        **clustering_kwargs: Additional keyword arguments to pass to the clustering function
+    """
+    # Pull Feature Matrix
+    X = getattr(cluster_class, 'feature_matrix', None)
+    master_labels = getattr(cluster_class, 'labels', None)
+
+    if X is None and master_labels is None:
+        raise ValueError("Feature matrix and labels must be set in the cluster_class for perturbation stability evaluation.")
+    n_samples = X.shape[0]
+    subsample_size = int(n_samples * subsample_fraction)
+
+    cluster_class.log(
+        f"Launching Pertubation Stability Analysis with {n_repeats} repeats, subsample fraction {subsample_fraction}, and random seed {random_seed}."
+    )
+
+    rng = np.random.default_rng(random_seed)
+    ari_scores = []
+
+    for i in range(n_repeats):
+        # Generate Data subsample
+        sub_indices = rng.choice(n_samples, size=subsample_size, replace=False)
+        X_sub = X[sub_indices]
+
+        # Re-run the unsuperivsed pipleine on the sliced coordinate space
+        try:
+            sub_labels, _ = clustering_fn(X_sub, **clustering_kwargs)
+        except Exception as e:
+            cluster_class.log(f"Error during clustering in repeat {i}: {e}")
+            continue
+        matched_master_labels = master_labels[sub_indices]
+        ari = adjusted_rand_score(matched_master_labels, sub_labels)
+        ari_scores.append(ari)
+
+    if not ari_scores:
+        cluster_class.log("No valid ARI scores computed during perturbation stability analysis.")
+        return {"perturbation_stability_ari_mean": None, "perturbation_stability_ari_std": None}
+    
+    mean_ari = np.mean(ari_scores)
+    std_ari = np.std(ari_scores)
+
+    cluster_class.log("\n --- Unsupervised Pertubation Stability Results ---")
+    cluster_class.log(f"  -> Mean Adjusted Rand Index (ARI): {mean_ari:.4f} (Higher is more stable, range [-1, 1])")
+    cluster_class.log(f"  -> Standard Deviation of ARI: {std_ari:.4f} (Lower is more consistent across perturbations)")
+
+    return {"mean_ari": mean_ari, "std_ari": std_ari}
+      
+
 
 def calculate_wcss_per_cluster(cluster_class, labels: Optional[np.ndarray] = None) -> Dict[int, float]:
     """ 
@@ -122,15 +188,22 @@ def _prepare_and_filter_labels(
     return X, y, n_clusters
 
 if __name__ == "__main__":
-    # Example usage with synthetic data
-    from sklearn.datasets import make_blobs
-    
-    X, y = make_blobs(n_samples=300, centers=4, n_features=10, random_state=42)
-    
-    class DummyClusterClass:
-        def log(self, message):
-            print(message)
-    
-    cluster_class = DummyClusterClass()
-    metrics = evaluate_all_metrics(cluster_class, feature_matrix=X, labels=y)
-    print(f"Computed Metrics: {metrics}")
+    from modules.cluster import Clustering
+
+    # Generate mock clustering instance
+    mock_feature_matrix = np.random.rand(100, 10)
+    cluster_class = Clustering(feature_matrix=mock_feature_matrix)
+    # Run a clustering to retrieve labels
+    labels, _ = cluster_class.run_clustering(method="kmeans", n_clusters=5)
+    cluster_class.log("Generated mock clustering instance for testing metrics evaluation.")
+    # Evaluate metrics
+    metrics = evaluate_all_metrics(cluster_class, feature_matrix=mock_feature_matrix, labels=labels)
+    print("Computed Metrics:", metrics)
+
+    # Test the perturbation stability function
+    def mock_clustering_fn(X, n_clusters=5):
+        from sklearn.cluster import KMeans
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+        return kmeans.fit_predict(X), None
+    stability_results = compute_pertubation_stability(cluster_class, clustering_fn=mock_clustering_fn, n_repeats=5) 
+    print("Perturbation Stability Results:", stability_results)

@@ -31,6 +31,7 @@ except ImportError:
 
 from modules.featurizer import Featurizer, FeaturizerConfig
 from modules.cluster import Clustering
+from modules.init import InitializationConfig, run_clustering_and_classifier_pipeline
 from modules.box import SimulationBox
 from modules.bhmc_config import BHMCConfig
 from modules.calculator import EnergyEvaluator
@@ -273,12 +274,36 @@ class BHMC:
     def analyze_training_results(
             self,
             reference_clustering: Clustering,
+            feature_mat_init: np.ndarray,
             structures: Optional[List[Tuple[Molecule, float]]] = None,
-        ) -> List[Tuple[Molecule, float, int]]:
-        """  
-        Runs an analysis on first 25 % of the BHMC run.
-        This method is mainly to test the stability of the classifier model in the reference clustering
-        and then predict the labels of the newly sampled structures in the embedding space
+            init_config: Optional[InitializationConfig] = None,
+        ) -> Optional[Clustering]:
+        """
+        Analyze the first `training_frac` fraction of the BHMC run and use it to improve
+        the reference classifier model.
+
+        Workflow: filter high-energy outliers, featurize with SOAP, embed into the
+        reference UMAP space, predict labels/probabilities with the reference
+        classifier, and flag "novel" structures (the ones the classifier is least
+        confident about). Those novel feature rows are stacked onto the initial raw
+        feature matrix and run back through the same cleaning + clustering +
+        classifier pipeline used during initialization (low-variance pruning,
+        Isolation Forest, UMAP, LOF, clustering, classifier fit/evaluation), producing
+        an updated Clustering instance with a more representative classifier.
+
+        Args:
+            reference_clustering: The fitted Clustering instance from initialize_from_xyz.
+            feature_mat_init:     The raw feature matrix returned alongside it.
+            structures:           (molecule, energy) pairs to analyze; defaults to
+                                   self.accepted_structures.
+            init_config:          The InitializationConfig used to build
+                                   reference_clustering, so the retrain reuses the same
+                                   clustering_method / classifier_backend / classifier_kwargs.
+                                   Falls back to "kmeans" / "knn" / {} if omitted.
+
+        Returns:
+            The retrained Clustering instance, or the unmodified reference_clustering if
+            no novel structures were found, or None if there was nothing to analyze.
         """
         self.logger.section("Analysis of BHMC Training Run")
         if structures is None:
@@ -286,8 +311,8 @@ class BHMC:
 
         if not structures:
             self._log("No structures to analyse.", level="warning")
-            return []
-        
+            return None
+
         mols = [m for m, _ in structures]
         energies = [e for _, e in structures]
         energy_arr = np.array(energies)
@@ -297,13 +322,13 @@ class BHMC:
         self._log(f"After energy Z-score filter: {len(mols)} structures remain")
         if not mols:
             self._log("All structures filtered as high-energy outliers.", level="warning")
-            return []
-        
+            return None
+
         # Featurize with SOAP
         featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
         feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
         self._log(f"SOAP features: {feature_mat.shape[0]} × {feature_mat.shape[1]}")
-        
+
         # Embed the new structures using the reference_clustering object
         new_structures_embedding = reference_clustering.embed_new_structures(x_new = feature_mat)
         # Predict cluster labels using the classifier model in the reference clustering
@@ -324,8 +349,47 @@ class BHMC:
             embedding_new = new_structures_embedding,
             threshold_percentile = 25.0
         )
+        if len(novel_indices) == 0:
+            self._log("No novel structures detected — keeping the existing reference model.")
+            return reference_clustering
 
+        # Combine Raw Features and Feature Matrix for the new structures
+        novel_feature_mat = feature_mat[novel_indices]
+        self._log(f"Novel structures feature mat shape: {novel_feature_mat.shape}")
+        self._log(f"Combining with initial feature matrix shape: {feature_mat_init.shape}")
+        combined_feature_mat = np.vstack([feature_mat_init, novel_feature_mat])
 
+        # Retrain on the combined pool using the same recipe as initialize_from_xyz.
+        # No molecules/energies are carried over here, so representative picking is
+        # skipped — this retrain is purely to refresh the clustering + classifier.
+        n_clusters = (
+            len(np.unique(reference_clustering.labels))
+            if reference_clustering.labels is not None
+            else 1
+        )
+        clustering_method = getattr(init_config, "clustering_method", "kmeans")
+        classifier_backend = getattr(init_config, "classifier_backend", "knn")
+        classifier_kwargs = getattr(init_config, "classifier_kwargs", None)
+
+        self._log(
+            f"\nRetraining clustering + {classifier_backend.upper()} classifier on "
+            f"{combined_feature_mat.shape[0]} combined structures..."
+        )
+        updated_clustering, _, _, _ = run_clustering_and_classifier_pipeline(
+            feature_matrix=combined_feature_mat,
+            n_clusters=n_clusters,
+            clustering_method=clustering_method,
+            classifier_backend=classifier_backend,
+            classifier_kwargs=classifier_kwargs,
+            metric=reference_clustering.metric,
+            compute_representatives=False,
+            logger=self.logger,
+            log_fn=self._log,
+            embedding_plot_path="figures/bhmc_retrained_umap_clusters.png",
+            embedding_plot_title="Retrained UMAP Embedding with Cluster Labels",
+            classifier_eval_dir="figures/classifier_evaluation_retrained",
+        )
+        return updated_clustering
 
 
 

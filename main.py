@@ -63,6 +63,11 @@ if __name__ == "__main__":
     o_l_train = operator_dict.get("L-OpsTraining", {})
     o_train = list({**o_nl_train, **o_l_train}.items())  # Combine into a list of (name, weight) tuples
 
+    # Get the operators for sampling
+    o_nl_sampling = operator_dict.get("NL-OPsMain", {})
+    o_l_sampling = operator_dict.get("L-OPsMain", {})
+    o_sampling = list({**o_nl_sampling, **o_l_sampling}.items()) # Combine into a list of (name, weight) tuples
+
 
     
 
@@ -118,7 +123,7 @@ if __name__ == "__main__":
     # obtain settings for xyz initialization
     settings_xyz_init = settings.get("InitializeXYZ", {})
     
-    initial_molecules, submol_indices, simulation_box, init_clustering = initializer.initialize_from_xyz(
+    initial_molecules, submol_indices, simulation_box, init_clustering, feature_mat_raw = initializer.initialize_from_xyz(
         args.i[0],
         n_workers=settings_xyz_init["n_workers"],
         n_configurations=settings_xyz_init["n_configurations"],
@@ -172,7 +177,7 @@ if __name__ == "__main__":
     # Compute Distance Matrix of Coloumb Matrix
     structure_analysis.plot_distance_matrix_heatmap(metric="euclidean", use_optimized=True, save_path="figures/distance_matrix_heatmap.png")
     # Cluster the optimized structures and obtain unique representatives
-    unique_indices, unique_mols = structure_analysis.get_unique_structures()
+    unique_indices, unique_mols = structure_analysis.get_unique_structures(use_optimized=True)
     logger.info(f"Number of unique structures after optimization: {len(unique_mols)}")
 
     logger.write_xyz_trajectory(
@@ -251,10 +256,56 @@ if __name__ == "__main__":
         filepath="trajectories/bhmc_structures.xyz",
         energies=[e for _, e in accepted_structures],
     )
-    bhmc_sampler.analyze_training_results(reference_clustering = init_clustering)
+    updated_clustering = bhmc_sampler.analyze_training_results(
+        reference_clustering=init_clustering,
+        feature_mat_init=feature_mat_raw,
+        init_config=init_config,
+    )
+    if updated_clustering is not None:
+        init_clustering = updated_clustering
 
-
-
-
-
+    # 4.b -> Continue Sampling with an updated operator distribution
+    n_sampling_steps = settings_bhmc["n_steps_per_worker"] - n_training_steps
     
+    logger.info(f"Continuing BHMC sampling with {n_sampling_steps} sampling steps per worker (total steps: {settings_bhmc['n_steps_per_worker']})")
+    
+    # Setup new config
+    bhmc_config_sampling = BHMCConfig(
+        backend=settings_bhmc["backend"],
+        qm_method = settings_bhmc["qm_method"],
+        qm_basis = settings_bhmc["qm_basis"],
+        xtb_method = settings_bhmc["xtb_method"],
+        gpaw_mode = settings_bhmc["gpaw_mode"],
+        gpaw_basis = settings_bhmc["gpaw_basis"],
+        gpaw_xc = settings_bhmc["gpaw_xc"],
+        temperature = settings_bhmc["temperature"],
+        verbose = settings_bhmc["verbose"],
+        adaptive_operators = settings_bhmc["adaptive_operators"],
+        adaptive_box = settings_bhmc["adaptive_box"],
+        box_update_interval = settings_bhmc["box_update_interval"],
+        box_target_acceptance = settings_bhmc["box_target_acceptance"],
+        box_acceptance_window = settings_bhmc["box_acceptance_window"],
+        box_growth_kp = settings_bhmc["box_growth_kp"],
+        box_growth_max = settings_bhmc["box_growth_max"],
+        box_max_scale = settings_bhmc["box_max_scale"],
+        box_stable_windows = settings_bhmc["box_stable_windows"],
+        operators = o_sampling,
+    )
+    bhmc_sampler_sampling = BHMC(
+        config=bhmc_config_sampling,
+        simulation_box=simulation_box,
+        logger=logger,
+        worker_log_file="bhmc_sampling_workers.log",
+    )
+    accepted_structures_sampling = bhmc_sampler_sampling.run(
+        initial_molecules=unique_mols,
+        submolecule_indices=submol_indices,
+        n_steps_per_worker=n_sampling_steps,
+        n_processes=len(unique_mols),
+    )
+    logger.info(f"BHMC sampling complete: {len(accepted_structures_sampling)} structures accepted")
+    logger.write_xyz_trajectory(
+        molecules=[m for m, _ in accepted_structures_sampling],
+        filepath="trajectories/bhmc_sampling_structures.xyz",
+        energies=[e for _, e in accepted_structures_sampling],
+    )

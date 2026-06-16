@@ -13,6 +13,8 @@ InitializationConfig:
 + xtb_method = "GFN2-xTB"
 + gpaw_mode = "lcao"
 + gpaw_xc = "B3LYP"
++ clustering_method = "kmeans"
++ clustering_kwargs = None
 + classifier_backend = "knn"
 + classifier_kwargs = None
 + box_type = "sphere"

@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Tuple
-
+from typing import List, Tuple, Optional, Dict, Any
 
 @dataclass
 class BHMCConfig:
@@ -50,3 +49,8 @@ class BHMCConfig:
     box_growth_max: float = 1.15
     box_max_scale: float = 2.0
     box_stable_windows: int = 3
+
+    # Clustering and Classifier Retraining
+    clustering_method: str = "kmeans"
+    classifier_backend: str = "knn"
+    classifier_kwargs: Optional[Dict[str, Any]] = None

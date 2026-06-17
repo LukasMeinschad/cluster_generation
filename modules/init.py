@@ -13,7 +13,7 @@ import time
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,7 +21,6 @@ from scipy.stats import qmc
 
 from modules.calculator import EnergyEvaluator
 from modules.cluster import Clustering
-from modules.cluster_algs import kmeans_clustering
 from modules.featurizer import Featurizer, FeaturizerConfig
 from modules.box import SimulationBox
 from modules.geometry import GeometryOps
@@ -93,126 +92,6 @@ class InitializationConfig:
                 continue
         scored.sort(key=lambda x: x[0])
         return scored[:n_keep]
-
-
-def run_clustering_and_classifier_pipeline(
-    feature_matrix: np.ndarray,
-    n_clusters: int,
-    molecules: Optional[List[Molecule]] = None,
-    energies: Optional[List[float]] = None,
-    clustering_method: str = "kmeans",
-    classifier_backend: str = "knn",
-    classifier_kwargs: Optional[dict] = None,
-    metric: str = "cityblock",
-    compute_representatives: bool = True,
-    logger: Optional[Logger] = None,
-    log_fn: Optional[Callable[[str], None]] = None,
-    embedding_plot_path: Optional[str] = None,
-    embedding_plot_title: str = "UMAP Embedding with Cluster Labels",
-    classifier_eval_dir: Optional[str] = "figures/classifier_evaluation",
-) -> Tuple[Clustering, np.ndarray, np.ndarray, Optional[Dict[int, int]]]:
-    """Clean a feature matrix and fit a clustering + classifier pipeline on it.
-
-    Steps: low-variance feature pruning, Isolation Forest outlier removal, 10D
-    UMAP embedding, Local Outlier Factor cleanup on the embedding, the
-    configured clustering algorithm, metric evaluation, perturbation
-    stability, an optional labeled embedding plot, and training/evaluating
-    the online structure-assignment classifier.
-
-    This is shared by `ClusterInitializer.initialize_from_xyz` (first build,
-    where `molecules`/`energies` are known and representatives are picked)
-    and `BHMC.analyze_training_results` (retraining on initial + novel
-    features after a BHMC run, where representatives aren't needed) so both
-    paths build their `Clustering` instance identically.
-
-    Args:
-        feature_matrix:          Descriptor matrix to clean and cluster.
-        n_clusters:               Target cluster count (clamped to the post-cleanup pool size).
-        molecules:                 Molecules aligned to feature_matrix rows, if available.
-        energies:                  Energies aligned to feature_matrix rows, if available.
-        clustering_method:         "kmeans" | "agglomerative" | "dbscan" | "hdbscan".
-        classifier_backend:        "knn" | "svm" | "random_forest".
-        classifier_kwargs:         Extra kwargs forwarded to the classifier constructor.
-        metric:                    Distance metric for clustering and classification.
-        compute_representatives:   Whether to pick a lowest-energy representative per
-                                    cluster (requires `energies` to be set).
-        logger:                    Optional Logger forwarded to the Clustering instance.
-        log_fn:                    Optional logging callback (defaults to `print`).
-        embedding_plot_path:       Where to save the labeled embedding plot, or None to skip.
-        embedding_plot_title:      Title for the embedding plot.
-        classifier_eval_dir:       Where to save classifier cross-validation diagnostics.
-
-    Returns:
-        (clustering, embedding_10d, labels, rep_indices) — rep_indices is None
-        unless compute_representatives is True.
-    """
-    log = log_fn or print
-    if classifier_backend.lower() not in {"knn", "svm", "random_forest"}:
-        raise ValueError(
-            f"Unknown classifier_backend: {classifier_backend!r}. "
-            "Choose 'knn', 'svm', or 'random_forest'."
-        )
-
-    clustering = Clustering(
-        feature_matrix=feature_matrix,
-        energies=energies,
-        molecules=molecules,
-        metric=metric,
-        normalize=False,
-        logger=logger,
-    )
-
-    log("\n ----- Feature Filtering and Outlier Removal ----- \n")
-    clustering.filter_low_variance_features(threshold=0.0005)
-    clustering.detect_outliers_isolation_forest(contamination=0.4, n_estimators=100)
-
-    embedding_10d = clustering.umap(n_components=10, n_neighbors=15, min_dist=0.1)
-    clustering._feature_matrix_normalized = embedding_10d  # Cache the 10D embedding for downstream steps
-    clustering.detect_outliers_local_outlier_factor(n_neighbors=20, contamination=0.3)
-
-    # Outlier removal may have pruned rows — pull the cleaned pool back from clustering
-    embedding_10d = clustering._feature_matrix_normalized
-    log(f"After filtering and outlier removal, {embedding_10d.shape[0]} configurations remain for clustering.")
-
-    n_clusters = min(n_clusters, embedding_10d.shape[0])
-    labels, _ = clustering.run_clustering(method=clustering_method, n_clusters=n_clusters)
-    clustering.evaluate_all_metrics(labels=labels, ignore_noise=True)
-
-    def stability_clustering_fn(X, n_clusters=n_clusters):
-        return kmeans_clustering(X, n_clusters=n_clusters, random_state=42)
-
-    clustering.compute_pertubation_stability(
-        clustering_fn=stability_clustering_fn,
-        n_repeats=5,
-        subsample_fraction=0.85,
-        random_seed=42,
-    )
-
-    if embedding_plot_path:
-        clustering.plot_embedding(
-            embedding_10d,
-            title=embedding_plot_title,
-            labels=labels,
-            save_path=embedding_plot_path,
-        )
-
-    rep_indices = None
-    if compute_representatives:
-        rep_indices = clustering.get_cluster_representatives(method="lowest_energy")
-
-    kwargs = classifier_kwargs or {}
-    log(f"\nTraining {classifier_backend.upper()} classifier on the 10D UMAP embedding...")
-    clustering.train_classifier(
-        model_type=classifier_backend.lower(),
-        x_train=embedding_10d,
-        y_train=labels,
-        **kwargs,
-    )
-    clustering.evaluate_classifier(
-        x=embedding_10d, y=labels, n_splits=5, save_dir=classifier_eval_dir
-    )
-
-    return clustering, embedding_10d, labels, rep_indices
 
 
 class ClusterInitializer:
@@ -346,7 +225,7 @@ class ClusterInitializer:
         if self.logger:
             self.logger.section("Initialization of Feature Matrix and Clustering")
         feature_mat_raw = self._build_feature_matrix(mols)
-        clustering, embedding_10d, labels, rep_indices = run_clustering_and_classifier_pipeline(
+        clustering, embedding_10d, labels, rep_indices = Clustering.run_clustering_and_classifier_pipeline(
             feature_matrix=feature_mat_raw,
             n_clusters=n_workers,
             molecules=mols,

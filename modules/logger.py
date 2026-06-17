@@ -140,7 +140,8 @@ class Logger:
             filepath: str,
             energies: Optional[List[float]] = None,
             comments: Optional[List[str]] = None,
-            append: bool = False
+            append: bool = False,
+            sort_by_energy: bool = False
         ) -> None:
         """
         Write a list of Molecuel objects to an XYZ file
@@ -151,14 +152,35 @@ class Logger:
             energies (List[float], optional): List of energies corresponding to each molecule. Defaults to None.
             comments (List[str], optional): List of comments for each molecule. Defaults to None.
             append (bool): Whether to append to the file if it exists. Defaults to False.
+            sort_by_energy (bool): Whether to sort the molecules by energy before writing. Defaults to False.
         """
         if not molecules:
             self.warning("No molecules provided to write to XYZ file.")
             return
+        
+        # Optional energy sorting
+        if sort_by_energy and energies:
+            if len(energies) != len(molecules):
+                self.warning("Length of energies does not match number of molecules. Skipping energy sorting.")
+            
+            combined = []
+            for idx, mol in enumerate(molecules):
+                eng = energies[idx] if energies and idx < len(energies) else None
+                comm = comments[idx] if comments and idx < len(comments) else None
+                combined.append((mol, eng, comm))
+            
+            combined.sort(key=lambda x: x[1] if x[1] is not None else float('inf'))
+            # Unpack and sort back
+            molecules = [item[0] for item in combined]
+            energies = [item[1] for item in combined] if energies else None
+            comments = [item[2] for item in combined] if comments else None
+
         path = Path(filepath)
         path.parent.mkdir(parents=True, exist_ok=True)
         mode = "a" if append else "w"
         n_written = 0
+
+
         with open(path, mode, encoding="utf-8") as f:
             for idx, mol in enumerate(molecules):
                 labels = mol.atom_labels
@@ -171,8 +193,10 @@ class Logger:
                     comment_parts.append(comments[idx])
                 else:
                     comment_parts.append(f"Structure {idx+1}")
-                if energies and idx < len(energies):
+
+                if energies and idx < len(energies) and energies[idx] != float('inf'):
                     comment_parts.append(f"Energy: {energies[idx]:.6f} Hartree")
+
                 comment_line = " | ".join(comment_parts)
                 f.write(f"{n_atoms}\n")
                 f.write(f"{comment_line}\n")
@@ -180,6 +204,7 @@ class Logger:
                     x,y,z = coords[i]
                     f.write(f"{labels[i]} {x:.6f} {y:.6f} {z:.6f}\n")
                 n_written += 1
+
         self.info(f"Wrote {n_written} structures to {filepath}")
 
     def write_single_xyz(

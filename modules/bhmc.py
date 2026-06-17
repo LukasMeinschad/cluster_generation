@@ -31,7 +31,7 @@ except ImportError:
 
 from modules.featurizer import Featurizer, FeaturizerConfig
 from modules.cluster import Clustering
-from modules.init import InitializationConfig, run_clustering_and_classifier_pipeline
+from modules.init import InitializationConfig
 from modules.box import SimulationBox
 from modules.bhmc_config import BHMCConfig
 from modules.calculator import EnergyEvaluator
@@ -375,7 +375,7 @@ class BHMC:
             f"\nRetraining clustering + {classifier_backend.upper()} classifier on "
             f"{combined_feature_mat.shape[0]} combined structures..."
         )
-        updated_clustering, _, _, _ = run_clustering_and_classifier_pipeline(
+        updated_clustering, _, _, _ = Clustering.run_clustering_and_classifier_pipeline(
             feature_matrix=combined_feature_mat,
             n_clusters=n_clusters,
             clustering_method=clustering_method,

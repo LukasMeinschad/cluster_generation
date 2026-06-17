@@ -1,14 +1,18 @@
-import os 
+import os
 import sys
 import logging
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 from contextlib import contextmanager
+
+# Silence and supress warnings 
+warnings.filterwarnings("ignore", category=UserWarning, module="pyfiglet")
+warnings.filterwarnings("ignore", category=UserWarning, module="pkg_resources")
+
 import pyfiglet
 import pkg_resources
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module="pyfiglet")
 
 
 class Logger:

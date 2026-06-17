@@ -3,11 +3,6 @@ import random
 import numpy as np
 from typing import List, Tuple, Dict, Optional
 
-import cProfile
-import pstats
-import io
-import tracemalloc
-
 from modules.molecule_class import Molecule
 from modules.operators import NonLocalOperators, LocalOperators
 from modules.box import SimulationBox
@@ -128,10 +123,6 @@ def _bhmc_worker(args: Tuple) -> Dict:
     import tempfile
     from pathlib import Path
 
-    pr = cProfile.Profile()
-    pr.enable()
-    tracemalloc.start()
-
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["MKL_NUM_THREADS"] = "1"
     os.environ["OPENBLAS_NUM_THREADS"] = "1"
@@ -153,233 +144,223 @@ def _bhmc_worker(args: Tuple) -> Dict:
         'operator_acceptance_rates': {},
     }
 
-    try:
-        logger = _get_worker_logger(worker_log_file, worker_id)
+    logger = _get_worker_logger(worker_log_file, worker_id)
 
-        def _log(msg: str, level: str = "info") -> None:
-            if config_dict.get('verbose', False):
-                print(msg)
-            if logger:
-                getattr(logger, level)(msg)
+    def _log(msg: str, level: str = "info") -> None:
+        if config_dict.get('verbose', False):
+            print(msg)
+        if logger:
+            getattr(logger, level)(msg)
 
-        # ---- Simulation box & adaptive controller ----
-        sim_box = SimulationBox.from_dict(sim_box_dict) if sim_box_dict else None
-        box_controller = AdaptiveBoxController(config_dict, sim_box)
-        box_updates = []
-        if box_controller.active:
-            box_updates.append({
-                "step": 0, "box_size": box_controller.get_current_size(),
-                "window_acceptance": None, "grew": False, "stable_windows": 0,
+    # ---- Simulation box & adaptive controller ----
+    sim_box = SimulationBox.from_dict(sim_box_dict) if sim_box_dict else None
+    box_controller = AdaptiveBoxController(config_dict, sim_box)
+    box_updates = []
+    if box_controller.active:
+        box_updates.append({
+            "step": 0, "box_size": box_controller.get_current_size(),
+            "window_acceptance": None, "grew": False, "stable_windows": 0,
+        })
+
+    # ---- Build unified operator pool ----
+    nonlocal_ops = NonLocalOperators(simulation_box=sim_box)
+    local_ops = LocalOperators(simulation_box=sim_box)
+    adaptive = config_dict.get('adaptive_operators', True)
+
+    nonlocal_adaptive = {'twist', 'large_displacement', 'roto_reflection'}
+
+    nonlocal_op_map = {
+        'twist':                   nonlocal_ops.twist_operator,
+        'large_displacement':      nonlocal_ops.large_displacement,
+        'mirror':                  nonlocal_ops.mirror_operator,
+        'roto_reflection':         nonlocal_ops.roto_reflection_operator,
+        'exchange':                nonlocal_ops.exchange_operator,
+        'random_so3':              nonlocal_ops.random_so3_operator,
+        'principal_axis_rotation': nonlocal_ops.principal_axis_rotation_operator,
+        'com_com_approach':        nonlocal_ops.com_com_approach_operator,
+        'com_com_separation':      nonlocal_ops.com_com_separation_operator,
+    }
+    local_op_map = {
+        'random_displacement':          local_ops.random_displacement_submolecule,
+        'random_rotation':              local_ops.random_rotation_submolecule,
+        'local_twist':                  local_ops.local_twist_submolecule,
+        'correlated_displacement':      local_ops.correlated_displacement,
+        'small_principal_axis_rotation': local_ops.small_principal_axis_rotation,
+    }
+
+    operators, weights = [], []
+    for op_name, weight in operator_list:
+        if op_name in nonlocal_op_map:
+            operators.append({
+                'name': op_name,
+                'func': nonlocal_op_map[op_name],
+                'local': False,
+                'supports_adaptive': op_name in nonlocal_adaptive,
             })
+            weights.append(weight)
+        elif op_name in local_op_map:
+            operators.append({
+                'name': op_name,
+                'func': local_op_map[op_name],
+                'local': True,
+                'supports_adaptive': True,
+            })
+            weights.append(weight)
+        else:
+            _log(f"Worker {worker_id}: Unknown operator '{op_name}', skipping.", level="warning")
 
-        # ---- Build unified operator pool ----
-        nonlocal_ops = NonLocalOperators(simulation_box=sim_box)
-        local_ops = LocalOperators(simulation_box=sim_box)
-        adaptive = config_dict.get('adaptive_operators', True)
+    if not operators:
+        _log(f"Worker {worker_id}: No valid operators found!", level="error")
+        return result
 
-        nonlocal_adaptive = {'twist', 'large_displacement', 'roto_reflection'}
+    weights = np.array(weights, dtype=float)
+    weights /= weights.sum()
 
-        nonlocal_op_map = {
-            'twist':                   nonlocal_ops.twist_operator,
-            'large_displacement':      nonlocal_ops.large_displacement,
-            'mirror':                  nonlocal_ops.mirror_operator,
-            'roto_reflection':         nonlocal_ops.roto_reflection_operator,
-            'exchange':                nonlocal_ops.exchange_operator,
-            'random_so3':              nonlocal_ops.random_so3_operator,
-            'principal_axis_rotation': nonlocal_ops.principal_axis_rotation_operator,
-            'com_com_approach':        nonlocal_ops.com_com_approach_operator,
-            'com_com_separation':      nonlocal_ops.com_com_separation_operator,
-        }
-        local_op_map = {
-            'random_displacement':          local_ops.random_displacement_submolecule,
-            'random_rotation':              local_ops.random_rotation_submolecule,
-            'local_twist':                  local_ops.local_twist_submolecule,
-            'correlated_displacement':      local_ops.correlated_displacement,
-            'small_principal_axis_rotation': local_ops.small_principal_axis_rotation,
-        }
+    op_accepted = {op['name']: 0 for op in operators}
+    op_attempted = {op['name']: 0 for op in operators}
 
-        operators, weights = [], []
-        for op_name, weight in operator_list:
-            if op_name in nonlocal_op_map:
-                operators.append({
-                    'name': op_name,
-                    'func': nonlocal_op_map[op_name],
-                    'local': False,
-                    'supports_adaptive': op_name in nonlocal_adaptive,
-                })
-                weights.append(weight)
-            elif op_name in local_op_map:
-                operators.append({
-                    'name': op_name,
-                    'func': local_op_map[op_name],
-                    'local': True,
-                    'supports_adaptive': True,
-                })
-                weights.append(weight)
-            else:
-                _log(f"Worker {worker_id}: Unknown operator '{op_name}', skipping.", level="warning")
+    # ---- Energy evaluator ----
+    evaluator = EnergyEvaluator(
+        backend=config_dict.get('backend', 'psi4'),
+        qm_method=config_dict.get('qm_method', 'hf'),
+        qm_basis=config_dict.get('qm_basis', 'sto-3g'),
+        xtb_method=config_dict.get('xtb_method', 'GFN2-xTB'),
+        gpaw_mode=config_dict.get('gpaw_mode', 'lcao'),
+        gpaw_basis=config_dict.get('gpaw_basis', 'dzp'),
+        gpaw_xc=config_dict.get('gpaw_xc', 'B3LYP'),
+    )
 
-        if not operators:
-            _log(f"Worker {worker_id}: No valid operators found!", level="error")
-            return result
+    # ---- Initial energy ----
+    current_structure = copy.deepcopy(initial_molecule)
+    try:
+        current_energy = evaluator.evaluate(current_structure)
+    except Exception as exc:
+        _log(f"Worker {worker_id}: Failed to evaluate initial energy: {exc}", level="error")
+        return result
 
-        weights = np.array(weights, dtype=float)
-        weights /= weights.sum()
+    _log(f"Worker {worker_id}: Starting energy = {current_energy:.6f} Hartree")
 
-        op_accepted = {op['name']: 0 for op in operators}
-        op_attempted = {op['name']: 0 for op in operators}
+    accepted_structures = []
+    energy_trajectory = [(0, current_energy)]
+    n_accepted = n_rejected = 0
+    temperature = config_dict.get('temperature', 400.0)
+    beta = 1.0 / (K_B * temperature)
 
-        # ---- Energy evaluator ----
-        evaluator = EnergyEvaluator(
-            backend=config_dict.get('backend', 'psi4'),
-            qm_method=config_dict.get('qm_method', 'hf'),
-            qm_basis=config_dict.get('qm_basis', 'sto-3g'),
-            xtb_method=config_dict.get('xtb_method', 'GFN2-xTB'),
-            gpaw_mode=config_dict.get('gpaw_mode', 'lcao'),
-            gpaw_basis=config_dict.get('gpaw_basis', 'dzp'),
-            gpaw_xc=config_dict.get('gpaw_xc', 'B3LYP'),
-        )
+    # ---- Main BHMC loop ----
+    for step in range(n_steps):
+        op_info = operators[np.random.choice(len(operators), p=weights)]
+        op_attempted[op_info['name']] += 1
 
-        # ---- Initial energy ----
-        current_structure = copy.deepcopy(initial_molecule)
         try:
-            current_energy = evaluator.evaluate(current_structure)
-        except Exception as exc:
-            _log(f"Worker {worker_id}: Failed to evaluate initial energy: {exc}", level="error")
-            return result
+            # Apply operator
+            if op_info['local']:
+                new_structure = op_info['func'](
+                    current_structure, submolecule_indices, adaptive=adaptive
+                )
+            elif op_info['supports_adaptive'] and adaptive:
+                new_structure = op_info['func'](
+                    current_structure, submolecule_indices=submolecule_indices, adaptive=True
+                )
+            else:
+                new_structure = op_info['func'](
+                    current_structure, submolecule_indices=submolecule_indices
+                )
 
-        _log(f"Worker {worker_id}: Starting energy = {current_energy:.6f} Hartree")
-
-        accepted_structures = []
-        energy_trajectory = [(0, current_energy)]
-        n_accepted = n_rejected = 0
-        temperature = config_dict.get('temperature', 400.0)
-        beta = 1.0 / (K_B * temperature)
-
-        # ---- Main BHMC loop ----
-        for step in range(n_steps):
-            op_info = operators[np.random.choice(len(operators), p=weights)]
-            op_attempted[op_info['name']] += 1
-
-            try:
-                # Apply operator
-                if op_info['local']:
-                    new_structure = op_info['func'](
-                        current_structure, submolecule_indices, adaptive=adaptive
-                    )
-                elif op_info['supports_adaptive'] and adaptive:
-                    new_structure = op_info['func'](
-                        current_structure, submolecule_indices=submolecule_indices, adaptive=True
-                    )
-                else:
-                    new_structure = op_info['func'](
-                        current_structure, submolecule_indices=submolecule_indices
-                    )
-
-                # Clash check
-                if nonlocal_ops._has_inter_submolecule_clashes(
-                    new_structure, submolecule_indices=submolecule_indices, scale=0.5
-                ):
-                    _log(f"Worker {worker_id}: Clash after '{op_info['name']}', rejecting.", level="warning")
-                    n_rejected += 1
-                    box_controller.record_step(False)
-                    energy_trajectory.append((step + 1, current_energy))
-                    continue
-
-                # No-move guard
-                if np.allclose(new_structure.coordinates, current_structure.coordinates):
-                    _log(f"Worker {worker_id}: No change from '{op_info['name']}', skipping.", level="warning")
-                    n_rejected += 1
-                    box_controller.record_step(False)
-                    energy_trajectory.append((step + 1, current_energy))
-                    continue
-
-                # Energy evaluation
-                try:
-                    new_energy = evaluator.evaluate(new_structure)
-                except Exception:
-                    new_energy = None
-
-                if new_energy is None:
-                    _log(f"Worker {worker_id}: Energy evaluation failed, rejecting.", level="warning")
-                    n_rejected += 1
-                    box_controller.record_step(False)
-                    energy_trajectory.append((step + 1, current_energy))
-                    continue
-
-                # Metropolis acceptance
-                if new_energy < current_energy:
-                    accept = True
-                else:
-                    delta_e_ev = (new_energy - current_energy) * HARTREE_TO_EV
-                    accept = random.random() < np.exp(-beta * delta_e_ev)
-                    if (step + 1) % 10 == 0:
-                        _log(
-                            f"Worker {worker_id}: Step {step+1}, op={op_info['name']}, "
-                            f"ΔE={delta_e_ev:.4f} eV, accept={accept}"
-                        )
-
-                if accept:
-                    current_structure = copy.deepcopy(new_structure)
-                    current_energy = new_energy
-                    accepted_structures.append((copy.deepcopy(current_structure), current_energy))
-                    op_accepted[op_info['name']] += 1
-                    n_accepted += 1
-                    _log(f"Worker {worker_id}: Step {step+1} accepted, E={current_energy:.6f} Ha")
-                else:
-                    n_rejected += 1
-
-                box_controller.record_step(accept)
-                energy_trajectory.append((step + 1, current_energy))
-
-            except Exception as exc:
-                _log(f"Worker {worker_id}: Exception at step {step+1}: {exc}", level="error")
+            # Clash check
+            if nonlocal_ops._has_inter_submolecule_clashes(
+                new_structure, submolecule_indices=submolecule_indices, scale=0.5
+            ):
+                _log(f"Worker {worker_id}: Clash after '{op_info['name']}', rejecting.", level="warning")
                 n_rejected += 1
                 box_controller.record_step(False)
                 energy_trajectory.append((step + 1, current_energy))
                 continue
 
-            # Adaptive box update
-            if box_controller.active and (step + 1) % box_controller.interval == 0:
-                update_info = box_controller.update()
-                box_updates.append({
-                    "step": step + 1,
-                    "box_size": update_info["current_size"],
-                    "window_acceptance": update_info.get("window_acceptance"),
-                    "grew": update_info.get("grew", False),
-                    "stable_windows": update_info.get("stable_windows", 0),
-                })
-                if update_info.get('grew'):
+            # No-move guard
+            if np.allclose(new_structure.coordinates, current_structure.coordinates):
+                _log(f"Worker {worker_id}: No change from '{op_info['name']}', skipping.", level="warning")
+                n_rejected += 1
+                box_controller.record_step(False)
+                energy_trajectory.append((step + 1, current_energy))
+                continue
+
+            # Energy evaluation
+            try:
+                new_energy = evaluator.evaluate(new_structure)
+            except Exception:
+                new_energy = None
+
+            if new_energy is None:
+                _log(f"Worker {worker_id}: Energy evaluation failed, rejecting.", level="warning")
+                n_rejected += 1
+                box_controller.record_step(False)
+                energy_trajectory.append((step + 1, current_energy))
+                continue
+
+            # Metropolis acceptance
+            if new_energy < current_energy:
+                accept = True
+            else:
+                delta_e_ev = (new_energy - current_energy) * HARTREE_TO_EV
+                accept = random.random() < np.exp(-beta * delta_e_ev)
+                if (step + 1) % 10 == 0:
                     _log(
-                        f"Worker {worker_id}: Box grew at step {step+1}. "
-                        f"Size={update_info['current_size']:.3f}, "
-                        f"acc={update_info['window_acceptance']:.3f}"
+                        f"Worker {worker_id}: Step {step+1}, op={op_info['name']}, "
+                        f"ΔE={delta_e_ev:.4f} eV, accept={accept}"
                     )
 
-        acc_rate = n_accepted / (n_accepted + n_rejected) * 100 if (n_accepted + n_rejected) > 0 else 0.0
-        _log(f"Worker {worker_id}: Done. Accepted={n_accepted}, Rejected={n_rejected}, Rate={acc_rate:.1f}%")
+            if accept:
+                current_structure = copy.deepcopy(new_structure)
+                current_energy = new_energy
+                accepted_structures.append((copy.deepcopy(current_structure), current_energy))
+                op_accepted[op_info['name']] += 1
+                n_accepted += 1
+                _log(f"Worker {worker_id}: Step {step+1} accepted, E={current_energy:.6f} Ha")
+            else:
+                n_rejected += 1
 
-        operator_rates = {
-            op: (op_accepted[op] / op_attempted[op] * 100 if op_attempted[op] > 0 else 0.0)
-            for op in op_accepted
-        }
+            box_controller.record_step(accept)
+            energy_trajectory.append((step + 1, current_energy))
 
-        result = {
-            'accepted_structures': accepted_structures,
-            'energy_trajectory': energy_trajectory,
-            'box_updates': box_updates,
-            'worker_id': worker_id,
-            'operator_acceptance_rates': operator_rates,
-        }
+        except Exception as exc:
+            _log(f"Worker {worker_id}: Exception at step {step+1}: {exc}", level="error")
+            n_rejected += 1
+            box_controller.record_step(False)
+            energy_trajectory.append((step + 1, current_energy))
+            continue
 
-    finally:
-        pr.disable()
-        s = io.StringIO()
-        pstats.Stats(pr, stream=s).sort_stats('cumulative').print_stats(10)
-        print(f"\n--- Profiling: Worker {worker_id} ---\n{s.getvalue()}")
-        current, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-        print(f"Memory — current: {current/1e6:.2f} MB, peak: {peak/1e6:.2f} MB")
+        # Adaptive box update
+        if box_controller.active and (step + 1) % box_controller.interval == 0:
+            update_info = box_controller.update()
+            box_updates.append({
+                "step": step + 1,
+                "box_size": update_info["current_size"],
+                "window_acceptance": update_info.get("window_acceptance"),
+                "grew": update_info.get("grew", False),
+                "stable_windows": update_info.get("stable_windows", 0),
+            })
+            if update_info.get('grew'):
+                _log(
+                    f"Worker {worker_id}: Box grew at step {step+1}. "
+                    f"Size={update_info['current_size']:.3f}, "
+                    f"acc={update_info['window_acceptance']:.3f}"
+                )
+
+    acc_rate = n_accepted / (n_accepted + n_rejected) * 100 if (n_accepted + n_rejected) > 0 else 0.0
+    _log(f"Worker {worker_id}: Done. Accepted={n_accepted}, Rejected={n_rejected}, Rate={acc_rate:.1f}%")
+
+    operator_rates = {
+        op: (op_accepted[op] / op_attempted[op] * 100 if op_attempted[op] > 0 else 0.0)
+        for op in op_accepted
+    }
+
+    result = {
+        'accepted_structures': accepted_structures,
+        'energy_trajectory': energy_trajectory,
+        'box_updates': box_updates,
+        'worker_id': worker_id,
+        'operator_acceptance_rates': operator_rates,
+    }
 
     return result
 

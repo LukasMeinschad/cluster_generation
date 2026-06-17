@@ -112,7 +112,7 @@ class EnergyEvaluator:
         # Convert the molecule to a ASE Atoms object
         molecule_ase = molecule.to_ase_atoms()
         # Set the calculator and calculate energy
-        molecule_ase.set_calculator(self.calculator)
+        molecule_ase.calc = self.calculator
         energy = molecule_ase.get_potential_energy()  # Energy in eV for ASE
         energy_hartree = energy * self.EV_TO_HARTREE  # Convert to Hartree
         return energy_hartree
@@ -125,7 +125,7 @@ class EnergyEvaluator:
             self._ensure_psi_scratch()
 
         atoms = molecule.to_ase_atoms()
-        atoms.set_calculator(self.calculator)
+        atoms.calc = self.calculator
         forces = atoms.get_forces()  # Forces in eV/Å for ASE
         forces_hartree_per_angstrom = forces * self.EV_TO_HARTREE  # Convert to Hartree/Å
         return forces_hartree_per_angstrom
@@ -140,7 +140,7 @@ class EnergyEvaluator:
         if self.backend == "psi4":
             self._ensure_psi_scratch()
         atoms = molecule.to_ase_atoms()
-        atoms.set_calculator(self.calculator)
+        atoms.calc = self.calculator
 
         def write_xyz():
             if trajectory_fp is not None:
@@ -152,9 +152,9 @@ class EnergyEvaluator:
 
         # Select the optimizer
         if optimizer.lower() == "bfgs":
-            opt = BFGS(atoms)
+            opt = BFGS(atoms, logfile=None)
         elif optimizer.lower() == "lbfgs":
-            opt = LBFGS(atoms)
+            opt = LBFGS(atoms, logfile=None)
         else:
             raise ValueError(f"Unsupported optimizer: {optimizer}. Supported optimizers are 'BFGS' and 'LBFGS'.")
         
@@ -183,7 +183,7 @@ class EnergyEvaluator:
                 calc = Psi4(method=self.qm_method, basis=self.qm_basis)
             else:
                 calc = self.calculator
-            atoms.set_calculator(calc)
+            atoms.calc = calc
             vib_name = os.path.join(tmpdir, "vib")
             vib = Vibrations(atoms, name=vib_name, delta=delta)
             vib.run()

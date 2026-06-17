@@ -420,7 +420,8 @@ class StructureAnalysis:
 
 
         plt.figure(figsize=(10, 6))
-        sns.barplot(x=np.arange(len(energy_differences)), y=energy_differences, palette="viridis")
+        x = np.arange(len(energy_differences))
+        sns.barplot(x=x, y=energy_differences, hue=x, palette="viridis", legend=False)
         plt.xticks(np.arange(len(energy_differences)), [f"{i}" for i in sorted_indices])
         plt.title("Optimized Energy Distribution Across Configurations")
         plt.xlabel("Structure Index")
@@ -452,7 +453,6 @@ if __name__ == "__main__":
     Run small self test to ensure that the StructureAnalysis class is working correctly
     """
     xyz_traj_path = "/media/storage_6/lme/master_thesis/cluster_generation/trajectories/initial_candidates.xyz"
-    #xyz_traj_path = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/water_dimer_local_minima/h2o_2_globalmin.xyz"
     struc_config = StructureAnalysisConfig(rmsd_threshold = 0.5)
     structure_analysis = StructureAnalysis(logger=None, config=struc_config)
     structure_analysis.load_mols_from_xyz(xyz_traj_path)

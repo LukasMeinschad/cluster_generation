@@ -9,6 +9,10 @@ from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 import time
 from pathlib import Path
+import warnings
+
+# Block networkx backend warning (must be set before importing networkx)
+warnings.filterwarnings("ignore", message="networkx backend defined more than once")
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -16,11 +20,6 @@ from numba import njit, prange
 from mendeleev.fetch import fetch_table
 
 from modules.geometry import GeometryOps
-
-
-# Block networkx backend warning
-import warnings
-warnings.filterwarnings("ignore", message="networkx backend defined more than once")
 
 @dataclass
 class Bond:

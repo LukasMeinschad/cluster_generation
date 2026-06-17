@@ -574,6 +574,7 @@ class BHMC:
             ops   = list(op_rates.keys())
             rates = [op_rates[op] for op in ops]
             ax.bar(ops, rates, color='skyblue')
+            ax.set_xticks(range(len(ops)))
             ax.set_xticklabels(ops, rotation=45, ha='right')
             ax.set_title(f"Worker {wid}")
             ax.set_ylabel("Acceptance rate (%)")

@@ -36,7 +36,7 @@ def _resolve_palette(n_labels: int) -> List:
     out of visually distinct colors (>10 clusters).
     """
     if n_labels > 10:
-        return sns.color_palette("nipy_spectral", n_colors=n_labels)
+        return sns.color_palette("gist_stern", n_colors=n_labels)
     return sns.color_palette("tab10", n_labels)
 
 

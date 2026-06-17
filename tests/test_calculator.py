@@ -117,7 +117,7 @@ def test_evaluate_energy_unit_conversion(emt_evaluator, water_molecule):
     """Test that the returned energy is scaled by EV_TO_HARTREE relative to a raw eV value"""
     from ase.calculators.emt import EMT
     atoms = water_molecule.to_ase_atoms()
-    atoms.set_calculator(EMT())
+    atoms.calc = EMT()
     energy_ev = atoms.get_potential_energy()
     energy_hartree = emt_evaluator.evaluate(water_molecule)
     assert np.isclose(energy_hartree, energy_ev * EnergyEvaluator.EV_TO_HARTREE)
@@ -142,7 +142,7 @@ def test_evaluate_forces_unit_conversion(emt_evaluator, water_molecule):
     """Test that returned forces are scaled by EV_TO_HARTREE relative to raw eV/Å values"""
     from ase.calculators.emt import EMT
     atoms = water_molecule.to_ase_atoms()
-    atoms.set_calculator(EMT())
+    atoms.calc = EMT()
     forces_ev = atoms.get_forces()
     forces_hartree = emt_evaluator.evaluate_forces(water_molecule)
     assert np.allclose(forces_hartree, forces_ev * EnergyEvaluator.EV_TO_HARTREE)

@@ -24,6 +24,7 @@ InitializationConfig:
 + max_placement_attempts = 1000
 + rmsd_threshold = 0.6
 + optimize_submolecules = True
++ optimizer_method = "LBFGS"
 + optimize_parallel = True
 + optimize_cluster_representatives = False 
 + verbose = False

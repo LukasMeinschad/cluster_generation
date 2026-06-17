@@ -1,6 +1,13 @@
 import sys
+import warnings
 from pathlib import Path
 import numpy as np
+
+# Silence warnings before importing modules that trigger them at import time
+# (logger.py imports pyfiglet/pkg_resources, molecule_class.py imports networkx)
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="networkx")
+warnings.filterwarnings("ignore", category=UserWarning, module="pyfiglet")
+warnings.filterwarnings("ignore", category=UserWarning, module="pkg_resources")
 
 module_dir = Path(__file__).parent / "modules"
 sys.path.insert(0, str(module_dir))
@@ -15,11 +22,6 @@ from molecule_class import Molecule
 from calculator import EnergyEvaluator
 from input_reader import read_ml_bhop_input, read_operator_distribution
 import time
-import warnings
-
-# Silence Warnings
-warnings.filterwarnings("ignore", category=RuntimeWarning, module="networkx")
-warnings.filterwarnings("ignore", category=UserWarning, module="pyfiglet")
 
 if __name__ == "__main__":
     args = get_args()

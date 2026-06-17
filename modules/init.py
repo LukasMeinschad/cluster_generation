@@ -543,7 +543,7 @@ class ClusterInitializer:
         for i, mol in enumerate(optimized_molecules):
             self._log(f"  Representative {i + 1}/{len(optimized_molecules)}...")
             try:
-                optimized_molecules[i] = self.energy_evaluator.optimize_geometry(
+                optimized_molecules[i], _ = self.energy_evaluator.optimize_geometry(
                     mol, optimizer="LBFGS", trajectory_fp=None
                 )
                 self._log("    Optimization successful")
@@ -733,8 +733,8 @@ class ClusterInitializer:
         for i, submol in enumerate(submolecules):
             self._log(f"      Submolecule {i + 1}: {len(submol.coordinates)} atoms...")
             try:
-                optimized_submol = self.energy_evaluator.optimize_geometry(
-                    submol, optimizer="BFGS", write_trajectory=False
+                optimized_submol, _  = self.energy_evaluator.optimize_geometry(
+                    submol, optimizer="BFGS"
                 )
                 optimized.append(optimized_submol)
                 self._log("        Done")
@@ -1355,7 +1355,8 @@ class ClusterInitializer:
                 gpaw_basis=gpaw_basis,
                 gpaw_xc=gpaw_xc,
             )
-            return calc.optimize_geometry(submol, optimizer="BFGS")
+            optimized_submol, _ = calc.optimize_geometry(submol, optimizer="BFGS")
+            return optimized_submol
         except Exception as exc:
             traceback.print_exc()
             raise RuntimeError(f"Optimization failed for task {task_id}: {exc}")

@@ -172,6 +172,8 @@ if __name__ == "__main__":
     )
     # Plot RMSD comparison of initial vs optimized structures
     structure_analysis.plot_rmsd_comparison(save_path="figures/rmsd_comparison.png")
+    # Plot distribution of optimized energies across configurations
+    structure_analysis.plot_optimized_energy_distribution(save_path="figures/optimized_energy_distribution.png")
     # Compute Eigenspectra of Coloumb matrix
     structure_analysis.plot_eigenspectra_distance_heatmap(metric="euclidean", use_optimized=True, save_path="figures/eigenspectra_distance_heatmap.png")
     # Compute Distance Matrix of Coloumb Matrix
@@ -234,6 +236,9 @@ if __name__ == "__main__":
         box_max_scale = settings_bhmc["box_max_scale"],
         box_stable_windows = settings_bhmc["box_stable_windows"],
         operators = o_train,
+        clustering_method = settings_bhmc["clustering_method"],
+        classifier_backend = settings_bhmc["classifier_backend"],
+        classifier_kwargs = settings_bhmc.get("classifier_kwargs", None),
     )
 
 
@@ -256,13 +261,34 @@ if __name__ == "__main__":
         filepath="trajectories/bhmc_structures.xyz",
         energies=[e for _, e in accepted_structures],
     )
-    updated_clustering = bhmc_sampler.analyze_training_results(
+    updated_clustering, training_representatives = bhmc_sampler.analyze_training_results(
         reference_clustering=init_clustering,
         feature_mat_init=feature_mat_raw,
-        init_config=init_config,
     )
     if updated_clustering is not None:
         init_clustering = updated_clustering
+
+    timer_end_bhmc = time.time()
+    elapsed_bhmc = timer_end_bhmc - timer_start_bhmc
+    logger.info(f"BHMC training phase completed in {elapsed_bhmc:.2f} seconds")
+
+    # 4.b -> Structure Analysis of the new representatives
+    logger.header("Structure Analysis of Representatives from BHMC Training Phase")
+    structure_analysis_bhmc = StructureAnalysis(logger=logger, mols=training_representatives, config=StructureAnalysisConfig)
+    # Optimize the Representatives Compare RMSD and write to xyz
+    optimized_representatives = structure_analysis_bhmc.optimize_geometries(n_workers=20)
+    logger.write_xyz_trajectory(
+        molecules=optimized_representatives,
+        filepath="trajectories/optimized_bhmc_representatives_training.xyz",
+        energies=None,
+    )
+    structure_analysis_bhmc.plot_rmsd_comparison(save_path="figures/rmsd_comparison_bhmc_training.png")
+    # Get new unique representatives from the training phase
+    unique_indices_bhmc, unique_mols_bhmc = structure_analysis_bhmc.get_unique_structures(use_optimized=True)
+    logger.info(f"Number of unique structures after BHMC training phase: {len(unique_mols_bhmc)}")
+    
+
+
 
     # 4.b -> Continue Sampling with an updated operator distribution
     n_sampling_steps = settings_bhmc["n_steps_per_worker"] - n_training_steps
@@ -309,3 +335,19 @@ if __name__ == "__main__":
         filepath="trajectories/bhmc_sampling_structures.xyz",
         energies=[e for _, e in accepted_structures_sampling],
     )
+
+    # Decide which model to analyze the sampling run against: the retrained model
+    # from the training phase if it found an improvement, otherwise the original
+    # init-run model.
+    if updated_clustering is not None:
+        sampling_reference_clustering = updated_clustering
+        logger.info("Using the retrained model from the training phase for sampling analysis.")
+    else:
+        sampling_reference_clustering = init_clustering
+        logger.info("No improved model from the training phase — using the init-run model for sampling analysis.")
+
+    novel_indices_sampling, mols_sampling, feature_mat_sampling, predicted_labels_sampling, predicted_probabilities_sampling = bhmc_sampler_sampling.analyze_sampling_results(
+        reference_clustering=sampling_reference_clustering,
+    )
+
+    

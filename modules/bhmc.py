@@ -276,34 +276,22 @@ class BHMC:
             reference_clustering: Clustering,
             feature_mat_init: np.ndarray,
             structures: Optional[List[Tuple[Molecule, float]]] = None,
-            init_config: Optional[InitializationConfig] = None,
-        ) -> Optional[Clustering]:
+        ) -> Tuple[Optional[Clustering], Optional[Dict[int, int]]]:
         """
         Analyze the first `training_frac` fraction of the BHMC run and use it to improve
         the reference classifier model.
 
-        Workflow: filter high-energy outliers, featurize with SOAP, embed into the
-        reference UMAP space, predict labels/probabilities with the reference
-        classifier, and flag "novel" structures (the ones the classifier is least
-        confident about). Those novel feature rows are stacked onto the initial raw
-        feature matrix and run back through the same cleaning + clustering +
-        classifier pipeline used during initialization (low-variance pruning,
-        Isolation Forest, UMAP, LOF, clustering, classifier fit/evaluation), producing
-        an updated Clustering instance with a more representative classifier.
-
-        Args:
-            reference_clustering: The fitted Clustering instance from initialize_from_xyz.
-            feature_mat_init:     The raw feature matrix returned alongside it.
-            structures:           (molecule, energy) pairs to analyze; defaults to
-                                   self.accepted_structures.
-            init_config:          The InitializationConfig used to build
-                                   reference_clustering, so the retrain reuses the same
-                                   clustering_method / classifier_backend / classifier_kwargs.
-                                   Falls back to "kmeans" / "knn" / {} if omitted.
-
-        Returns:
-            The retrained Clustering instance, or the unmodified reference_clustering if
-            no novel structures were found, or None if there was nothing to analyze.
+        Workflow:
+          1. Filter high-energy outliers
+          2. Featurize with SOAP
+          3. Embed into the reference UMAP by INIT
+          4. Predict labels/probabilities with the reference classifier
+          5. Flag "novel" structures (the ones the classifier is least confident about)
+          6. Stack novel feature rows onto the initial raw feature matrix
+          7. Run back through the same cleaning + clustering + classifier pipeline used
+                during initialization (low-variance pruning, Isolation Forest, UMAP, LOF,
+                clustering, classifier fit/evaluation), producing an updated Clustering instance
+                with a more representative classifier. 
         """
         self.logger.section("Analysis of BHMC Training Run")
         if structures is None:
@@ -311,7 +299,7 @@ class BHMC:
 
         if not structures:
             self._log("No structures to analyse.", level="warning")
-            return None
+            return None, None
 
         mols = [m for m, _ in structures]
         energies = [e for _, e in structures]
@@ -322,7 +310,7 @@ class BHMC:
         self._log(f"After energy Z-score filter: {len(mols)} structures remain")
         if not mols:
             self._log("All structures filtered as high-energy outliers.", level="warning")
-            return None
+            return None, None
 
         # Featurize with SOAP
         featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
@@ -351,7 +339,7 @@ class BHMC:
         )
         if len(novel_indices) == 0:
             self._log("No novel structures detected — keeping the existing reference model.")
-            return reference_clustering
+            return reference_clustering, None
 
         # Combine Raw Features and Feature Matrix for the new structures
         novel_feature_mat = feature_mat[novel_indices]
@@ -360,16 +348,14 @@ class BHMC:
         combined_feature_mat = np.vstack([feature_mat_init, novel_feature_mat])
 
         # Retrain on the combined pool using the same recipe as initialize_from_xyz.
-        # No molecules/energies are carried over here, so representative picking is
-        # skipped — this retrain is purely to refresh the clustering + classifier.
         n_clusters = (
             len(np.unique(reference_clustering.labels))
             if reference_clustering.labels is not None
             else 1
         )
-        clustering_method = getattr(init_config, "clustering_method", "kmeans")
-        classifier_backend = getattr(init_config, "classifier_backend", "knn")
-        classifier_kwargs = getattr(init_config, "classifier_kwargs", None)
+        clustering_method = self.config.clustering_method
+        classifier_backend = self.config.classifier_backend 
+        classifier_kwargs = self.config.classifier_kwargs
 
         self._log(
             f"\nRetraining clustering + {classifier_backend.upper()} classifier on "
@@ -389,9 +375,92 @@ class BHMC:
             embedding_plot_title="Retrained UMAP Embedding with Cluster Labels",
             classifier_eval_dir="figures/classifier_evaluation_retrained",
         )
-        return updated_clustering
+        # Obtain new representatives for the updated clustering
+        # TODO: The main loop does not consider the energies right now so the "lowest_energy" gets an error this needs fixing
+        representatives = updated_clustering.get_cluster_representatives(method="centroid")
+
+        return updated_clustering, representatives
 
 
+    def analyze_sampling_results(
+            self,
+            reference_clustering: Clustering,
+            structures: Optional[List[Tuple[Molecule, float]]] = None,
+        ) -> Tuple[Optional[np.ndarray], Optional[List[Molecule]], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
+        """
+        Analyze the structures collected during the BHMC sampling phase against the
+        current reference model (either the retrained model from
+        analyze_training_results, or the original init model if no improvement was
+        found there).
+
+        Workflow:
+          1. Filter high-energy outliers
+          2. Featurize with SOAP
+          3. Embed into the reference UMAP space
+          4. Predict labels/probabilities with the reference classifier
+          5. Flag "novel" structures (the ones the classifier is least confident about)
+
+        Args:
+            reference_clustering: The Clustering instance to embed/predict against.
+            structures:           (molecule, energy) pairs to analyze; defaults to
+                                   self.accepted_structures.
+
+        Returns:
+            (novel_indices, mols, feature_mat, predicted_labels, predicted_probabilities),
+            or all-None if there was nothing to analyze.
+        """
+        self.logger.section("Analysis of BHMC Sampling Run")
+        if structures is None:
+            structures = self.accepted_structures
+
+        if not structures:
+            self._log("No structures to analyse.", level="warning")
+            return None, None, None, None, None
+
+        mols = [m for m, _ in structures]
+        energies = [e for _, e in structures]
+        energy_arr = np.array(energies)
+        z_e = (energy_arr - energy_arr.mean()) / (energy_arr.std() + 1e-12)
+        mols     = [m for m, z in zip(mols, z_e)     if z <= 3.0]
+        energies = [e for e, z in zip(energies, z_e) if z <= 3.0]
+        self._log(f"After energy Z-score filter: {len(mols)} structures remain")
+        if not mols:
+            self._log("All structures filtered as high-energy outliers.", level="warning")
+            return None, None, None, None, None
+
+        # Featurize with SOAP
+        featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
+        feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
+        self._log(f"SOAP features: {feature_mat.shape[0]} × {feature_mat.shape[1]}")
+
+        # Embed the new structures using the reference_clustering object
+        new_structures_embedding = reference_clustering.embed_new_structures(x_new=feature_mat)
+        # Predict cluster labels using the classifier model in the reference clustering
+        predicted_labels = reference_clustering.predict_labels(x_test=new_structures_embedding)
+        predicted_probabilities = reference_clustering.predict_probabilities(x_test=new_structures_embedding)
+
+        # Plot the probabilities
+        reference_clustering.plot_probabilities(
+            embedding=new_structures_embedding,
+            probabilities=predicted_probabilities,
+            labels=predicted_labels,
+            title="BHMC Sampling Structures Cluster Probabilities",
+            save_path="figures/bhmc_sampling_cluster_probabilities.png",
+        )
+
+        # Flag Novel structures based on a 25% probability threshold
+        novel_indices = reference_clustering.flag_novel_structures(
+            embedding_new=new_structures_embedding,
+            threshold_percentile=25.0
+        )
+
+        # Check if novel indices were found in the sampling run
+        if len(novel_indices) == 0:
+            self._log("No novel structures detected in sampling run.", level="info")
+        
+        # If now novel indices are found carry out an analysis on the new structures
+        
+        
 
 
 

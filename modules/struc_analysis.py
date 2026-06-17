@@ -52,6 +52,7 @@ class StructureAnalysis:
         # State Arrays to prevent tracking issues
         self.initial_mols: List[Molecule] = mols if mols is not None else []
         self.optimized_mols: Optional[List[Molecule]] = None
+        self.optimized_energies: Optional[List[float]] = None
 
         self.config = config if config is not None else StructureAnalysisConfig()
         self._setup_calculator()
@@ -100,18 +101,20 @@ class StructureAnalysis:
             content = f.read()
 
         mols = [Molecule.from_xyz(frame) for frame in self._split_xyz_frames(content)]
-        self._log(f"Loaded {len(mols)} molecules from {trajectory_path}") 
+        self._log(f"Loaded {len(mols)} molecules from {trajectory_path}")
         self.initial_mols = mols
         self.optimized_mols = None # Reset optimized mols when loading new structures
+        self.optimized_energies = None
         return mols
-    
+
 
     def from_mols(self, mols: List[Molecule]):
-        """  
+        """
         Initializes the StructureAnalysis object with a list of Molecule objects
         """
         self.initial_mols = mols
         self.optimized_mols = None
+        self.optimized_energies = None
         self._log(f"Initialized StructureAnalysis with {len(mols)} structures")
 
     def compute_pairwise_rmsd(self, use_optimized: bool = False) -> np.ndarray:
@@ -274,6 +277,7 @@ class StructureAnalysis:
         Optimizes the geometries of all structures in parallel using multiprocessing
         """
         optimized_mols_tracker: Dict[int, Molecule] = {}
+        optimized_energies_tracker: Dict[int, float] = {}
         ctx = multiprocessing.get_context("spawn")
         with ProcessPoolExecutor(max_workers=n_workers, mp_context=ctx) as executor:
             futures = {
@@ -283,19 +287,20 @@ class StructureAnalysis:
             for future in as_completed(futures):
                 idx = futures[future]
                 try:
-                    optimized_mols_tracker[idx] = future.result()
+                    optimized_mols_tracker[idx], optimized_energies_tracker[idx] = future.result()
                 except Exception as e:
                     self._log(f"Error optimizing molecule at index {idx}: {e}")
 
         # Re-Sort to maintain original order
         self.optimized_mols = [optimized_mols_tracker[i] for i in range(len(self.initial_mols)) if i in optimized_mols_tracker]
+        self.optimized_energies = [optimized_energies_tracker[i] for i in range(len(self.initial_mols)) if i in optimized_energies_tracker]
         self._log(f"Completed geometry optimization for {len(self.optimized_mols)} structures")
         return self.optimized_mols
 
-    
+
 
     @staticmethod
-    def _optimize_geometry_worker(mol: Molecule, calculator_config: StructureAnalysisConfig) -> Molecule:
+    def _optimize_geometry_worker(mol: Molecule, calculator_config: StructureAnalysisConfig) -> Tuple[Molecule, float]:
         calculator = EnergyEvaluator(
             backend=calculator_config.calculator_backend,
             qm_method=calculator_config.calculator_qm_method,
@@ -398,6 +403,30 @@ class StructureAnalysis:
 
         self._save_plot(save_path)
         self._log(f"Saved RMSD comparison plot to {save_path}")
+
+    def plot_optimized_energy_distribution(self, save_path: str = "figures/optimized_energy_distribution.png"):
+        """Plots a barplot of the optimized energies across configurations.""" 
+        if self.optimized_energies is None:
+            self._log("No optimized energies found. Run optimize_geometries() first.")
+            return
+
+        # Compute differences from lowest energy for better visualization
+        min_energy = min(self.optimized_energies)
+        energy_differences = [e - min_energy for e in self.optimized_energies]
+        
+        # sort the structures by energy for better visualization
+        sorted_indices = np.argsort(energy_differences)
+        energy_differences = [energy_differences[i] for i in sorted_indices]
+
+
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x=np.arange(len(energy_differences)), y=energy_differences, palette="viridis")
+        plt.xticks(np.arange(len(energy_differences)), [f"{i}" for i in sorted_indices])
+        plt.title("Optimized Energy Distribution Across Configurations")
+        plt.xlabel("Structure Index")
+        plt.ylabel("Optimized Energy (Hartree)")
+        self._save_plot(save_path)
+        self._log(f"Saved optimized energy distribution plot to {save_path}")
 
     @staticmethod
     def _split_xyz_frames(text: str) -> List[str]:

@@ -152,16 +152,18 @@ def test_evaluate_forces_unit_conversion(emt_evaluator, water_molecule):
 
 def test_optimize_geometry_bfgs_returns_molecule(emt_evaluator, water_molecule):
     """Test that geometry optimization with BFGS returns a Molecule with the same atom count"""
-    optimized = emt_evaluator.optimize_geometry(water_molecule, optimizer="BFGS")
+    optimized, energy = emt_evaluator.optimize_geometry(water_molecule, optimizer="BFGS")
     assert isinstance(optimized, Molecule), "Optimized result should be a Molecule instance"
     assert optimized.get_number_of_atoms() == water_molecule.get_number_of_atoms()
+    assert isinstance(energy, float)
 
 
 def test_optimize_geometry_lbfgs_returns_molecule(emt_evaluator, water_molecule):
     """Test that geometry optimization with LBFGS returns a Molecule with the same atom count"""
-    optimized = emt_evaluator.optimize_geometry(water_molecule, optimizer="LBFGS")
+    optimized, energy = emt_evaluator.optimize_geometry(water_molecule, optimizer="LBFGS")
     assert isinstance(optimized, Molecule), "Optimized result should be a Molecule instance"
     assert optimized.get_number_of_atoms() == water_molecule.get_number_of_atoms()
+    assert isinstance(energy, float)
 
 
 def test_optimize_geometry_invalid_optimizer(emt_evaluator, water_molecule):
@@ -173,8 +175,7 @@ def test_optimize_geometry_invalid_optimizer(emt_evaluator, water_molecule):
 def test_optimize_geometry_lowers_energy(emt_evaluator, water_molecule):
     """Test that geometry optimization produces a lower or equal energy than the initial structure"""
     energy_before = emt_evaluator.evaluate(water_molecule)
-    optimized = emt_evaluator.optimize_geometry(water_molecule, optimizer="BFGS")
-    energy_after = emt_evaluator.evaluate(optimized)
+    _, energy_after = emt_evaluator.optimize_geometry(water_molecule, optimizer="BFGS")
     assert energy_after <= energy_before + 1e-6, (
         f"Optimized energy ({energy_after:.6f} Ha) should be <= initial energy ({energy_before:.6f} Ha)"
     )

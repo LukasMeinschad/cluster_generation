@@ -132,9 +132,10 @@ class EnergyEvaluator:
     
     def optimize_geometry(self, molecule: Molecule,
                             optimizer: str = "BFGS",
-                            trajectory_fp: Optional = None) -> Molecule:
+                            trajectory_fp: Optional[str] = None) -> Tuple[Molecule, float]:
         """  
         Helper function to optimize the geometry of a molecule using the specified optimizer
+        Returns the optimized molecule and its converged energy in Hartree.
         """
         if self.backend == "psi4":
             self._ensure_psi_scratch()
@@ -146,7 +147,6 @@ class EnergyEvaluator:
                 write(trajectory_fp, atoms, append=True)
             
         if trajectory_fp is not None:
-            # Clear the trajectory file if it already exists
             with open(trajectory_fp, "w") as f:
                 f.write("")  # Clear the file contents
 
@@ -157,10 +157,12 @@ class EnergyEvaluator:
             opt = LBFGS(atoms)
         else:
             raise ValueError(f"Unsupported optimizer: {optimizer}. Supported optimizers are 'BFGS' and 'LBFGS'.")
+        
         opt.attach(write_xyz, interval=1)
-        opt.run(fmax=0.001)  # Tight convergence required for reliable Hessian/frequencies
+        opt.run(fmax=0.001)         
+        energy_hartree = atoms.get_potential_energy() * self.EV_TO_HARTREE
         optimized_molecule = Molecule.from_ase_atoms(atoms)
-        return optimized_molecule
+        return optimized_molecule, energy_hartree
 
     def compute_hessian(self, molecule, delta=0.01):
         """
@@ -331,9 +333,10 @@ def run_self_tests():
     print("Testing PSI4 backend...")
     psi4_evaluator = EnergyEvaluator(backend="psi4", qm_method="mp2", qm_basis="cc-pvdz")
     # Optimize and calculate hessian
-    optimized_molecule_psi4 = psi4_evaluator.optimize_geometry(molecule, optimizer="LBFGS", trajectory_fp="test_molecules/h2o_opt.xyz")
+    optimized_molecule_psi4, energy_psi4 = psi4_evaluator.optimize_geometry(molecule, optimizer="LBFGS", trajectory_fp="test_molecules/h2o_opt.xyz")
     hessian_psi4, frequencies_psi4, order_stationary_point, global_minimum = psi4_evaluator.compute_hessian(optimized_molecule_psi4)
-     
+
+    print("Optimized energy (Hartree):", energy_psi4) 
 
 
     print("hessian shape:", hessian_psi4.shape)

@@ -56,6 +56,9 @@ BHMCConfig:
 + gpaw_mode = "lcao"
 + gpaw_basis = "dzp"
 + gpaw_xc = "B3LYP"
++ clustering_method = "kmeans"
++ classifier_backend = "knn"
++ classifier_kwargs = None
 + temperature = 600
 + verbose = False
 + adaptive_operators = True

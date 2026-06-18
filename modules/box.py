@@ -80,20 +80,22 @@ class SimulationBox:
     def from_vdw_radii(vdw_radii: Union[List[float], np.ndarray],
                        n_atoms: int,
                        box_type: str = "sphere",
-                       eta_factor: float = 0.4) -> 'SimulationBox':
-        """  
-        Generates a Simulation Box based on vdW Sphere Packing
+                       eta_factor: float = 0.4,
+                       padding: float = 0.0) -> 'SimulationBox':
+        """
+        Generates a Simulation Box based on vdW Sphere Packing, plus a fixed
+        padding distance added on top to leave room for rigid-body moves.
 
         V_vdw = sum_i^N (4/3 * pi * R_vdw_i^3)
-        R_eff = (V_vdw / eta)^(1/3)
+        R_eff = (V_vdw / eta)^(1/3) + padding
         """
         R_vdw = np.array(vdw_radii)
         V_vdw = np.sum((4.0 / 3.0) * np.pi * R_vdw**3)
-        R_eff = (V_vdw / eta_factor)**(1/3)
         if box_type.lower() == "sphere":
+            R_eff = (V_vdw / eta_factor)**(1/3) + padding
             return SimulationBox(box_type="sphere", radius=R_eff)
         elif box_type.lower() == "cube":
-            side_length = (V_vdw / eta_factor)**(1/3)
+            side_length = (V_vdw / eta_factor)**(1/3) + 2.0 * padding
             dimensions = np.array([side_length, side_length, side_length])
             return SimulationBox(box_type="cube", box_dimensions=dimensions)
         else:

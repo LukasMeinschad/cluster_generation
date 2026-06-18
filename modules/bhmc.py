@@ -275,8 +275,9 @@ class BHMC:
             self,
             reference_clustering: Clustering,
             feature_mat_init: np.ndarray,
+            mols_init: Optional[List[Molecule]] = None,
             structures: Optional[List[Tuple[Molecule, float]]] = None,
-        ) -> Tuple[Optional[Clustering], Optional[Dict[int, int]]]:
+        ) -> Tuple[Optional[Clustering], Optional[List[Molecule]]]:
         """
         Analyze the first `training_frac` fraction of the BHMC run and use it to improve
         the reference classifier model.
@@ -291,7 +292,25 @@ class BHMC:
           7. Run back through the same cleaning + clustering + classifier pipeline used
                 during initialization (low-variance pruning, Isolation Forest, UMAP, LOF,
                 clustering, classifier fit/evaluation), producing an updated Clustering instance
-                with a more representative classifier. 
+                with a more representative classifier.
+
+        Args:
+            reference_clustering: The Clustering instance fitted during initialization.
+            feature_mat_init:     The raw (pre-pruning) feature matrix from initialization
+                                   (e.g. ClusterInitializer.initialize_from_xyz's
+                                   raw_feature_matrix return value).
+            mols_init:            Molecules aligned 1:1 with feature_mat_init's rows (e.g.
+                                   the corresponding clustering.raw_molecules). Required to
+                                   resolve cluster representatives back to actual Molecule
+                                   objects; if omitted, representatives cannot be resolved
+                                   and None is returned in their place.
+            structures:            (molecule, energy) pairs to analyze; defaults to
+                                   self.accepted_structures.
+
+        Returns:
+            (updated_clustering, representative_mols) — representative_mols is one
+            Molecule per retained cluster, or None if there was nothing to analyze,
+            no novel structures were found, or mols_init was not provided.
         """
         self.logger.section("Analysis of BHMC Training Run")
         if structures is None:
@@ -347,6 +366,25 @@ class BHMC:
         self._log(f"Combining with initial feature matrix shape: {feature_mat_init.shape}")
         combined_feature_mat = np.vstack([feature_mat_init, novel_feature_mat])
 
+        # Keep the molecule list aligned 1:1 with combined_feature_mat's rows, so
+        # cluster representative row indices can be resolved back to actual
+        # structures after retraining (instead of being left as bare row indices).
+        combined_mols = None
+        if mols_init is not None:
+            if len(mols_init) != feature_mat_init.shape[0]:
+                raise ValueError(
+                    f"mols_init has {len(mols_init)} entries but feature_mat_init has "
+                    f"{feature_mat_init.shape[0]} rows — they must be aligned 1:1."
+                )
+            novel_mols = [mols[i] for i in novel_indices]
+            combined_mols = list(mols_init) + novel_mols
+        else:
+            self._log(
+                "mols_init not provided — cluster representatives will not be "
+                "resolvable to Molecule objects.",
+                level="warning",
+            )
+
         # Retrain on the combined pool using the same recipe as initialize_from_xyz.
         n_clusters = (
             len(np.unique(reference_clustering.labels))
@@ -354,7 +392,7 @@ class BHMC:
             else 1
         )
         clustering_method = self.config.clustering_method
-        classifier_backend = self.config.classifier_backend 
+        classifier_backend = self.config.classifier_backend
         classifier_kwargs = self.config.classifier_kwargs
 
         self._log(
@@ -364,6 +402,7 @@ class BHMC:
         updated_clustering, _, _, _ = Clustering.run_clustering_and_classifier_pipeline(
             feature_matrix=combined_feature_mat,
             n_clusters=n_clusters,
+            molecules=combined_mols,
             clustering_method=clustering_method,
             classifier_backend=classifier_backend,
             classifier_kwargs=classifier_kwargs,
@@ -379,7 +418,16 @@ class BHMC:
         # TODO: The main loop does not consider the energies right now so the "lowest_energy" gets an error this needs fixing
         representatives = updated_clustering.get_cluster_representatives(method="centroid")
 
-        return updated_clustering, representatives
+        if updated_clustering.molecules is None:
+            self._log(
+                "Updated clustering has no tracked molecules (mols_init was not "
+                "provided) — returning representative row indices cannot be resolved.",
+                level="warning",
+            )
+            return updated_clustering, None
+
+        representative_mols = [updated_clustering.molecules[idx] for idx in representatives.values()]
+        return updated_clustering, representative_mols
 
 
     def analyze_sampling_results(

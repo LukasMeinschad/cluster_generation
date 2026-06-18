@@ -111,11 +111,14 @@ if __name__ == "__main__":
         box_type = settings_init["box_type"],
         box_scale_factor = settings_init["box_scale_factor"],
         eta_factor = settings_init["eta_factor"],
+        padding_factor = settings_init["padding_factor"],
         min_distance = settings_init["min_distance"],
         max_placement_attempts = settings_init["max_placement_attempts"],
         optimize_submolecules = settings_init["optimize_submolecules"],
         optimize_parallel = settings_init["optimize_parallel"],
         optimize_cluster_representatives = settings_init["optimize_cluster_representatives"],
+        filter_com_outliers = settings_init["filter_com_outliers"],
+        com_threshold = settings_init["com_threshold"],
         verbose = settings_init["verbose"],
     )
 
@@ -166,7 +169,7 @@ if __name__ == "__main__":
     time_struc_analysis = time.time() 
     structure_analysis = StructureAnalysis(logger=logger, mols= initial_molecules, config=StructureAnalysisConfig)
     # Optimize the initial structures and write to xyz
-    optimized_mols = structure_analysis.optimize_geometries(n_workers=20)
+    optimized_mols, optimized_energies = structure_analysis.optimize_geometries(n_workers=20)
     logger.write_xyz_trajectory(
         molecules=optimized_mols,
         filepath="trajectories/optimized_initial_candidates.xyz",
@@ -182,6 +185,7 @@ if __name__ == "__main__":
     structure_analysis.plot_distance_matrix_heatmap(metric="euclidean", use_optimized=True, save_path="figures/distance_matrix_heatmap.png")
     # Cluster the optimized structures and obtain unique representatives
     unique_indices, unique_mols = structure_analysis.get_unique_structures(use_optimized=True)
+    unique_energies = [optimized_energies[i] for i in unique_indices]
     logger.info(f"Number of unique structures after optimization: {len(unique_mols)}")
 
     logger.write_xyz_trajectory(
@@ -266,6 +270,7 @@ if __name__ == "__main__":
     updated_clustering, training_representatives = bhmc_sampler.analyze_training_results(
         reference_clustering=init_clustering,
         feature_mat_init=feature_mat_raw,
+        mols_init=init_clustering.raw_molecules,
     )
     if updated_clustering is not None:
         init_clustering = updated_clustering
@@ -278,16 +283,24 @@ if __name__ == "__main__":
     logger.header("Structure Analysis of Representatives from BHMC Training Phase")
     structure_analysis_bhmc = StructureAnalysis(logger=logger, mols=training_representatives, config=StructureAnalysisConfig)
     # Optimize the Representatives Compare RMSD and write to xyz
-    optimized_representatives = structure_analysis_bhmc.optimize_geometries(n_workers=20)
+    optimized_representatives_training, optimized_energies_training = structure_analysis_bhmc.optimize_geometries(n_workers=20)
     logger.write_xyz_trajectory(
-        molecules=optimized_representatives,
+        molecules=optimized_representatives_training,
         filepath="trajectories/optimized_bhmc_representatives_training.xyz",
         energies=None,
     )
     structure_analysis_bhmc.plot_rmsd_comparison(save_path="figures/rmsd_comparison_bhmc_training.png")
     # Get new unique representatives from the training phase
     unique_indices_bhmc, unique_mols_bhmc = structure_analysis_bhmc.get_unique_structures(use_optimized=True)
+    unique_energies_bhmc = [optimized_energies_training[i] for i in unique_indices_bhmc]
     logger.info(f"Number of unique structures after BHMC training phase: {len(unique_mols_bhmc)}")
+
+    # Compare the init pool against the BHMC training representatives (energy + structure)
+    pes_comparison_training = structure_analysis_bhmc.compare_pes(
+        unique_mols, unique_energies,
+        unique_mols_bhmc, unique_energies_bhmc,
+        label_a="init", label_b="bhmc_training",
+    )
     
 
 

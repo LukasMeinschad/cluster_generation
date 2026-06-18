@@ -310,15 +310,24 @@ class GeometryOps:
         """
         return np.mean(coords, axis=0)
     
-    @staticmethod 
+    @staticmethod
     def center_of_mass(coords: np.ndarray, masses: np.ndarray) -> np.ndarray:
-        """   
+        """
         Calculates the Center of Mass of a set of coordinates with given masses
         """
-        if masses.ndim == 1: 
+        if masses.ndim == 1:
             masses = masses[:, np.newaxis]
         return np.sum(masses * coords, axis=0) / np.sum(masses)
-    
+
+    @staticmethod
+    def bounding_radius(coords: np.ndarray, masses: np.ndarray, vdw_radii: np.ndarray) -> float:
+        """
+        Radius of the smallest sphere, centered on the center of mass, that fully
+        encloses every atom (accounting for each atom's own vdW radius).
+        """
+        com = GeometryOps.center_of_mass(coords, masses)
+        return float(np.max(np.linalg.norm(coords - com, axis=1) + np.asarray(vdw_radii)))
+
     @staticmethod 
     @njit(fastmath=True)
     def inertia_tensor(coords: np.ndarray, masses: np.ndarray) -> np.ndarray:

@@ -110,16 +110,19 @@ class MolecularOperators:
             raise ValueError(f"Unknown box type '{self.simulation_box.box_type}'")
 
         free_space = max(box_length - effective_mol_size, 0.1)
-        size_ratio = effective_mol_size / free_space
+        # Room available per molecule-width: more room -> bigger allowed moves,
+        # a cramped box -> smaller ones (previously inverted, which let tight
+        # boxes take the largest moves and clash constantly).
+        room_ratio = free_space / effective_mol_size
 
         if operator_type == "local":
             base_scale = 0.2
             max_scale = 0.8
-            scale = base_scale + (max_scale - base_scale) * (1 - np.exp(-size_ratio))
+            scale = base_scale + (max_scale - base_scale) * (1 - np.exp(-room_ratio))
         elif operator_type == "nonlocal":
             base_scale = 0.3
             max_scale = 1.0
-            scale = base_scale + (max_scale - base_scale) * (1 - np.exp(-size_ratio * 0.5))
+            scale = base_scale + (max_scale - base_scale) * (1 - np.exp(-room_ratio * 0.5))
         else:
             scale = 1.0
         return np.clip(scale, base_scale, max_scale)

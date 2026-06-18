@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 from scipy.stats import qmc
 
@@ -58,6 +59,7 @@ class InitializationConfig:
     box_type: str = "sphere"              # "sphere" | "cube"
     box_scale_factor: float = 2.5        # Legacy scale factor (covalent-radius mode)
     eta_factor: float = 4.0             # Packing factor for vdW-radius box sizing
+    padding_factor: float = 1.0         # Multiplier on the largest submolecule's bounding radius, added as box padding
     min_distance: float = 2.0           # Minimum intermolecular distance (Å)
     max_placement_attempts: int = 1000  # Max attempts per submolecule placement
 
@@ -66,6 +68,8 @@ class InitializationConfig:
     optimize_submolecules: bool = True              # Optimize each fragment before placement
     optimize_parallel: bool = True                  # Run fragment optimizations in parallel
     optimize_cluster_representatives: bool = False  # Local opt of selected representatives
+    filter_com_outliers: bool = True                # Discard candidates whose submolecules end up far apart
+    com_threshold: float = 5.0                      # Max allowed pairwise submolecule COM distance (Å)
     verbose: bool = True
 
     def rank_candidates(
@@ -101,7 +105,8 @@ class ClusterInitializer:
       1. Load an XYZ structure and fragment it into connected submolecules.
       2. Optionally optimize each fragment with the configured backend.
       3. Build a simulation box sized by vdW radii.
-      4. Sample a large pool of random/Sobol/grid candidate placements.
+      4. Sample a large pool of random/Sobol/grid candidate placements, then
+         discard non-compact ones via submolecule center-of-mass distances.
       5. Evaluate energies, filter outliers, cluster with UMAP+KMeans, and
          return one representative per cluster as the BHMC starting points.
     """
@@ -177,7 +182,9 @@ class ClusterInitializer:
             `raw_feature_matrix` is the SOAP descriptor matrix built right after
             Z-score energy filtering but before any clustering-side feature pruning
             or outlier removal — keep it around to extend or retrain the model later
-            without recomputing features from scratch.
+            without recomputing features from scratch. `clustering.raw_molecules`
+            holds the Molecule list aligned 1:1 with its rows (clustering.molecules
+            is the post-pruning subset instead, aligned with clustering.feature_matrix).
         """
         time_start = time.time()
         self._log_run_configuration(
@@ -191,8 +198,14 @@ class ClusterInitializer:
         # Step 2: Fragment into submolecules
         submolecules = self._fragment_molecule(molecule)
 
-        # Step 2b: Record atom indices before any optimization
-        submol_indices = [submol.get_index_in_parent() for submol in submolecules]
+        # Step 2b: Atom indices for each submolecule as they appear in every generated
+        # candidate
+        submol_indices = []
+        offset = 0
+        for submol in submolecules:
+            n_atoms = len(submol.coordinates)
+            submol_indices.append(list(range(offset, offset + n_atoms)))
+            offset += n_atoms
 
         # Step 3: Optimize submolecules (optional)
         if self.config.optimize_submolecules:
@@ -214,6 +227,10 @@ class ClusterInitializer:
             n_sampling_workers=n_sampling_workers,
         )
 
+        # Step 5b: Discard non-compact candidates (submolecules placed too far apart)
+        if self.config.filter_com_outliers:
+            initial_molecules = self._apply_com_filtering(initial_molecules, submolecules)
+
         # Step 6: Energy prescreening + Z-score filtering
         scored, failed = self._prescreen_candidates(initial_molecules, n_sampling_workers)
         mols_raw, energies_raw, e_min, e_max, n_workers = self._finalize_candidate_pool(
@@ -225,6 +242,7 @@ class ClusterInitializer:
         if self.logger:
             self.logger.section("Initialization of Feature Matrix and Clustering")
         feature_mat_raw = self._build_feature_matrix(mols)
+        mols_aligned_to_raw = list(mols)  # preserve 1:1 alignment with feature_mat_raw before pipeline pruning
         clustering, embedding_10d, labels, rep_indices = Clustering.run_clustering_and_classifier_pipeline(
             feature_matrix=feature_mat_raw,
             n_clusters=n_workers,
@@ -239,6 +257,11 @@ class ClusterInitializer:
             embedding_plot_path="figures/initialization_umap_clusters.png",
             embedding_plot_title="Initialization UMAP Embedding with Cluster Labels",
         )
+        # Stash the molecules aligned to feature_mat_raw (pre-pruning) on the clustering
+        # object itself, so callers retraining on feature_mat_raw later (e.g. BHMC's
+        # analyze_training_results) can resolve representative row indices back to
+        # actual Molecule objects without recomputing features from scratch.
+        clustering.raw_molecules = mols_aligned_to_raw
         mols, energies = clustering.molecules, clustering.energies
 
         # Step 9: Pick one representative per cluster and resolve RMSD duplicates
@@ -312,7 +335,58 @@ class ClusterInitializer:
             msg += "  optimize_submolecules: True\n"
         if self.config.optimize_cluster_representatives:
             msg += "  optimize_cluster_representatives: True\n"
+        if self.config.filter_com_outliers:
+            msg += f"  filter_com_outliers:  True (threshold={self.config.com_threshold} Å)\n"
         self.logger.info(msg)
+
+    def _compute_submol_placement_indices(self, submolecules: List[Molecule]) -> List[np.ndarray]:
+        """Return each submolecule's atom-index range within an assembled candidate.
+
+        Candidates are built by concatenating submolecule coordinates in a fixed
+        order (see _generate_configuration / _generate_batch_static), so every
+        candidate shares the same index ranges regardless of where each
+        submolecule ends up after placement.
+        """
+        indices = []
+        start = 0
+        for submol in submolecules:
+            n = len(submol.coordinates)
+            indices.append(np.arange(start, start + n))
+            start += n
+        return indices
+
+    def _apply_com_filtering(
+        self,
+        initial_molecules: List[Molecule],
+        submolecules: List[Molecule],
+    ) -> List[Molecule]:
+        """Discard candidates whose submolecules ended up farther apart than com_threshold.
+
+        Random/Sobol/grid placement can scatter submolecules to opposite sides
+        of the simulation box, producing "clusters" that are really two
+        unrelated fragments sharing a box. Removing those before the (costly)
+        energy prescreening keeps only compact, physically meaningful starting
+        points for BHMC and avoids wasting evaluations on them.
+        """
+        if len(submolecules) < 2:
+            return initial_molecules
+
+        submol_indices = self._compute_submol_placement_indices(submolecules)
+        filtered, _ = self.filter_high_com_outliers(
+            initial_molecules,
+            [submol_indices] * len(initial_molecules),
+            com_threshold=self.config.com_threshold,
+        )
+        self._log(
+            f"COM-compactness filtering: kept {len(filtered)}/{len(initial_molecules)} candidates "
+            f"(threshold={self.config.com_threshold} Å)"
+        )
+        if not filtered:
+            raise RuntimeError(
+                "All candidates were filtered out by COM-compactness filtering — "
+                "try increasing com_threshold or check the simulation box size."
+            )
+        return filtered
 
     def _prescreen_candidates(
         self,
@@ -624,6 +698,49 @@ class ClusterInitializer:
                 filtered_energies.append(energy)
         return filtered_molecules, filtered_energies
 
+    def filter_high_com_outliers(
+            self,
+            molecules: List[Molecule],
+            submolecule_indices: List[List[np.ndarray]],
+            com_threshold: float = 4.0,
+        ) -> Tuple[List[Molecule], List[List[np.ndarray]]]:
+        """
+        Keep only candidates whose submolecules form a single connected aggregate.
+
+        Builds a graph with one node per submolecule and an edge between two
+        submolecules whenever their COM-COM distance is at most com_threshold.
+        A candidate is discarded unless that graph is fully connected — i.e.
+        every submolecule is linked (directly or transitively) to the rest of
+        the cluster. Requiring full connectivity (rather than every pairwise
+        distance to be below the threshold) lets compact but elongated or
+        branched clusters survive; the naive all-pairs check collapses to
+        ~0% survival for 4+ submolecules since it effectively demands the
+        whole cluster fit inside a ball smaller than the placement box.
+
+        Args:
+            molecules:            Candidate molecules.
+            submolecule_indices:  One entry per molecule; each entry is the list of
+                                   atom-index arrays for that molecule's submolecules.
+            com_threshold:        Max COM-COM "link" distance (Å) between submolecules.
+        """
+        filtered_molecules, filtered_submolecule_indices = [], []
+        for mol, indices in zip(molecules, submolecule_indices):
+            coms = [np.average(mol.coordinates[idx], axis=0, weights=mol.masses[idx]) for idx in indices]
+
+            graph = nx.Graph()
+            graph.add_nodes_from(range(len(coms)))
+            for i in range(len(coms)):
+                for j in range(i + 1, len(coms)):
+                    if np.linalg.norm(coms[i] - coms[j]) <= com_threshold:
+                        graph.add_edge(i, j)
+
+            if nx.is_connected(graph):
+                filtered_molecules.append(mol)
+                filtered_submolecule_indices.append(indices)
+        return filtered_molecules, filtered_submolecule_indices
+
+
+
     def filter_duplicates_rmsd(
         self,
         molecules: List[Molecule],
@@ -791,15 +908,25 @@ class ClusterInitializer:
         self._log("\n[4/5] Creating simulation box")
         all_vdw_radii = []
         total_atoms   = 0
+        submol_extents = []
         for submol in submolecules:
             all_vdw_radii.extend(submol.vdw_radii)
             total_atoms += len(submol.coordinates)
+            submol_extents.append(
+                GeometryOps.bounding_radius(submol.coordinates, submol.masses, submol.vdw_radii)
+            )
+
+        # Pad the box by the largest submolecule's own bounding radius so it has
+        # room to rotate/translate near the boundary --> avoids clashing 
+        padding = self.config.padding_factor * max(submol_extents)
+        self._log(f"      Largest submolecule extent: {max(submol_extents):.2f} Å -> padding: {padding:.2f} Å")
 
         simulation_box = SimulationBox.from_vdw_radii(
             vdw_radii=all_vdw_radii,
             n_atoms=total_atoms,
             box_type=self.config.box_type,
             eta_factor=self.config.eta_factor,
+            padding=padding,
         )
         self._log(f"      Box type: {simulation_box.box_type}")
         if simulation_box.box_type == "sphere":
@@ -1753,3 +1880,32 @@ def plot_placement_comparison(
 if __name__ == "__main__":
     xyz_file = "/media/storage_6/lme/master_thesis/cluster_generation/test_molecules/co2_h2o.xyz"
     plot_placement_comparison(R=5.0, N=500, save_path="figures/placement_comparison.png")
+    # Test the com_com max distance filtering
+    test_initializer(
+        xyz_file=xyz_file,
+        method="hf",
+        basis="cc-pvdz",
+        optimize=True,
+        box_type="sphere",
+        box_scale=2.5,
+        min_distance=2.0,
+        placing_method="sobol",
+        n_configurations=3,
+        save_output=True,
+    )
+    # Test if the configuration passes the partition mapping test
+    config = InitializationConfig(
+        qm_method="hf",
+        qm_basis="cc-pvdz",
+        optimize_submolecules=True,
+        box_type="sphere",
+        box_scale_factor=2.5,   
+        min_distance=2.0,
+        verbose=True,
+    )
+    initializer = ClusterInitializer(config=config)
+    initial_molecules, submol_indices, simulation_box, _, _ = initializer.initialize_from_xyz(
+        xyz_file,
+        n_configurations=3,
+        placing_method="sobol",
+    )

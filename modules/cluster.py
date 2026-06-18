@@ -187,12 +187,6 @@ class Clustering:
         stability, an optional labeled embedding plot, and training/evaluating
         the online structure-assignment classifier.
 
-        This is shared by `ClusterInitializer.initialize_from_xyz` (first build,
-        where `molecules`/`energies` are known and representatives are picked)
-        and `BHMC.analyze_training_results` (retraining on initial + novel
-        features after a BHMC run, where representatives aren't needed) so both
-        paths build their `Clustering` instance identically.
-
         Args:
             feature_matrix:          Descriptor matrix to clean and cluster.
             n_clusters:               Target cluster count (clamped to the post-cleanup pool size).

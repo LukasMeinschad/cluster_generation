@@ -20,6 +20,8 @@ import seaborn as sns
 from scipy.spatial.distance import pdist
 from dscribe.descriptors import CoulombMatrix
 
+HARTREE_TO_KCAL_MOL = 627.5094740631
+
 @dataclass
 class StructureAnalysisConfig:
     """  
@@ -295,7 +297,7 @@ class StructureAnalysis:
         self.optimized_mols = [optimized_mols_tracker[i] for i in range(len(self.initial_mols)) if i in optimized_mols_tracker]
         self.optimized_energies = [optimized_energies_tracker[i] for i in range(len(self.initial_mols)) if i in optimized_energies_tracker]
         self._log(f"Completed geometry optimization for {len(self.optimized_mols)} structures")
-        return self.optimized_mols
+        return self.optimized_mols, self.optimized_energies
 
 
 
@@ -312,6 +314,121 @@ class StructureAnalysis:
         )
         return calculator.optimize_geometry(mol, optimizer="LBFGS")
 
+    def compare_pes(
+        self,
+        mols_a: List[Molecule],
+        energies_a: List[float],
+        mols_b: List[Molecule],
+        energies_b: List[float],
+        label_a: str = "A",
+        label_b: str = "B",
+        rmsd_threshold: Optional[float] = None,
+        energy_tol: float = 1e-5,
+    ) -> Dict[str, Any]:
+        """
+        Compares the global minima of two structure structural pools on both energy and structure.
+
+        Finds each pool's lowest-energy structure, reports the energy gap between
+        them, and checks whether B's minimum structurally matches anything already
+        present in A (RMSD below rmsd_threshold) — this distinguishes a genuinely
+        new basin from a known structure that simply got relaxed a bit further.
+
+        Args:
+            mols_a, energies_a: Reference pool (energies in Hartree).
+            mols_b, energies_b: Pool to compare against the reference.
+            label_a, label_b:   Names used in log output only.
+            rmsd_threshold:     Override for self.config.rmsd_threshold.
+            energy_tol:         Minimum |ΔE| (Hartree) to treat an energy difference
+                                 as real rather than numerical noise.
+
+        Returns:
+            Dict with both global minima, their energy gap (Hartree and kcal/mol),
+            the RMSD between them, B's nearest structural match in A, and an
+            `is_new_minimum` verdict.
+        """
+        if not mols_a or not mols_b:
+            raise ValueError("Both structure sets must be non-empty.")
+        if len(mols_a) != len(energies_a) or len(mols_b) != len(energies_b):
+            raise ValueError("Each molecule list must have a matching energy list.")
+
+        threshold = self.config.rmsd_threshold if rmsd_threshold is None else rmsd_threshold
+
+        energies_a_arr = np.asarray(energies_a)
+        energies_b_arr = np.asarray(energies_b)
+        idx_min_a = int(np.argmin(energies_a_arr))
+        idx_min_b = int(np.argmin(energies_b_arr))
+        e_min_a = float(energies_a_arr[idx_min_a])
+        e_min_b = float(energies_b_arr[idx_min_b])
+
+        delta_hartree = e_min_b - e_min_a
+        delta_kcal = delta_hartree * HARTREE_TO_KCAL_MOL
+
+        best_a = mols_a[idx_min_a]
+        best_b = mols_b[idx_min_b]
+        rmsd_minima = self.geometry_ops.compute_optimal_correspondence_rmsd(best_a.coordinates, best_b.coordinates)
+
+        # B's minimum might match a non-minimal structure in A rather than A's own
+        # minimum, so search all of A for its nearest structural neighbour.
+        rmsd_to_a = np.array([
+            self.geometry_ops.compute_optimal_correspondence_rmsd(best_b.coordinates, mol.coordinates)
+            for mol in mols_a
+        ])
+        nearest_idx_in_a = int(np.argmin(rmsd_to_a))
+        nearest_rmsd_in_a = float(rmsd_to_a[nearest_idx_in_a])
+
+        improved = delta_hartree < -energy_tol
+        structurally_novel = nearest_rmsd_in_a > threshold
+        is_new_minimum = improved and structurally_novel
+
+        result = {
+            "label_a": label_a,
+            "label_b": label_b,
+            "n_a": len(mols_a),
+            "n_b": len(mols_b),
+            "idx_min_a": idx_min_a,
+            "idx_min_b": idx_min_b,
+            "e_min_a": e_min_a,
+            "e_min_b": e_min_b,
+            "delta_e_hartree": delta_hartree,
+            "delta_e_kcal_mol": delta_kcal,
+            "improved": improved,
+            "rmsd_minima": rmsd_minima,
+            "nearest_match_index_in_a": nearest_idx_in_a,
+            "nearest_match_rmsd": nearest_rmsd_in_a,
+            "structurally_novel": structurally_novel,
+            "is_new_minimum": is_new_minimum,
+        }
+
+        self._log(
+            f"\nPES comparison: {label_a} (n={len(mols_a)}) vs {label_b} (n={len(mols_b)})\n"
+            f"  {label_a} global minimum:  structure {idx_min_a}, E = {e_min_a:.6f} Hartree\n"
+            f"  {label_b} global minimum:  structure {idx_min_b}, E = {e_min_b:.6f} Hartree\n"
+            f"  Delta E ({label_b} - {label_a}): {delta_hartree:.6f} Hartree ({delta_kcal:+.3f} kcal/mol)\n"
+            f"  RMSD between the two minima: {rmsd_minima:.3f} Å\n"
+            f"  {label_b}'s minimum's nearest match in {label_a}: structure {nearest_idx_in_a} "
+            f"(RMSD = {nearest_rmsd_in_a:.3f} Å, threshold = {threshold:.3f} Å)"
+        )
+        if is_new_minimum:
+            self._log(
+                f"  --> NEW LOWEST-ENERGY MINIMUM found in {label_b}: "
+                f"{abs(delta_kcal):.3f} kcal/mol below {label_a}'s minimum and structurally "
+                f"distinct from every structure in {label_a}."
+            )
+        elif improved:
+            self._log(
+                f"  --> {label_b} found a lower energy ({abs(delta_kcal):.3f} kcal/mol), but its "
+                f"minimum matches an existing structure in {label_a} (RMSD = {nearest_rmsd_in_a:.3f} Å) "
+                "-- likely the same basin relaxed further, not a new minimum."
+            )
+        else:
+            self._log(
+                f"  --> No improvement: {label_b}'s best structure is {delta_kcal:.3f} kcal/mol "
+                f"above {label_a}'s minimum."
+            )
+
+        return result
+
+
     def analyze_hessians(self, use_optimized: bool = True, n_workers: int = 4) -> List[Any]:
         """Computes tracking matrices for stationary point criteria evaluation."""
         mols = self._get_target_mols(use_optimized)
@@ -327,6 +444,7 @@ class StructureAnalysis:
             
         self.hessian_analysis_results = results
         return results
+
 
     def analyze_hessian_sparsity(self, use_optimized: bool = True, n_workers: int = 4, save_path: str = "figures/hessian_sparsity.png"):
         """Determines the element distribution matrix densities inside computed Hessians."""
@@ -465,3 +583,16 @@ if __name__ == "__main__":
 
     # Plot tracking verification
     structure_analysis.plot_distance_matrix_heatmap(metric="euclidean", use_optimized=True, save_path="figures/distance_matrix_heatmap_optimized.png")
+
+    # Check the compare_pes function on the initial vs optimized structures
+    optimized_energies = structure_analysis.optimized_energies if structure_analysis.optimized_energies is not None else [0.0] * len(optimized_structures)
+    structure_analysis.compare_pes(
+        mols_a=structure_analysis.initial_mols,
+        energies_a=[0.0] * len(structure_analysis.initial_mols),  # Assuming initial energies are not computed, set to 0 for comparison
+        mols_b=optimized_structures,
+        energies_b=optimized_energies,
+        label_a="Initial Candidates",
+        label_b="Optimized Candidates",
+        rmsd_threshold=0.5,
+        energy_tol=1e-5,
+    )

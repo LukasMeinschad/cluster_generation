@@ -20,6 +20,7 @@ InitializationConfig:
 + box_type = "sphere"
 + box_scale_factor = 1.0
 + eta_factor = 4.0
++ padding_factor = 1.0
 + min_distance = 1.8
 + max_placement_attempts = 1000
 + rmsd_threshold = 0.6
@@ -27,11 +28,13 @@ InitializationConfig:
 + optimizer_method = "LBFGS"
 + optimize_parallel = True
 + optimize_cluster_representatives = False 
++ filter_com_outliers = True
++ com_threshold = 4.5
 + verbose = False
 
 InitializeXYZ:
 + n_workers = 20
-+ n_configurations = 100
++ n_configurations = 2000
 + n_sampling_workers = 20
 + placing_method = "sobol"
 + grid_spacing = "sobol"

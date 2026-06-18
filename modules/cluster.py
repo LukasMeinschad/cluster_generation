@@ -158,34 +158,36 @@ class Clustering:
         )
 
     # =========================================================
-    # FULL CLUSTERING + CLASSIFIER PIPELINE
+    # CLUSTERING PIPELINE (unsupervised), + CLASSIFIER ON TOP
     # =========================================================
 
     @classmethod
-    def run_clustering_and_classifier_pipeline(
+    def run_clustering_pipeline(
         cls,
         feature_matrix: np.ndarray,
         n_clusters: int,
         molecules: Optional[List[Any]] = None,
         energies: Optional[List[float]] = None,
         clustering_method: str = "kmeans",
-        classifier_backend: str = "knn",
-        classifier_kwargs: Optional[dict] = None,
         metric: str = "cityblock",
         compute_representatives: bool = True,
+        representative_method: str = "lowest_energy",
         logger: Optional[Logger] = None,
         log_fn: Optional[Callable[[str], None]] = None,
         embedding_plot_path: Optional[str] = None,
         embedding_plot_title: str = "UMAP Embedding with Cluster Labels",
-        classifier_eval_dir: Optional[str] = "figures/classifier_evaluation",
     ) -> Tuple["Clustering", np.ndarray, np.ndarray, Optional[Dict[int, int]]]:
-        """Clean a feature matrix and fit a clustering + classifier pipeline on it.
+        """Clean a feature matrix and fit the unsupervised clustering stage — no classifier.
 
         Steps: low-variance feature pruning, Isolation Forest outlier removal, 10D
         UMAP embedding, Local Outlier Factor cleanup on the embedding, the
         configured clustering algorithm, metric evaluation, perturbation
-        stability, an optional labeled embedding plot, and training/evaluating
-        the online structure-assignment classifier.
+        stability, and an optional labeled embedding plot.
+
+        This is the shared first half of run_clustering_and_classifier_pipeline.
+        Call it directly (instead of the classifier variant) when there's no
+        need — or no sound basis — to (re)fit a classifier, e.g. re-clustering a
+        small pool of "novel" structures flagged by an existing reference model.
 
         Args:
             feature_matrix:          Descriptor matrix to clean and cluster.
@@ -193,27 +195,21 @@ class Clustering:
             molecules:                 Molecules aligned to feature_matrix rows, if available.
             energies:                  Energies aligned to feature_matrix rows, if available.
             clustering_method:         "kmeans" | "agglomerative" | "dbscan" | "hdbscan".
-            classifier_backend:        "knn" | "svm" | "random_forest".
-            classifier_kwargs:         Extra kwargs forwarded to the classifier constructor.
-            metric:                    Distance metric for clustering and classification.
-            compute_representatives:   Whether to pick a lowest-energy representative per
-                                        cluster (requires `energies` to be set).
+            metric:                    Distance metric for clustering.
+            compute_representatives:   Whether to pick one representative per cluster.
+            representative_method:    "lowest_energy" | "centroid" | "medoid" | "convex_hull"
+                                        (see get_cluster_representatives; "lowest_energy"
+                                        requires `energies` to be set).
             logger:                    Optional Logger forwarded to the Clustering instance.
             log_fn:                    Optional logging callback (defaults to `print`).
             embedding_plot_path:       Where to save the labeled embedding plot, or None to skip.
             embedding_plot_title:      Title for the embedding plot.
-            classifier_eval_dir:       Where to save classifier cross-validation diagnostics.
 
         Returns:
             (clustering, embedding_10d, labels, rep_indices) — rep_indices is None
             unless compute_representatives is True.
         """
         log = log_fn or print
-        if classifier_backend.lower() not in {"knn", "svm", "random_forest"}:
-            raise ValueError(
-                f"Unknown classifier_backend: {classifier_backend!r}. "
-                "Choose 'knn', 'svm', or 'random_forest'."
-            )
 
         clustering = cls(
             feature_matrix=feature_matrix,
@@ -260,7 +256,72 @@ class Clustering:
 
         rep_indices = None
         if compute_representatives:
-            rep_indices = clustering.get_cluster_representatives(method="lowest_energy")
+            rep_indices = clustering.get_cluster_representatives(method=representative_method)
+
+        return clustering, embedding_10d, labels, rep_indices
+
+    @classmethod
+    def run_clustering_and_classifier_pipeline(
+        cls,
+        feature_matrix: np.ndarray,
+        n_clusters: int,
+        molecules: Optional[List[Any]] = None,
+        energies: Optional[List[float]] = None,
+        clustering_method: str = "kmeans",
+        classifier_backend: str = "knn",
+        classifier_kwargs: Optional[dict] = None,
+        metric: str = "cityblock",
+        compute_representatives: bool = True,
+        logger: Optional[Logger] = None,
+        log_fn: Optional[Callable[[str], None]] = None,
+        embedding_plot_path: Optional[str] = None,
+        embedding_plot_title: str = "UMAP Embedding with Cluster Labels",
+        classifier_eval_dir: Optional[str] = "figures/classifier_evaluation",
+    ) -> Tuple["Clustering", np.ndarray, np.ndarray, Optional[Dict[int, int]]]:
+        """Run run_clustering_pipeline, then train/evaluate the online classifier on top of it.
+
+        Args:
+            feature_matrix:          Descriptor matrix to clean and cluster.
+            n_clusters:               Target cluster count (clamped to the post-cleanup pool size).
+            molecules:                 Molecules aligned to feature_matrix rows, if available.
+            energies:                  Energies aligned to feature_matrix rows, if available.
+            clustering_method:         "kmeans" | "agglomerative" | "dbscan" | "hdbscan".
+            classifier_backend:        "knn" | "svm" | "random_forest".
+            classifier_kwargs:         Extra kwargs forwarded to the classifier constructor.
+            metric:                    Distance metric for clustering and classification.
+            compute_representatives:   Whether to pick a lowest-energy representative per
+                                        cluster (requires `energies` to be set).
+            logger:                    Optional Logger forwarded to the Clustering instance.
+            log_fn:                    Optional logging callback (defaults to `print`).
+            embedding_plot_path:       Where to save the labeled embedding plot, or None to skip.
+            embedding_plot_title:      Title for the embedding plot.
+            classifier_eval_dir:       Where to save classifier cross-validation diagnostics.
+
+        Returns:
+            (clustering, embedding_10d, labels, rep_indices) — rep_indices is None
+            unless compute_representatives is True.
+        """
+        log = log_fn or print
+        if classifier_backend.lower() not in {"knn", "svm", "random_forest"}:
+            raise ValueError(
+                f"Unknown classifier_backend: {classifier_backend!r}. "
+                "Choose 'knn', 'svm', or 'random_forest'."
+            )
+
+        clustering, embedding_10d, labels, rep_indices = cls.run_clustering_pipeline(
+            feature_matrix=feature_matrix,
+            n_clusters=n_clusters,
+            molecules=molecules,
+            energies=energies,
+            clustering_method=clustering_method,
+            metric=metric,
+            compute_representatives=compute_representatives,
+            representative_method="lowest_energy",
+            logger=logger,
+            log_fn=log_fn,
+            embedding_plot_path=embedding_plot_path,
+            embedding_plot_title=embedding_plot_title,
+        )
 
         kwargs = classifier_kwargs or {}
         log(f"\nTraining {classifier_backend.upper()} classifier on the 10D UMAP embedding...")

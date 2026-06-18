@@ -7,7 +7,7 @@
                                              
 
 A Machine Learning assisted Basin Hopping Optimization for Molecular Cluster Generation
-2026-06-18 09:50:04
+2026-06-18 10:53:25
 Made by: Lukas Meinschad
 Assisted by Jonas Schlagin, Klaus R. Liedl at University of Innsbruck, Liedl Lab
 ================================================================================
@@ -40,11 +40,11 @@ Settings successfully read:
     optimize_parallel = True
     optimize_cluster_representatives = False
     filter_com_outliers = True
-    com_threshold = 4.5
+    com_threshold = 6
     verbose = False
   [InitializeXYZ]
     n_workers = 20
-    n_configurations = 2000
+    n_configurations = 20
     n_sampling_workers = 20
     placing_method = sobol
     grid_spacing = sobol
@@ -84,7 +84,7 @@ Settings successfully read:
     box_stable_windows = 3
     n_workers = 20
     training_frac = 0.25
-    n_steps_per_worker = 10000
+    n_steps_per_worker = 20
 ------------------------------------------------------------------------
 Reading operator distribution from: operator_dist.inp
 Operator distribution successfully read:
@@ -121,206 +121,206 @@ Operator distribution successfully read:
     correlated_displacement = 2.0
     small_principal_axis_rotation = 2.0
 ------------------------------------------------------------------------
-Initial SP Energy: -20.6128 eV (Calculated in 0.02 seconds)
+Initial SP Energy: -10.8091 eV (Calculated in 0.02 seconds)
 ========================================================================
                          Cluster Initialization                         
 ========================================================================
-Initialization started at 2026-06-18 09:50:04
+Initialization started at 2026-06-18 10:53:25
 Configuration:
-  XYZ file:              test_molecules/co2_co2.xyz
+  XYZ file:              test_molecules/h2o_n2.xyz
   n_workers:             20
-  n_configurations:      2000
-  Total candidates:      40000
+  n_configurations:      20
+  Total candidates:      400
   placing_method:        sobol
   energy_backend:        xtb (GFN2-xTB)
   classifier_backend:    knn
   optimize_submolecules: True
-  filter_com_outliers:  True (threshold=4.5 Å)
+  filter_com_outliers:  True (threshold=6 Å)
 
 
-[1/5] Loading molecule from test_molecules/co2_co2.xyz
-      6 atoms — types: {'O1', 'C2', 'O4', 'O2', 'C1', 'O3'}
+[1/5] Loading molecule from test_molecules/h2o_n2.xyz
+      5 atoms — types: {'H1', 'N2', 'O1', 'N1', 'H2'}
 
 [2/5] Fragmenting molecule into submolecules
-      4 covalent bonds, 0 hydrogen bonds
+      3 covalent bonds, 0 hydrogen bonds
       2 submolecule(s):
-        [1] 3 atoms
+        [1] 2 atoms
         [2] 3 atoms
 
 [3/5] Optimizing 2 submolecule(s)...
       Parallel optimization on 2 worker(s)...
-        Submolecule 1 optimized successfully
         Submolecule 2 optimized successfully
+        Submolecule 1 optimized successfully
 
 [4/5] Creating simulation box
-      Largest submolecule extent: 2.66 Å -> padding: 2.66 Å
+      Largest submolecule extent: 2.10 Å -> padding: 2.10 Å
       Box type: sphere
-      Radius:   5.59 Å
-      Volume:   730.77 Å³
+      Radius:   4.52 Å
+      Volume:   387.93 Å³
 
-[5/5] Sampling 2000 configurations on each of 20 workers (total: 40000)...
-  Worker 1: 2000 configurations generated
-  Worker 2: 2000 configurations generated
-  Worker 4: 2000 configurations generated
-  Worker 5: 2000 configurations generated
-  Worker 0: 2000 configurations generated
-  Worker 9: 2000 configurations generated
-  Worker 3: 2000 configurations generated
-  Worker 7: 2000 configurations generated
-  Worker 10: 2000 configurations generated
-  Worker 16: 2000 configurations generated
-  Worker 12: 2000 configurations generated
-  Worker 17: 2000 configurations generated
-  Worker 6: 2000 configurations generated
-  Worker 13: 2000 configurations generated
-  Worker 15: 2000 configurations generated
-  Worker 8: 2000 configurations generated
-  Worker 14: 2000 configurations generated
-  Worker 11: 2000 configurations generated
-  Worker 19: 2000 configurations generated
-  Worker 18: 2000 configurations generated
-  Total configurations collected: 40000
-COM-compactness filtering: kept 1092/40000 candidates (threshold=4.5 Å)
+[5/5] Sampling 20 configurations on each of 20 workers (total: 400)...
+  Worker 1: 20 configurations generated
+  Worker 0: 20 configurations generated
+  Worker 5: 20 configurations generated
+  Worker 6: 20 configurations generated
+  Worker 2: 20 configurations generated
+  Worker 7: 20 configurations generated
+  Worker 4: 20 configurations generated
+  Worker 3: 20 configurations generated
+  Worker 8: 20 configurations generated
+  Worker 10: 20 configurations generated
+  Worker 11: 20 configurations generated
+  Worker 12: 20 configurations generated
+  Worker 13: 20 configurations generated
+  Worker 16: 20 configurations generated
+  Worker 14: 20 configurations generated
+  Worker 15: 20 configurations generated
+  Worker 17: 20 configurations generated
+  Worker 18: 20 configurations generated
+  Worker 9: 20 configurations generated
+  Worker 19: 20 configurations generated
+  Total configurations collected: 400
+COM-compactness filtering: kept 225/400 candidates (threshold=6 Å)
 
-Energy prescreening: distributing 1092 candidates across 20 workers...
-  Worker 1: 54/54 evaluations successful
-  Worker 0: 54/54 evaluations successful
-  Worker 2: 54/54 evaluations successful
-  Worker 3: 54/54 evaluations successful
-  Worker 7: 54/54 evaluations successful
-  Worker 6: 54/54 evaluations successful
-  Worker 4: 54/54 evaluations successful
-  Worker 5: 54/54 evaluations successful
-  Worker 17: 54/54 evaluations successful
-  Worker 13: 54/54 evaluations successful
-  Worker 8: 54/54 evaluations successful
-  Worker 19: 54/54 evaluations successful
-  Worker 9: 54/54 evaluations successful
-  Worker 20: 12/12 evaluations successful
-  Worker 12: 54/54 evaluations successful
-  Worker 15: 54/54 evaluations successful
-  Worker 18: 54/54 evaluations successful
-  Worker 11: 54/54 evaluations successful
-  Worker 10: 54/54 evaluations successful
-  Worker 14: 54/54 evaluations successful
-  Worker 16: 54/54 evaluations successful
+Energy prescreening: distributing 225 candidates across 20 workers...
+  Worker 0: 11/11 evaluations successful
+  Worker 1: 11/11 evaluations successful
+  Worker 2: 11/11 evaluations successful
+  Worker 3: 11/11 evaluations successful
+  Worker 5: 11/11 evaluations successful
+  Worker 6: 11/11 evaluations successful
+  Worker 8: 11/11 evaluations successful
+  Worker 10: 11/11 evaluations successful
+  Worker 11: 11/11 evaluations successful
+  Worker 4: 11/11 evaluations successful
+  Worker 15: 11/11 evaluations successful
+  Worker 16: 11/11 evaluations successful
+  Worker 9: 11/11 evaluations successful
+  Worker 17: 11/11 evaluations successful
+  Worker 19: 11/11 evaluations successful
+  Worker 7: 11/11 evaluations successful
+  Worker 20: 5/5 evaluations successful
+  Worker 13: 11/11 evaluations successful
+  Worker 14: 11/11 evaluations successful
+  Worker 12: 11/11 evaluations successful
+  Worker 18: 11/11 evaluations successful
 
-Energy evaluation complete: 1092 successful, 0 failed
-Wrote 1092 structures to trajectories/initialization_trajectory.xyz
+Energy evaluation complete: 225 successful, 0 failed
+Wrote 225 structures to trajectories/initialization_trajectory.xyz
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 Filtering and Data Preparation for Clustering
 ------------------------------------------------------------------------
 Performing Z-score filtering to remove high-energy outliers...
-Energy statistics before filtering: mean=-20.614104, std=0.010729, min=-20.618850, max=-20.527952 Hartree
-Energy statistics after filtering: mean=-20.615765, std=0.005406, min=-20.618850, max=-20.582817 Hartree
-Filtered out 36 high-energy outliers.
+Energy statistics before filtering: mean=-10.834587, std=0.000205, min=-10.835660, max=-10.833988 Hartree
+Energy statistics after filtering: mean=-10.834587, std=0.000205, min=-10.835660, max=-10.833988 Hartree
+Filtered out 0 high-energy outliers.
 ------------------------------------------------------------------------
 Initialization of Feature Matrix and Clustering
 ------------------------------------------------------------------------
 
  ----- Feature Filtering and Outlier Removal ----- 
 
-Filtered out 2474 low-variance features (threshold=0.0005). Remaining features: 226.
+Filtered out 5847 low-variance features (threshold=0.0005). Remaining features: 147.
 Running Isolation Forest with contamination=0.4, n_estimators=100, bootstrap=False, prune=True, random_state=None
-Isolation Forest detected 422 outliers out of 1056 samples.
-  -> Context Pruning complete: Matrix footprint reduced from 1056 down to 634 structures.
+Isolation Forest detected 90 outliers out of 225 samples.
+  -> Context Pruning complete: Matrix footprint reduced from 225 down to 135 structures.
 Applying UMAP with n_components=10, n_neighbors=15, min_dist=0.1, random_state=None
 Running Local Outlier Factor with contamination=0.3, n_neighbors=20, prune=True, metric=cityblock
-Local Outlier Factor detected 190 outliers out of 634 samples.
-  -> Context Pruning complete: Matrix footprint reduced from 634 down to 444 structures.
-After filtering and outlier removal, 444 configurations remain for clustering.
-K-Means clustering completed with inertia: 104.23857879638672
-Evaluating metrics on 444 samples across 20 clusters using metric: cityblock
+Local Outlier Factor detected 41 outliers out of 135 samples.
+  -> Context Pruning complete: Matrix footprint reduced from 135 down to 94 structures.
+After filtering and outlier removal, 94 configurations remain for clustering.
+K-Means clustering completed with inertia: 6.202144622802734
+Evaluating metrics on 94 samples across 20 clusters using metric: cityblock
 Internal Cluster Validation Statistics:
-  -> Silhouette Score: 0.4886 (Higher is better, range [-1, 1])
-  -> Davies-Bouldin Index: 0.7043 (Lower is better, range [0, inf])
-  -> Calinski-Harabasz Index: 989.8293 (Higher is better, range [0, inf])
+  -> Silhouette Score: 0.4101 (Higher is better, range [-1, 1])
+  -> Davies-Bouldin Index: 0.6986 (Lower is better, range [0, inf])
+  -> Calinski-Harabasz Index: 1198.8320 (Higher is better, range [0, inf])
 Launching Pertubation Stability Analysis with 5 repeats, subsample fraction 0.85, and random seed 42.
 
  --- Unsupervised Pertubation Stability Results ---
-  -> Mean Adjusted Rand Index (ARI): 0.9081 (Higher is more stable, range [-1, 1])
-  -> Standard Deviation of ARI: 0.0555 (Lower is more consistent across perturbations)
+  -> Mean Adjusted Rand Index (ARI): 0.7506 (Higher is more stable, range [-1, 1])
+  -> Standard Deviation of ARI: 0.0960 (Lower is more consistent across perturbations)
 Saved embedding plot to: figures/initialization_umap_clusters.png
-Cluster representatives identified via 'lowest_energy' optimization: {0: 90, 1: 110, 2: 0, 3: 30, 4: 83, 5: 97, 6: 164, 7: 113, 8: 205, 9: 49, 10: 23, 11: 167, 12: 8, 13: 141, 14: 352, 15: 255, 16: 18, 17: 1, 18: 361, 19: 25}
+Cluster representatives identified via 'lowest_energy' optimization: {0: 30, 1: 0, 2: 16, 3: 47, 4: 19, 5: 26, 6: 6, 7: 13, 8: 56, 9: 5, 10: 27, 11: 11, 12: 12, 13: 14, 14: 25, 15: 9, 16: 43, 17: 1, 18: 2, 19: 17}
 
 Training KNN classifier on the 10D UMAP embedding...
 Initializing classifier training for model type: knn
-Sucsessfully trained knn classifier on 444 samples with 10 features.
+Sucsessfully trained knn classifier on 94 samples with 10 features.
 Starting 5-fold cross-validation for classifier evaluation...
 
 -- Classifier Evaluation Report ---
 
               precision    recall  f1-score   support
 
-           0       1.00      0.89      0.94        18
-           1       1.00      1.00      1.00        19
-           2       0.96      0.93      0.94        27
-           3       0.95      0.95      0.95        22
-           4       1.00      0.75      0.86         8
-           5       1.00      1.00      1.00        32
-           6       1.00      1.00      1.00        29
-           7       0.96      1.00      0.98        24
-           8       1.00      1.00      1.00        19
-           9       1.00      1.00      1.00        27
-          10       0.89      1.00      0.94        17
-          11       0.96      1.00      0.98        27
-          12       1.00      0.81      0.90        16
-          13       0.98      1.00      0.99        42
-          14       1.00      1.00      1.00        20
-          15       1.00      1.00      1.00        20
-          16       0.94      1.00      0.97        17
-          17       0.97      0.97      0.97        31
-          18       1.00      1.00      1.00        10
-          19       0.90      1.00      0.95        19
+           0       0.71      1.00      0.83         5
+           1       1.00      1.00      1.00         6
+           2       0.75      1.00      0.86         6
+           3       0.00      0.00      0.00         2
+           4       1.00      1.00      1.00         6
+           5       0.71      1.00      0.83         5
+           6       0.86      1.00      0.92         6
+           7       0.80      1.00      0.89         4
+           8       1.00      0.83      0.91         6
+           9       1.00      1.00      1.00         5
+          10       0.67      0.67      0.67         3
+          11       0.67      0.80      0.73         5
+          12       1.00      1.00      1.00         6
+          13       0.00      0.00      0.00         3
+          14       0.00      0.00      0.00         2
+          15       0.67      0.50      0.57         4
+          16       1.00      1.00      1.00         5
+          17       1.00      1.00      1.00         5
+          18       0.83      1.00      0.91         5
+          19       1.00      0.80      0.89         5
 
-    accuracy                           0.98       444
-   macro avg       0.98      0.96      0.97       444
-weighted avg       0.98      0.98      0.97       444
+    accuracy                           0.86        94
+   macro avg       0.73      0.78      0.75        94
+weighted avg       0.81      0.86      0.83        94
 
-   -> Average Out-of-Fold prediction certainty (max probability): 0.9559
-   -> Structures below 60% confidence threshold: 2 / 444 (0.45%)
+   -> Average Out-of-Fold prediction certainty (max probability): 0.7149
+   -> Structures below 60% confidence threshold: 10 / 94 (10.64%)
 Confusion matrix saved to: figures/classifier_evaluation/confusion_matrix.png
 RMSD Based Checking for Duplicate Representatives...
-Discarding cluster 5 (RMSD=0.319 Å) in favor of cluster 2
-Discarding cluster 7 (RMSD=0.467 Å) in favor of cluster 2
-Discarding cluster 10 (RMSD=0.354 Å) in favor of cluster 2
-Discarding cluster 12 (RMSD=0.402 Å) in favor of cluster 2
-Discarding cluster 16 (RMSD=0.393 Å) in favor of cluster 2
-Discarding cluster 4 (RMSD=0.394 Å) in favor of cluster 19
-Discarding cluster 14 (RMSD=0.422 Å) in favor of cluster 6
-Discarding cluster 8 (RMSD=0.464 Å) in favor of cluster 9
-Discarding cluster 11 (RMSD=0.462 Å) in favor of cluster 17
-   Applying centroid fallback for cluster 4...
-   Selected fallback representative for cluster 4 with UMAP distance 0.185
+Discarding cluster 0 (RMSD=0.341 Å) in favor of cluster 2
+Discarding cluster 10 (RMSD=0.478 Å) in favor of cluster 2
+Discarding cluster 2 (RMSD=0.414 Å) in favor of cluster 17
+Discarding cluster 3 (RMSD=0.469 Å) in favor of cluster 7
+Discarding cluster 5 (RMSD=0.470 Å) in favor of cluster 7
+Discarding cluster 7 (RMSD=0.353 Å) in favor of cluster 6
+Discarding cluster 11 (RMSD=0.471 Å) in favor of cluster 6
+Discarding cluster 16 (RMSD=0.426 Å) in favor of cluster 15
+Discarding cluster 18 (RMSD=0.226 Å) in favor of cluster 17
+   Applying centroid fallback for cluster 0...
+   Selected fallback representative for cluster 0 with UMAP distance 0.067
+   Applying centroid fallback for cluster 2...
+   Selected fallback representative for cluster 2 with UMAP distance 0.126
+   Applying centroid fallback for cluster 3...
+   Selected fallback representative for cluster 3 with UMAP distance 0.247
    Applying centroid fallback for cluster 5...
-   Selected fallback representative for cluster 5 with UMAP distance 0.154
+   Selected fallback representative for cluster 5 with UMAP distance 0.106
    Applying centroid fallback for cluster 7...
-   Selected fallback representative for cluster 7 with UMAP distance 0.200
-   Applying centroid fallback for cluster 8...
-   Selected fallback representative for cluster 8 with UMAP distance 0.091
+   Selected fallback representative for cluster 7 with UMAP distance 0.185
    Applying centroid fallback for cluster 10...
-   Selected fallback representative for cluster 10 with UMAP distance 0.158
+   Selected fallback representative for cluster 10 with UMAP distance 0.081
    Applying centroid fallback for cluster 11...
-   Selected fallback representative for cluster 11 with UMAP distance 0.076
-   Applying centroid fallback for cluster 12...
-   Selected fallback representative for cluster 12 with UMAP distance 0.168
-   Applying centroid fallback for cluster 14...
-   Selected fallback representative for cluster 14 with UMAP distance 0.117
+   Selected fallback representative for cluster 11 with UMAP distance 0.186
    Applying centroid fallback for cluster 16...
-   Selected fallback representative for cluster 16 with UMAP distance 0.171
+   Selected fallback representative for cluster 16 with UMAP distance 0.151
+   Applying centroid fallback for cluster 18...
+   Selected fallback representative for cluster 18 with UMAP distance 0.088
 Skipping optimization of selected representatives (disabled in config).
 ============================================================
 Initialization Complete!
-  Total atoms:      6
+  Total atoms:      5
   Submolecules:     2
   Box type:         sphere
-  Candidates:       40000 (20w × 2000), valid: 1092, failed: 0
+  Candidates:       400 (20w × 20), valid: 225, failed: 0
   Selected:         20
-  Energy range:     -20.618850 to -20.527952 Hartree
-  Box radius:       5.59 Å
-  Box volume:       730.77 Å³
-Total initialization time: 71.01 s
+  Energy range:     -10.835660 to -10.833988 Hartree
+  Box radius:       4.52 Å
+  Box volume:       387.93 Å³
+Total initialization time: 60.21 s
 ------------------------------------------------------------------------
 Wrote 20 structures to trajectories/initial_candidates.xyz
 
@@ -334,157 +334,134 @@ Saved RMSD comparison plot to figures/rmsd_comparison.png
 Saved optimized energy distribution plot to figures/optimized_energy_distribution.png
 Identifying unique structures using RMSD threshold of 0.6 Å (use_optimized=True)
 Computed pairwise RMSD matrix (use_optimized=True)
-Identified 7 unique structures (use_optimized=True)
-Number of unique structures after optimization: 7
-Wrote 7 structures to trajectories/unique_optimized_initial_candidates.xyz
-Structure analysis and optimization completed in 32.16 seconds
-n_workers (20) is greater than the number of unique molecules (7). Randomly sampling with replacement to fill up workers.
-Starting BHMC sampling with 2500 training steps per worker (total steps: 10000)
+Identified 6 unique structures (use_optimized=True)
+Number of unique structures after optimization: 6
+Wrote 6 structures to trajectories/unique_optimized_initial_candidates.xyz
+Structure analysis and optimization completed in 40.77 seconds
+n_workers (20) is greater than the number of unique molecules (6). Randomly sampling with replacement to fill up workers.
+Starting BHMC sampling with 5 training steps per worker (total steps: 20)
 ========================================================================
                                 BHMC Run                                
 ========================================================================
 Workers            : 20
-Steps / worker     : 2500
-Total steps        : 50000
+Steps / worker     : 5
+Total steps        : 100
 xTB method        : GFN2-xTB
 Temperature        : 600 K
 Adaptive operators : True
 Operators          : ['twist', 'large_displacement', 'mirror', 'roto_reflection', 'exchange', 'random_so3', 'principal_axis_rotation', 'com_com_approach', 'com_com_separation', 'random_displacement', 'random_rotation', 'local_twist', 'correlated_displacement', 'small_principal_axis_rotation']
-Simulation box     : <modules.box.SimulationBox object at 0x7f14095e7dc0>
-SP time estimate: 0.01 s  (E = -20.618914 Ha)
-Estimated run time : 5.2 min
+Simulation box     : <modules.box.SimulationBox object at 0x7f51fe8dab50>
+SP time estimate: 0.00 s  (E = -10.836362 Ha)
+Estimated run time : 0.0 min
 Launching workers...
-  Worker 0: 2035 accepted, op rates: {'twist': 94.34889434889435, 'large_displacement': 78.4741144414169, 'mirror': 47.474747474747474, 'roto_reflection': 20.32967032967033, 'exchange': 85.41666666666666, 'random_so3': 81.29032258064515, 'principal_axis_rotation': 91.8918918918919, 'com_com_approach': 96.93877551020408, 'com_com_separation': 100.0, 'random_displacement': 96.19047619047619, 'random_rotation': 98.46153846153847, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 92.85714285714286}
-  Worker 1: 2016 accepted, op rates: {'twist': 96.09375, 'large_displacement': 78.84130982367759, 'mirror': 46.7005076142132, 'roto_reflection': 23.463687150837988, 'exchange': 84.12322274881517, 'random_so3': 76.97368421052632, 'principal_axis_rotation': 81.92771084337349, 'com_com_approach': 98.09523809523809, 'com_com_separation': 100.0, 'random_displacement': 98.21428571428571, 'random_rotation': 98.95287958115183, 'local_twist': 100.0, 'correlated_displacement': 96.55172413793103, 'small_principal_axis_rotation': 92.5}
-  Worker 2: 2084 accepted, op rates: {'twist': 97.71573604060913, 'large_displacement': 78.94736842105263, 'mirror': 58.68544600938967, 'roto_reflection': 25.128205128205128, 'exchange': 93.16455696202532, 'random_so3': 78.28947368421053, 'principal_axis_rotation': 92.7007299270073, 'com_com_approach': 93.33333333333333, 'com_com_separation': 100.0, 'random_displacement': 96.75675675675676, 'random_rotation': 99.46236559139786, 'local_twist': 100.0, 'correlated_displacement': 92.10526315789474, 'small_principal_axis_rotation': 95.74468085106383}
-  Worker 3: 2087 accepted, op rates: {'twist': 95.37712895377129, 'large_displacement': 76.78100263852242, 'mirror': 59.798994974874375, 'roto_reflection': 30.102040816326532, 'exchange': 92.17171717171718, 'random_so3': 80.66666666666666, 'principal_axis_rotation': 89.85507246376811, 'com_com_approach': 94.5054945054945, 'com_com_separation': 100.0, 'random_displacement': 97.0873786407767, 'random_rotation': 98.96373056994818, 'local_twist': 100.0, 'correlated_displacement': 97.77777777777777, 'small_principal_axis_rotation': 97.2972972972973}
-  Worker 4: 2040 accepted, op rates: {'twist': 94.94949494949495, 'large_displacement': 78.83597883597884, 'mirror': 49.746192893401016, 'roto_reflection': 21.428571428571427, 'exchange': 89.61748633879782, 'random_so3': 87.05882352941177, 'principal_axis_rotation': 89.1025641025641, 'com_com_approach': 98.0392156862745, 'com_com_separation': 100.0, 'random_displacement': 95.23809523809523, 'random_rotation': 96.61835748792271, 'local_twist': 100.0, 'correlated_displacement': 95.1219512195122, 'small_principal_axis_rotation': 78.72340425531915}
-  Worker 5: 2003 accepted, op rates: {'twist': 94.61756373937678, 'large_displacement': 85.6396866840731, 'mirror': 37.850467289719624, 'roto_reflection': 19.5, 'exchange': 77.7479892761394, 'random_so3': 86.28571428571429, 'principal_axis_rotation': 89.6969696969697, 'com_com_approach': 98.0392156862745, 'com_com_separation': 100.0, 'random_displacement': 100.0, 'random_rotation': 99.04306220095694, 'local_twist': 100.0, 'correlated_displacement': 97.22222222222221, 'small_principal_axis_rotation': 100.0}
-  Worker 6: 2052 accepted, op rates: {'twist': 94.9468085106383, 'large_displacement': 84.59595959595958, 'mirror': 52.70935960591133, 'roto_reflection': 22.439024390243905, 'exchange': 83.41968911917098, 'random_so3': 85.54913294797689, 'principal_axis_rotation': 90.56603773584906, 'com_com_approach': 100.0, 'com_com_separation': 100.0, 'random_displacement': 97.57281553398059, 'random_rotation': 100.0, 'local_twist': 97.87234042553192, 'correlated_displacement': 93.10344827586206, 'small_principal_axis_rotation': 96.96969696969697}
-  Worker 7: 2055 accepted, op rates: {'twist': 94.63806970509383, 'large_displacement': 81.50851581508516, 'mirror': 43.81443298969072, 'roto_reflection': 23.783783783783786, 'exchange': 83.62282878411911, 'random_so3': 89.20863309352518, 'principal_axis_rotation': 93.82716049382715, 'com_com_approach': 99.02912621359224, 'com_com_separation': 100.0, 'random_displacement': 97.94871794871794, 'random_rotation': 98.21428571428571, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 100.0}
-  Worker 8: 2027 accepted, op rates: {'twist': 94.9868073878628, 'large_displacement': 80.50632911392405, 'mirror': 48.97959183673469, 'roto_reflection': 17.989417989417987, 'exchange': 83.66336633663366, 'random_so3': 80.4054054054054, 'principal_axis_rotation': 88.96551724137932, 'com_com_approach': 97.02970297029702, 'com_com_separation': 100.0, 'random_displacement': 99.48979591836735, 'random_rotation': 99.00990099009901, 'local_twist': 100.0, 'correlated_displacement': 95.55555555555556, 'small_principal_axis_rotation': 92.5}
-  Worker 9: 2011 accepted, op rates: {'twist': 95.88235294117648, 'large_displacement': 85.1063829787234, 'mirror': 39.39393939393939, 'roto_reflection': 20.930232558139537, 'exchange': 81.7948717948718, 'random_so3': 85.71428571428571, 'principal_axis_rotation': 92.12121212121212, 'com_com_approach': 100.0, 'com_com_separation': 100.0, 'random_displacement': 98.9010989010989, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 98.27586206896551, 'small_principal_axis_rotation': 97.72727272727273}
-  Worker 10: 2118 accepted, op rates: {'twist': 97.04301075268818, 'large_displacement': 83.42245989304813, 'mirror': 55.67567567567567, 'roto_reflection': 22.727272727272727, 'exchange': 95.51122194513717, 'random_so3': 84.05797101449275, 'principal_axis_rotation': 93.24324324324324, 'com_com_approach': 99.07407407407408, 'com_com_separation': 100.0, 'random_displacement': 97.65258215962442, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 97.91666666666666}
-  Worker 11: 1962 accepted, op rates: {'twist': 96.52406417112299, 'large_displacement': 85.27131782945736, 'mirror': 40.0, 'roto_reflection': 17.903930131004365, 'exchange': 72.58064516129032, 'random_so3': 77.64705882352942, 'principal_axis_rotation': 88.62275449101796, 'com_com_approach': 98.83720930232558, 'com_com_separation': 100.0, 'random_displacement': 98.40425531914893, 'random_rotation': 98.89502762430939, 'local_twist': 100.0, 'correlated_displacement': 97.43589743589743, 'small_principal_axis_rotation': 94.11764705882352}
-  Worker 12: 2064 accepted, op rates: {'twist': 95.64164648910412, 'large_displacement': 80.34398034398035, 'mirror': 52.94117647058824, 'roto_reflection': 18.947368421052634, 'exchange': 89.18205804749341, 'random_so3': 82.16560509554141, 'principal_axis_rotation': 90.13157894736842, 'com_com_approach': 100.0, 'com_com_separation': 95.83333333333334, 'random_displacement': 96.55172413793103, 'random_rotation': 98.08612440191388, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 100.0}
-  Worker 13: 2022 accepted, op rates: {'twist': 96.51741293532339, 'large_displacement': 81.06060606060606, 'mirror': 42.780748663101605, 'roto_reflection': 14.356435643564355, 'exchange': 88.19277108433735, 'random_so3': 81.02189781021897, 'principal_axis_rotation': 88.125, 'com_com_approach': 94.79166666666666, 'com_com_separation': 100.0, 'random_displacement': 97.72727272727273, 'random_rotation': 99.48186528497409, 'local_twist': 100.0, 'correlated_displacement': 91.17647058823529, 'small_principal_axis_rotation': 95.55555555555556}
-  Worker 14: 2107 accepted, op rates: {'twist': 97.3170731707317, 'large_displacement': 82.94573643410853, 'mirror': 54.44444444444444, 'roto_reflection': 22.872340425531913, 'exchange': 89.33002481389578, 'random_so3': 85.0, 'principal_axis_rotation': 94.87179487179486, 'com_com_approach': 97.95918367346938, 'com_com_separation': 100.0, 'random_displacement': 95.95375722543352, 'random_rotation': 98.4375, 'local_twist': 97.43589743589743, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 98.0}
-  Worker 15: 2065 accepted, op rates: {'twist': 95.11002444987776, 'large_displacement': 79.67479674796748, 'mirror': 56.043956043956044, 'roto_reflection': 24.848484848484848, 'exchange': 81.66259168704157, 'random_so3': 80.74534161490683, 'principal_axis_rotation': 88.8235294117647, 'com_com_approach': 100.0, 'com_com_separation': 100.0, 'random_displacement': 96.5, 'random_rotation': 99.51456310679612, 'local_twist': 100.0, 'correlated_displacement': 91.8918918918919, 'small_principal_axis_rotation': 100.0}
-  Worker 16: 2093 accepted, op rates: {'twist': 96.66666666666667, 'large_displacement': 84.09638554216868, 'mirror': 56.49999999999999, 'roto_reflection': 23.157894736842106, 'exchange': 87.46736292428199, 'random_so3': 82.6923076923077, 'principal_axis_rotation': 92.63803680981594, 'com_com_approach': 100.0, 'com_com_separation': 100.0, 'random_displacement': 98.82352941176471, 'random_rotation': 98.52216748768473, 'local_twist': 100.0, 'correlated_displacement': 95.83333333333334, 'small_principal_axis_rotation': 96.96969696969697}
-  Worker 17: 2040 accepted, op rates: {'twist': 96.58792650918635, 'large_displacement': 78.72860635696821, 'mirror': 55.44554455445545, 'roto_reflection': 24.88479262672811, 'exchange': 85.47619047619047, 'random_so3': 85.625, 'principal_axis_rotation': 90.44117647058823, 'com_com_approach': 99.02912621359224, 'com_com_separation': 100.0, 'random_displacement': 97.19101123595506, 'random_rotation': 99.43820224719101, 'local_twist': 96.875, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 93.75}
-  Worker 18: 2060 accepted, op rates: {'twist': 97.10526315789474, 'large_displacement': 77.71428571428571, 'mirror': 54.891304347826086, 'roto_reflection': 22.596153846153847, 'exchange': 87.34793187347933, 'random_so3': 83.22580645161291, 'principal_axis_rotation': 90.19607843137256, 'com_com_approach': 97.41379310344827, 'com_com_separation': 100.0, 'random_displacement': 97.10144927536231, 'random_rotation': 99.5, 'local_twist': 100.0, 'correlated_displacement': 93.75, 'small_principal_axis_rotation': 95.0}
-  Worker 19: 1969 accepted, op rates: {'twist': 94.07008086253369, 'large_displacement': 84.71849865951742, 'mirror': 33.99014778325123, 'roto_reflection': 21.31979695431472, 'exchange': 77.22772277227723, 'random_so3': 85.54913294797689, 'principal_axis_rotation': 88.96103896103897, 'com_com_approach': 98.88888888888889, 'com_com_separation': 100.0, 'random_displacement': 94.14893617021278, 'random_rotation': 95.52238805970148, 'local_twist': 97.36842105263158, 'correlated_displacement': 96.7741935483871, 'small_principal_axis_rotation': 88.67924528301887}
-Total accepted structures : 40910
-Memory (accepted list)    : 0.37 MB
-Energy (Ha) — min=-20.618914  max=-20.609885  mean=-20.617199  std=0.000557
-Peak memory: 116.82 MB
-BHMC complete: 40910 structures accepted
-Wrote 40910 structures to trajectories/bhmc_structures.xyz
+  Worker 0: 4 accepted, op rates: {'twist': 100.0, 'large_displacement': 50.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 100.0}
+  Worker 1: 4 accepted, op rates: {'twist': 100.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 50.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 0.0, 'local_twist': 100.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 2: 5 accepted, op rates: {'twist': 100.0, 'large_displacement': 100.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 100.0}
+  Worker 3: 3 accepted, op rates: {'twist': 100.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 100.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 4: 1 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 100.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 5: 4 accepted, op rates: {'twist': 100.0, 'large_displacement': 100.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 100.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 6: 3 accepted, op rates: {'twist': 100.0, 'large_displacement': 0.0, 'mirror': 50.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 7: 5 accepted, op rates: {'twist': 0.0, 'large_displacement': 100.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 100.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 100.0}
+  Worker 8: 4 accepted, op rates: {'twist': 100.0, 'large_displacement': 100.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 100.0, 'local_twist': 0.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 0.0}
+  Worker 9: 3 accepted, op rates: {'twist': 100.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 50.0, 'principal_axis_rotation': 100.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 10: 4 accepted, op rates: {'twist': 100.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 100.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 11: 2 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 100.0, 'principal_axis_rotation': 50.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 12: 2 accepted, op rates: {'twist': 0.0, 'large_displacement': 50.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 13: 2 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 14: 3 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 15: 5 accepted, op rates: {'twist': 100.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 100.0, 'principal_axis_rotation': 100.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 0.0, 'local_twist': 100.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 16: 3 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 50.0, 'roto_reflection': 100.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 17: 4 accepted, op rates: {'twist': 100.0, 'large_displacement': 50.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 100.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 0.0}
+  Worker 18: 5 accepted, op rates: {'twist': 0.0, 'large_displacement': 100.0, 'mirror': 0.0, 'roto_reflection': 100.0, 'exchange': 0.0, 'random_so3': 100.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 0.0}
+  Worker 19: 1 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 0.0, 'random_rotation': 0.0, 'local_twist': 0.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 100.0}
+Total accepted structures : 67
+Memory (accepted list)    : 0.00 MB
+Energy (Ha) — min=-10.836362  max=-10.833281  mean=-10.835423  std=0.000930
+Peak memory: 20.87 MB
+BHMC complete: 67 structures accepted
+Wrote 67 structures to trajectories/bhmc_structures.xyz
 ------------------------------------------------------------------------
 Analysis of BHMC Training Run
 ------------------------------------------------------------------------
-After energy Z-score filter: 40694 structures remain
-SOAP features: 40694 × 2700
-Transformed 40694 out-of-sample data points into UMAP space.
-Embedded 40694 new structures into existing UMAP space, resulting in shape (40694, 10).
-Completed cluster label assignment for 40694 samples.
+After energy Z-score filter: 67 structures remain
+SOAP features: 67 × 5994
+Transformed 67 out-of-sample data points into UMAP space.
+Embedded 67 new structures into existing UMAP space, resulting in shape (67, 10).
+Completed cluster label assignment for 67 samples.
 Model Uncertainty Profiling & Confidence Analysis:
-   -> Average Shannon Entropy across predictions: 0.0001
-   -> Mean of maximum predicted probabilities: 1.0000
-   -> Standard deviation of maximum predicted probabilities: 0.0028
+   -> Average Shannon Entropy across predictions: 0.8841
+   -> Mean of maximum predicted probabilities: 0.6000
+   -> Standard deviation of maximum predicted probabilities: 0.0000
 Classification confidence map saved to: figures/bhmc_training_cluster_probabilities.png
-Novelty detection threshold set at the 25.0 percentile of max probabilities: 1.0000
-Flagged 8 novel structures out of 40694 total new structures based on confidence threshold.
-Novel structures feature mat shape: (8, 2700)
-Combining with initial feature matrix shape: (1056, 2700)
-
-Retraining clustering + KNN classifier on 1064 combined structures...
-
- ----- Feature Filtering and Outlier Removal ----- 
-
-Filtered out 2471 low-variance features (threshold=0.0005). Remaining features: 229.
-Running Isolation Forest with contamination=0.4, n_estimators=100, bootstrap=False, prune=True, random_state=None
-Isolation Forest detected 426 outliers out of 1064 samples.
-  -> Context Pruning complete: Matrix footprint reduced from 1064 down to 638 structures.
-Applying UMAP with n_components=10, n_neighbors=15, min_dist=0.1, random_state=None
-Running Local Outlier Factor with contamination=0.3, n_neighbors=20, prune=True, metric=cityblock
-Local Outlier Factor detected 192 outliers out of 638 samples.
-  -> Context Pruning complete: Matrix footprint reduced from 638 down to 446 structures.
-After filtering and outlier removal, 446 configurations remain for clustering.
-K-Means clustering completed with inertia: 94.96163177490234
-Evaluating metrics on 446 samples across 20 clusters using metric: cityblock
-Internal Cluster Validation Statistics:
-  -> Silhouette Score: 0.4768 (Higher is better, range [-1, 1])
-  -> Davies-Bouldin Index: 0.7627 (Lower is better, range [0, inf])
-  -> Calinski-Harabasz Index: 1065.3156 (Higher is better, range [0, inf])
-Launching Pertubation Stability Analysis with 5 repeats, subsample fraction 0.85, and random seed 42.
-
- --- Unsupervised Pertubation Stability Results ---
-  -> Mean Adjusted Rand Index (ARI): 0.8720 (Higher is more stable, range [-1, 1])
-  -> Standard Deviation of ARI: 0.0313 (Lower is more consistent across perturbations)
-Saved embedding plot to: figures/bhmc_retrained_umap_clusters.png
-
-Training KNN classifier on the 10D UMAP embedding...
-Initializing classifier training for model type: knn
-Sucsessfully trained knn classifier on 446 samples with 10 features.
-Starting 5-fold cross-validation for classifier evaluation...
-
--- Classifier Evaluation Report ---
-
-              precision    recall  f1-score   support
-
-           0       1.00      1.00      1.00        29
-           1       0.95      0.95      0.95        20
-           2       0.95      0.95      0.95        20
-           3       0.85      0.94      0.89        18
-           4       0.95      1.00      0.97        18
-           5       1.00      1.00      1.00        25
-           6       1.00      0.81      0.90        16
-           7       1.00      1.00      1.00        29
-           8       0.95      1.00      0.98        20
-           9       1.00      1.00      1.00        21
-          10       1.00      1.00      1.00        31
-          11       0.95      1.00      0.97        18
-          12       0.96      1.00      0.98        26
-          13       0.96      1.00      0.98        26
-          14       1.00      0.94      0.97        16
-          15       1.00      1.00      1.00        20
-          16       1.00      0.96      0.98        25
-          17       0.91      1.00      0.95        20
-          18       1.00      0.87      0.93        23
-          19       1.00      0.96      0.98        25
-
-    accuracy                           0.97       446
-   macro avg       0.97      0.97      0.97       446
-weighted avg       0.97      0.97      0.97       446
-
-   -> Average Out-of-Fold prediction certainty (max probability): 0.9507
-   -> Structures below 60% confidence threshold: 0 / 446 (0.00%)
-Confusion matrix saved to: figures/classifier_evaluation_retrained/confusion_matrix.png
-Cluster representatives identified via 'centroid' optimization: {0: 280, 1: 131, 2: 197, 3: 66, 4: 215, 5: 312, 6: 158, 7: 121, 8: 68, 9: 323, 10: 429, 11: 331, 12: 231, 13: 330, 14: 102, 15: 414, 16: 256, 17: 42, 18: 33, 19: 309}
-BHMC training phase completed in 187.44 seconds
+Novelty detection threshold set at the 25.0 percentile of max probabilities: 0.6000
+Flagged 0 novel structures out of 67 total new structures based on confidence threshold.
+No novel structures detected — keeping the existing reference model.
+BHMC training phase completed in 37.73 seconds
 ========================================================================
      Structure Analysis of Representatives from BHMC Training Phase     
 ========================================================================
-Error optimizing molecule at index 0: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 1: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 2: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 3: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 4: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 5: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 6: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 7: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 8: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 9: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 10: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 11: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 12: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 13: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 14: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 15: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 16: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 17: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 18: 'int' object has no attribute 'to_ase_atoms'
-Error optimizing molecule at index 19: 'int' object has no attribute 'to_ase_atoms'
-Completed geometry optimization for 0 structures
-No molecules provided to write to XYZ file.
+No novel structures were found during the BHMC training phase — skipping optimization and PES comparison for this step.
+Continuing BHMC sampling with 15 sampling steps per worker (total steps: 20)
+========================================================================
+                                BHMC Run                                
+========================================================================
+Workers            : 20
+Steps / worker     : 15
+Total steps        : 300
+xTB method        : GFN2-xTB
+Temperature        : 600 K
+Adaptive operators : True
+Operators          : ['twist', 'large_displacement', 'mirror', 'roto_reflection', 'exchange', 'random_so3', 'principal_axis_rotation', 'com_com_approach', 'com_com_separation', 'random_displacement', 'random_rotation', 'local_twist', 'correlated_displacement', 'small_principal_axis_rotation']
+Simulation box     : <modules.box.SimulationBox object at 0x7f51fe8dab50>
+SP time estimate: 0.01 s  (E = -10.836362 Ha)
+Estimated run time : 0.0 min
+Launching workers...
+  Worker 0: 13 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 100.0}
+  Worker 1: 15 accepted, op rates: {'twist': 100.0, 'large_displacement': 100.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 100.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 0.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 0.0}
+  Worker 2: 13 accepted, op rates: {'twist': 0.0, 'large_displacement': 100.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 100.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 100.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 50.0}
+  Worker 3: 14 accepted, op rates: {'twist': 100.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 100.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 50.0}
+  Worker 4: 14 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 100.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 100.0}
+  Worker 5: 14 accepted, op rates: {'twist': 100.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 100.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 0.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 0.0}
+  Worker 6: 12 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 100.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 100.0}
+  Worker 7: 14 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 100.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 0.0, 'small_principal_axis_rotation': 66.66666666666666}
+  Worker 8: 15 accepted, op rates: {'twist': 100.0, 'large_displacement': 100.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 100.0}
+  Worker 9: 14 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 100.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 0.0}
+  Worker 10: 14 accepted, op rates: {'twist': 100.0, 'large_displacement': 100.0, 'mirror': 0.0, 'roto_reflection': 100.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 0.0}
+  Worker 11: 10 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 66.66666666666666, 'small_principal_axis_rotation': 66.66666666666666}
+  Worker 12: 15 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 100.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 100.0}
+  Worker 13: 14 accepted, op rates: {'twist': 0.0, 'large_displacement': 100.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 100.0}
+  Worker 14: 11 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 80.0}
+  Worker 15: 14 accepted, op rates: {'twist': 0.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 100.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 100.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 66.66666666666666}
+  Worker 16: 12 accepted, op rates: {'twist': 100.0, 'large_displacement': 100.0, 'mirror': 0.0, 'roto_reflection': 100.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 0.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 50.0}
+  Worker 17: 15 accepted, op rates: {'twist': 100.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 100.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 100.0}
+  Worker 18: 14 accepted, op rates: {'twist': 100.0, 'large_displacement': 0.0, 'mirror': 0.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 0.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 100.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 50.0}
+  Worker 19: 13 accepted, op rates: {'twist': 100.0, 'large_displacement': 0.0, 'mirror': 50.0, 'roto_reflection': 0.0, 'exchange': 0.0, 'random_so3': 0.0, 'principal_axis_rotation': 0.0, 'com_com_approach': 0.0, 'com_com_separation': 100.0, 'random_displacement': 100.0, 'random_rotation': 100.0, 'local_twist': 0.0, 'correlated_displacement': 100.0, 'small_principal_axis_rotation': 100.0}
+Total accepted structures : 270
+Memory (accepted list)    : 0.00 MB
+Energy (Ha) — min=-10.836361  max=-10.833050  mean=-10.835583  std=0.000918
+Peak memory: 24.15 MB
+BHMC sampling complete: 270 structures accepted
+Wrote 270 structures to trajectories/bhmc_sampling_structures.xyz
+Using the retrained model from the training phase for sampling analysis.
+------------------------------------------------------------------------
+Analysis of BHMC Sampling Run
+------------------------------------------------------------------------
+After energy Z-score filter: 270 structures remain
+SOAP features: 270 × 5994
+Transformed 270 out-of-sample data points into UMAP space.
+Embedded 270 new structures into existing UMAP space, resulting in shape (270, 10).
+Completed cluster label assignment for 270 samples.
+Model Uncertainty Profiling & Confidence Analysis:
+   -> Average Shannon Entropy across predictions: 0.9038
+   -> Mean of maximum predicted probabilities: 0.6000
+   -> Standard deviation of maximum predicted probabilities: 0.0172
+Classification confidence map saved to: figures/bhmc_sampling_cluster_probabilities.png
+Novelty detection threshold set at the 25.0 percentile of max probabilities: 0.6000
+Flagged 1 novel structures out of 270 total new structures based on confidence threshold.
+269 structures confidently recognized by the reference classifier — kept as-is.
+1 novel structures detected — reclustering them independently.
+
+ ----- Feature Filtering and Outlier Removal ----- 
+
+Filtered out 5994 low-variance features (threshold=0.0005). Remaining features: 0.
+Running Isolation Forest with contamination=0.4, n_estimators=100, bootstrap=False, prune=True, random_state=None

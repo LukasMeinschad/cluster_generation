@@ -5,6 +5,8 @@ Handles noise-aware computations for Silhouette Score, Davies-Bouldin Index, and
 import numpy as np
 from typing import Optional, Any, Tuple, Dict, Callable
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score, adjusted_rand_score
+import warnings
+from sklearn.exceptions import UndefinedMetricWarning
 
 
 def evaluate_all_metrics(
@@ -41,17 +43,24 @@ def evaluate_all_metrics(
     
     cluster_class.log(f"Evaluating metrics on {X_clean.shape[0]} samples across {n_clusters} clusters using metric: {metric}")
     try:
-        sil = float(silhouette_score(X_clean, y_clean, metric=metric))
+        # Catch warnings for Silhouette Score when clusters are not well-defined
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+            sil = float(silhouette_score(X_clean, y_clean, metric=metric))
     except Exception as e:
         cluster_class.log(f"Error computing Silhouette Score: {e}")
         sil = None
     try:
-        db = float(davies_bouldin_score(X_clean, y_clean))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+            db = float(davies_bouldin_score(X_clean, y_clean))
     except Exception as e:
         cluster_class.log(f"Error computing Davies-Bouldin Index: {e}")
         db = None
     try:
-        ch = float(calinski_harabasz_score(X_clean, y_clean))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+            ch = float(calinski_harabasz_score(X_clean, y_clean))
     except Exception as e:
         cluster_class.log(f"Error computing Calinski-Harabasz Index: {e}")
         ch = None

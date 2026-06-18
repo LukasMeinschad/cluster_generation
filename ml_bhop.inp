@@ -29,12 +29,12 @@ InitializationConfig:
 + optimize_parallel = True
 + optimize_cluster_representatives = False 
 + filter_com_outliers = True
-+ com_threshold = 4.5
++ com_threshold = 6
 + verbose = False
 
 InitializeXYZ:
 + n_workers = 20
-+ n_configurations = 2000
++ n_configurations = 20
 + n_sampling_workers = 20
 + placing_method = "sobol"
 + grid_spacing = "sobol"
@@ -76,4 +76,4 @@ BHMCConfig:
 + box_stable_windows = 3
 + n_workers = 20
 + training_frac = 0.25
-+ n_steps_per_worker = 10000 
++ n_steps_per_worker = 20 

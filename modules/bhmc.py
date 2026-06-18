@@ -434,7 +434,7 @@ class BHMC:
             self,
             reference_clustering: Clustering,
             structures: Optional[List[Tuple[Molecule, float]]] = None,
-        ) -> Tuple[Optional[np.ndarray], Optional[List[Molecule]], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
+        ) -> Tuple[Optional[List[Molecule]], Optional[np.ndarray], Optional[Clustering], Optional[List[Molecule]]]:
         """
         Analyze the structures collected during the BHMC sampling phase against the
         current reference model (either the retrained model from
@@ -447,6 +447,14 @@ class BHMC:
           3. Embed into the reference UMAP space
           4. Predict labels/probabilities with the reference classifier
           5. Flag "novel" structures (the ones the classifier is least confident about)
+          6. Structures the classifier confidently recognized are kept as-is under
+             their predicted label — they're already understood by the reference
+             model, so there is nothing to recluster for them.
+          7. Novel structures are re-clustered from scratch with
+             Clustering.run_clustering_pipeline (cleaning + UMAP + clustering,
+             but no classifier fit — there's no reason to trust a freshly fit
+             classifier on a handful of outlier structures), then the
+             lowest-energy structure per new cluster is taken as its representative.
 
         Args:
             reference_clustering: The Clustering instance to embed/predict against.
@@ -454,8 +462,12 @@ class BHMC:
                                    self.accepted_structures.
 
         Returns:
-            (novel_indices, mols, feature_mat, predicted_labels, predicted_probabilities),
-            or all-None if there was nothing to analyze.
+            (confirmed_mols, confirmed_labels, novel_clustering, novel_representative_mols)
+            confirmed_mols/confirmed_labels are the non-novel structures and their
+            classifier-predicted labels (None if there was nothing to analyze).
+            novel_clustering/novel_representative_mols are the reclustered novel
+            pool and its lowest-energy representatives (None if no novel
+            structures were found).
         """
         self.logger.section("Analysis of BHMC Sampling Run")
         if structures is None:
@@ -463,7 +475,7 @@ class BHMC:
 
         if not structures:
             self._log("No structures to analyse.", level="warning")
-            return None, None, None, None, None
+            return None, None, None, None
 
         mols = [m for m, _ in structures]
         energies = [e for _, e in structures]
@@ -474,7 +486,7 @@ class BHMC:
         self._log(f"After energy Z-score filter: {len(mols)} structures remain")
         if not mols:
             self._log("All structures filtered as high-energy outliers.", level="warning")
-            return None, None, None, None, None
+            return None, None, None, None
 
         # Featurize with SOAP
         featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
@@ -502,15 +514,44 @@ class BHMC:
             threshold_percentile=25.0
         )
 
-        # Check if novel indices were found in the sampling run
+        # Everything the classifier confidently recognized stays under its
+        # predicted label — no reclustering needed for what the model already understands.
+        novel_set = set(novel_indices.tolist())
+        confirmed_indices = [i for i in range(len(mols)) if i not in novel_set]
+        confirmed_mols = [mols[i] for i in confirmed_indices]
+        confirmed_labels = predicted_labels[confirmed_indices]
+        self._log(f"{len(confirmed_mols)} structures confidently recognized by the reference classifier — kept as-is.")
+
         if len(novel_indices) == 0:
-            self._log("No novel structures detected in sampling run.", level="info")
-        
-        # If now novel indices are found carry out an analysis on the new structures
-        
-        
+            self._log("No novel structures detected in sampling run.")
+            return confirmed_mols, confirmed_labels, None, None
 
+        self._log(f"{len(novel_indices)} novel structures detected — reclustering them independently.")
+        novel_mols = [mols[i] for i in novel_indices]
+        novel_energies = [energies[i] for i in novel_indices]
+        novel_feature_mat = feature_mat[novel_indices]
 
+        n_novel_clusters = (
+            len(np.unique(reference_clustering.labels)) if reference_clustering.labels is not None else 1
+        )
+        novel_clustering, _, _, novel_rep_indices = Clustering.run_clustering_pipeline(
+            feature_matrix=novel_feature_mat,
+            n_clusters=n_novel_clusters,
+            molecules=novel_mols,
+            energies=novel_energies,
+            clustering_method=self.config.clustering_method,
+            metric=reference_clustering.metric,
+            compute_representatives=True,
+            representative_method="lowest_energy",
+            logger=self.logger,
+            log_fn=self._log,
+            embedding_plot_path="figures/bhmc_sampling_novel_umap_clusters.png",
+            embedding_plot_title="Novel Sampling Structures — UMAP Embedding with Cluster Labels",
+        )
+        novel_representative_mols = [novel_clustering.molecules[idx] for idx in novel_rep_indices.values()]
+        self._log(f"Identified {len(novel_representative_mols)} lowest-energy representative(s) among the novel structures.")
+
+        return confirmed_mols, confirmed_labels, novel_clustering, novel_representative_mols
 
 
 

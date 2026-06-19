@@ -626,7 +626,7 @@ class ClusterInitializer:
         cluster closest to the UMAP centroid (excluding the discarded index).
         """
         if self.logger:
-            self.logger.section("RMSD Duplicate Resolution")
+            self.logger.section("RMSD Duplicate Check")
         self._log("Checking representatives for near-duplicate structures (RMSD-based)...")
         cluster_order = list(rep_indices.keys())
         cluster_labels_arr = np.asarray(labels)

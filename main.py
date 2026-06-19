@@ -483,7 +483,7 @@ def analyze_final_results(
 def main() -> None:
     args = get_args()
 
-    logger = Logger(name="cluster_gen", log_file=args.f[0], include_timestamp=False, include_level=False)
+    logger = Logger(name="cluster_gen", log_file=args.f[0], include_timestamp=False, include_level=False, file_mode="w")
     logger.program_header()
     logger.separator()
 

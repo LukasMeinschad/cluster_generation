@@ -41,7 +41,7 @@ def evaluate_all_metrics(
         cluster_class.log("Not enough clusters to compute metrics. Returning NaN for all metrics.")
         return {"silhouette:": None, "davies_bouldin": None, "calinski_harabasz": None}
     
-    cluster_class.log(f"Evaluating metrics on {X_clean.shape[0]} samples across {n_clusters} clusters using metric: {metric}")
+    cluster_class.substep(f"Evaluating metrics on {X_clean.shape[0]} samples across {n_clusters} clusters using metric: {metric}")
     try:
         # Catch warnings for Silhouette Score when clusters are not well-defined
         with warnings.catch_warnings():
@@ -66,19 +66,11 @@ def evaluate_all_metrics(
         ch = None
 
     # Log internal execution profile metrics
-    cluster_class.log("Internal Cluster Validation Statistics:")
-    if sil is not None:
-        cluster_class.log(f"  -> Silhouette Score: {sil:.4f} (Higher is better, range [-1, 1])")
-    else:
-        cluster_class.log("  -> Silhouette Score: Not computable")
-    if db is not None:
-        cluster_class.log(f"  -> Davies-Bouldin Index: {db:.4f} (Lower is better, range [0, inf])")
-    else:
-        cluster_class.log("  -> Davies-Bouldin Index: Not computable")
-    if ch is not None:
-        cluster_class.log(f"  -> Calinski-Harabasz Index: {ch:.4f} (Higher is better, range [0, inf])")
-    else:
-        cluster_class.log("  -> Calinski-Harabasz Index: Not computable")
+    cluster_class.parameters("Internal Cluster Validation Statistics", [
+        ("Silhouette Score", f"{sil:.4f} (higher is better, range [-1, 1])" if sil is not None else "not computable"),
+        ("Davies-Bouldin Index", f"{db:.4f} (lower is better, range [0, inf])" if db is not None else "not computable"),
+        ("Calinski-Harabasz Index", f"{ch:.4f} (higher is better, range [0, inf])" if ch is not None else "not computable"),
+    ])
 
     scores = {"silhouette": sil, "davies_bouldin": db, "calinski_harabasz": ch}
     cluster_class.clustering_metrics = scores
@@ -113,9 +105,11 @@ def compute_pertubation_stability(
     n_samples = X.shape[0]
     subsample_size = int(n_samples * subsample_fraction)
 
-    cluster_class.log(
-        f"Launching Pertubation Stability Analysis with {n_repeats} repeats, subsample fraction {subsample_fraction}, and random seed {random_seed}."
-    )
+    cluster_class.parameters("Perturbation Stability Analysis", [
+        ("n_repeats", n_repeats),
+        ("subsample_fraction", subsample_fraction),
+        ("random_seed", random_seed),
+    ])
 
     rng = np.random.default_rng(random_seed)
     ari_scores = []
@@ -142,9 +136,10 @@ def compute_pertubation_stability(
     mean_ari = np.mean(ari_scores)
     std_ari = np.std(ari_scores)
 
-    cluster_class.log("\n --- Unsupervised Pertubation Stability Results ---")
-    cluster_class.log(f"  -> Mean Adjusted Rand Index (ARI): {mean_ari:.4f} (Higher is more stable, range [-1, 1])")
-    cluster_class.log(f"  -> Standard Deviation of ARI: {std_ari:.4f} (Lower is more consistent across perturbations)")
+    cluster_class.parameters("Perturbation Stability Results", [
+        ("Mean ARI", f"{mean_ari:.4f} (higher is more stable, range [-1, 1])"),
+        ("Std ARI", f"{std_ari:.4f} (lower is more consistent across perturbations)"),
+    ])
 
     return {"mean_ari": mean_ari, "std_ari": std_ari}
       

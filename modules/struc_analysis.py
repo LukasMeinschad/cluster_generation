@@ -5,8 +5,8 @@ in terms of their structural similarity and evaluate if they propose a local min
 """
 
 import numpy as np
-from typing import Optional, Tuple, List, Dict, Any
-import os    
+from typing import Optional, Tuple, List, Dict, Any, Union
+import os
 from modules.molecule_class import Molecule
 from modules.geometry import GeometryOps
 from modules.calculator import EnergyEvaluator
@@ -76,20 +76,58 @@ class StructureAnalysis:
 
 
 
-    def _log(self, message: str):
-        if self.logger:
-            self.logger.info(message)
+    def _log(self, message: str, level: str = "info") -> None:
+        if self.logger and hasattr(self.logger, level):
+            getattr(self.logger, level)(message)
         else:
             # Fallback to printing if no logger is provided
             print(message)
 
+    def step(self, current: int, total: int, title: str) -> None:
+        """Numbered step header, e.g. '[2/3] Optimizing geometries'."""
+        if self.logger:
+            self.logger.step(current, total, title)
+        else:
+            print(f"[{current}/{total}] {title}")
+
+    def substep(self, msg: str, level: int = 1) -> None:
+        """Detail line nested under the most recent step()/section()."""
+        if self.logger:
+            self.logger.substep(msg, level=level)
+        else:
+            print(f"{'    ' * level}{msg}")
+
+    def parameters(
+        self,
+        title: str,
+        items: Union[Dict[str, Any], List[Tuple[str, Any]]],
+        indent: int = 1,
+    ) -> None:
+        """Aligned 'label : value' block, surfacing the important numbers for a phase."""
+        pairs = list(items.items()) if isinstance(items, dict) else list(items)
+        if not pairs:
+            return
+        if self.logger:
+            self.logger.parameters(title, pairs, indent=indent)
+        else:
+            print(f"{title}:")
+            for label, value in pairs:
+                print(f"    {label} : {value}")
+
+    def section(self, title: str) -> None:
+        """Visual sub-phase divider."""
+        if self.logger:
+            self.logger.section(title)
+        else:
+            print(f"--- {title} ---")
+
     def _get_target_mols(self, use_optimized: bool) -> List[Molecule]:
-        """  
+        """
         Helper to resolve targed coordinates savely
         """
         if use_optimized:
             if self.optimized_mols is None:
-                self._log("No optimized molecules available, falling back to initial molecules.")
+                self._log("No optimized molecules available, falling back to initial molecules.", level="warning")
                 return self.initial_mols
             return self.optimized_mols
         else:
@@ -139,7 +177,6 @@ class StructureAnalysis:
         """
         Filters out structurally redundant geometries based on the configured RMSD threshold
         """
-        self._log(f"Identifying unique structures using RMSD threshold of {self.config.rmsd_threshold} Å (use_optimized={use_optimized})")
         mols = self._get_target_mols(use_optimized=use_optimized)
         rmsd_matrix = self.compute_pairwise_rmsd(use_optimized=use_optimized)
 
@@ -148,7 +185,12 @@ class StructureAnalysis:
             if all(rmsd_matrix[i, j] >= self.config.rmsd_threshold for j in unique_indices):
                 unique_indices.append(i)
         unique_mols = [mols[i] for i in unique_indices]
-        self._log(f"Identified {len(unique_mols)} unique structures (use_optimized={use_optimized})")
+        self.parameters("Unique structure filtering", [
+            ("rmsd_threshold", f"{self.config.rmsd_threshold} Å"),
+            ("use_optimized", use_optimized),
+            ("input structures", len(mols)),
+            ("unique structures", len(unique_mols)),
+        ])
         return unique_indices, unique_mols
 
     def compute_coulomb_matrix_eigenspectra(self, use_optimized: bool = False) -> np.ndarray:
@@ -158,7 +200,7 @@ class StructureAnalysis:
         mols = self._get_target_mols(use_optimized=use_optimized)
 
         if not mols:
-            self._log("No molecules available to compute Coulomb matrix eigenspectra.")
+            self._log("No molecules available to compute Coulomb matrix eigenspectra.", level="warning")
             return np.array([])
         max_atoms = max(mol.coordinates.shape[0] for mol in mols)
         cm = CoulombMatrix(n_atoms_max=max_atoms, permutation="eigenspectrum")
@@ -291,12 +333,16 @@ class StructureAnalysis:
                 try:
                     optimized_mols_tracker[idx], optimized_energies_tracker[idx] = future.result()
                 except Exception as e:
-                    self._log(f"Error optimizing molecule at index {idx}: {e}")
+                    self._log(f"Optimization failed for molecule at index {idx}: {e}", level="warning")
 
         # Re-Sort to maintain original order
         self.optimized_mols = [optimized_mols_tracker[i] for i in range(len(self.initial_mols)) if i in optimized_mols_tracker]
         self.optimized_energies = [optimized_energies_tracker[i] for i in range(len(self.initial_mols)) if i in optimized_energies_tracker]
-        self._log(f"Completed geometry optimization for {len(self.optimized_mols)} structures")
+        self.parameters("Geometry optimization", [
+            ("requested", len(self.initial_mols)),
+            ("succeeded", len(self.optimized_mols)),
+            ("failed", len(self.initial_mols) - len(self.optimized_mols)),
+        ])
         return self.optimized_mols, self.optimized_energies
 
 
@@ -399,30 +445,30 @@ class StructureAnalysis:
             "is_new_minimum": is_new_minimum,
         }
 
-        self._log(
-            f"\nPES comparison: {label_a} (n={len(mols_a)}) vs {label_b} (n={len(mols_b)})\n"
-            f"  {label_a} global minimum:  structure {idx_min_a}, E = {e_min_a:.6f} Hartree\n"
-            f"  {label_b} global minimum:  structure {idx_min_b}, E = {e_min_b:.6f} Hartree\n"
-            f"  Delta E ({label_b} - {label_a}): {delta_hartree:.6f} Hartree ({delta_kcal:+.3f} kcal/mol)\n"
-            f"  RMSD between the two minima: {rmsd_minima:.3f} Å\n"
-            f"  {label_b}'s minimum's nearest match in {label_a}: structure {nearest_idx_in_a} "
-            f"(RMSD = {nearest_rmsd_in_a:.3f} Å, threshold = {threshold:.3f} Å)"
-        )
+        self.section(f"PES Comparison: {label_a} (n={len(mols_a)}) vs {label_b} (n={len(mols_b)})")
+        self.parameters("Result", [
+            (f"{label_a} global minimum", f"structure {idx_min_a}, E = {e_min_a:.6f} Hartree"),
+            (f"{label_b} global minimum", f"structure {idx_min_b}, E = {e_min_b:.6f} Hartree"),
+            ("Delta E", f"{delta_hartree:.6f} Hartree ({delta_kcal:+.3f} kcal/mol)"),
+            ("RMSD between minima", f"{rmsd_minima:.3f} Å"),
+            (f"Nearest match in {label_a}", f"structure {nearest_idx_in_a} "
+                                              f"(RMSD = {nearest_rmsd_in_a:.3f} Å, threshold = {threshold:.3f} Å)"),
+        ])
         if is_new_minimum:
             self._log(
-                f"  --> NEW LOWEST-ENERGY MINIMUM found in {label_b}: "
+                f"--> NEW LOWEST-ENERGY MINIMUM found in {label_b}: "
                 f"{abs(delta_kcal):.3f} kcal/mol below {label_a}'s minimum and structurally "
                 f"distinct from every structure in {label_a}."
             )
         elif improved:
             self._log(
-                f"  --> {label_b} found a lower energy ({abs(delta_kcal):.3f} kcal/mol), but its "
+                f"--> {label_b} found a lower energy ({abs(delta_kcal):.3f} kcal/mol), but its "
                 f"minimum matches an existing structure in {label_a} (RMSD = {nearest_rmsd_in_a:.3f} Å) "
                 "-- likely the same basin relaxed further, not a new minimum."
             )
         else:
             self._log(
-                f"  --> No improvement: {label_b}'s best structure is {delta_kcal:.3f} kcal/mol "
+                f"--> No improvement: {label_b}'s best structure is {delta_kcal:.3f} kcal/mol "
                 f"above {label_a}'s minimum."
             )
 
@@ -433,15 +479,18 @@ class StructureAnalysis:
         """Computes tracking matrices for stationary point criteria evaluation."""
         mols = self._get_target_mols(use_optimized)
         results, errors = self.calculator.compute_hessians_parallel(mols, n_workers)
-        
+
         for mol, e in errors:
-            self._log(f"Error analyzing Hessian for molecule {mol.name}: {e}")
-            
-        self._log(f"Completed Hessian analysis for all structures (use_optimized={use_optimized})")
+            self._log(f"Error analyzing Hessian for molecule {mol.name}: {e}", level="warning")
+
+        self._log(f"Completed Hessian analysis for {len(results)}/{len(mols)} structures (use_optimized={use_optimized})")
         for mol, analysis in results:
-            self._log(f"Molecule: {mol.name} order_stationary_point={analysis['order_stationary_point']} global_minimum={analysis['global_minimum']}")
-            self._log(f"Frequencies (cm^-1): {analysis['frequencies']}")
-            
+            self.substep(
+                f"{mol.name}: order_stationary_point={analysis['order_stationary_point']}, "
+                f"global_minimum={analysis['global_minimum']}"
+            )
+            self._log(f"{mol.name} frequencies (cm^-1): {analysis['frequencies']}", level="debug")
+
         self.hessian_analysis_results = results
         return results
 
@@ -470,7 +519,7 @@ class StructureAnalysis:
         """Plots structural stiffness profiles side by side over an axes arrangement grid."""
         n = len(self.hessian_analysis_results)
         if n == 0:
-            self._log("No Hessian analysis results to plot.")
+            self._log("No Hessian analysis results to plot.", level="warning")
             return
         
         n_cols = 4
@@ -493,7 +542,7 @@ class StructureAnalysis:
     def plot_rmsd_comparison(self, save_path: str = "figures/rmsd_comparison.png"):
         """Generates cross-examination heatmaps contrasting structural profiles before and after optimization."""
         if self.optimized_mols is None:
-            self._log("No optimized structures found. Run optimize_geometries() first.")
+            self._log("No optimized structures found. Run optimize_geometries() first.", level="warning")
             return
 
         def _get_matrix(mols: List[Molecule]) -> np.ndarray:
@@ -525,7 +574,7 @@ class StructureAnalysis:
     def plot_optimized_energy_distribution(self, save_path: str = "figures/optimized_energy_distribution.png"):
         """Plots a barplot of the optimized energies across configurations.""" 
         if self.optimized_energies is None:
-            self._log("No optimized energies found. Run optimize_geometries() first.")
+            self._log("No optimized energies found. Run optimize_geometries() first.", level="warning")
             return
 
         # Compute differences from lowest energy for better visualization

@@ -58,11 +58,14 @@ except ImportError:
 
 
 class Clustering:
-    """ 
+    """
     Generalized Data Container for Clustering
     Manages the raw feature configuration, scaling transformation, tracking labels and centralized login
-    """ 
+    """
 
+    # Numbered steps in run_clustering_pipeline (filtering -> UMAP -> LOF ->
+    # clustering -> metrics/stability) — single source of truth for "[k/N]" markers.
+    _CLUSTERING_STEPS = 5
 
     def __init__(self,
                  feature_matrix: np.ndarray,
@@ -143,6 +146,44 @@ class Clustering:
             prefix = f"[{level.upper()}]" if level else ""
             print(f"{prefix} {msg}")
 
+    def step(self, current: int, total: int, title: str) -> None:
+        """Numbered step header, e.g. '[2/5] UMAP embedding (10D)'."""
+        if self.logger:
+            self.logger.step(current, total, title)
+        else:
+            print(f"[{current}/{total}] {title}")
+
+    def substep(self, msg: str, level: int = 1) -> None:
+        """Detail line nested under the most recent step()/section()."""
+        if self.logger:
+            self.logger.substep(msg, level=level)
+        else:
+            print(f"{'    ' * level}{msg}")
+
+    def parameters(
+        self,
+        title: str,
+        items: Union[Dict[str, Any], List[Tuple[str, Any]]],
+        indent: int = 1,
+    ) -> None:
+        """Aligned 'label : value' block, surfacing the important numbers for a phase."""
+        pairs = list(items.items()) if isinstance(items, dict) else list(items)
+        if not pairs:
+            return
+        if self.logger:
+            self.logger.parameters(title, pairs, indent=indent)
+        else:
+            print(f"{title}:")
+            for label, value in pairs:
+                print(f"    {label} : {value}")
+
+    def section(self, title: str) -> None:
+        """Visual sub-phase divider."""
+        if self.logger:
+            self.logger.section(title)
+        else:
+            print(f"--- {title} ---")
+
     def normalize(self) -> None:
         """ 
         Fits a standard scaler to the raw feature matrix, transforms it and
@@ -201,7 +242,9 @@ class Clustering:
                                         (see get_cluster_representatives; "lowest_energy"
                                         requires `energies` to be set).
             logger:                    Optional Logger forwarded to the Clustering instance.
-            log_fn:                    Optional logging callback (defaults to `print`).
+            log_fn:                    Deprecated — kept only so existing callers that still
+                                        pass it don't break. Step/section/parameter output now
+                                        always goes through `logger` (or print, if it's None).
             embedding_plot_path:       Where to save the labeled embedding plot, or None to skip.
             embedding_plot_title:      Title for the embedding plot.
 
@@ -209,8 +252,6 @@ class Clustering:
             (clustering, embedding_10d, labels, rep_indices) — rep_indices is None
             unless compute_representatives is True.
         """
-        log = log_fn or print
-
         clustering = cls(
             feature_matrix=feature_matrix,
             energies=energies,
@@ -219,21 +260,28 @@ class Clustering:
             normalize=False,
             logger=logger,
         )
+        n_steps = cls._CLUSTERING_STEPS
 
-        log("\n ----- Feature Filtering and Outlier Removal ----- \n")
+        clustering.step(1, n_steps, "Feature filtering & Isolation Forest outlier removal")
         clustering.filter_low_variance_features(threshold=0.0005)
         clustering.detect_outliers_isolation_forest(contamination=0.4, n_estimators=100)
 
+        clustering.step(2, n_steps, "UMAP embedding (10D)")
         embedding_10d = clustering.umap(n_components=10, n_neighbors=15, min_dist=0.1)
         clustering._feature_matrix_normalized = embedding_10d  # Cache the 10D embedding for downstream steps
+
+        clustering.step(3, n_steps, "Local Outlier Factor cleanup")
         clustering.detect_outliers_local_outlier_factor(n_neighbors=20, contamination=0.3)
 
         # Outlier removal may have pruned rows — pull the cleaned pool back from clustering
         embedding_10d = clustering._feature_matrix_normalized
-        log(f"After filtering and outlier removal, {embedding_10d.shape[0]} configurations remain for clustering.")
+        clustering.substep(f"{embedding_10d.shape[0]} configurations remain for clustering")
 
         n_clusters = min(n_clusters, embedding_10d.shape[0])
+        clustering.step(4, n_steps, f"Clustering ({clustering_method}, k={n_clusters})")
         labels, _ = clustering.run_clustering(method=clustering_method, n_clusters=n_clusters)
+
+        clustering.step(5, n_steps, "Metric evaluation & perturbation stability")
         clustering.evaluate_all_metrics(labels=labels, ignore_noise=True)
 
         def stability_clustering_fn(X, n_clusters=n_clusters):
@@ -253,6 +301,7 @@ class Clustering:
                 labels=labels,
                 save_path=embedding_plot_path,
             )
+            clustering.substep(f"Embedding plot saved to: {embedding_plot_path}")
 
         rep_indices = None
         if compute_representatives:
@@ -292,7 +341,9 @@ class Clustering:
             compute_representatives:   Whether to pick a lowest-energy representative per
                                         cluster (requires `energies` to be set).
             logger:                    Optional Logger forwarded to the Clustering instance.
-            log_fn:                    Optional logging callback (defaults to `print`).
+            log_fn:                    Deprecated — kept only so existing callers that still
+                                        pass it don't break. Step/section/parameter output now
+                                        always goes through `logger` (or print, if it's None).
             embedding_plot_path:       Where to save the labeled embedding plot, or None to skip.
             embedding_plot_title:      Title for the embedding plot.
             classifier_eval_dir:       Where to save classifier cross-validation diagnostics.
@@ -301,7 +352,6 @@ class Clustering:
             (clustering, embedding_10d, labels, rep_indices) — rep_indices is None
             unless compute_representatives is True.
         """
-        log = log_fn or print
         if classifier_backend.lower() not in {"knn", "svm", "random_forest"}:
             raise ValueError(
                 f"Unknown classifier_backend: {classifier_backend!r}. "
@@ -324,7 +374,7 @@ class Clustering:
         )
 
         kwargs = classifier_kwargs or {}
-        log(f"\nTraining {classifier_backend.upper()} classifier on the 10D UMAP embedding...")
+        clustering.section(f"{classifier_backend.upper()} Classifier Training & Evaluation")
         clustering.train_classifier(
             model_type=classifier_backend.lower(),
             x_train=embedding_10d,

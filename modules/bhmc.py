@@ -7,7 +7,7 @@ within a basin. The balance is controlled by the weights in BHMCConfig.operators
 """
 
 import numpy as np
-from typing import List, Optional, Tuple, Dict
+from typing import Any, List, Optional, Tuple, Dict
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import cProfile
@@ -69,6 +69,73 @@ class BHMC:
         if self.logger:
             getattr(self.logger, level)(msg)
 
+    def _step(self, current: int, total: int, title: str) -> None:
+        """Numbered step header — console + logger."""
+        if self.config.verbose:
+            print(f"[{current}/{total}] {title}")
+        if self.logger:
+            self.logger.step(current, total, title)
+
+    def _substep(self, msg: str, level: int = 1) -> None:
+        """Detail line nested under the most recent _step()/section() — console + logger."""
+        if self.config.verbose:
+            print(f"{' ' * (Logger.INDENT_UNIT * level)}{msg}")
+        if self.logger:
+            self.logger.substep(msg, level=level)
+
+    def _parameters(self, title: str, items, indent: int = 1) -> None:
+        """Aligned 'label : value' block — console + logger."""
+        pairs = list(items.items()) if isinstance(items, dict) else list(items)
+        if not pairs:
+            return
+        if self.config.verbose:
+            print(f"{title}:")
+            for label, value in pairs:
+                print(f"{' ' * (Logger.INDENT_UNIT * indent)}{label} : {value}")
+        if self.logger:
+            self.logger.parameters(title, pairs, indent=indent)
+
+    def _worker_summary(self, title: str, per_worker: Dict[int, Any], indent: int = 1) -> None:
+        """Aggregate min/mean/max across workers instead of a per-worker dump — console + logger."""
+        if not per_worker:
+            return
+        if self.config.verbose:
+            vals = list(per_worker.values())
+            if isinstance(vals[0], dict):
+                print(f"{title} ({len(per_worker)} workers)")
+            else:
+                print(
+                    f"{title} ({len(per_worker)} workers): "
+                    f"mean={np.mean(vals):.2f}  min={np.min(vals):.2f}  max={np.max(vals):.2f}"
+                )
+        if self.logger:
+            self.logger.worker_summary(title, per_worker, indent=indent)
+
+    def _run_config_pairs(self) -> List[Tuple[str, Any]]:
+        """Build the (label, value) pairs describing this run's backend/sampling config.
+
+        Shared by the main-log parameter block and the worker-log-file header
+        (see run()) so the two can never drift out of sync.
+        """
+        if self.config.backend == "psi4":
+            backend_str = f"psi4 ({self.config.qm_method}/{self.config.qm_basis})"
+        elif self.config.backend == "xtb":
+            backend_str = f"xtb ({self.config.xtb_method})"
+        elif self.config.backend == "gpaw":
+            backend_str = f"gpaw ({self.config.gpaw_mode}, {self.config.gpaw_basis}, {self.config.gpaw_xc})"
+        else:
+            backend_str = self.config.backend
+
+        pairs: List[Tuple[str, Any]] = [
+            ("Backend", backend_str),
+            ("Temperature", f"{self.config.temperature} K"),
+            ("Adaptive operators", self.config.adaptive_operators),
+            ("Operators", [op[0] for op in self.config.operators]),
+        ]
+        if self.simulation_box:
+            pairs.append(("Simulation box", self.simulation_box))
+        return pairs
+
     # ---------------------------------------------------------- time estimation
 
     def estimate_single_point_time(self, molecule: Molecule) -> Optional[float]:
@@ -119,53 +186,28 @@ class BHMC:
         if self.logger:
             self.logger.header("BHMC Run")
 
-        self._log(f"Workers            : {n_processes}")
-        self._log(f"Steps / worker     : {n_steps_per_worker}")
-        self._log(f"Total steps        : {n_processes * n_steps_per_worker}")
-        if self.config.backend == "psi4":
-            self._log(f"QM method         : {self.config.qm_method} / {self.config.qm_basis}")
-        if self.config.backend == "xtb":
-            self._log(f"xTB method        : {self.config.xtb_method}")
-        if self.config.backend == "gpaw":
-            self._log(f"GPAW mode         : {self.config.gpaw_mode}")
-            self._log(f"GPAW basis        : {self.config.gpaw_basis}")
-            self._log(f"GPAW xc           : {self.config.gpaw_xc}")
-    
-        self._log(f"Temperature        : {self.config.temperature} K")
-        self._log(f"Adaptive operators : {self.config.adaptive_operators}")
-        self._log(f"Operators          : {[op[0] for op in self.config.operators]}")
-        if self.simulation_box:
-            self._log(f"Simulation box     : {self.simulation_box}")
+        run_params = [
+            ("Workers", n_processes),
+            ("Steps / worker", n_steps_per_worker),
+            ("Total steps", n_processes * n_steps_per_worker),
+        ] + self._run_config_pairs()
+        self._parameters("Run Configuration", run_params)
 
-        # Write worker log header
+        # Write worker log header — reuses _run_config_pairs() so this can't
+        # drift out of sync with the main-log block above.
         if self.worker_log_file:
             with open(self.worker_log_file, 'w') as f:
                 f.write("BHMC Worker Log\n")
                 f.write(f"{n_processes} workers × {n_steps_per_worker} steps\n")
-                # Write method/config info for each worker
-                if self.config.backend == "psi4":
-                    f.write(f"QM method         : {self.config.qm_method} / {self.config.qm_basis}\n")
-                if self.config.backend == "xtb":
-                    f.write(f"xTB method        : {self.config.xtb_method}\n")
-                if self.config.backend == "gpaw":
-                    f.write(f"GPAW mode         : {self.config.gpaw_mode}\n")
-                    f.write(f"GPAW basis        : {self.config.gpaw_basis}\n")
-                    f.write(f"GPAW xc           : {self.config.gpaw_xc}\n")
-                f.write(f"Temperature        : {self.config.temperature} K\n")
-                f.write(f"Adaptive operators : {self.config.adaptive_operators}\n")
-                f.write(f"Operators          : {[op[0] for op in self.config.operators]}\n")
-                if self.simulation_box:
-                    f.write(f"Simulation box     : {self.simulation_box}\n")
+                for label, value in self._run_config_pairs():
+                    f.write(f"{label}: {value}\n")
                 f.write("\n")
-
-                        
 
         # SP timing estimate
         sp_time = self.estimate_single_point_time(initial_molecules[0])
         if sp_time is not None:
             est_min = sp_time * n_steps_per_worker * n_processes / 60
             self._log(f"Estimated run time : {est_min:.1f} min")
-            print(f"Estimated run time : {est_min:.1f} min")
 
         config_dict = {
             'backend':            self.config.backend,
@@ -223,10 +265,15 @@ class BHMC:
                     results[wid] = future.result()
 
             # ---- Collect results ----
+            # Per-worker detail (accepted count, full operator acceptance dict) is
+            # already written to worker_log_file by each worker's own logger (see
+            # bhmc_worker.py's "Worker {id}: Done. ..." line) — the main log only
+            # gets the aggregates below, not a per-worker dump.
             all_accepted: List[Tuple[Molecule, float]] = []
             self.worker_trajectories = {}
             self.worker_box_updates = {}
             self.worker_operator_acceptance = {}
+            accepted_counts: Dict[int, int] = {}
 
             for r in results:
                 wid = r['worker_id']
@@ -235,18 +282,24 @@ class BHMC:
                 self.worker_trajectories[wid] = r['energy_trajectory']
                 self.worker_box_updates[wid] = r.get('box_updates', [])
                 self.worker_operator_acceptance[wid] = r.get('operator_acceptance_rates', {})
-                self._log(
-                    f"  Worker {wid}: {len(accepted)} accepted, "
-                    f"op rates: {r.get('operator_acceptance_rates', {})}"
-                )
+                accepted_counts[wid] = len(accepted)
 
-            self._log(f"Total accepted structures : {len(all_accepted)}")
-            self._log(f"Memory (accepted list)    : {sys.getsizeof(all_accepted)/1e6:.2f} MB")
+            self._worker_summary("Accepted structures per worker", accepted_counts)
+            self._worker_summary("Operator acceptance rate across workers", self.worker_operator_acceptance)
 
+            summary = [
+                ("Total accepted structures", len(all_accepted)),
+                ("Memory (accepted list)", f"{sys.getsizeof(all_accepted)/1e6:.2f} MB"),
+            ]
             if all_accepted:
                 energies = [e for _, e in all_accepted]
-                self._log(f"Energy (Ha) — min={min(energies):.6f}  max={max(energies):.6f}  "
-                          f"mean={np.mean(energies):.6f}  std={np.std(energies):.6f}")
+                summary += [
+                    ("Energy min", f"{min(energies):.6f} Ha"),
+                    ("Energy max", f"{max(energies):.6f} Ha"),
+                    ("Energy mean", f"{np.mean(energies):.6f} Ha"),
+                    ("Energy std", f"{np.std(energies):.6f} Ha"),
+                ]
+            self._parameters("Run Summary", summary)
 
             self.accepted_structures = all_accepted
 
@@ -326,7 +379,6 @@ class BHMC:
         z_e = (energy_arr - energy_arr.mean()) / (energy_arr.std() + 1e-12)
         mols     = [m for m, z in zip(mols, z_e)     if z <= 3.0]
         energies = [e for e, z in zip(energies, z_e) if z <= 3.0]
-        self._log(f"After energy Z-score filter: {len(mols)} structures remain")
         if not mols:
             self._log("All structures filtered as high-energy outliers.", level="warning")
             return None, None
@@ -334,7 +386,10 @@ class BHMC:
         # Featurize with SOAP
         featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
         feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
-        self._log(f"SOAP features: {feature_mat.shape[0]} × {feature_mat.shape[1]}")
+        self._parameters("Filtering & Featurization", [
+            ("Structures after Z-score filter", len(mols)),
+            ("SOAP feature shape", f"{feature_mat.shape[0]} × {feature_mat.shape[1]}"),
+        ])
 
         # Embed the new structures using the reference_clustering object
         new_structures_embedding = reference_clustering.embed_new_structures(x_new = feature_mat)
@@ -362,9 +417,12 @@ class BHMC:
 
         # Combine Raw Features and Feature Matrix for the new structures
         novel_feature_mat = feature_mat[novel_indices]
-        self._log(f"Novel structures feature mat shape: {novel_feature_mat.shape}")
-        self._log(f"Combining with initial feature matrix shape: {feature_mat_init.shape}")
         combined_feature_mat = np.vstack([feature_mat_init, novel_feature_mat])
+        self._parameters("Combining for retraining", [
+            ("Novel feature mat shape", str(novel_feature_mat.shape)),
+            ("Init feature mat shape", str(feature_mat_init.shape)),
+            ("Combined feature mat shape", str(combined_feature_mat.shape)),
+        ])
 
         # Keep the molecule list aligned 1:1 with combined_feature_mat's rows, so
         # cluster representative row indices can be resolved back to actual
@@ -395,8 +453,8 @@ class BHMC:
         classifier_backend = self.config.classifier_backend
         classifier_kwargs = self.config.classifier_kwargs
 
-        self._log(
-            f"\nRetraining clustering + {classifier_backend.upper()} classifier on "
+        self._substep(
+            f"Retraining clustering + {classifier_backend.upper()} classifier on "
             f"{combined_feature_mat.shape[0]} combined structures..."
         )
         updated_clustering, _, _, _ = Clustering.run_clustering_and_classifier_pipeline(
@@ -483,7 +541,6 @@ class BHMC:
         z_e = (energy_arr - energy_arr.mean()) / (energy_arr.std() + 1e-12)
         mols     = [m for m, z in zip(mols, z_e)     if z <= 3.0]
         energies = [e for e, z in zip(energies, z_e) if z <= 3.0]
-        self._log(f"After energy Z-score filter: {len(mols)} structures remain")
         if not mols:
             self._log("All structures filtered as high-energy outliers.", level="warning")
             return None, None, None, None
@@ -491,7 +548,10 @@ class BHMC:
         # Featurize with SOAP
         featurizer = Featurizer(FeaturizerConfig(descriptor_type="SOAP"))
         feature_mat = featurizer.build_feature_matrix(mols, energies=None, include_hbonds=False)
-        self._log(f"SOAP features: {feature_mat.shape[0]} × {feature_mat.shape[1]}")
+        self._parameters("Filtering & Featurization", [
+            ("Structures after Z-score filter", len(mols)),
+            ("SOAP feature shape", f"{feature_mat.shape[0]} × {feature_mat.shape[1]}"),
+        ])
 
         # Embed the new structures using the reference_clustering object
         new_structures_embedding = reference_clustering.embed_new_structures(x_new=feature_mat)
@@ -520,13 +580,13 @@ class BHMC:
         confirmed_indices = [i for i in range(len(mols)) if i not in novel_set]
         confirmed_mols = [mols[i] for i in confirmed_indices]
         confirmed_labels = predicted_labels[confirmed_indices]
-        self._log(f"{len(confirmed_mols)} structures confidently recognized by the reference classifier — kept as-is.")
+        self._substep(f"{len(confirmed_mols)} structures confidently recognized by the reference classifier — kept as-is.")
 
         if len(novel_indices) == 0:
             self._log("No novel structures detected in sampling run.")
             return confirmed_mols, confirmed_labels, None, None
 
-        self._log(f"{len(novel_indices)} novel structures detected — reclustering them independently.")
+        self._substep(f"{len(novel_indices)} novel structures detected — reclustering them independently.")
         novel_mols = [mols[i] for i in novel_indices]
         novel_energies = [energies[i] for i in novel_indices]
         novel_feature_mat = feature_mat[novel_indices]
@@ -564,7 +624,7 @@ class BHMC:
             embedding_plot_title="Novel Sampling Structures — UMAP Embedding with Cluster Labels",
         )
         novel_representative_mols = [novel_clustering.molecules[idx] for idx in novel_rep_indices.values()]
-        self._log(f"Identified {len(novel_representative_mols)} lowest-energy representative(s) among the novel structures.")
+        self._substep(f"Identified {len(novel_representative_mols)} lowest-energy representative(s) among the novel structures.")
 
         return confirmed_mols, confirmed_labels, novel_clustering, novel_representative_mols
 

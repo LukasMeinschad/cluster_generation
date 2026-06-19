@@ -258,9 +258,12 @@ def get_cluster_representatives(
 
     # Cache target representative registers on the tracking context
     cluster_class.representatives = representatives
-    cluster_class.log(f"Cluster representatives identified via '{method}' optimization: {representatives}")
-    
-    return representatives 
+    cluster_class.parameters(
+        f"Cluster representatives ('{method}')",
+        {f"cluster {k}": f"row {v}" for k, v in representatives.items()},
+    )
+
+    return representatives
 
 if __name__ == "__main__":
     # Example usage with synthetic data

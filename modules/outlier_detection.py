@@ -56,7 +56,12 @@ def run_isolation_forest(
         random_state: Controls the randomness of the estimator
     """
     X = cluster_class.feature_matrix
-    cluster_class.log(f"Running Isolation Forest with contamination={contamination}, n_estimators={n_estimators}, bootstrap={bootstrap}, prune={prune}, random_state={random_state}")
+    cluster_class.parameters("Isolation Forest", [
+        ("contamination", contamination),
+        ("n_estimators", n_estimators),
+        ("bootstrap", bootstrap),
+        ("random_state", random_state),
+    ])
     iso_forest = IsolationForest(
         n_estimators=n_estimators,
         contamination=contamination,
@@ -75,7 +80,7 @@ def run_isolation_forest(
     # Map to boolean mask where True = Outlier
     outlier_mask = (preds == -1)
     n_outliers = np.sum(outlier_mask)
-    cluster_class.log(f"Isolation Forest detected {n_outliers} outliers out of {X.shape[0]} samples.")
+    cluster_class.substep(f"Detected {n_outliers} outliers out of {X.shape[0]} samples")
 
     cluster_class.outlier_mask = outlier_mask
     cluster_class.anomaly_scores = scores
@@ -104,7 +109,11 @@ def run_local_outlier_factor(
 
     X = cluster_class.feature_matrix
     metric = getattr(cluster_class, "metric", "cityblock")
-    cluster_class.log(f"Running Local Outlier Factor with contamination={contamination}, n_neighbors={n_neighbors}, prune={prune}, metric={metric}")
+    cluster_class.parameters("Local Outlier Factor", [
+        ("contamination", contamination),
+        ("n_neighbors", n_neighbors),
+        ("metric", metric),
+    ])
     lof = LocalOutlierFactor(
         n_neighbors=n_neighbors,
         contamination=contamination,
@@ -121,7 +130,7 @@ def run_local_outlier_factor(
     # Map to boolean mask where True = Outlier
     outlier_mask = (preds == -1)
     n_outliers = np.sum(outlier_mask)
-    cluster_class.log(f"Local Outlier Factor detected {n_outliers} outliers out of {X.shape[0]} samples.")
+    cluster_class.substep(f"Detected {n_outliers} outliers out of {X.shape[0]} samples")
     cluster_class.outlier_mask = outlier_mask
     cluster_class.anomaly_scores = scores
     if prune:
@@ -162,9 +171,9 @@ def _prune_context(context: Any) -> None:
     if hasattr(context, "structures") and context.structures is not None:
         context.structures = [s for i, s in enumerate(context.structures) if inlier_mask[i]]
 
-    context.log(
-        f"  -> Context Pruning complete: Matrix footprint reduced from "
-        f"{old_shape[0]} down to {context.feature_matrix.shape[0]} structures."
+    context.substep(
+        f"Context pruning complete: {old_shape[0]} → {context.feature_matrix.shape[0]} structures",
+        level=2,
     )
 
 if __name__ == "__main__":

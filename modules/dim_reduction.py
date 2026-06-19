@@ -83,7 +83,12 @@ def umap(cluster_class: Any, n_components: int = 2, n_neighbors: int = 15, min_d
     Stores the fitted model inside the context for out-of-sample mapping and inverse transformation
     """
     _check_umap_availability()
-    cluster_class.log(f"Applying UMAP with n_components={n_components}, n_neighbors={n_neighbors}, min_dist={min_dist}, random_state={random_state}")
+    cluster_class.parameters("UMAP", [
+        ("n_components", n_components),
+        ("n_neighbors", n_neighbors),
+        ("min_dist", min_dist),
+        ("random_state", random_state),
+    ])
     umap_model = UMAP(
         n_components=n_components,
         n_neighbors=n_neighbors,
@@ -97,12 +102,17 @@ def umap(cluster_class: Any, n_components: int = 2, n_neighbors: int = 15, min_d
     return embedding
 
 def umap_densmap(cluster_class: Any, n_components: int = 2, n_neighbors: int = 15, min_dist: float= 0.1, dens_lambda: float = 0.8, random_state: Optional[int] = None) -> np.ndarray:
-    """ 
+    """
     Runs DensMAP a density-preserving variant of UMAP that preserves local density
     variances from a high dimensional featuere matrix inside the low-dimensional embedding
     """
     _check_umap_availability()
-    cluster_class.log(f"Applying DensMAP with n_neighbors={n_neighbors}, min_dist={min_dist}, dens_lambda={dens_lambda}, random_state={random_state}")
+    cluster_class.parameters("DensMAP", [
+        ("n_neighbors", n_neighbors),
+        ("min_dist", min_dist),
+        ("dens_lambda", dens_lambda),
+        ("random_state", random_state),
+    ])
     umap_model = UMAP(
         n_components=n_components,
         n_neighbors=n_neighbors,
@@ -181,11 +191,13 @@ def flag_novel_structures(
     probabilities = active_classifier.predict_proba(embedding_new)
     max_probabilities = np.max(probabilities, axis=1)
     threshold_value = np.percentile(max_probabilities, threshold_percentile)
-    context.log(f"Novelty detection threshold set at the {threshold_percentile} percentile of max probabilities: {threshold_value:.4f}")
     novel_indices = np.where(max_probabilities < threshold_value)[0]
 
-    # Log results
-    context.log(f"Flagged {len(novel_indices)} novel structures out of {embedding_new.shape[0]} total new structures based on confidence threshold.")
+    context.parameters("Novelty detection", [
+        ("threshold percentile", threshold_percentile),
+        ("threshold value (max probability)", f"{threshold_value:.4f}"),
+        ("novel structures flagged", f"{len(novel_indices)} / {embedding_new.shape[0]}"),
+    ])
     return novel_indices
 
 

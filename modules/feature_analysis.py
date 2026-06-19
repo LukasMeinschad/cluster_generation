@@ -25,7 +25,7 @@ def feature_statistics(cluster_class: Any) -> Dict[str, Dict[str, float]]:
         mean_val = float(np.mean(col_data))
         std_val = float(np.std(col_data))
         feature_stats[f"feature_{i}"] = {"mean": mean_val, "std": std_val}
-        cluster_class.log(f"  -> Feature {i}: mean={mean_val:.4f}, std={std_val:.4f}")
+        cluster_class.log(f"Feature {i}: mean={mean_val:.4f}, std={std_val:.4f}", level="debug")
 
     cluster_class.feature_stats = feature_stats
     return feature_stats
@@ -50,7 +50,11 @@ def filter_low_variance_features(
         cluster_class._feature_matrix_normalized = cluster_class._feature_matrix_normalized[:, selected_features]
 
     
-    cluster_class.log(f"Filtered out {np.sum(low_var_mask)} low-variance features (threshold={threshold}). Remaining features: {len(selected_features)}.")
+    cluster_class.parameters("Low-variance feature filtering", [
+        ("threshold", threshold),
+        ("filtered out", int(np.sum(low_var_mask))),
+        ("remaining", len(selected_features)),
+    ])
     return selected_features
 
 def spearman_correlation(

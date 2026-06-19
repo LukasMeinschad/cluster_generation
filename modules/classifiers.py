@@ -42,7 +42,6 @@ def train_classifier(
         **kwargs: Additional keyword arguments for the classifier constructor
     """
     model_type = model_type.lower()
-    cluster_class.log(f"Initializing classifier training for model type: {model_type}")
 
     if model_type == 'knn':
         # Fall back to containers distance metric choice if not explicitly overridden
@@ -61,7 +60,7 @@ def train_classifier(
     
     # Train model on the provided data space
     model.fit(x_train, y_train)
-    cluster_class.log(f"Sucsessfully trained {model_type} classifier on {x_train.shape[0]} samples with {x_train.shape[1]} features.")
+    cluster_class.substep(f"Trained {model_type.upper()} classifier on {x_train.shape[0]} samples with {x_train.shape[1]} features")
 
     # mutate model to store in cluster class context
     cluster_class.classifier_model = model
@@ -101,10 +100,11 @@ def predict_probabilities(cluster_class: Any, x_test: np.ndarray) -> np.ndarray:
     max_probabilities = np.max(probabilities, axis=1)
     mean_max_prob = np.mean(max_probabilities)
     std_max_prob = np.std(max_probabilities)
-    cluster_class.log("Model Uncertainty Profiling & Confidence Analysis:")
-    cluster_class.log(f"   -> Average Shannon Entropy across predictions: {avg_entropy:.4f}")
-    cluster_class.log(f"   -> Mean of maximum predicted probabilities: {mean_max_prob:.4f}")
-    cluster_class.log(f"   -> Standard deviation of maximum predicted probabilities: {std_max_prob:.4f}")
+    cluster_class.parameters("Model Uncertainty Profiling & Confidence Analysis", [
+        ("Average Shannon entropy", f"{avg_entropy:.4f}"),
+        ("Mean max predicted probability", f"{mean_max_prob:.4f}"),
+        ("Std max predicted probability", f"{std_max_prob:.4f}"),
+    ])
 
     return probabilities
 
@@ -136,7 +136,7 @@ def evaluate_classifier(
     unique_classes = np.unique(y)
     oof_probs = np.zeros((len(y), len(unique_classes)))
 
-    cluster_class.log(f"Starting {n_splits}-fold cross-validation for classifier evaluation...")
+    cluster_class.substep(f"Starting {n_splits}-fold cross-validation for classifier evaluation...")
 
     for fold, (train_idx, val_idx) in enumerate(skf.split(x,y)):
         x_tr, x_val = x[train_idx], x[val_idx]
@@ -155,14 +155,16 @@ def evaluate_classifier(
     report_dict = classification_report(y, oof_preds, output_dict=True)
     report_text = classification_report(y, oof_preds)
 
-    cluster_class.log("\n-- Classifier Evaluation Report ---\n")
-    cluster_class.log(report_text)
+    cluster_class.log("Classifier evaluation report (full per-class table at DEBUG level):")
+    cluster_class.log(report_text, level="debug")
 
     # Profile boundary confidence margins if probabilities are available
     if hasattr(prod_model, "predict_proba"):
         max_probs = np.max(oof_probs, axis=1)
-        cluster_class.log(f"   -> Average Out-of-Fold prediction certainty (max probability): {np.mean(max_probs):.4f}")
-        cluster_class.log(f"   -> Structures below 60% confidence threshold: {np.sum(max_probs < 0.6)} / {len(max_probs)} ({np.mean(max_probs < 0.6) * 100:.2f}%)")
+        cluster_class.parameters("Classifier Evaluation Summary", [
+            ("Avg out-of-fold confidence", f"{np.mean(max_probs):.4f}"),
+            ("Below 60% confidence", f"{np.sum(max_probs < 0.6)} / {len(max_probs)} ({np.mean(max_probs < 0.6) * 100:.2f}%)"),
+        ])
 
     # Generate and Save Confusion matrix plot
     cm = confusion_matrix(y, oof_preds)

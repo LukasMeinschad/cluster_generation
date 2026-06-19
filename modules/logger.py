@@ -4,10 +4,12 @@ import logging
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from contextlib import contextmanager
 
-# Silence and supress warnings 
+import numpy as np
+
+# Silence and supress warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="pyfiglet")
 warnings.filterwarnings("ignore", category=UserWarning, module="pkg_resources")
 
@@ -19,6 +21,10 @@ class Logger:
     """  
     Logger class for output file logging.
     """
+    # Class wide variables for formatting
+    INDENT_UNIT: int = 4 # single source of truth for indentation :)
+
+
     def __init__(
         self,
         name: str = "cluster_gen",
@@ -31,7 +37,7 @@ class Logger:
         """   
         Args:
             name (str): Name of the logger.
-            log_file (str, optional): Path to the log file. If None, logging to file is disabled. Defaults to "cluster_gen.log".
+            log_file (str, optional): Path to the log file. If None, messages are printed to the console instead. Defaults to "cluster_gen.log".
             level (int): Logging level (e.g., logging.INFO, logging.DEBUG). Defaults to logging.INFO.
             file_mode (str): Mode for opening the log file ('a' for append, 'w' for write). Defaults to 'a'.
         """
@@ -51,13 +57,18 @@ class Logger:
 
         formatter = logging.Formatter(fmt=fmt, datefmt="%Y-%m-%d %H:%M:%S")
 
-        # File Handler 
+        # File Handler
         if log_file:
             path = Path(log_file)
             path.parent.mkdir(parents=True, exist_ok=True)
             fh = logging.FileHandler(path, mode=file_mode, encoding="utf-8")
             fh.setFormatter(formatter)
             self._logger.addHandler(fh)
+        else:
+            # No log file given - fall back to printing everything to the console
+            ch = logging.StreamHandler(sys.stdout)
+            ch.setFormatter(formatter)
+            self._logger.addHandler(ch)
 
         
     # ========================= Core Logging Methods =============================
@@ -86,6 +97,77 @@ class Logger:
         Log a critical message
         """
         self._logger.critical(msg)
+
+    # ======================== Utilities for Step Logging summaries and so on ==============================
+    def step(self, current: int, total: int, title: str) -> None:
+        """  
+        Makes steps like [2/5] Fragmentation of Molecules --> always un-intendend
+        """
+        self._logger.info(f"[{current}/{total}] {title}")
+
+    def substep(self, msg: str, level: int = 1) -> None:
+        """    
+        Detail line nested under the most recent step()/section()
+        level is the nesting depth: intendation = INDENT_UNIT * level spaces
+        """
+        self._logger.info(f"{' ' * (self.INDENT_UNIT * level)}{msg}")
+
+    def parameters(
+        self,
+        title: str,
+        items: Union[Dict[str, Any], List[Tuple[str, Any]]],
+        indent: int = 1,
+    ) -> None:
+        """
+        Aligned 'label : value' block, "items" is a dict (insertion order preserved)
+        or a list of (label, value) pairs when duplicate labels or conditional
+        ordering is needed.
+        """
+        pairs = list(items.items()) if isinstance(items, dict) else list(items)
+        if not pairs:
+            return
+        prefix = " " * (self.INDENT_UNIT * indent)
+        label_width = max(len(str(label)) for label, _ in pairs)
+        self._logger.info(f"{title}:")
+        for label, value in pairs:
+            self._logger.info(f"{prefix}{str(label):<{label_width}} : {value}")
+
+    def worker_summary(
+        self,
+        title: str,
+        per_worker: Dict[int, Any],
+        indent: int = 1,
+    ) -> None:
+        """
+        Log aggregate min/mean/max across workers instead of a per-worker dump.
+
+        Two shapes are supported:
+          - per_worker: Dict[int, float]            -> one summary line
+          - per_worker: Dict[int, Dict[str, float]]  -> one line per inner key
+            (e.g. one line per operator, averaged across workers)
+        """
+        if not per_worker:
+            return
+        n_workers = len(per_worker)
+        prefix = " " * (self.INDENT_UNIT * indent)
+        first = next(iter(per_worker.values()))
+
+        if isinstance(first, dict):
+            keys = list(first.keys())
+            label_width = max(len(str(k)) for k in keys)
+            self._logger.info(f"{title} ({n_workers} workers):")
+            for key in keys:
+                vals = [w.get(key, 0.0) for w in per_worker.values()]
+                self._logger.info(
+                    f"{prefix}{str(key):<{label_width}} : "
+                    f"mean={np.mean(vals):5.1f}%  min={np.min(vals):5.1f}%  max={np.max(vals):5.1f}%"
+                )
+        else:
+            vals = list(per_worker.values())
+            self._logger.info(
+                f"{title} ({n_workers} workers): "
+                f"mean={np.mean(vals):.2f}  min={np.min(vals):.2f}  max={np.max(vals):.2f}"
+            )
 
     # ======================== Sections & Separators ==============================
     def program_header(self) -> None:
@@ -136,6 +218,11 @@ class Logger:
         self._logger.info(f"Working Directory: {os.getcwd()}")
         self._logger.info(f"Log File: {self._logger.handlers[0].baseFilename if self._logger.handlers else 'None'}")
         self._logger.info("Made by: Lukas Meinschad")
+
+    
+
+
+
 
     # ======================== General Logging Functionalities ==============================
     def write_xyz_trajectory(
@@ -259,7 +346,6 @@ class Logger:
             fmt (str): Format string for values (e.g., ".4f"). Defaults to ".4f".
             max_col_width (int): Maximum width for each column in characters. Defaults to 14.
         """
-        import numpy as np
         if matrix.ndim != 2:
             self.warning(f"log_matrix expects a 2D array, but got {matrix.ndim}D array.")
             return
@@ -291,6 +377,18 @@ class Logger:
         Utility function to remove digits from a string (used for cleaner logging)
         """
         return ''.join(filter(lambda x: not x.isdigit(), s))
+
+
+if __name__ == "__main__":
+    # Example usage of the Logger class
+    logger = Logger(level=logging.INFO, include_timestamp=True, include_level=True)
+    
+    logger.program_header()
+    logger.step(1, 3, "Starting the process")
+    logger.substep("Loading data", level=1)
+    logger.parameters("Configuration Parameters", {"param1": 10, "param2": 20}, indent=2)
+    logger.worker_summary("Worker Performance", {0: {"accuracy": 95.5, "time": 120}, 1: {"accuracy": 96.0, "time": 110}}, indent=1)
+    logger.write_program_header()
 
 
 

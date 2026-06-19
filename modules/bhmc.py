@@ -534,6 +534,21 @@ class BHMC:
         n_novel_clusters = (
             len(np.unique(reference_clustering.labels)) if reference_clustering.labels is not None else 1
         )
+
+        # A small novel pool doesn't warrant one cluster per reference cluster (or
+        # worse, one cluster per point) — fall back to a fixed ratio of the novel
+        # pool instead, so points aren't spread too thin across clusters.
+        if len(novel_mols) < n_novel_clusters:
+            ratio_clusters = max(1, round(len(novel_mols) * self.config.novel_cluster_ratio))
+            self._log(
+                f"Not enough novel structures ({len(novel_mols)}) to form "
+                f"{n_novel_clusters} clusters — using a {self.config.novel_cluster_ratio:.0%} ratio "
+                f"fallback instead: {ratio_clusters} cluster(s)."
+            )
+            n_novel_clusters = ratio_clusters
+
+
+
         novel_clustering, _, _, novel_rep_indices = Clustering.run_clustering_pipeline(
             feature_matrix=novel_feature_mat,
             n_clusters=n_novel_clusters,
@@ -565,6 +580,8 @@ class BHMC:
     ):
         """Plot energy vs step for each worker."""
         import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+        from pathlib import Path
 
         if trajectories is None:
             trajectories = self.worker_trajectories
@@ -573,19 +590,45 @@ class BHMC:
             return
 
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-        cmap = plt.get_cmap('tab20', max(len(trajectories), 1))
+
+        # Use a high-contrast qualitative colormap
+        num_workers = len(trajectories)
+        colors = cm.get_cmap('tab20', num_workers)
+
 
         plt.figure(figsize=(12, 6))
-        for wid, traj in trajectories.items():
-            steps, energies = zip(*traj)
-            plt.plot(steps, energies, label=f"Worker {wid}", color=cmap(wid))
-        plt.xlabel("Step")
-        plt.ylabel("Energy (Hartree)")
-        plt.title(title)
-        plt.legend(ncols=4, loc="upper right", columnspacing=0.5)
-        plt.grid(True)
+
+        # Sort keys for consistent color assignment
+        for i, (wid, traj) in enumerate(sorted(trajectories.items())):
+            steps, energies = zip(*traj) if traj else ([], [])
+
+            # Add transparency and slightly thinned lines
+            plt.plot(
+                steps, 
+                energies,
+                label=f"Worker {wid}",
+                color=colors(i),
+                alpha = 0.7,
+                linewidth=1.5
+            )
+
+        plt.xlabel("Step", fontsize=12, fontweight='bold')
+        plt.ylabel("Energy (Hartree)", fontsize=12, fontweight='bold')
+        plt.title(title, fontsize=14, fontweight='bold', pad=15)
+
+        # Legend placement
+        plt.legend(
+            bbox_to_anchor = (1.02, 1),
+            loc = "upper left",
+            borderaxespad = 0,
+            fontsize = "small",
+            ncol = 1 + (num_workers // 20)
+        )
+
+        
+        plt.grid(True, linestyle='--', alpha=0.6)
         plt.tight_layout()
-        plt.savefig(save_path, dpi=300)
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
 
     def plot_adaptive_box_updates(
@@ -596,6 +639,9 @@ class BHMC:
     ):
         """Plot box size and window acceptance rate per worker."""
         import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+        from pathlib import Path
+
 
         if box_updates_by_worker is None:
             box_updates_by_worker = self.worker_box_updates
@@ -606,40 +652,54 @@ class BHMC:
             return
 
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-        fig, (ax_size, ax_acc) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-        cmap = plt.get_cmap('tab20', max(len(valid), 1))
+        
+        fig, (ax_size, ax_acc) = plt.subplots(2, 1, figsize=(12, 8), sharex=True, gridspec_kw={'height_ratios': [1, 1]})
+        
+        colors = cm.get_cmap('tab20', max(len(valid), 1))
+
 
         for i, (wid, updates) in enumerate(sorted(valid.items())):
-            color = cmap(i)
-            steps = [u["step"] for u in updates]
-            sizes = [u["box_size"] for u in updates]
-            ax_size.plot(steps, sizes, marker='o', linewidth=1.8, markersize=4,
-                         label=f"Worker {wid}", color=color)
+            color = colors(i)
 
-            acc_steps = [u["step"] for u in updates if u["window_acceptance"] is not None]
-            acc_vals  = [u["window_acceptance"] for u in updates if u["window_acceptance"] is not None]
-            if acc_vals:
-                ax_acc.plot(acc_steps, acc_vals, marker='o', linewidth=1.5, markersize=4,
-                            label=f"Worker {wid}", color=color)
+            steps = [u["step"] for u in updates]
+            
+            
+            # Plot box size
+            ax_size.plot(steps, [u["box_size"] for u in updates],
+                         marker=".", markersize=3, alpha=0.6, label=f"Worker {wid}", color=color)
+            
+            # Plot Acceptance Rate
+            acc_data = [(u["step"], u["window_acceptance"]) for u in updates if "window_acceptance" in u]
+            if acc_data:
+                s, a = zip(*acc_data)
+                ax_acc.plot(s, a, marker=".", markersize=3, alpha=0.6, color=color)
 
         target = self.config.box_target_acceptance
         window = self.config.box_acceptance_window
-        ax_acc.axhline(target,          linestyle='--', linewidth=1.2, color='black', alpha=0.8, label='Target')
-        ax_acc.axhline(target - window, linestyle=':',  linewidth=1.0, color='gray',  alpha=0.8, label='Window')
-        ax_acc.axhline(target + window, linestyle=':',  linewidth=1.0, color='gray',  alpha=0.8)
 
-        ax_size.set_ylabel("Box size (Å)")
-        ax_size.set_title(title)
-        ax_size.grid(True, alpha=0.3)
-        ax_size.legend(ncols=4, loc='best')
-        ax_acc.set_xlabel("Step")
-        ax_acc.set_ylabel("Window acceptance")
-        ax_acc.set_ylim(0.0, 1.0)
-        ax_acc.grid(True, alpha=0.3)
-        ax_acc.legend(ncols=4, loc='best')
+        ax_acc.axhline(target, color="black", linestyle="--", linewidth=1.5, label="Target Acceptance")
+        ax_acc.axhspan(target - window, target + window, color="gray", alpha=0.2, label="Acceptance Window")
 
-        plt.tight_layout()
-        plt.savefig(save_path, dpi=300)
+        # Formatting the Axes 
+        ax_size.set_ylabel("Box size (Å)", fontsize=12, fontweight='bold')
+        ax_acc.set_ylabel("Window Acceptance Rate (%)", fontsize=12, fontweight='bold')
+        ax_acc.set_xlabel("Step", fontsize=12, fontweight='bold')
+        ax_size.set_title(f"{title} — Box Size", fontsize=14, fontweight='bold', pad=15)
+        ax_acc.set_title(f"{title} — Acceptance Rate", fontsize=14, fontweight='bold', pad=15)
+
+        # Legend Outside to prevent data overlap
+        fig.legend(
+            loc="center right",
+            bbox_to_anchor=(1.15, 0.5),
+            fontsize = "small",
+            frameon=False,
+            ncol = 1 + (len(valid) // 20)
+        )
+
+
+
+        plt.tight_layout(rect=[0,0,0.9,1]) # Leave space on the right for the legend
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
 
     def plot_worker_operator_acceptance(
@@ -648,35 +708,42 @@ class BHMC:
     ):
         """Bar chart of operator acceptance rates per worker."""
         import matplotlib.pyplot as plt
+        from pathlib import Path
 
         if not self.worker_operator_acceptance:
+            self._log("No operator acceptance data to plot.", level="warning")
             return
+        
+        # Prepare the data for plotting
+        workers = sorted(self.worker_operator_acceptance.keys())
+        operators = sorted(next(iter(self.worker_operator_acceptance.values())).keys())
 
-        n = len(self.worker_operator_acceptance)
-        ncols = max(1, min(4, n))
-        nrows = (n + ncols - 1) // ncols
-        fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 4 * nrows), sharey=True)
-        axes = axes.flatten() if n > 1 else [axes]
+        # Create a 2D array: rows = workers, columns = operators
+        data = np.array([[self.worker_operator_acceptance[wid].get(op, 0) for op in operators] for wid in workers]) 
 
-        for i, (wid, op_rates) in enumerate(sorted(self.worker_operator_acceptance.items())):
-            ax = axes[i]
-            ops   = list(op_rates.keys())
-            rates = [op_rates[op] for op in ops]
-            ax.bar(ops, rates, color='skyblue')
-            ax.set_xticks(range(len(ops)))
-            ax.set_xticklabels(ops, rotation=45, ha='right')
-            ax.set_title(f"Worker {wid}")
-            ax.set_ylabel("Acceptance rate (%)")
-            ax.set_ylim(0, 100)
-            ax.grid(True, alpha=0.3)
+        # Plot as a heatmap for clarity
+        plt.figure(figsize = (max(8, len(operators) * 1.5), max(6, len(workers) * 0.5)))
 
-        for j in range(i + 1, len(axes)):
-            axes[j].axis('off')
+        plt.imshow(data, cmap='viridis', aspect='auto', vmin=0, vmax=100)
 
+        # Add text annotations inside cells for precision
+        for i in range(len(workers)):
+            for j in range(len(operators)):
+                plt.text(j, i, f"{data[i, j]:.1f}%", ha='center', va='center', color='white' if data[i, j] < 50 else 'black')
+
+        plt.colorbar(label='Acceptance Rate (%)')
+
+        # Axis formatting 
+        plt.xticks(range(len(operators)), operators, rotation=45, ha='right', fontsize=10)
+        plt.yticks(range(len(workers)), [f"Worker {wid}" for wid in workers], fontsize=10)
+        plt.title("Operator Acceptance Rates per Worker", fontsize=14, fontweight='bold', pad=15)
         plt.tight_layout()
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(save_path, dpi=300)
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
+
+
+
 
     # ---------------------------------------------------------- interpolation
 

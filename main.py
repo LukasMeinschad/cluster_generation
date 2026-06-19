@@ -28,6 +28,14 @@ from calculator import EnergyEvaluator
 from input_reader import read_ml_bhop_input, read_operator_distribution
 
 
+"""
+Main.py Loop
+This script condenses all of the necessary functions for the algorithm to run
+In the following the respective methods for the __main__ are defined
+"""
+
+
+
 # ============================================================================
 # Setup: CLI arguments, settings file, operator distribution
 # ============================================================================
@@ -315,13 +323,17 @@ def analyze_training_phase_structures(
     unique_mols: List[Molecule],
     unique_energies: List[float],
     logger: Logger,
-) -> Optional[Dict[str, Any]]:
+) -> Tuple[Optional[Dict[str, Any]], Optional[List[Molecule]], Optional[List[float]]]:
     """Optimize and PES-compare the BHMC training-phase representatives against the init pool.
 
     training_representatives is None whenever analyze_training_results found no
     structures novel enough to justify retraining the reference model (or had
     nothing to analyze at all) — in that case there is nothing new to optimize
     or compare, so this step is skipped instead of running on an empty pool.
+
+    Returns (comparison, unique_mols_bhmc, unique_energies_bhmc) — the latter two
+    are the optimized, deduplicated training-phase representatives, forwarded so
+    the final run-wide aggregation step doesn't need to redo this work.
     """
     logger.header("Structure Analysis of Representatives from BHMC Training Phase")
 
@@ -330,7 +342,7 @@ def analyze_training_phase_structures(
             "No novel structures were found during the BHMC training phase — "
             "skipping optimization and PES comparison for this step."
         )
-        return None
+        return None, None, None
 
     structure_analysis_bhmc = StructureAnalysis(logger=logger, mols=training_representatives, config=struc_analysis_config)
     optimized_representatives, optimized_energies = structure_analysis_bhmc.optimize_geometries(n_workers=20)
@@ -345,11 +357,12 @@ def analyze_training_phase_structures(
     unique_energies_bhmc = [optimized_energies[i] for i in unique_indices_bhmc]
     logger.info(f"Number of unique structures after BHMC training phase: {len(unique_mols_bhmc)}")
 
-    return structure_analysis_bhmc.compare_pes(
+    comparison = structure_analysis_bhmc.compare_pes(
         unique_mols, unique_energies,
         unique_mols_bhmc, unique_energies_bhmc,
         label_a="init", label_b="bhmc_training",
     )
+    return comparison, unique_mols_bhmc, unique_energies_bhmc
 
 
 def run_bhmc_sampling_phase(
@@ -401,14 +414,76 @@ def run_bhmc_sampling_phase(
     return accepted_structures_sampling, sampling_results
 
 
+def analyze_final_results(
+    struc_analysis_config: StructureAnalysisConfig,
+    unique_mols: List[Molecule],
+    unique_energies: List[float],
+    training_mols: Optional[List[Molecule]],
+    training_energies: Optional[List[float]],
+    accepted_structures_sampling: List[Tuple[Molecule, float]],
+    logger: Logger,
+) -> Optional[Dict[str, Any]]:
+    """Optimize the BHMC sampling output, combine it with the init and training pools,
+    PES-compare everything new against the init baseline, then sort the full final
+    pool by energy and write it to one xyz trajectory.
+
+    training_mols/training_energies are None whenever the training phase found
+    nothing novel (see analyze_training_phase_structures).
+    """
+    logger.header("Final Aggregation Across the Full Run")
+
+    new_mols: List[Molecule] = list(training_mols) if training_mols else []
+    new_energies: List[float] = list(training_energies) if training_energies else []
+
+    if accepted_structures_sampling:
+        sampling_analysis = StructureAnalysis(
+            logger=logger,
+            mols=[m for m, _ in accepted_structures_sampling],
+            config=struc_analysis_config,
+        )
+        _, optimized_sampling_energies = sampling_analysis.optimize_geometries(n_workers=20)
+        sampling_unique_indices, sampling_unique_mols = sampling_analysis.get_unique_structures(use_optimized=True)
+        sampling_unique_energies = [optimized_sampling_energies[i] for i in sampling_unique_indices]
+        logger.info(f"Number of unique structures after BHMC sampling phase: {len(sampling_unique_mols)}")
+        new_mols += sampling_unique_mols
+        new_energies += sampling_unique_energies
+
+    final_comparison = None
+    if new_mols:
+        comparator = StructureAnalysis(logger=logger, config=struc_analysis_config)
+        final_comparison = comparator.compare_pes(
+            unique_mols, unique_energies,
+            new_mols, new_energies,
+            label_a="init", label_b="full_run",
+        )
+    else:
+        logger.info("No new structures were obtained from the training or sampling phases.")
+
+    final_pool_analysis = StructureAnalysis(
+        logger=logger, mols=unique_mols + new_mols, config=struc_analysis_config
+    )
+    final_unique_indices, final_unique_mols = final_pool_analysis.get_unique_structures(use_optimized=False)
+    final_unique_energies = [(unique_energies + new_energies)[i] for i in final_unique_indices]
+    logger.info(f"Final unique structure pool across the whole run: {len(final_unique_mols)}")
+
+    logger.write_xyz_trajectory(
+        molecules=final_unique_mols,
+        filepath="trajectories/final_results.xyz",
+        energies=final_unique_energies,
+        sort_by_energy=True,
+    )
+    return final_comparison
+
+
+
 # ============================================================================
-# Entry point
+# Main Function 
 # ============================================================================
 
 def main() -> None:
     args = get_args()
 
-    logger = Logger(name="cluster_gen", log_file="cluster_gen.out", file_mode="w")
+    logger = Logger(name="cluster_gen", log_file=args.f[0], include_timestamp=False, include_level=False)
     logger.program_header()
     logger.separator()
 
@@ -463,12 +538,20 @@ def main() -> None:
         init_clustering = updated_clustering
     logger.info(f"BHMC training phase completed in {time.time() - timer_start_bhmc:.2f} seconds")
 
-    analyze_training_phase_structures(training_representatives, struc_analysis_config, unique_mols, unique_energies, logger)
+    _, training_mols_bhmc, training_energies_bhmc = analyze_training_phase_structures(
+        training_representatives, struc_analysis_config, unique_mols, unique_energies, logger
+    )
 
-    run_bhmc_sampling_phase(
+    accepted_structures_sampling, _ = run_bhmc_sampling_phase(
         unique_mols, submol_indices, simulation_box,
         settings_bhmc, o_sampling, n_sampling_steps,
         init_clustering, updated_clustering, logger,
+    )
+
+    analyze_final_results(
+        struc_analysis_config, unique_mols, unique_energies,
+        training_mols_bhmc, training_energies_bhmc,
+        accepted_structures_sampling, logger,
     )
 
 

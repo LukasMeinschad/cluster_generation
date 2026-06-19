@@ -21,12 +21,14 @@ def get_args():
         "--s",
         nargs=1,
         metavar=("file2"),
+        default=["ml_bhop.inp"],
         help="Path to input file containing settings for the cluster generation process"
     )
 
     parser.add_argument(
         "--o",
         nargs=1,
+        default=["operator_dist.inp"],
         metavar=("file3"),
         help="Filepath of the operator distribution file to be used for the BHMC sampling"
     )
@@ -38,6 +40,14 @@ def get_args():
         choices=["method_basis_combinations"],
         help="""Choose tests to perform:\n
               method_basis_combinations: Determine viable method and basis set combinations for the molecule"""
+    )
+
+    parser.add_argument(
+        "--f",
+        nargs=1,
+        metavar=("file4"),
+        default=["cluster_gen.out"],
+        help="Filename for the output file of the programm printing the results and additional information"
     )
 
     args = parser.parse_args()

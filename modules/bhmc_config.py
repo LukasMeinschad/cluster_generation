@@ -54,3 +54,7 @@ class BHMCConfig:
     clustering_method: str = "kmeans"
     classifier_backend: str = "knn"
     classifier_kwargs: Optional[Dict[str, Any]] = None
+
+    # Fraction of a novel-structure pool to use as its re-clustering target,
+    # so a handful of novel points doesn't get split into one cluster each.
+    novel_cluster_ratio: float = 0.1

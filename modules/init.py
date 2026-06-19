@@ -111,14 +111,31 @@ class ClusterInitializer:
          return one representative per cluster as the BHMC starting points.
     """
 
-    def __init__(self, config: InitializationConfig, logger: Optional[Logger] = None):
+    # Total numbered steps in the core load->fragment->optimize->box->sample
+    # workflow (see _load_molecule .. _generate_random_configurations) — the
+    # single source of truth for the "[k/N]" step markers.
+    _INIT_STEPS = 5
+
+    def __init__(
+        self,
+        config: InitializationConfig,
+        logger: Optional[Logger] = None,
+        worker_log_file: Optional[str] = "init_prescreening_workers.log",
+    ):
         """Initialise with a configuration and an optional logger.
 
         An EnergyEvaluator is built immediately so that submolecule
         optimization and prescreening share the same backend settings.
+
+        worker_log_file is where granular per-worker detail (one line per
+        prescreening/sampling worker) is written, keeping the main logger's
+        output to aggregate summaries — mirrors the pattern BHMC already
+        uses for its own worker_log_file.
         """
         self.config = config
         self.logger = logger
+        self.worker_log_file = worker_log_file
+        self._worker_logger: Optional[Logger] = None
         self.energy_evaluator = EnergyEvaluator(
             backend=self.config.backend,
             qm_method=self.config.qm_method,
@@ -139,6 +156,61 @@ class ClusterInitializer:
             print(msg)
         if self.logger:
             getattr(self.logger, level)(msg)
+
+    def _step(self, current: int, total: int, title: str) -> None:
+        """Numbered step header, e.g. '[2/5] Fragmenting molecule...' — console + logger."""
+        if self.config.verbose:
+            print(f"[{current}/{total}] {title}")
+        if self.logger:
+            self.logger.step(current, total, title)
+
+    def _substep(self, msg: str, level: int = 1) -> None:
+        """Detail line nested under the most recent _step()/section() — console + logger."""
+        if self.config.verbose:
+            print(f"{' ' * (Logger.INDENT_UNIT * level)}{msg}")
+        if self.logger:
+            self.logger.substep(msg, level=level)
+
+    def _parameters(self, title: str, items, indent: int = 1) -> None:
+        """Aligned 'label : value' block — console + logger."""
+        pairs = list(items.items()) if isinstance(items, dict) else list(items)
+        if not pairs:
+            return
+        if self.config.verbose:
+            print(f"{title}:")
+            for label, value in pairs:
+                print(f"{' ' * (Logger.INDENT_UNIT * indent)}{label} : {value}")
+        if self.logger:
+            self.logger.parameters(title, pairs, indent=indent)
+
+    def _worker_summary(self, title: str, per_worker: Dict[int, Any], indent: int = 1) -> None:
+        """Aggregate min/mean/max across workers instead of a per-worker dump — console + logger."""
+        if not per_worker:
+            return
+        if self.config.verbose:
+            vals = list(per_worker.values())
+            if isinstance(vals[0], dict):
+                print(f"{title} ({len(per_worker)} workers)")
+            else:
+                print(
+                    f"{title} ({len(per_worker)} workers): "
+                    f"mean={np.mean(vals):.2f}  min={np.min(vals):.2f}  max={np.max(vals):.2f}"
+                )
+        if self.logger:
+            self.logger.worker_summary(title, per_worker, indent=indent)
+
+    def _get_worker_logger(self) -> Optional[Logger]:
+        """Lazily create the dedicated per-run logger for granular worker-level detail.
+
+        Created once per ClusterInitializer instance (i.e. once per run) so that
+        the prescreening and sampling worker loops append to the same file,
+        in the order they actually execute.
+        """
+        if not self.worker_log_file:
+            return None
+        if self._worker_logger is None:
+            self._worker_logger = Logger(name="init_workers", log_file=self.worker_log_file, file_mode="w")
+        return self._worker_logger
 
     # ------------------------------------------------------------------
     # Public API
@@ -314,30 +386,27 @@ class ClusterInitializer:
             if self.config.backend == "xtb"
             else self.config.backend
         )
-        msg = (
-            f"Configuration:\n"
-            f"  XYZ file:              {xyz_file}\n"
-            f"  n_workers:             {n_workers}\n"
-            f"  n_configurations:      {n_configurations}\n"
-            f"  Total candidates:      {n_sampling_workers * n_configurations}\n"
-            f"  placing_method:        {placing_method}\n"
-            f"  energy_backend:        {backend_str}\n"
-            f"  classifier_backend:    {self.config.classifier_backend}\n"
-        )
+        params = [
+            ("XYZ file", xyz_file),
+            ("n_workers", n_workers),
+            ("n_configurations", n_configurations),
+            ("Total candidates", n_sampling_workers * n_configurations),
+            ("placing_method", placing_method),
+            ("energy_backend", backend_str),
+            ("classifier_backend", self.config.classifier_backend),
+        ]
         if placing_method == "grid":
-            msg += (
-                f"  grid_spacing:          {grid_spacing}\n"
-                f"  n_theta={n_theta}  n_phi={n_phi}  n_r={n_r}\n"
-            )
+            params.append(("grid_spacing", grid_spacing))
+            params.append(("n_theta / n_phi / n_r", f"{n_theta} / {n_phi} / {n_r}"))
         if self.config.classifier_kwargs:
-            msg += f"  classifier_kwargs:     {self.config.classifier_kwargs}\n"
+            params.append(("classifier_kwargs", self.config.classifier_kwargs))
         if self.config.optimize_submolecules:
-            msg += "  optimize_submolecules: True\n"
+            params.append(("optimize_submolecules", True))
         if self.config.optimize_cluster_representatives:
-            msg += "  optimize_cluster_representatives: True\n"
+            params.append(("optimize_cluster_representatives", True))
         if self.config.filter_com_outliers:
-            msg += f"  filter_com_outliers:  True (threshold={self.config.com_threshold} Å)\n"
-        self.logger.info(msg)
+            params.append(("filter_com_outliers", f"True (threshold={self.config.com_threshold} Å)"))
+        self.logger.parameters("Configuration", params)
 
     def _compute_submol_placement_indices(self, submolecules: List[Molecule]) -> List[np.ndarray]:
         """Return each submolecule's atom-index range within an assembled candidate.
@@ -404,7 +473,7 @@ class ClusterInitializer:
 
         if n_sampling_workers > 1:
             self._log(
-                f"\nEnergy prescreening: distributing {len(initial_molecules)} candidates "
+                f"Energy prescreening: distributing {len(initial_molecules)} candidates "
                 f"across {n_sampling_workers} workers..."
             )
             all_labels = [m.atom_labels.tolist() for m in initial_molecules]
@@ -416,6 +485,8 @@ class ClusterInitializer:
 
             ctx = multiprocessing.get_context("spawn")
             energy_by_idx: dict = {}
+            worker_success_rates: Dict[int, float] = {}
+            worker_logger = self._get_worker_logger()
             with ProcessPoolExecutor(max_workers=n_sampling_workers, mp_context=ctx) as executor:
                 futures = {
                     executor.submit(
@@ -439,10 +510,12 @@ class ClusterInitializer:
                     try:
                         batch_results = future.result()
                         ok = sum(1 for _, e in batch_results if e is not None)
-                        self._log(f"  Worker {worker_id}: {ok}/{len(batch_results)} evaluations successful")
+                        worker_success_rates[worker_id] = (ok / len(batch_results) * 100) if batch_results else 0.0
+                        if worker_logger:
+                            worker_logger.info(f"Worker {worker_id}: {ok}/{len(batch_results)} evaluations successful")
                         energy_by_idx.update({idx: e for idx, e in batch_results})
                     except Exception as exc:
-                        self._log(f"  Worker {worker_id} batch failed: {exc}", level="error")
+                        self._log(f"Worker {worker_id} batch failed: {exc}", level="error")
 
             for i, mol in enumerate(initial_molecules):
                 e = energy_by_idx.get(i)
@@ -450,6 +523,9 @@ class ClusterInitializer:
                     scored.append((e, mol))
                 else:
                     failed += 1
+
+            if worker_success_rates:
+                self._worker_summary("Evaluations successful per worker (%)", worker_success_rates)
         else:
             for mol in initial_molecules:
                 try:
@@ -459,7 +535,7 @@ class ClusterInitializer:
                     self._log(f"Energy evaluation failed for one candidate: {exc}", level="error")
                     failed += 1
 
-        self._log(f"\nEnergy evaluation complete: {len(scored)} successful, {failed} failed")
+        self._log(f"Energy evaluation complete: {len(scored)} successful, {failed} failed")
         return scored, failed
 
     def _finalize_candidate_pool(
@@ -508,17 +584,19 @@ class ClusterInitializer:
     ) -> Tuple[List[Molecule], List[float]]:
         """Remove high-energy outliers via Z-score filtering and plot the before/after distributions."""
         self._log("Performing Z-score filtering to remove high-energy outliers...")
-        self._log(
-            f"Energy statistics before filtering: "
-            f"mean={np.mean(energies_raw):.6f}, std={np.std(energies_raw):.6f}, "
-            f"min={min(energies_raw):.6f}, max={max(energies_raw):.6f} Hartree"
-        )
+        self._parameters("Energy statistics (before filtering)", [
+            ("mean", f"{np.mean(energies_raw):.6f} Hartree"),
+            ("std", f"{np.std(energies_raw):.6f} Hartree"),
+            ("min", f"{min(energies_raw):.6f} Hartree"),
+            ("max", f"{max(energies_raw):.6f} Hartree"),
+        ])
         mols, energies = self.filter_high_energy_outliers(mols_raw, energies_raw, Z_threshold=3.0)
-        self._log(
-            f"Energy statistics after filtering: "
-            f"mean={np.mean(energies):.6f}, std={np.std(energies):.6f}, "
-            f"min={min(energies):.6f}, max={max(energies):.6f} Hartree"
-        )
+        self._parameters("Energy statistics (after filtering)", [
+            ("mean", f"{np.mean(energies):.6f} Hartree"),
+            ("std", f"{np.std(energies):.6f} Hartree"),
+            ("min", f"{min(energies):.6f} Hartree"),
+            ("max", f"{max(energies):.6f} Hartree"),
+        ])
         self._log(f"Filtered out {len(mols_raw) - len(mols)} high-energy outliers.")
 
         self.plot_energy_distribution_filtering(
@@ -547,7 +625,9 @@ class ClusterInitializer:
         higher-energy one is discarded and replaced with the structure in its
         cluster closest to the UMAP centroid (excluding the discarded index).
         """
-        self._log("RMSD Based Checking for Duplicate Representatives...")
+        if self.logger:
+            self.logger.section("RMSD Duplicate Resolution")
+        self._log("Checking representatives for near-duplicate structures (RMSD-based)...")
         cluster_order = list(rep_indices.keys())
         cluster_labels_arr = np.asarray(labels)
         discarded_clusters = set()
@@ -569,10 +649,10 @@ class ClusterInitializer:
                     # Eliminate the one with higher energy
                     if energies[idx_i] < energies[idx_j]:
                         discarded_clusters.add(cluster_j)
-                        self._log(f"Discarding cluster {cluster_j} (RMSD={rmsd:.3f} Å) in favor of cluster {cluster_i}")
+                        self._substep(f"Discarding cluster {cluster_j} (RMSD={rmsd:.3f} Å) in favor of cluster {cluster_i}")
                     else:
                         discarded_clusters.add(cluster_i)
-                        self._log(f"Discarding cluster {cluster_i} (RMSD={rmsd:.3f} Å) in favor of cluster {cluster_j}")
+                        self._substep(f"Discarding cluster {cluster_i} (RMSD={rmsd:.3f} Å) in favor of cluster {cluster_j}")
                         break  # No need to compare cluster_i with others if it's discarded
 
         selected_molecules = []
@@ -583,14 +663,17 @@ class ClusterInitializer:
                 continue
 
             # Fall back to picking closest to centroid if the representative was discarded
-            self._log(f"   Applying centroid fallback for cluster {cluster_id}...")
+            self._substep(f"Applying centroid fallback for cluster {cluster_id}...")
             member_indices = np.where(cluster_labels_arr == cluster_id)[0]
 
             # Exclude the duplicate configuration we just threw out
             fallback_pool = [idx for idx in member_indices if idx != rep_indices[cluster_id]]
 
             if not fallback_pool:
-                self._log(f"   No valid fallback candidates for cluster {cluster_id}. Skipping this cluster.", level="warning")
+                self._log(
+                    f"{' ' * Logger.INDENT_UNIT}No valid fallback candidates for cluster {cluster_id}. Skipping this cluster.",
+                    level="warning",
+                )
                 selected_molecules.append(mols[rep_indices[cluster_id]])  # Keep the original representative
                 continue
 
@@ -606,23 +689,28 @@ class ClusterInitializer:
                     min_distance = dist
                     best_fallback_idx = idx
             selected_molecules.append(mols[best_fallback_idx])
-            self._log(f"   Selected fallback representative for cluster {cluster_id} with UMAP distance {min_distance:.3f}")
+            self._substep(
+                f"Selected fallback representative for cluster {cluster_id} with UMAP distance {min_distance:.3f}",
+                level=2,
+            )
 
         return selected_molecules
 
     def _optimize_representatives(self, selected_molecules: List[Molecule]) -> List[Molecule]:
         """Locally re-optimize each selected representative geometry."""
-        self._log(f"\nOptimizing {len(selected_molecules)} selected representatives...")
+        if self.logger:
+            self.logger.section("Optional Representative Re-optimization")
+        self._log(f"Optimizing {len(selected_molecules)} selected representatives...")
         optimized_molecules = list(selected_molecules)
         for i, mol in enumerate(optimized_molecules):
-            self._log(f"  Representative {i + 1}/{len(optimized_molecules)}...")
+            self._substep(f"Representative {i + 1}/{len(optimized_molecules)}...")
             try:
                 optimized_molecules[i], _ = self.energy_evaluator.optimize_geometry(
                     mol, optimizer="LBFGS", trajectory_fp=None
                 )
-                self._log("    Optimization successful")
+                self._substep("Optimization successful", level=2)
             except Exception as exc:
-                self._log(f"    Optimization failed: {exc}", level="error")
+                self._log(f"{' ' * (Logger.INDENT_UNIT * 2)}Optimization failed: {exc}", level="error")
         return optimized_molecules
 
     def _log_initialization_summary(
@@ -640,24 +728,28 @@ class ClusterInitializer:
         time_start: float,
     ) -> None:
         """Log a summary of the completed initialization run."""
-        summary_lines = [
-            f"{'=' * 60}",
-            "Initialization Complete!",
-            f"  Total atoms:      {len(initial_molecules[0].coordinates)}",
-            f"  Submolecules:     {len(submolecules)}",
-            f"  Box type:         {simulation_box.box_type}",
-            f"  Candidates:       {n_sampling_workers * n_configurations} "
-            f"({n_sampling_workers}w × {n_configurations}), valid: {len(scored)}, failed: {failed}",
-            f"  Selected:         {len(selected_molecules)}",
-            f"  Energy range:     {e_min:.6f} to {e_max:.6f} Hartree",
+        summary = [
+            ("Total atoms", len(initial_molecules[0].coordinates)),
+            ("Submolecules", len(submolecules)),
+            ("Box type", simulation_box.box_type),
+            ("Candidates", f"{n_sampling_workers * n_configurations} "
+                           f"({n_sampling_workers}w × {n_configurations}), valid: {len(scored)}, failed: {failed}"),
+            ("Selected", len(selected_molecules)),
+            ("Energy range", f"{e_min:.6f} to {e_max:.6f} Hartree"),
         ]
         if simulation_box.box_type == "sphere":
-            summary_lines.append(f"  Box radius:       {simulation_box.radius:.2f} Å")
+            summary.append(("Box radius", f"{simulation_box.radius:.2f} Å"))
         else:
-            summary_lines.append(f"  Box dimensions:   {simulation_box.box_dimensions}")
-        summary_lines.append(f"  Box volume:       {simulation_box.get_volume():.2f} Å³")
+            summary.append(("Box dimensions", str(simulation_box.box_dimensions)))
+        summary.append(("Box volume", f"{simulation_box.get_volume():.2f} Å³"))
 
-        self._log("\n".join(summary_lines))
+        if self.config.verbose and not self.logger:
+            print("Initialization Complete!")
+            for label, value in summary:
+                print(f"  {label}: {value}")
+        if self.logger:
+            self.logger.header("Initialization Complete", width=60)
+            self.logger.parameters("Summary", summary)
         self._log(f"Total initialization time: {time.time() - time_start:.2f} s")
 
     def _check_clustering_artifacts(self, clustering: Clustering) -> None:
@@ -819,44 +911,44 @@ class ClusterInitializer:
 
     def _load_molecule(self, xyz_file: str) -> Molecule:
         """Load and return a Molecule from an XYZ file."""
-        self._log(f"\n[1/5] Loading molecule from {xyz_file}")
+        self._step(1, self._INIT_STEPS, f"Loading molecule from {xyz_file}")
         with open(xyz_file, "r") as f:
             xyz_content = f.read()
         molecule = Molecule.from_xyz(xyz_content)
-        self._log(f"      {len(molecule.coordinates)} atoms — types: {set(molecule.atom_labels)}")
+        self._substep(f"{len(molecule.coordinates)} atoms — types: {set(molecule.atom_labels)}")
         return molecule
 
     def _fragment_molecule(self, molecule: Molecule) -> List[Molecule]:
         """Fragment the molecule into covalently connected submolecules."""
-        self._log("\n[2/5] Fragmenting molecule into submolecules")
+        self._step(2, self._INIT_STEPS, "Fragmenting molecule into submolecules")
         molecule.compute_bonds()
-        self._log(
-            f"      {len(molecule._covalent_bonds)} covalent bonds, "
+        self._substep(
+            f"{len(molecule._covalent_bonds)} covalent bonds, "
             f"{len(molecule._hydrogen_bonds)} hydrogen bonds"
         )
         submolecules = molecule.fragment_by_connectivity()
-        self._log(f"      {len(submolecules)} submolecule(s):")
+        self._substep(f"{len(submolecules)} submolecule(s):")
         for i, submol in enumerate(submolecules):
-            self._log(f"        [{i + 1}] {len(submol.coordinates)} atoms")
+            self._substep(f"[{i + 1}] {len(submol.coordinates)} atoms", level=2)
         return submolecules
 
     def _optimize_submolecules(self, submolecules: List[Molecule]) -> List[Molecule]:
         """Optimize all submolecules, in parallel if configured."""
-        self._log(f"\n[3/5] Optimizing {len(submolecules)} submolecule(s)...")
+        self._step(3, self._INIT_STEPS, f"Optimizing {len(submolecules)} submolecule(s)")
         if self.config.optimize_parallel and len(submolecules) > 1:
             return self._optimize_submolecules_parallel(submolecules)
 
         optimized = []
         for i, submol in enumerate(submolecules):
-            self._log(f"      Submolecule {i + 1}: {len(submol.coordinates)} atoms...")
+            self._substep(f"Submolecule {i + 1}: {len(submol.coordinates)} atoms...")
             try:
                 optimized_submol, _  = self.energy_evaluator.optimize_geometry(
                     submol, optimizer="BFGS"
                 )
                 optimized.append(optimized_submol)
-                self._log("        Done")
+                self._substep("Done", level=2)
             except Exception as exc:
-                self._log(f"        Failed: {exc} — using original geometry", level="error")
+                self._log(f"{' ' * (Logger.INDENT_UNIT * 2)}Failed: {exc} — using original geometry", level="error")
                 optimized.append(submol)
         return optimized
 
@@ -868,7 +960,7 @@ class ClusterInitializer:
         original index so the returned list order is preserved.
         """
         n_workers = min(len(submolecules), multiprocessing.cpu_count())
-        self._log(f"      Parallel optimization on {n_workers} worker(s)...")
+        self._substep(f"Parallel optimization on {n_workers} worker(s)...")
         optimized: List[Optional[Molecule]] = [None] * len(submolecules)
 
         submol_data = [
@@ -897,15 +989,15 @@ class ClusterInitializer:
                 idx = future_to_idx[future]
                 try:
                     optimized[idx] = future.result()
-                    self._log(f"        Submolecule {idx + 1} optimized successfully")
+                    self._substep(f"Submolecule {idx + 1} optimized successfully", level=2)
                 except Exception as exc:
-                    self._log(f"        Submolecule {idx + 1} failed: {exc}", level="error")
+                    self._log(f"{' ' * (Logger.INDENT_UNIT * 2)}Submolecule {idx + 1} failed: {exc}", level="error")
                     optimized[idx] = submolecules[idx]
         return optimized
 
     def _create_simulation_box(self, submolecules: List[Molecule]) -> SimulationBox:
         """Build a simulation box sized from the collective vdW radii of all submolecules."""
-        self._log("\n[4/5] Creating simulation box")
+        self._step(4, self._INIT_STEPS, "Creating simulation box")
         all_vdw_radii = []
         total_atoms   = 0
         submol_extents = []
@@ -917,9 +1009,8 @@ class ClusterInitializer:
             )
 
         # Pad the box by the largest submolecule's own bounding radius so it has
-        # room to rotate/translate near the boundary --> avoids clashing 
+        # room to rotate/translate near the boundary --> avoids clashing
         padding = self.config.padding_factor * max(submol_extents)
-        self._log(f"      Largest submolecule extent: {max(submol_extents):.2f} Å -> padding: {padding:.2f} Å")
 
         simulation_box = SimulationBox.from_vdw_radii(
             vdw_radii=all_vdw_radii,
@@ -928,13 +1019,18 @@ class ClusterInitializer:
             eta_factor=self.config.eta_factor,
             padding=padding,
         )
-        self._log(f"      Box type: {simulation_box.box_type}")
+
+        box_params = [
+            ("Largest submolecule extent", f"{max(submol_extents):.2f} Å"),
+            ("Padding", f"{padding:.2f} Å"),
+            ("Box type", simulation_box.box_type),
+        ]
         if simulation_box.box_type == "sphere":
-            self._log(f"      Radius:   {simulation_box.radius:.2f} Å")
-            self._log(f"      Volume:   {simulation_box.get_volume():.2f} Å³")
+            box_params.append(("Radius", f"{simulation_box.radius:.2f} Å"))
         else:
-            self._log(f"      Dims:     {simulation_box.box_dimensions}")
-            self._log(f"      Volume:   {simulation_box.get_volume():.2f} Å³")
+            box_params.append(("Dimensions", str(simulation_box.box_dimensions)))
+        box_params.append(("Volume", f"{simulation_box.get_volume():.2f} Å³"))
+        self._parameters("Simulation box", box_params)
         return simulation_box
 
     def _generate_random_configurations(
@@ -988,24 +1084,27 @@ class ClusterInitializer:
             if n_theta is None or n_phi is None or n_r is None:
                 n_per_submol = max(1, n_configurations // len(submolecules))
                 n_theta = n_phi = n_r = int(np.ceil(n_per_submol ** (1 / 3)))
-                self._log(
-                    f"      Grid auto-sizing: n_theta = n_phi = n_r = {n_theta} "
+                self._substep(
+                    f"Grid auto-sizing: n_theta = n_phi = n_r = {n_theta} "
                     f"(target ≥ {n_configurations} configurations)"
                 )
-            self._log(f"      Grid spacing: {spacing}, n_theta={n_theta}, n_phi={n_phi}, n_r={n_r}")
+            self._substep(f"Grid spacing: {spacing}, n_theta={n_theta}, n_phi={n_phi}, n_r={n_r}")
         else:
             spacing = n_theta = n_phi = n_r = None
 
         if n_sampling_workers > 1:
-            self._log(
-                f"\n[5/5] Sampling {n_configurations} configurations on each of "
-                f"{n_sampling_workers} workers (total: {n_sampling_workers * n_configurations})..."
+            self._step(
+                5, self._INIT_STEPS,
+                f"Sampling {n_configurations} configurations on each of "
+                f"{n_sampling_workers} workers (total: {n_sampling_workers * n_configurations})",
             )
             submol_labels = [s.atom_labels.tolist() for s in submolecules]
             submol_coords = [s.coordinates.tolist() for s in submolecules]
 
             ctx = multiprocessing.get_context("spawn")
             all_configs: List[Molecule] = []
+            worker_counts: Dict[int, int] = {}
+            worker_logger = self._get_worker_logger()
             with ProcessPoolExecutor(max_workers=n_sampling_workers, mp_context=ctx) as executor:
                 futures = {
                     executor.submit(
@@ -1030,13 +1129,17 @@ class ClusterInitializer:
                     try:
                         batch = future.result()
                         all_configs.extend(batch)
-                        self._log(f"  Worker {worker_id}: {len(batch)} configurations generated")
+                        worker_counts[worker_id] = len(batch)
+                        if worker_logger:
+                            worker_logger.info(f"Worker {worker_id}: {len(batch)} configurations generated")
                     except Exception as exc:
-                        self._log(f"  Worker {worker_id} failed: {exc}", level="error")
-            self._log(f"  Total configurations collected: {len(all_configs)}")
+                        self._log(f"Worker {worker_id} failed: {exc}", level="error")
+            if worker_counts:
+                self._worker_summary("Configurations generated per worker", worker_counts)
+            self._substep(f"Total configurations collected: {len(all_configs)}")
             return all_configs
 
-        self._log(f"\n[5/5] Sampling {n_configurations} configurations sequentially...")
+        self._step(5, self._INIT_STEPS, f"Sampling {n_configurations} configurations sequentially")
         configurations: List[Molecule] = []
         for _ in range(n_configurations):
             mol = self._generate_configuration(
